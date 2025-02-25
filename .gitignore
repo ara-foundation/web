@@ -42,3 +42,4 @@ next-env.d.ts
 
 # Atomic Server
 .data/config/*
+.backup
