@@ -10,6 +10,12 @@ services:
       - type: bind
         source: ./.data
         target: /atomic-storage
+      - type: bind
+        source: ./.backup
+        target: /atomic-storage-backup
+      - type: bind
+        source: ./.export
+        target: /atomic-storage-export
 volumes:
   atomic-storage:
     driver: local

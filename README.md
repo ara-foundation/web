@@ -2,6 +2,18 @@
 
 A collaboration platform with the financial transparency, community building and custom AI agents for your needs.
 
+To export the data:
+
+```
+docker-compose run atomic-server export -p /atomic-storage-export/data.json
+```
+
+To run the development mode:
+
+```
+docker-compose up -d
+```
+
 ## Features
 
 - 🤖 End user made custom AI agents
