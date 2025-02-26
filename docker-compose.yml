@@ -1,0 +1,21 @@
+services:
+  atomic-server:
+    # You can create a .env using `atomic-server generate-dotenv`
+    env_file: ".env"
+    image: joepmeneer/atomic-server
+    container_name: atomic-server
+    ports:
+      - 80:80
+    volumes:
+      - type: bind
+        source: ./.data
+        target: /atomic-storage
+      - type: bind
+        source: ./.backup
+        target: /atomic-storage-backup
+      - type: bind
+        source: ./.export
+        target: /atomic-storage-export
+volumes:
+  atomic-storage:
+    driver: local
