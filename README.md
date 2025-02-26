@@ -1,19 +1,28 @@
-# Glyptodon - Personal Astro Theme
+# Ara Web
 
-A clean and modern, eco-friendly personal website theme built with [Astro](https://www.astro.build], using fluid type and grid sizing for smooth size transitions.
+A collaboration platform with the financial transparency, community building and custom AI agents for your needs.
 
-All dummy text is created by Claude AI to get a sense for what it looks like with content.
+To export the data:
 
-To see it in action, I use it for my own website at [www.timeaton.dev](https://www.timeaton.dev). Feel free to use and modify for your needs!
+```
+docker-compose run atomic-server export -p /atomic-storage-export/data.json
+```
 
-## Screenshots
-![glyptodon-dark min](https://github.com/user-attachments/assets/49a9f63a-8002-4493-bf91-a54552c94998)
----
-![glyptodon-post min](https://github.com/user-attachments/assets/08943779-5cc6-45bd-b396-dda19a0350bf)
----
-![glyptodon-light min](https://github.com/user-attachments/assets/0b51d6e3-36e2-4e73-85d4-3c4fc3d6dbd8)
+To run the development mode:
+
+```
+docker-compose up -d
+```
 
 ## Features
+
+- 🤖 End user made custom AI agents
+- 📝 Ara Web is Open Source
+- 🛠️ Blockchain based transparency
+- 🔌 Community: contributors, freelancers or monetization
+- 🔒 Secure by default
+
+### Features of the Web
 
 - Responsive design
 - Scores A or A+ (depending on hosting and your images) on [Accessify](https://www.accessify.com/) and [Ecograder](https://ecograder.com/)
@@ -24,6 +33,38 @@ To see it in action, I use it for my own website at [www.timeaton.dev](https://w
 - Now page (inspired by [nownownow.com](https://nownownow.com))
 - Microblog for found links (Today I Found...)
 - Blog for personal projects
+
+
+## Getting Started
+
+First, install the packages:
+
+```bash
+npm install
+```
+
+Then, run the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Documentation
+
+### Architecture
+Let's first explain the components that made up the Ara Web.
+
+The background is the same for all pages.
+All pages have the same classic web layout: `Header`, `Content`, `Footer`.
+Each layout also composed of three sections: `Left`, `Center`, `Right`.
+
+Below is the mockup with the rectangles defining layouts and sections. Red rectangles define the layouts. Yellow rectangles define the sections.
+
+![Layouts](docs/layout.png)
+
+---
 
 ## Getting Started
 
