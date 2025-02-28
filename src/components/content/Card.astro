@@ -1,0 +1,43 @@
+---
+interface Props {
+  title: string;
+  descriptions: string[];
+  alt: string;
+  url: string;
+}
+const { url, alt, title, descriptions } = Astro.props;
+
+
+---
+
+    <div class="card bg-base-100 image-full shadow-xl">
+        <figure>
+          <img
+            src={url}
+            alt={alt} />
+        </figure>
+        <div class="card-body ">
+          <h2 class="card-title">{title}!</h2>
+          <div class="card-description">
+            {descriptions.map((description) => <p>{description}</p>)}
+          </div>
+          <div class="card-actions relative">
+            <div class="absolute -bottom-6">
+              <div class="flex justify-stretch">
+                <progress class="progress progress-primary w-56" value="50" max="100"></progress>
+              </div>
+              <div class="flex justify-between">
+                <div>20$</div>
+                <div>100$</div>
+              </div>
+            </div>
+            <!-- <button class="btn btn-primary">Buy Now</button> -->
+          </div>
+        </div>
+      </div>
+
+<style>
+  .card-description {
+    background-color: rgba(252, 252, 54, 0.5);
+  }
+</style>

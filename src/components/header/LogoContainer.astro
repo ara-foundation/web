@@ -1,0 +1,59 @@
+---
+import LogoIcon from "./LogoIcon.astro"
+
+const youtubeIconUrl = 'https://assets.api.uizard.io/api/cdn/stream/bf6c4229-ba6d-4b6a-83ce-808b9e084635.png';
+const telegramIconUrl = 'https://assets.api.uizard.io/api/cdn/stream/f0661113-a625-4151-b7d5-9d2647a35d59.png';
+const webIconUrl = 'https://assets.api.uizard.io/api/cdn/stream/0e42f794-3a8f-4640-9bc0-b47157687aba.png';
+const githubIconUrl = 'https://assets.api.uizard.io/api/cdn/stream/befd2e85-62f8-4584-9672-5b9dfc779a08.png';
+---
+
+<div class="logo-container">
+  <LogoIcon></LogoIcon>
+  <span>ARA</span>
+  <nav>
+    <a class="nav-link">
+      <img src={youtubeIconUrl} />
+    </a>
+    <a class="nav-link">
+      <img src={telegramIconUrl} />
+    </a>
+    <a class="nav-link">
+      <img src={webIconUrl} />
+    </a>
+    <a class="nav-link">
+      <img src={githubIconUrl} />
+    </a>
+  </nav>
+</div>
+<style define:vars={{youtubeIconUrl}}>
+  .logo-container {
+    top: 0px;
+    left: 3px;
+    width: 253px;
+    height: 43px;
+    background-color: #e6e6e6;
+    display: flex;
+  }
+
+  .logo-container span {
+    color: #0e0e0e;
+    font-size: 24px;
+    font-family: "Open Sans";
+    font-weight: 200;
+    line-height: 37px;
+  }
+
+  .logo-container > nav {
+    display: flex;
+  }
+
+  .nav-link > img {
+    top: 13px;
+    left: 134px;
+    width: 23px;
+    height: 17px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+</style>
