@@ -1,0 +1,31 @@
+---
+import { LungtaTypes } from "../../scripts/lungtaTypes";
+interface Props {
+    active: LungtaTypes;
+}
+
+const { active } = Astro.props;
+
+const activeBorder = "border-t-4 border-r-4 border-b-4 border-white-500";
+const logosClass = (active == LungtaTypes.Logos ? " active text-white " + activeBorder: "disabled");
+const maydoneClass = (active == LungtaTypes.Maydone ? " active text-white " + activeBorder : "disabled");
+const sanghaClass = (active == LungtaTypes.Sangha ? " active text-white " + activeBorder : "disabled");
+---
+
+<ul class="menu menu-lg bg-base-200 rounded-box w-56">
+    <li class="bg-blue-500 hover:bg-blue-400 "><span class={logosClass}>Logos</span></li>
+    <li class="bg-yellow-500 hover:bg-yellow-400"><span class={maydoneClass}>MayDone</span></li>
+    <li class="bg-red-500 hover:bg-red-400"><span class={sanghaClass}>Community</span></li>
+</ul>
+
+<style>
+    ul {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    li {
+        margin-bottom: 1rem;
+    }
+</style>

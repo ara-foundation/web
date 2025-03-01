@@ -1,0 +1,35 @@
+---
+import GitftBox from "./GitftBox";
+import NowOkButton from "./NowOkButton";
+const url = "https://web.ara.foundation/tokens/book-bike";
+
+---
+<dialog id="done_modal" class="modal">
+    <div class="modal-box">
+      <div role="alert" class="alert alert-success text-lg font-bold text-center flex justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6 shrink-0 stroke-current"
+          fill="none"
+          viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Done!</span>
+      </div>
+      <p class="py-4"><span class="text-sm">Project's Web Page:</span><br /><a href={url} class="link link-accent">{url}</a></p>
+      <p class="py-4"><span class="text-sm">Share with people:</span><br /><a href={url} class="link link-accent">BookBike Maintainer Token</a></p>
+      <div class="modal-action justify-center">
+        <form method="dialog">
+            <div class="m-20">
+                <GitftBox client:load></GitftBox>
+                <NowOkButton client:load></NowOkButton>
+              </div>
+            <!-- <button class="btn btn-sm btn-circle btn-ghost absolute right-1 top-1">✕</button> -->
+          </form>
+      </div>
+    </div>
+</dialog>

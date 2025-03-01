@@ -1,14 +1,16 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '@layouts/Layout.astro';
 import { getCollection } from 'astro:content';
-import Card from '../components/content/Card.astro';
+import Card from '@components/content/Card.astro';
 
 const posts = (await getCollection('posts', ({ data }) => {
     return data.public !== false;
 }))
-    .sort((a, b) => b.data.publicationDate.valueOf() - a.data.publicationDate.valueOf())
-    .slice(0,5);
+.sort((a, b) => b.data.publicationDate.valueOf() - a.data.publicationDate.valueOf())
+.slice(0,5);
 
+const footerLink = "/lungta/logos/post";
+const footerText = "Create your Community";
 
 // BookBike
 const url = 'https://assets.api.uizard.io/api/cdn/stream/22f374e9-e658-489f-93b7-0fd727f7b539.png';
@@ -17,7 +19,10 @@ const title = "BookBike";
 const descriptions = ["A bike rental aggregator.", "Available in South East Asia."];
 ---
 
-<Layout title="Home">
+<Layout title="Home" 
+  footerLink={footerLink} 
+  footerText={footerText}
+>
   <div class="flex flex-row">
     <section class="basis-1/6"></section>
     <section class="basis-2/3">

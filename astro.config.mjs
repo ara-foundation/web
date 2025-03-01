@@ -11,7 +11,9 @@ import react from "@astrojs/react";
 export default defineConfig({
   base: "/",
   site: CONFIG.site_url,
-  integrations: [sitemap(), mdx(), playformCompress(), react()],
+  integrations: [sitemap(), mdx(), playformCompress(), react({
+    experimentalReactChildren: true,
+  })],
   markdown: {
     shikiConfig: {
       theme: "material-theme-darker",

@@ -1,0 +1,122 @@
+---
+// POST Rest API operation on MayDone.
+// Create a new MayDone
+import { library, icon, type Icon } from "@fortawesome/fontawesome-svg-core";
+import {faCrown, faPenRuler, faPen, faGlobe} from "@fortawesome/free-solid-svg-icons"
+
+library.add(faCrown, faPenRuler, faPen, faGlobe);
+const crownIcon = icon({ prefix: "fas", iconName: faCrown.iconName });
+const penRulerIcon = icon({ prefix: "fas", iconName: faPenRuler.iconName });
+const penIcon = icon({ prefix: "fas", iconName: faPen.iconName });
+const globeIcon = icon({ prefix: "fas", iconName: faGlobe.iconName });
+
+import DoneModal from "@components/lungta/DoneModal.astro"
+import ThankYou from "@components/lungta/ThankYou"
+import Layout from "@layouts/Layout.astro"
+import LungtaNavigation from "@components/lungta/LungtaNavigation.astro";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+
+type Token = {
+    name: string;
+    icon: Icon;
+}
+
+const tokens: Token[] = [
+    {
+        name: "Manager Token",
+        icon: crownIcon,
+    },
+    {
+        name: "Maintainer Token",
+        icon: penRulerIcon
+    },
+    {
+        name: "Contributor Token",
+        icon: penIcon
+    }
+];
+
+---
+
+<Layout title="New Logos" footerLink={""}>
+    <div class="flex flex-row">
+        <section class="basis-1/6">
+            <LungtaNavigation active={LungtaTypes.Sangha} />
+            <!-- <Ceo client:load /> -->
+        </section>
+        <section class="basis-2/3 flex flex-col px-4 h-full">
+            <h2 class="pt-10 text-center">
+                Allow Tokens to be Purchased
+            </h2>
+            <div class="grid grid-cols-10 grid-rows-3 gap-4 mt-4">
+                {
+                    tokens.map((token) => 
+                        <div class="col-span-4 col-start-1">
+                            <div class="card grid h-20 flex-grow place-items-center">
+                                <label class="input input-bordered flex items-center gap-2">
+                                    <Fragment set:html={token.icon.html} />
+                                    <input type="text" class="grow" value={token.name} disabled />
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-end-6 divider divider-horizontal">
+                            <input type="checkbox" checked="checked" class="checkbox" />
+                        </div>
+                    )
+                }
+                <div class={"relative col-start-6 col-end-10 row-start-1 bg-red-300 row-span-3"}>
+                    <h2 class="text-center text-sm p-2 font-normal">                                    
+                        <Fragment set:html={globeIcon.html} />
+                        Buy Page</h2>
+                    <ul class="pl-4 w-full">
+                        <li class="my-2">
+                            <label class="input input-bordered flex items-center gap-2">
+                                Maintainer Token Price
+                                <input type="number" class="grow" placeholder="2" />
+                                <span class="badge badge-info">$</span>
+                            </label>
+                        </li>
+                        <li class="my-2">
+                            <label class="input input-bordered flex items-center gap-2">
+                                Maintainer Token Price
+                                <input type="number" class="grow" placeholder="2" />
+                                <span class="badge badge-info">$</span>
+                            </label>
+                        </li>
+                        <li class="my-2">
+                            <label class="input input-bordered flex items-center gap-2">
+                                Maintainer Token Price
+                                <input type="number" class="grow" placeholder="2" />
+                                <span class="badge badge-info">$</span>
+                            </label>
+                        </li>
+                    </ul>
+                    <div class="bg-red-400 absolute bottom-0 p-2">
+                        Available on:
+                        <a class="link link-primary text-center">https://web.ara.foundation/tokens/book-bike</a>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center mt-10">
+                <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
+            </div>
+        </section>
+        <section class="basis-1/6 pr-4">
+            <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
+            <a href="/lungta/maydone/post" class="btn btn-outline btn-neutral w-full">Previous</a>
+        </section>
+    </div>
+</Layout>
+<DoneModal />
+<ThankYou client:load />
+
+<style is:global>
+    /* Declare a custom CSS class to make the icon look right */
+    .svg-inline--fa {
+      overflow: visible;
+      box-sizing: content-box;
+      display: inline-block;
+      height: 1em;
+      vertical-align: -0.125em;
+    }
+</style>

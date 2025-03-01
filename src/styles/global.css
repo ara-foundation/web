@@ -130,8 +130,8 @@ main {
 }
 
 a {
-  color: var(--color-link);
-  padding: 0;
+  /* color: var(--color-link); */
+  /* padding: 0; */
   background-image: linear-gradient(var(--color-link-bg) 0 0);
   background-size: 0;
   background-repeat: no-repeat;
@@ -318,4 +318,9 @@ main blockquote {
   background: none;
   padding: 0;
   font-size: var(--step--1);
+}
+
+.modal-box {
+  color: rgb(236, 234, 234);
+  background-color: #7f1e0c;
 }

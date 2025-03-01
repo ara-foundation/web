@@ -1,0 +1,26 @@
+---
+// POST Rest API operation on MayDone.
+// Create a new MayDone
+import Layout from "@layouts/Layout.astro"
+import LungtaNavigation from "@components/lungta/LungtaNavigation.astro";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+
+const footerLink = "/lungta/sangha/post";
+const footerText = "Set Budget";
+---
+
+<Layout title="New Logos" footerLink={footerLink} footerText={footerText}>
+    <div class="flex flex-row">
+        <section class="basis-1/6">
+            <LungtaNavigation active={LungtaTypes.Maydone} />
+        </section>
+        <section class="basis-2/3 flex flex-col px-4 h-full">
+            <input type="number" placeholder="Budget" class="input input-bordered w-full mb-2" />
+            <textarea class="textarea textarea-bordered textarea-lg w-full min-h-80" placeholder="Describe how do you spend the budget"></textarea>
+        </section>
+        <section class="basis-1/6 pr-4">
+            <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
+            <a href="/lungta/logos/post" class="btn btn-outline btn-neutral w-full">Previous</a>
+        </section>
+    </div>
+</Layout>

@@ -4,7 +4,21 @@ import Header from "@components/Header.astro";
 import Footer from "@components/Footer.astro";
 import { CONFIG } from "../config";
 
-const { title = CONFIG.site_title, description = CONFIG.description, image = "/og-default.jpg" } = Astro.props;
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  footerLink?: string;
+  footerText?: string;
+}
+
+const { 
+	title = CONFIG.site_title, 
+	description = CONFIG.description, 
+	image = "/og-default.jpg",
+	footerLink,
+	footerText,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -15,6 +29,6 @@ const { title = CONFIG.site_title, description = CONFIG.description, image = "/o
 	<body>
 		<Header />
 		<slot/>
-		<Footer />
+		<Footer footerLink={footerLink} footerText={footerText} />
 	</body>
 </html>

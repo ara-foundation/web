@@ -1,0 +1,25 @@
+---
+// POST Rest API operation on Logos.
+// Create a new Logos
+import Layout from "@layouts/Layout.astro"
+import LungtaNavigation from "@components/lungta/LungtaNavigation.astro";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+
+const footerLink = "/lungta/maydone/post";
+const footerText = "Create Project";
+---
+
+<Layout title="New Logos" footerLink={footerLink} footerText={footerText}>
+    <div class="flex flex-row">
+        <section class="basis-1/6">
+            <LungtaNavigation active={LungtaTypes.Logos} />
+        </section>
+        <section class="basis-2/3 flex flex-col px-4 h-full">
+            <input type="text" placeholder="Project Name" class="input input-bordered w-full mb-2" />
+            <textarea class="textarea textarea-bordered textarea-lg w-full min-h-80" placeholder="Description"></textarea>
+        </section>
+        <section class="basis-1/6 pr-4">
+            <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
+        </section>
+    </div>
+</Layout>

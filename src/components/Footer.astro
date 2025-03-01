@@ -1,35 +1,45 @@
 ---
+import AraContact from "@components/lungta/AraContact"
+interface Props {
+  footerLink?: string;
+  footerText?: string;
+}
+
+const { footerLink, footerText } = Astro.props;
 ---
 
 <footer class="footer flex flex-row">
   <div class="basis-1/6"></div>
   <div class="basis-2/3 center">
-    <button class="btn btn-primary py-6 px-10">Create your Community</button>
+    {footerLink && 
+      <a href={footerLink} class="btn btn-primary py-6 px-10">{footerText}</a>
+    }
   </div>
-  <div class="basis-1/6"></div>
+  <div class="basis-1/6">
+    <AraContact client:load />
+  </div>
 </footer>
-    <style>
-      .footer {
-        position: sticky;
-        bottom: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        /* background-color: var(--color-background); */
-        /* color: var(--color-text-base); */
-        /* box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
-        /* -webkit-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
-        /* -moz-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
-        padding: 10px 20px;
-        z-index: 1000;
-        /* border-bottom: 2px solid var(--color-border);  */
-      }
 
+<style>
+.footer {
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  z-index: 1000;
+  /* background-color: var(--color-background);
+    color: var(--color-text-base);
+    box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+    -webkit-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+    -moz-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+    border-bottom: 2px solid var(--color-border);  */
+}
      
-  .center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-    </style>
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>
