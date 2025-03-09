@@ -1,0 +1,20 @@
+{
+  "84532": {
+    "chainId": "84532",
+    "contracts": {
+      "PublicKeyRegistry": "0xEfe594CDCc7c3E4DCCF25f75D5203A740445E838",
+      "SimpleAccountFactory": "0x7c4Ab97326EE95Ad4f32D5F555fc387db42dbe73",
+      "UltraVerifier": "0xD37D6e4e41Be1F05AfDF653777848Ee4Fff8FBc9"
+    },
+    "name": "baseSepolia"
+  },
+  "911867": {
+    "chainId": "911867",
+    "contracts": {
+      "PublicKeyRegistry": "0x4aCE3c45Ce0395c178eA70D61d78326c11546e03",
+      "SimpleAccountFactory": "0xe86f848F0BFa31DdaA5455E95cD8aF5f696ddc0e",
+      "UltraVerifier": "0xc500504b6b2F64D3CaE0FB92C22ef582e07Ecf5A"
+    },
+    "name": "odysseyTestnet"
+  }
+}

@@ -1,6 +1,8 @@
 ---
 import Logo from '@components/header/LogoContainer.astro'
 import Notification from '@components/header/Notification.astro';
+// import Login from "@components/auth/Login"
+import Login from "@components/auth/ZkLogin"
 export interface Props {
   activeNav?: string;
 }
@@ -16,7 +18,7 @@ const { activeNav } = Astro.props;
     <Notification text="Exclusive Early Adoper Version!" />
   </div>
   <div class="basis-1/6">
-    <!-- <Navigation /> -->
+    <Login client:only></Login>
 </div>
 </header>
 

@@ -14,3 +14,7 @@ export const CONFIG = {
   email: "your@email.com",
   description: "Welcome to my blog!",
 } as const;
+
+export const AUTH = {
+  GOOGLE_CLIENT_ID: import.meta.env.PUBLIC_GOOGLE_CLIENT_ID!
+}

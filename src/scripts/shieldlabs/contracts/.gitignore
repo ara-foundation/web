@@ -1,0 +1,19 @@
+# Hardhat files
+artifacts
+cache
+
+# Tests
+coverage
+coverage.json
+
+# Lib
+node_modules
+
+# IDE
+.vscode
+
+# Env
+.env
+
+# Misc
+.DS_Store

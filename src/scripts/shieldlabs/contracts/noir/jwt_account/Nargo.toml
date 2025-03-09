@@ -1,0 +1,8 @@
+[package]
+name = "jwt_account"
+type = "bin"
+authors = ["Oleh Misarosh <olehmisar@gmail.com>"]
+
+[dependencies]
+jwt = { path = "../jwt" }
+nodash = { git = "https://github.com/olehmisar/nodash/", tag = "v0.39.2" }

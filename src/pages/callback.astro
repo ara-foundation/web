@@ -1,0 +1,8 @@
+---
+import Layout from "@layouts/Layout.astro"
+import HandleRedirect from "@components/auth/HandleRedirect"
+---
+
+<Layout>
+    <HandleRedirect client:only url={Astro.url} />
+</Layout>
