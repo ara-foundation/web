@@ -4,12 +4,10 @@ import { toJwtNonce } from "@scripts/shieldlabs/libs/services/JwtAccountService"
 import { EXTEND_SESSION_SEARCH_PARAM } from "@scripts/shieldlabs/libs/utils";
 import { formatDistance, formatDuration, intervalToDuration } from "date-fns";
 import { ethers } from "ethers";
-import ms from "ms";
 import { assert } from "ts-essentials";
 import { privateKey, extendSessionStart } from "@scripts/state";
 import { useStore } from "@nanostores/react";
 // import SendEthCard from "$lib/SendEthCard.svelte";
-// import { onMount } from "svelte";
 import { useEffect, useState } from "react";
 import GapContainer from "./GapContainer";
 import LoadingButton from "@components/ui/LoadingButton";
@@ -23,7 +21,6 @@ type AccountInfo = {
 }
 
 function ZKLogin() {
-  const $privateKey = useStore(privateKey);
   const $extendSessionStart = useStore(extendSessionStart);
   const [jwtAccountInfo, setJwtAccountInfo] = useState<AccountInfo|undefined>(undefined);
   const [jwt, setJwt] = useState<string|undefined>(undefined);
@@ -31,13 +28,12 @@ function ZKLogin() {
   useEffect(() => {
     lib.queries.jwt().then((jwtQuery) => {
       setJwt(jwtQuery ?? undefined);
-      console.log(`Set the jwt from cache -> ${jwtQuery}`);
     }).catch(e => {
       console.error(e);
     })
   }, [])
 
-  let signerPrivateKey = $privateKey
+  let signerPrivateKey = privateKey.get();
   if (!signerPrivateKey) {
     signerPrivateKey = ethers.Wallet.createRandom().privateKey;
     privateKey.set(signerPrivateKey);
@@ -53,11 +49,8 @@ function ZKLogin() {
 
     // lib.queries.queryClient();
     const fetchKeylessAccount = async () => {
-      console.log(`Fetching the keyless`);
       const account = await lib.jwtAccount.getAccount(jwt, signer);
-      console.log(`Account: ${account}`);
       const ownerInfo = await lib.jwtAccount.currentOwner(account);
-      
       return {
         address: account.address,
         ownerInfo:
@@ -76,10 +69,10 @@ function ZKLogin() {
 
   async function extendSession() {
     try {
-      extendSessionStart.set(Date.now());
+      extendSessionStart.set(Date.now().toString());
       await extendSessionInner();
     } finally {
-      extendSessionStart.set(0);
+      extendSessionStart.set("0");
     }
   }
 
@@ -91,8 +84,11 @@ function ZKLogin() {
     await lib.zkLogin.publicKeyRegistry.requestPublicKeysUpdate(
       publicClient.chain.id,
     );
+    
+    const nonce = await toJwtNonce(signer);
+    alert(`Extend session for Nonce: ${nonce} for ${await signer.getAddress()}`);
 
-    const result = await lib.zkLogin.proveJwt(jwt, await toJwtNonce(signer));
+    const result = await lib.zkLogin.proveJwt(jwt, nonce);
     if (!result) {
       console.log(
         "Sign in again please to link your wallet to your Google account",
@@ -123,6 +119,7 @@ function ZKLogin() {
     { extendSessionAfterLogin = false } = {},
   ) {
     const nonce = await toJwtNonce(signer);
+    alert(`Nonce: ${nonce} for ${await signer.getAddress()}`);
     await lib.authProvider.signInWithRedirect({ nonce });
   }
 
@@ -146,8 +143,6 @@ function ZKLogin() {
     return addr.substring(0, 8) + "..." + addr.substring(36); 
   }
 
-  console.log(`What is JWT: ${JSON.stringify(jwt)}`);
-
   return (
     !jwt ?
         <GapContainer>
@@ -160,19 +155,18 @@ function ZKLogin() {
           </LoadingButton>
         </GapContainer>
       :
-      <div className="bg-blue-100 p-2 mt-0 w-60">
+      <div className="bg-blue-100 p-2 mt-0">
         {jwtAccountInfo === undefined ? <button disabled>Loading...</button> :
-        <details className="dropdown">
-          <summary className="btn m-1">{shortAddr(jwtAccountInfo.address)}</summary>
-          <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm text-sm">
-            <li>
-              <div>Address: {jwtAccountInfo.address}</div>
+        <details className="dropdown w-full">
+          <summary className="btn m-1 w-full btn-primary pt-2">{shortAddr(jwtAccountInfo.address)}</summary>
+          <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm text-sm w-full">
+            <li className="text-sm w-full object-cover overflow-hidden">
+              Address: {jwtAccountInfo.address}
             </li>
-            <li>
-              <div>Network: {publicClient.chain.name}</div>
+            <li className="w-full">
+              Network: {publicClient.chain.name}
             </li>
-            <li>
-              <div>
+            <li className="w-full">
                 {jwtAccountInfo.ownerInfo === undefined 
                   ? "No session" 
                   : (jwtAccountInfo.ownerInfo === "expired" 
@@ -183,12 +177,11 @@ function ZKLogin() {
                     )}`
                   )
                 }
-              </div>  
             </li>
               <LoadingButton
                   variant="default"
                   onclick={extendSession}
-                  loading={$extendSessionStart != 0}
+                  loading={$extendSessionStart !== "0" && jwtAccountInfo.ownerInfo !== undefined}
               >
                 {jwtAccountInfo.ownerInfo === undefined ? "Create" : "Extend"} session
               </LoadingButton>

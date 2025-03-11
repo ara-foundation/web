@@ -12,7 +12,7 @@ interface Props {
 
 function Button({loading, children, onclick}: Props) {
     return <button
-    className="no-underline btn btn-secondary"
+    className="no-underline btn btn-secondary w-full"
     disabled={loading} 
     onClick={onclick}
     >

@@ -14,6 +14,16 @@ import {
   toBoundedVec,
 } from "./utils.js";
 
+import { UltraPlonkBackend } from '@aztec/bb.js';
+import { Noir } from '@noir-lang/noir_js';
+
+// @ts-ignore
+import acvm from '@noir-lang/acvm_js/web/acvm_js_bg.wasm?url';
+// @ts-ignore
+import noirc from '@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm?url';
+import initNoirC from '@noir-lang/noirc_abi';
+import initACVM from '@noir-lang/acvm_js';
+
 // Note: keep in sync with Noir
 const JWT_HEADER_MAX_LEN = 256;
 // Note: keep in sync with Noir
@@ -33,12 +43,24 @@ export class ZkLogin {
   async proveJwt(jwt: string, expectedNonce: string) {
     const input = await this.prepareJwt(jwt);
 
+    console.log(`Prove JWT: ${input}`);
+
+    await Promise.all([initACVM(fetch(acvm)), initNoirC(fetch(noirc))]);
+
     const isValid: boolean = await this.checkJwt(input, expectedNonce);
+    console.log(`Is valid JWT against expected nonce? ${expectedNonce}`);
     if (!isValid) {
+      console.log(`No it's not a valid`);
       return undefined;
+    } else {
+      console.log(`Yes, its valid, now get noir`);
     }
 
     const { noir, backend } = await getNoir();
+    if (noir == null || backend == null) {
+      console.log(`Noir retreive failed`);
+      return undefined;
+    }
     console.time("generate witness");
     const { witness } = await noir.execute(input);
     console.timeEnd("generate witness");
@@ -149,14 +171,23 @@ export class ZkLogin {
 }
 
 const getNoir = utils.lazyValue(async () => {
-  const { Noir } = await import("@noir-lang/noir_js");
-  const { UltraPlonkBackend } = await import("@aztec/bb.js");
-  const noir = new Noir(circuit as any);
-  const threads =
-    typeof navigator !== "undefined" ? navigator.hardwareConcurrency : 1;
-  console.log(`Using ${threads} threads`);
-  const backend = new UltraPlonkBackend(circuit.bytecode, { threads });
-  return { noir, backend };
+  // const initNoirC = await import("@noir-lang/noirc_abi");
+  // const initACVM = await import("@noir-lang/acvm_js");
+  // const acvm = await import("@noir-lang/acvm_js/web/acvm_js_bg.wasm");
+  // const noirc = await import("@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm");
+  // await Promise.all([await fetch(acvm), await fetch(noirc)]);
+  
+  try {
+    const noir = new Noir(circuit as any);
+    const threads =
+      typeof navigator !== "undefined" ? navigator.hardwareConcurrency : 1;
+    console.log(`Using ${threads} threads, and get noir by circuit bytecode...`);
+    const backend = new UltraPlonkBackend(circuit.bytecode, { threads });
+    console.log(`fetched, now return the data`);
+    return { noir, backend };
+  } catch (e) {
+    return {noir: null, backend: null}
+  }
 });
 
 async function getAccountIdFromJwt(jwtDecoded: ReturnType<typeof decodeJwt>) {

@@ -80,16 +80,22 @@ export class JwtAccountService {
   }
 
   async currentOwner(account: JwtSmartAccount) {
+    console.log(`Check the current owner for ${account.address}`);
     const deployed: boolean = await isDeployed(account, this.publicClient);
     if (!deployed) {
+      console.log(`Not deployed return null`);
       return null;
+    } else {
+      console.log(`Deployed, continue, and connect as ${account.address}`);
     }
     const contract = SimpleAccount__factory.connect(
       account.address,
       this.provider,
     );
+    console.log(`Get owner info and address`);
     const ownerInfo = await contract.ownerInfo();
     const ownerAddress = await contract.currentOwner();
+    console.log(`Return the data`);
     return {
       owner: ownerAddress,
       expirationTimestamp: ethers.toNumber(ownerInfo.expirationTimestamp),
