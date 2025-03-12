@@ -1,60 +1,19 @@
 {
-  "name": "ara-web",
-  "description": "Ara Web Client &ndash; World of Softwares",
-  "version": "1.0.1",
-  "private": true,
-  "license": "MIT",
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "preinstall": "npx only-allow pnpm"
-},
-  "dependencies": {
-    "@astrojs/mdx": "^4.0.7",
-    "@astrojs/react": "^4.2.0",
-    "@astrojs/rss": "^4.0.11",
-    "@astrojs/sitemap": "^3.2.1",
-    "@aztec/bb.js": "^0.78.1",
-    "@fortawesome/fontawesome-svg-core": "^6.7.2",
-    "@fortawesome/free-brands-svg-icons": "^6.7.2",
-    "@fortawesome/free-solid-svg-icons": "^6.7.2",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "@mach-34/noir-bignum-paramgen": "^1.1.2",
-    "@nanostores/persistent": "^0.10.2",
-    "@nanostores/react": "^0.8.4",
-    "@noir-lang/acvm_js": "^1.0.0-beta.3",
-    "@noir-lang/noir_js": "^1.0.0-beta.3",
-    "@noir-lang/noir_wasm": "^1.0.0-beta.3",
-    "@noir-lang/noirc_abi": "^1.0.0-beta.3",
-    "@playform/compress": "^0.1.7",
-    "@shield-labs/utils": "^0.1.0",
-    "@tailwindcss/vite": "^4.0.9",
-    "@tomic/lib": "^0.40.0",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "astro": "^5.1.9",
-    "astro-embed": "^0.9.0",
-    "astro-og-canvas": "^0.5.5",
-    "date-fns": "^4.1.0",
-    "dotenv": "^16.4.7",
-    "ethers": "^6.13.5",
-    "js-cookie": "^3.0.5",
-    "ky": "^1.7.5",
-    "lodash-es": "^4.17.21",
-    "nanostores": "^0.11.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.9",
-    "ts-essentials": "^10.0.4",
-    "viem": "^2.23.8",
-    "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "@tomic/cli": "^0.40.0",
-    "@types/js-cookie": "^3.0.6",
-    "@types/lodash-es": "^4.17.12",
-    "daisyui": "^5.0.0-beta.8"
+    "name": "ara-web",
+    "type": "module",
+    "private": true,
+    "scripts": {
+      "release": "pnpm changeset version && git add . && git commit -m\"chore: release\" && pnpm changeset publish && git push && git push --tags"
+    },
+    "devDependencies": {
+      "@changesets/cli": "^2.27.10",
+      "prettier-plugin-svelte": "^3.2.7",
+      "typescript": "^5.6.3"
+    },
+    "pnpm": {
+      "patchedDependencies": {
+        "@aztec/bb.js": "patches/@aztec__bb.js.patch"
+      }
+    }
   }
-}
+  
