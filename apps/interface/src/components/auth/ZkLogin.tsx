@@ -12,6 +12,7 @@ import GapContainer from "./GapContainer";
 import LoadingButton from "@components/ui/LoadingButton";
 import ms from "ms";
 import { useInterval } from "usehooks-ts";
+import SendEth, { SendEthModalId } from "./SendEthModal";
 
 const SESSION_DURATION = ms("5 min");
 
@@ -217,13 +218,20 @@ function ZKLogin() {
                 >
                   {jwtAccountInfo.ownerInfo === undefined ? "Create" : "Extend"} session
                 </LoadingButton>
-              </li>
-              {extendingCountdown !== null ?
+            </li>
+            {extendingCountdown !== null ?
                   <li>
                     Remaining time: {extendingCountdown.formattedDuration}
                     <progress className="progress w-full" value={extendingCountdown.value} max={extendingCountdown.max}></progress>
                   </li>
-                : null}
+            : null}
+            {jwtAccountInfo.ownerInfo === undefined || jwtAccountInfo.ownerInfo === "expired"
+              ? null
+              : <>
+                  <button className="btn" onClick={()=>document.getElementById(SendEthModalId).showModal()}>Send Eth</button>
+                  <SendEth jwt={jwt} signer={signer} />
+                </>
+            }
           </ul>
         </details>
       }
