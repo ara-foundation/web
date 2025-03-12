@@ -26,7 +26,7 @@ function LoadingButton({children, onclick, ...props}: Props) {
                 console.error(e);
                 throw e;
             } finally {
-                loading = false;
+                setLoading(false);
             }
         }
     }>

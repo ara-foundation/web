@@ -9,6 +9,4 @@ export class QueriesService {
     return await this.authProvider.getJwt() ?? null;
   }
 
-  async invalidateAll() {
-  }
 }

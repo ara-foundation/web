@@ -5,12 +5,15 @@ import { EXTEND_SESSION_SEARCH_PARAM } from "@scripts/shieldlabs/libs/utils";
 import { formatDistance, formatDuration, intervalToDuration } from "date-fns";
 import { ethers } from "ethers";
 import { assert } from "ts-essentials";
-import { privateKey, extendSessionStart } from "@scripts/state";
-import { useStore } from "@nanostores/react";
+import { privateKey } from "@scripts/state";
 // import SendEthCard from "$lib/SendEthCard.svelte";
 import { useEffect, useState } from "react";
 import GapContainer from "./GapContainer";
 import LoadingButton from "@components/ui/LoadingButton";
+import ms from "ms";
+import { useInterval } from "usehooks-ts";
+
+const SESSION_DURATION = ms("5 min");
 
 type AccountInfo = {
   address: `0x${string}`;
@@ -20,11 +23,17 @@ type AccountInfo = {
   } | undefined | "expired";
 }
 
+type ExtendTime = {
+  formattedDuration: string;
+  value: number;
+  max: number;
+}
+
 function ZKLogin() {
-  const $extendSessionStart = useStore(extendSessionStart);
+  const [extendSessionStart, setExtendSessionStart] = useState<number | null>(null);
   const [jwtAccountInfo, setJwtAccountInfo] = useState<AccountInfo|undefined>(undefined);
   const [jwt, setJwt] = useState<string|undefined>(undefined);
-
+  const [extendingCountdown, setExtendingCountdown] = useState<ExtendTime | null>(null);
   useEffect(() => {
     lib.queries.jwt().then((jwtQuery) => {
       setJwt(jwtQuery ?? undefined);
@@ -32,6 +41,27 @@ function ZKLogin() {
       console.error(e);
     })
   }, [])
+
+  useInterval(
+    () => {
+      if (extendSessionStart === null) {
+        return;
+      }
+      
+      const intervals = intervalToDuration({
+        start: Date.now(),
+        end: extendSessionStart + SESSION_DURATION,
+      });
+      let newCountdown: ExtendTime = {
+        formattedDuration: formatDuration(intervals),
+        value: Date.now() - extendSessionStart,
+        max: SESSION_DURATION,
+      };
+      setExtendingCountdown(newCountdown);
+    },
+    // Delay in milliseconds or null to stop it
+    extendSessionStart === null ? null: 1000,
+  )
 
   let signerPrivateKey = privateKey.get();
   if (!signerPrivateKey) {
@@ -67,13 +97,15 @@ function ZKLogin() {
   }, [jwt])
   // Show the params in useEffect params from queryKey: ["jwtCurrentOwner", jwt, signer.address],
 
-  async function extendSession() {
-    try {
-      extendSessionStart.set(Date.now().toString());
-      await extendSessionInner();
-    } finally {
-      extendSessionStart.set("0");
-    }
+  function extendSession() {
+    setExtendSessionStart(Date.now());
+    extendSessionInner().catch((e) => {
+      console.error(`Error in extending the service: ${e}`)
+    }).finally(() => {
+      console.log(`Set extend start to 0`);
+      setExtendSessionStart(null);
+      setExtendingCountdown(null);
+    });
   }
 
   async function extendSessionInner() {
@@ -111,7 +143,6 @@ function ZKLogin() {
       hash: tx,
     });
     console.log("Session extended successfully");
-    lib.queries.invalidateAll();
   }
 
   async function signIn(
@@ -178,31 +209,26 @@ function ZKLogin() {
                   )
                 }
             </li>
-              <LoadingButton
-                  variant="default"
-                  onclick={extendSession}
-                  loading={$extendSessionStart !== "0"}
-              >
-                {jwtAccountInfo.ownerInfo === undefined ? "Create" : "Extend"} session
-              </LoadingButton>
+            <li>
+                <LoadingButton
+                    variant="default"
+                    onclick={extendSession}
+                    loading={extendSessionStart !== null}
+                >
+                  {jwtAccountInfo.ownerInfo === undefined ? "Create" : "Extend"} session
+                </LoadingButton>
+              </li>
+              {extendingCountdown !== null ?
+                  <li>
+                    Remaining time: {extendingCountdown.formattedDuration}
+                    <progress className="progress w-full" value={extendingCountdown.value} max={extendingCountdown.max}></progress>
+                  </li>
+                : null}
           </ul>
         </details>
       }
       </div>
-          //       {#if extendSessionStart}
-          //         {@const estimatedDuration = ms("1.5 min")}
-          //         Remaining time: {formatDuration(
-          //           intervalToDuration({
-          //             start: Date.now(),
-          //             end: extendSessionStart + estimatedDuration,
-          //           }),
-          //         )}
-          //         <Ui.Progress
-          //           value={Date.now() - extendSessionStart}
-          //           max={estimatedDuration}
-          //         />
-          //       {/if}
-                )
+  )
 }
 
 export default ZKLogin;
