@@ -1,6 +1,16 @@
 {
     "extends": "astro/tsconfigs/strict",
+    "include": [
+        "./src/**/*"
+    ],
     "compilerOptions": {
+      "downlevelIteration": true,
+      "esModuleInterop": true,
+      "verbatimModuleSyntax": true,
+      "lib": [
+        "dom",
+        "es2016"
+      ],
       "resolveJsonModule": true,
       "baseUrl": "src",
       "paths": {
@@ -18,6 +28,9 @@
         ],
         "@styles/*": [
           "styles/*"
+        ],
+        "@ontologies/*": [
+          "ontologies/*"
         ]
       },
       "jsx": "react-jsx",

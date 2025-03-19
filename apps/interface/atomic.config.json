@@ -1,0 +1,7 @@
+{
+  "outputFolder": "./src/ontologies",
+  "moduleAlias": "@tomic/lib",
+  "ontologies": [
+    "http://localhost/01jmyd0541pt267avr8mge4me5"
+  ]
+}

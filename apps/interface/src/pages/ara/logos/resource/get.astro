@@ -1,0 +1,15 @@
+---
+import Browser from "@components/resource/Browser"
+import Layout from "@layouts/Layout.astro"
+---
+
+
+<Layout>
+    <div class="flex flex-row">
+        <section class="basis-1/6"></section>
+        <section class="basis-2/3">
+            <Browser client:visible></Browser>
+        </section>
+        <section class="basis-1/6"></section>
+    </div>
+</Layout>

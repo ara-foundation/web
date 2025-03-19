@@ -94,6 +94,9 @@ importers:
       '@tomic/lib':
         specifier: ^0.40.0
         version: 0.40.0
+      '@tomic/react':
+        specifier: ^0.40.0
+        version: 0.40.0(react@19.0.0)
       '@types/react':
         specifier: ^19.0.10
         version: 19.0.10
@@ -2146,6 +2149,11 @@ packages:
 
   '@tomic/lib@0.40.0':
     resolution: {integrity: sha512-Js8e6EEAnC0zKmk7OuHWv+fkA+2i8C/H2HI8IARD8HPBHO1t4cwnuMsNhVQght3i5d/CSdYysvg44DAiGFGgbQ==}
+
+  '@tomic/react@0.40.0':
+    resolution: {integrity: sha512-ldVAs+iX3BBOHPusJdVXijo2cv6Vkp3Htoqmaj81AY8kCvqsnfmOycMvwORbmew/v7JsYUoc3koUTSg7y6/Geg==}
+    peerDependencies:
+      react: '>17.0.2'
 
   '@trysound/sax@0.2.0':
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
@@ -8059,6 +8067,11 @@ snapshots:
       base64-arraybuffer: 1.0.2
       fast-json-stable-stringify: 2.1.0
       ulidx: 2.4.1
+
+  '@tomic/react@0.40.0(react@19.0.0)':
+    dependencies:
+      '@tomic/lib': 0.40.0
+      react: 19.0.0
 
   '@trysound/sax@0.2.0': {}
 
