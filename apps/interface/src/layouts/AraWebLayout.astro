@@ -1,0 +1,39 @@
+---
+import HeadContent from	"@components/HeadContent.astro";
+import Header from "@components/Header.astro";
+import Footer from "@components/Footer.astro";
+import { CONFIG } from "../config";
+import Row from "@layouts/Row.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  footerLink?: string;
+  footerText?: string;
+}
+
+const { 
+	title = CONFIG.site_title, 
+	description = CONFIG.description, 
+	image = "/og-default.jpg",
+	footerLink,
+	footerText,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-us">
+	<head>
+		<HeadContent title={title} description={description} image={image} />
+	</head>
+	<body>
+		<Header />
+		<Row centerClass="mt-20" leftClass="mt-20" rightClass="mt-20">
+			<slot name="left" slot="left" />
+			<slot />
+			<slot name="right" slot="right" />
+		</Row>
+		<Footer footerLink={footerLink} footerText={footerText} />
+	</body>
+</html>

@@ -1,0 +1,71 @@
+---
+import { 
+    type SubNavigation, 
+    NewDefaultNavigation, 
+    selectPath,
+    NewLungtaElement,
+    navigationElementToNavigationNode
+ } from "@scripts/navigation";
+import NestedNavigation from "@components/lungta/NestedNavigation.astro";
+
+interface Props {
+    subNavigation?: SubNavigation;
+    selectedPath?: string;
+}
+
+const { subNavigation, selectedPath } = Astro.props;
+let DefaultNavigation = NewDefaultNavigation();
+
+// Inject the sub navigation into the default navigation
+if (subNavigation !== undefined) {
+    for (let project of DefaultNavigation) {
+        if (subNavigation.projectSlug === project.props.slug) {
+            project.props.visible = true;
+            if (project.children === undefined) {
+                project.children = [
+                    navigationElementToNavigationNode(NewLungtaElement(subNavigation.lungta))
+                ];
+            }
+            
+            for (let lungta of project.children!) {
+                if (subNavigation.lungta.toString() == lungta.props.slug) {
+                    if (lungta.children === undefined) {
+                        lungta.children = [
+                            subNavigation.element,
+                        ]
+                    } else {
+                        lungta.children.push(subNavigation.element)
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+}
+
+DefaultNavigation = selectPath(selectedPath, DefaultNavigation);
+
+const listCss = "menu menu-lg bg-base-200 rounded-box ";
+
+---
+{ /*--------------------------------------------------
+    1) LEVEL as the list of projects 
+   ---------------------------------------------------*/ }
+<ul class={listCss + " w-56"} >
+{DefaultNavigation.map((project) => (
+    <NestedNavigation node={project} />
+))}
+</ul>
+
+<style>
+    ul {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    li {
+        margin-bottom: 1rem;
+    }
+</style>

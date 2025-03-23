@@ -1,0 +1,41 @@
+---
+import Browser from "@components/resource/Browser"
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { 
+    type SubNavigation, 
+    NewAraNavigation, 
+    type NavigationNode, 
+    RestNavigationKey, 
+    restNavigationKeyToNavigationElement,
+    navigationElementToNavigationNode } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import SideNavigation from "@components/lungta/SideNavigation.astro";
+
+const resourceNavigation: NavigationNode = {
+    props: {
+        title: "Resource",
+        slug: "resource",
+        color: "purple",
+        visible: true,
+        selected: true,
+    },
+    children: [
+        // GET REST
+        navigationElementToNavigationNode(restNavigationKeyToNavigationElement(RestNavigationKey.get))
+    ]
+}
+
+const resourceSubNavigation: SubNavigation = {
+    projectSlug: NewAraNavigation().props.slug,
+    lungta: LungtaTypes.Logos,
+    element: resourceNavigation,
+}
+
+const selectedPath = "ara/logos/resource/get";
+
+---
+
+<AraWebLayout>
+    <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
+    <Browser client:visible ></Browser>
+</AraWebLayout>

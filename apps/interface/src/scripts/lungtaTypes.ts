@@ -1,5 +1,7 @@
 export enum LungtaTypes {
-    Logos,
-    Maydone,
-    Sangha
+    Logos = "logos",
+    Aurora = "aurora",
+    Maydone = "maydone",
+    Act = "act",
+    Sangha = "sangha"
 }

@@ -42,7 +42,7 @@ export default function Browser() {
 
   return (
     <AppContext.Provider value={contextSubjectHook}>
-      <h1>Atomic Data Resources</h1>
+      <h1>Resources</h1>
       {/* <em>
         {agent ? (
           <>

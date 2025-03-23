@@ -1,5 +1,7 @@
 ---
 import AraContact from "@components/lungta/AraContact"
+import Row from "@layouts/Row.astro"
+
 interface Props {
   footerLink?: string;
   footerText?: string;
@@ -8,27 +10,17 @@ interface Props {
 const { footerLink, footerText } = Astro.props;
 ---
 
-<footer class="footer flex flex-row">
-  <div class="basis-1/6"></div>
-  <div class="basis-2/3 center">
+<footer class="">
+  <Row centerClass="flex justify-center" fixToBottom>
     {footerLink && 
-      <a href={footerLink} class="btn btn-primary py-6 px-10">{footerText}</a>
+      <a href={footerLink} class="btn btn-primary py-6 px-10 mb-4">{footerText}</a>
     }
-  </div>
-  <div class="basis-1/6">
-    <AraContact client:load />
-  </div>
+    <AraContact client:load slot="right" />
+  </Row>
 </footer>
 
 <style>
 .footer {
-  position: fixed;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  z-index: 1000;
   /* background-color: var(--color-background);
     color: var(--color-text-base);
     box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
