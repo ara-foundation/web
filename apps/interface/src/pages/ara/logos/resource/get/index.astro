@@ -1,5 +1,5 @@
 ---
-import Browser from "@components/resource/Browser"
+import List from "@components/resource/list.astro"
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { 
     type SubNavigation, 
@@ -15,7 +15,7 @@ const resourceNavigation: NavigationNode = {
     props: {
         title: "Resource",
         slug: "resource",
-        color: "purple",
+        color: "pink",
         visible: true,
         selected: true,
     },
@@ -37,5 +37,5 @@ const selectedPath = "ara/logos/resource/get";
 
 <AraWebLayout>
     <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
-    <Browser client:visible ></Browser>
+    <List />
 </AraWebLayout>

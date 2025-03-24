@@ -1,0 +1,28 @@
+---
+import { OntologyType, type OntologyLink } from "@scripts/atomicServer";
+
+interface Props {
+    link: OntologyLink;
+}
+
+const { link } = Astro.props;
+
+let badgeColor = link.type == OntologyType.class ? "badge-primary" : 
+  link.type == OntologyType.property ? "badge-secondary" : 
+  "badge-neutral";
+
+---
+
+<li class="m-4">
+  <div class="card w-full bg-base-100 card-sm shadow-sm ">
+    <div class="card-body relative">
+      <h2 class="card-title">
+        {link.label}
+      </h2>
+      <div class={"absolute bottom-5 left-5 badge " + badgeColor}>{link.type}</div>
+      <div class="justify-end card-actions">
+        <a class="btn btn-neutral" href={`/ara/logos/resource/get/${link.label}`}>Details...</a>
+      </div>
+    </div>
+  </div>
+</li>

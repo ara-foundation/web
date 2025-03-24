@@ -196,10 +196,6 @@ export const NewDefaultNavigation = (): Navigation => {
     return [NewAraNavigation()];
 }
 
-const PROJECT_INDEX = 0;
-const LUNGTA_INDEX = 1;
-const REST_INDEX = 2;
-
 const selectPathInNavigationChildren = (oldSlugs: string[], nodes: NavigationNode[] | undefined): NavigationNode[] | undefined => {
     if (oldSlugs.length === 0 || nodes === undefined || nodes.length === 0) {
         return nodes;

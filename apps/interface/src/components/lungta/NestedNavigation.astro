@@ -10,11 +10,13 @@ interface Props {
 const { node, offsetLeft } = Astro.props;
 
 const listCss = "menu menu-lg bg-base-200 rounded-box w-56";
-
+if (node.props.slug == "resource") {
+    console.log(`Resource color is ${node.props.color}`)
+}
 ---
 <NavigationLi elementProps={node.props} offsetLeft={offsetLeft}>
 {
-    node.children && 
+    node.children && node.children.length > 0 && 
     <ul class={listCss}>
     {
         node.children.map((child) => (

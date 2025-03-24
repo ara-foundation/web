@@ -11,6 +11,44 @@ export const defaultResourceUrl: string = lungta.classes.logos;
 
 let store: Store;
 
+export enum OntologyType {
+  class = "class",
+  property = "propery"
+};
+
+export type OntologyLink = {
+  url: string,
+  label: string,
+  type: OntologyType
+}
+
+// Lungta Ontology
+export const lungtaOntologyLinks = (): OntologyLink[] => {
+  const links: OntologyLink[] = [];
+
+  let classType: keyof typeof lungta.classes;
+  for (classType in lungta.classes) {
+    const link = {
+      url: lungta.classes[classType],
+      label: classType,
+      type: OntologyType.class
+    }
+    links.push(link);
+  }
+
+  let propertyType: keyof typeof lungta.properties;
+  for (propertyType in lungta.properties) {
+    const link = {
+      url: lungta.properties[propertyType],
+      label: propertyType,
+      type: OntologyType.property,
+    }
+    links.push(link);
+  }
+
+  return links;
+}
+
 export function getStore(): Store {
   if (!store) {
     // On first call, create a new store.
