@@ -1,0 +1,87 @@
+---
+import { lungtaOntologyLinks, findLink, OntologyType } from "@scripts/atomicServer";
+import ResourceElement from "@components/resource/listElement.astro";
+import SideNavigation from "@components/lungta/SideNavigation.astro";
+import { navigationElementToNavigationNode, NewAraNavigation, RestNavigationKey, restNavigationKeyToNavigationElement, type NavigationElement, type NavigationNode, type SubNavigation } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import Resource from "@components/resource/Resource";
+
+type DynamicParam = {
+    params: {
+        ontologytype: string,
+        label: string,
+    }
+}
+
+export async function getStaticPaths() {
+    const links = lungtaOntologyLinks();
+
+    const params: DynamicParam[] = [];
+
+    for (let link of links) {
+        let param = {
+            params: {
+                ontologytype: link.type,
+                label: link.label
+            }
+        }
+
+        params.push(param);
+    }
+
+    return params;
+}
+
+
+const { ontologytype, label } = Astro.params;
+const link = findLink(ontologytype as OntologyType, label);
+
+if (link === undefined) {
+    return Astro.redirect(`/ara/logos/resource/get`)
+}
+
+function capitalizeFirstLetter(val: string): string {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
+const resourceNavigationElement: NavigationElement = {
+    title: `${capitalizeFirstLetter(label)} (${capitalizeFirstLetter(ontologytype)})`,
+    slug: label,
+    color: ontologytype === 'class' ? 'primary' : 'secondary',
+    visible: true,
+}
+const resourceNavigationNode = navigationElementToNavigationNode(resourceNavigationElement);
+
+const restGetNavigationElement = restNavigationKeyToNavigationElement(RestNavigationKey.get);
+const restGetNavigationNode = navigationElementToNavigationNode(restGetNavigationElement);
+restGetNavigationNode.children?.push(resourceNavigationNode);
+
+const resourceNavigation: NavigationNode = {
+    props: {
+        title: "Resource",
+        slug: "resource",
+        color: "pink",
+        visible: true,
+        selected: true,
+    },
+    children: [
+        restGetNavigationNode,
+    ]
+}
+
+const resourceSubNavigation: SubNavigation = {
+    projectSlug: NewAraNavigation().props.slug,
+    lungta: LungtaTypes.Logos,
+    element: resourceNavigation,
+}
+
+const selectedPath = "ara/logos/resource/get/" + resourceNavigationElement.slug;
+
+
+---
+<AraWebLayout>
+    <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
+    <Resource subject={link.url} />
+    <a slot="right" href="/ara/logos/resource/get">Back</a>
+</AraWebLayout>

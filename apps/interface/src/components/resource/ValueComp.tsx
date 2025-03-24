@@ -85,7 +85,7 @@ import {
   
       // We're not going to implement the others, to let's default to a JSON stringification
       default:
-        return <div>{valToString(value)}</div>;
+        return <a href={value?.toString()} target="_blank">{valToString(value)}</a>;
     }
   }
   

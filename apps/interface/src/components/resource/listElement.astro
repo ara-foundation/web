@@ -21,7 +21,7 @@ let badgeColor = link.type == OntologyType.class ? "badge-primary" :
       </h2>
       <div class={"absolute bottom-5 left-5 badge " + badgeColor}>{link.type}</div>
       <div class="justify-end card-actions">
-        <a class="btn btn-neutral" href={`/ara/logos/resource/get/${link.label}`}>Details...</a>
+        <a class="btn btn-neutral" href={`/ara/logos/resource/get/${link.type}-${link.label}`}>Details...</a>
       </div>
     </div>
   </div>

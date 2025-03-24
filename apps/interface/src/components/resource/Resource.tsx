@@ -1,12 +1,16 @@
 import {
-    properties,
     useCanWrite,
     useResource,
     useString,
-    useTitle
+    useTitle,
+    core,
+    commits,
+    valToArray,
   } from "@tomic/react";
   import PropVal from "@components/resource/PropVal";
   import { useState } from "react";
+  import DefitionLink from "@components/resource/definitionLink";
+  import { useCurrentAgent } from "@tomic/react";
   
   interface Props {
     /** The subject URL - the identifier of the resource. */
@@ -14,43 +18,32 @@ import {
   }
   
   export function Resource({ subject }: Props) {
-    // The useResource hook fetches the subject URL, and converts it into a Resource.
-    // The Resource is fetched only once, and it is stored in the Store to be re-used.
-    // This Resource contains all its values, and provides various useful methods.
     const resource = useResource(subject);
-  
-    // The useTitle hook internally checks for various properties that could be used as a title.
-    // If none are available, it will create one from the subject URL.
-    const [title, setTitle] = useTitle(resource);
+    // This hook can be used for getting and setting the current Agent.
+    // In other words, this is how you can let users sign in.
+    // https://docs.atomicdata.dev/agents.html
+    // const [agent] = useCurrentAgent();
+
+    const [title] = useTitle(resource);
   
     // Let's make an editable / form field.
   
     // Since we might get (validation) errors, we should show these to the user, and store them in some state
     const [err, setErr] = useState<Error>();
+    
+    // And some options for saving.
+    const commitOptions = {
+      commit: false, // We directly send all commits to the server, no manual 'save' required
+      commitDebounce: 100,
+      handleValidationError: setErr, // When things go wrong with saving, we can set a handler for the error (message)
+    }
   
-    // Use datatype specific hooks to get typesafe values for properties.
-    // This hook means: for this resource, get the "https://atomicdata.dev/properties/description" property, and
-    // return it as a string!
-    // The second part of the Hook can be used to edit this value.
-    // You still need to call resource.save() to persist changes.
-    const [description, setDescription] = useString(
-      resource,
-      // Here, we pass a Property URL
-      properties.description,
-      // And some options for saving.
-      {
-        // We directly send all commits to the server, no manual 'save' required
-        commit: true,
-        commitDebounce: 100,
-        // When things go wrong with saving, we can set a handler for the error (message)
-        handleValidationError: setErr
-      }
-    );
+    const [description, setDescription] = useString(resource, core.properties.description, commitOptions);
   
     // We can check whether the current Agent (user) has the correct rights to edit this resource.
     // If it does, we can render a form input!
     const [canWrite, canWriteErr] = useCanWrite(resource);
-  
+
     // If something goes wrong while fetching the resource, there will be an error here
     if (resource.error) {
       return <div>{resource.error?.message}</div>;
@@ -64,17 +57,40 @@ import {
     // And let's also render all the properties that we didn't think of.
     // To do that, we take the map of all the PropVals and render these in a PropVal component.
     const propVals = [...resource.getPropVals()];
+    console.log(`Prop vals`);
+    console.log(propVals);
   
     // ... except for the ones we've already rendered!
-    const except = [
-      properties.description,
-      properties.name,
-      properties.shortname
+    const except: string[] = [
+      core.properties.description,
+      core.properties.name,
+      core.properties.shortname,
+      core.properties.parent,
     ];
+
+    const coreProps: string[] = [
+      core.properties.isA,
+      commits.properties.lastCommit,
+    ]
+
+    const corePropsLabels: {[key: string]: string} = {
+      [core.properties.isA]: "Ontology Type",
+      [commits.properties.lastCommit]: "Last Transaction" 
+    }
+
+      /* <em>
+        {agent ? (
+          <>
+            signed in as agent: <a href={agent.subject}>{agent.subject}</a>{" "}
+          </>
+        ) : (
+          "not signed in"
+        )}
+  </em> */
   
     return (
-      <div>
-        <h2>Title: {title}</h2>
+      <div className="ml-10">
+        <h1>{title} <DefitionLink url={subject} /></h1>
         {description && canWrite ? (
           <>
             <textarea
@@ -91,21 +107,54 @@ import {
           </>
         ) : (
           <>
-            <i>
-              You cannot edit this resource:
-              {canWriteErr}
+            <i className="text-gray-400">
+              You cannot edit this resource {canWriteErr}
             </i>
             <p>{description}</p>
           </>
         )}
         {err && <p>{err.message}</p>}
-        {propVals.map(([prop, val]) => {
-          if (except.includes(prop)) {
-            return null;
-          }
-          return <PropVal key={prop} propertyURL={prop} value={val} />;
-        })}
+        <hr className="text-gray-400" />
+        <ul className="list bg-gray-200 rounded-box shadow-md">
+          <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">Core Properties</li>
+          {propVals.map(([prop, val]) => {
+            if (!coreProps.includes(prop)) {
+              return null;
+            }
+            return <PropVal propertyLabel={corePropsLabels[prop]} key={prop} propertyURL={prop} value={val} enableAction={false} />;
+          })}
+          
+        </ul>
+
+        <hr className="text-gray-400" />
+        <ul className="mt-4 list bg-gray-200 rounded-box shadow-md">
+          <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">Required Properties</li>
+          {propVals.map(([prop, val]) => {
+            if (prop != core.properties.requires) {
+              return null;
+            }
+            return valToArray(val).map((reqProp) => (
+              <PropVal key={reqProp?.toString()} propertyURL={reqProp!.toString()} value={reqProp?.toString()} />
+            ))
+          })}
+          
+        </ul>
+
+        <ul className="mt-4 list bg-gray-200 rounded-box shadow-md">
+          <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">Recommended Properties</li>
+          {propVals.map(([prop, val]) => {
+            if (prop != core.properties.recommends) {
+              return null;
+            }
+            return valToArray(val).map((reqProp) => (
+              <PropVal key={reqProp?.toString()} propertyURL={reqProp!.toString()} value={reqProp?.toString()} />
+            ))
+          })}
+          
+        </ul>
+        
       </div>
     );
-  }
-  
+}
+
+export default Resource;

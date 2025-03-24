@@ -22,6 +22,17 @@ export type OntologyLink = {
   type: OntologyType
 }
 
+export const findLink = (ontologyType: OntologyType, label: string): OntologyLink | undefined => {
+  const links = lungtaOntologyLinks();
+  for (const link of links) {
+    if (link.type === ontologyType && link.label === label) {
+      return link;
+    }
+  }
+
+  return undefined;
+}
+
 // Lungta Ontology
 export const lungtaOntologyLinks = (): OntologyLink[] => {
   const links: OntologyLink[] = [];
