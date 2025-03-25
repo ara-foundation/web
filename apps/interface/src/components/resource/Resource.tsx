@@ -51,7 +51,7 @@ import {
   
     // While the resource is being fetched, this will be true
     if (resource.loading) {
-      return <div>loading...</div>;
+      return <div>Refresh the page again after few seconds...</div>;
     }
   
     // And let's also render all the properties that we didn't think of.
