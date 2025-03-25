@@ -14,9 +14,10 @@ const offsetCss = " ml-4";
 ---
 {elementProps === undefined ? <div>HTML Li element based navigation element</div> : 
 <li class={(elementClass ?? "") + " " + (offsetLeft ? offsetCss : "")}>
-    <span class={getColorCss(elementProps.color) + " " + getNavigationElementCss(elementProps)}>
+    <a  href={elementProps.url}
+        class={getColorCss(elementProps.color) + " " + getNavigationElementCss(elementProps)}>
         {elementProps.title}
-    </span>
+    </a>
     <slot />
 </li>
 }

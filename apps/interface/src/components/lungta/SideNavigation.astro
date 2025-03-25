@@ -4,7 +4,8 @@ import {
     NewDefaultNavigation, 
     selectPath,
     NewLungtaElement,
-    navigationElementToNavigationNode
+    navigationElementToNavigationNode,
+    setUrls
  } from "@scripts/navigation";
 import NestedNavigation from "@components/lungta/NestedNavigation.astro";
 
@@ -45,6 +46,7 @@ if (subNavigation !== undefined) {
 }
 
 DefaultNavigation = selectPath(selectedPath, DefaultNavigation);
+DefaultNavigation = setUrls(DefaultNavigation);
 
 const listCss = "menu menu-lg bg-base-200 rounded-box ";
 

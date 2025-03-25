@@ -102,6 +102,7 @@ export type NavigationElement = {
     color?: string;
     visible?: boolean;
     selected?: boolean;
+    url?: string;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -252,4 +253,23 @@ export const newAraWebNavigationNode = (): NavigationNode => {
         },
         children: []
     }
+}
+
+const setNodeUrls = (node: NavigationNode, prefix: string = ''): NavigationNode => {
+    node.props.url = `${prefix}/${node.props.slug}`;
+    if (node.children !== undefined && node.children.length > 0) {
+        for (let i in node.children) {
+            let child = node.children[i];
+            node.children[i] = setNodeUrls(child, node.props.url);
+        }
+    }
+    return node;
+}
+
+export const setUrls = (navigation: Navigation, prefix: string = ''): Navigation => {
+    for (let projectIndex in navigation) {
+        const project = navigation[projectIndex];
+        navigation[projectIndex] = setNodeUrls(project);
+    }    
+    return navigation;
 }
