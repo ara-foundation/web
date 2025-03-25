@@ -47,6 +47,10 @@ if (subNavigation !== undefined) {
 DefaultNavigation = selectPath(selectedPath, DefaultNavigation);
 
 const listCss = "menu menu-lg bg-base-200 rounded-box ";
+console.log(`Show the side navigation`);
+DefaultNavigation.forEach((project) => {
+    console.log(`Show nested navigation for ${project.props.title}`);
+})
 
 ---
 { /*--------------------------------------------------
