@@ -11,9 +11,6 @@ interface Props {
 const { elementProps, elementClass, offsetLeft } = Astro.props;
 const offsetCss = " ml-4";
 
-
-console.log(`Navigation Element was received`);
-
 ---
 {elementProps === undefined ? <div>HTML Li element based navigation element</div> : 
 <li class={(elementClass ?? "") + " " + (offsetLeft ? offsetCss : "")}>

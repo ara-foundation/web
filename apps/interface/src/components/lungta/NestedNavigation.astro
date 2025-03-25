@@ -11,8 +11,6 @@ interface Props {
 const { node, offsetLeft } = Astro.props;
 const listCss = "menu menu-lg bg-base-200 rounded-box w-56";
 
-console.log(`Was node received in nested navigation? ${node !== undefined}`);
-
 ---
 
 {node === undefined ? <EmptyNestedNavigation /> :
