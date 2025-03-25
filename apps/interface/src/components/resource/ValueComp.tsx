@@ -12,7 +12,7 @@ import {
   import { AppContext } from "@scripts/atomicServer";
   
   type LinkProps = {
-    subject: string;
+    subject?: string;
   };
   
   /** This allows us to set the currently shown item, and preview its title  */
@@ -26,7 +26,7 @@ import {
         href={subject}
         onClick={(e) => {
           e.preventDefault();
-          setSubject(subject);
+          setSubject(subject!);
         }}
       >
         {title}

@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import type { ArrayOrSingle } from "ts-essentials";
 
 interface Props {
-    query:
+    query?:
       | {
           status: "pending";
         }
@@ -18,7 +18,7 @@ interface Props {
     hide?: ArrayOrSingle<"pending" | "error">;
     error?: any;
     pending?: any;
-    success: any;
+    success?: any;
 }
 
 
@@ -31,14 +31,18 @@ function Query({
   }: Props) {
   
     useEffect(() => {
-        if (query.status === "error") {
+        if (query?.status === "error") {
             console.error(query.error);
           }
     }, [query])
 
   let hideArray = castArray(hide);
 
-  if (query.status === "pending") {
+  if (query === undefined) {
+    return <p>Query the status of authentication... Requires query property</p>
+  }
+
+  if (query?.status === "pending") {
     if (!hideArray.includes("pending")) {
         if (pending) {
             return <p>Pending</p>
@@ -46,7 +50,7 @@ function Query({
             return <p>Loading...</p>
         }
     }
-  } else if (query.status === "error") {
+  } else if (query?.status === "error") {
     if (!hideArray.includes("error")) {
         if (error) {
             return <p>{query.error}</p>
@@ -54,8 +58,8 @@ function Query({
             return <p>Error: nothing</p>
         }
     }
-  } else if (query.status === "success") {
-    return <p>{query.data}</p>
+  } else if (query?.status === "success") {
+    return <p>{query?.data}</p>
   }
 }
 

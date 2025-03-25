@@ -15,7 +15,7 @@ const styles = {
     },
 };
 
-const Image = (props) => {
+const Image = () => {
     const $hasAraToken = useStore(hasAraToken);
     const [localAraToken, setLocalAraToken] = useState(false);
 

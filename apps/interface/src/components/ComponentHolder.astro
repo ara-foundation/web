@@ -1,0 +1,20 @@
+---
+// Receives the component struct and imports the component by it
+import { type Component } from "@scripts/component"
+
+interface Props {
+    component?: Component,
+}
+
+const {component} = Astro.props;
+
+const fileName = component === undefined ? "fileName.astro" : `/src/${component.category.slug}${component.fileName}`;
+
+const Element: any = component !== undefined &&  component.glob;
+
+---
+
+{component === undefined ? 
+<p>Component Holder</p> :
+<Element.default />
+}

@@ -1,9 +1,9 @@
 ---
 import { type NavigationElement } from "@scripts/navigation";
-import { getColorCss, getNavigationElementCss } from "@components/lungta/NavigationCss";
+import { getColorCss, getNavigationElementCss } from "@scripts/NavigationCss";
 
 interface Props {
-    elementProps: NavigationElement;
+    elementProps?: NavigationElement;
     elementClass?: string;
     offsetLeft?: boolean;
 }
@@ -11,12 +11,14 @@ interface Props {
 const { elementProps, elementClass, offsetLeft } = Astro.props;
 const offsetCss = " ml-4";
 ---
+{elementProps === undefined ? <div>HTML Li element based navigation element</div> : 
 <li class={(elementClass ?? "") + " " + (offsetLeft ? offsetCss : "")}>
     <span class={getColorCss(elementProps.color) + " " + getNavigationElementCss(elementProps)}>
-        {elementProps.title}
+    {elementProps.title}
     </span>
-    <slot />
+<slot />
 </li>
+}
 
 <style>
     li {

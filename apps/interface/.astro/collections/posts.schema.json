@@ -12,7 +12,7 @@
         },
         "author": {
           "type": "string",
-          "default": "Jane Doe"
+          "default": "Ara Foundation"
         },
         "externalUrl": {
           "type": "string"

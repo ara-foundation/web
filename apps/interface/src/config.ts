@@ -8,11 +8,11 @@ export const PATHS = {
 } as const;
 
 export const CONFIG = {
-  site_title: "Jane Doe | Graphic Designer",
-  site_url: "https://www.yoursite.dev",
-  author: "Jane Doe",
-  email: "your@email.com",
-  description: "Welcome to my blog!",
+  site_title: "Ara Web",
+  site_url: "https://web.ara.foundation",
+  author: "Ara Foundation",
+  email: "info@ara.foundation",
+  description: "Create shareable app to create global inter-connected apps managed by world!",
 } as const;
 
 export const AUTH = {

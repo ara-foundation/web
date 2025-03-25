@@ -2,10 +2,8 @@ import GoogleLogo from "@components/auth/GoogleLogo";
 import { AUTH } from "config";
 
 function LoginPage() {
-console.log(AUTH.GOOGLE_CLIENT_ID)
-console.log(`URL = ${window.location.origin}`)
-
   const redirectUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  const callbackUrl = typeof window === "undefined" ? "callback" : `${window.location.origin}/callback`
 
   const searchParams = new URLSearchParams({
     /**
@@ -19,7 +17,7 @@ console.log(`URL = ${window.location.origin}`)
      *
      * window.location.origin == http://localhost:5173
      */
-    redirect_uri: `${window.location.origin}/callback`,
+    redirect_uri: callbackUrl,
     /**
      * This uses the OpenID Connect implicit flow to return an id_token. This is recommended
      * for SPAs as it does not require a backend server.
@@ -30,7 +28,6 @@ console.log(`URL = ${window.location.origin}`)
     // nonce: ephemeralKeyPair.nonce,
   });
   redirectUrl.search = searchParams.toString();
-  console.log("URL = " + redirectUrl.toString());
 
   return (
         <a

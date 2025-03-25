@@ -1,0 +1,66 @@
+---
+// A list of web components that user can define and use with the Resources.
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { getComponents } from "@scripts/component"
+import { 
+    type SubNavigation, 
+    NewAraNavigation, 
+    type NavigationNode, 
+    RestNavigationKey, 
+    restNavigationKeyToNavigationElement,
+    navigationElementToNavigationNode,
+    newAraWebNavigationNode } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import SideNavigation from "@components/lungta/SideNavigation.astro";
+import ComponentHolder from "@components/ComponentHolder.astro"
+
+const araWebNavigation = newAraWebNavigationNode();
+
+const navigationNode: NavigationNode = {
+    props: {
+        title: "Component",
+        slug: "component",
+        color: "pink",
+        visible: true,
+    },// Here make the nested component for (web ara -> Act)
+    children: [
+        // GET REST
+        navigationElementToNavigationNode(restNavigationKeyToNavigationElement(RestNavigationKey.get))
+    ]
+}
+
+araWebNavigation.children?.push(navigationNode);
+
+const resourceSubNavigation: SubNavigation = {
+    projectSlug: NewAraNavigation().props.slug,
+    lungta: LungtaTypes.Act,
+    element: araWebNavigation,
+}
+
+const selectedPath = "ara/act/ara-web/component/get";
+const components = getComponents();
+---
+
+<AraWebLayout>
+    <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
+    <h1>List of Defined UI Components in Ara Web client</h1>
+    <ul class="mt-4 ml-10">
+        {
+            components.map((component) => (
+            <li class="m-4">
+                <div class="card w-full bg-base-100 card-sm shadow-sm ">
+                    <div class="card-body relative">
+                    <h2 class="card-title">
+                        {component.label ? component.label : component.fileName}
+                    </h2>
+                    <div class={"absolute top-5 right-5 badge badge-neutral"}>{component.category.name}</div>
+                        <div class="bg-gray-100">
+                            <ComponentHolder component={component}></ComponentHolder>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            ))
+        }
+    </ul>
+</AraWebLayout>

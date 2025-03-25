@@ -241,3 +241,15 @@ export const selectPath = (selectedPath: string | undefined, navigation: Navigat
 
     return navigation;
 }
+
+export const newAraWebNavigationNode = (): NavigationNode => { 
+    return {
+        props: {
+            title: "Ara Web",
+            slug: "ara-web",
+            color: "indigo",
+            visible: true,
+        },
+        children: []
+    }
+}

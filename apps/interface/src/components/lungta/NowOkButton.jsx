@@ -3,7 +3,7 @@ import { thankYouAccepted, hasAraToken } from '@scripts/state';
 import { useState, useEffect } from 'react';
 import '@styles/anim.css'
 
-const Image = (props) => {
+const Image = () => {
     const $thankYouAccepted = useStore(thankYouAccepted);
     const [localAraToken, setLocalAraToken] = useState(false);
 

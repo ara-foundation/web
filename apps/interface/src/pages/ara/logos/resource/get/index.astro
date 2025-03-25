@@ -10,6 +10,8 @@ import {
     navigationElementToNavigationNode } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import SideNavigation from "@components/lungta/SideNavigation.astro";
+import ListElement from "@components/resource/listElement.astro";
+import { lungtaOntologyLinks } from "@scripts/atomicServer";
 
 const resourceNavigation: NavigationNode = {
     props: {
@@ -32,10 +34,19 @@ const resourceSubNavigation: SubNavigation = {
 }
 
 const selectedPath = "ara/logos/resource/get";
+const links = lungtaOntologyLinks();
 
 ---
 
 <AraWebLayout>
     <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
+    <h1>List of Defined Resources in Ara</h1>
+    <ul class="mt-4 ml-10">
+    {
+        links.map((link) => (
+        <ListElement link={link} />
+        ))
+    }
+    </ul>
     <List />
 </AraWebLayout>

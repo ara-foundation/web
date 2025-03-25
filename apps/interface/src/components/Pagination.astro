@@ -1,11 +1,17 @@
 ---
 interface Props {
-  currentPage: number;
-  totalPages: number;
-  baseUrl: string;
+  currentPage?: number;
+  totalPages?: number;
+  baseUrl?: string;
 }
 
-const { currentPage, totalPages, baseUrl } = Astro.props;
+let { currentPage, totalPages, baseUrl } = Astro.props;
+if (currentPage === undefined) {
+  currentPage = 0;
+}
+if (totalPages === undefined) {
+  totalPages = 10;
+}
 
 const prevUrl = currentPage > 1 ? `${baseUrl}${currentPage - 1}` : null;
 const nextUrl = currentPage < totalPages ? `${baseUrl}${currentPage + 1}` : null;

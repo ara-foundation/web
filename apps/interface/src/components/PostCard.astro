@@ -1,15 +1,15 @@
 ---
 interface Props {
-  title: string;
-  description: string;
-  publicationDate: Date;
-  category: string;
-  slug: string;
+  title?: string;
+  description?: string;
+  publicationDate?: Date;
+  category?: string;
+  slug?: string;
 }
 
 const { title, description, publicationDate, category, slug } = Astro.props;
 
-const date = new Date(publicationDate);
+const date = publicationDate !== undefined ? new Date(publicationDate): new Date();
 const formattedDate = date.toLocaleDateString('en-UK', {
   year: 'numeric',
   month: 'short',
@@ -18,15 +18,15 @@ const formattedDate = date.toLocaleDateString('en-UK', {
 ---
 
 <article class="post-card">
-  <a href={`/posts/${slug}`}>
+  <a href={`/posts/${slug ? slug: "[slug]"}`}>
   <div class="post-meta">
-    <span class="category">{category}</span>
+    <span class="category">{category ? category : "Category"}</span>
     <time datetime={date.toISOString()}>{formattedDate}</time>
   </div>
   <h3 class="post-title">
-    {title}
+    {title ? title : "Title"}
   </h3>
-  <p class="post-description">{description}</p>
+  <p class="post-description">{description ? description : "Description"}</p>
   </a>
 </article>
 

@@ -1,5 +1,7 @@
 # Ara Web
 
+Ara &ndash; Build Modular Apps, share your experience and get help from others.
+
 A collaboration platform with the financial transparency, community building and custom AI agents for your needs.
 
 To export the data:

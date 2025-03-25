@@ -1,25 +1,27 @@
 ---
 interface Props {
-  title: string;
-  descriptions: string[];
-  alt: string;
-  url: string;
+  title?: string;
+  descriptions?: string[];
+  alt?: string;
+  url?: string;
 }
 const { url, alt, title, descriptions } = Astro.props;
-
 
 ---
 
     <div class="card bg-base-100 image-full shadow-xl">
+      {url !== undefined &&   
         <figure>
           <img
             src={url}
             alt={alt} />
         </figure>
-        <div class="card-body ">
-          <h2 class="card-title">{title}!</h2>
+      }
+      <div class="card-body ">
+          <h2 class="card-title">{title ? title : "Card Title"}!</h2>
           <div class="card-description">
-            {descriptions.map((description) => <p>{description}</p>)}
+            {descriptions?.map((description) => <p>{description}</p>)}
+            {descriptions === undefined && "Here is the card desciption..."}
           </div>
           <div class="card-actions relative">
             <div class="absolute -bottom-6">

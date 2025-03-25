@@ -14,7 +14,7 @@ import {
   
   interface Props {
     /** The subject URL - the identifier of the resource. */
-    subject: string;
+    subject?: string;
   }
   
   export function Resource({ subject }: Props) {
@@ -57,8 +57,6 @@ import {
     // And let's also render all the properties that we didn't think of.
     // To do that, we take the map of all the PropVals and render these in a PropVal component.
     const propVals = [...resource.getPropVals()];
-    console.log(`Prop vals`);
-    console.log(propVals);
   
     // ... except for the ones we've already rendered!
     const except: string[] = [

@@ -1,6 +1,6 @@
 ---
 interface Props {
-  path: string[];
+  path?: string[];
 }
 
 const { path } = Astro.props;
@@ -13,7 +13,7 @@ function ucFirst(str: string) {
 <nav aria-label="Breadcrumb" class="breadcrumbs">
   <ol>
     <li><a href="/">Home</a></li>
-    {path.map((item, index) => (
+    {path !== undefined && path.map((item, index) => (
       <li>
         {index === path.length - 1 ? (
           <span aria-current="page">{ucFirst(item)}</span>

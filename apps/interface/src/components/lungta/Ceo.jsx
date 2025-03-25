@@ -31,8 +31,6 @@ const styles = {
   },
 };
 
-// const element = 
-
 const socials = [
     {
         icon: <FontAwesomeIcon icon={['fab', 'youtube']} size='lg' />,
@@ -48,7 +46,7 @@ const socials = [
     },
 ]
 
-const Image = (props) => {
+const Image = () => {
     const $giftClaimed = useStore(giftClaimed);
 
     return ($giftClaimed && 

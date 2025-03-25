@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 export const SendEthModalId = "send-eth-modal";
 
 interface Props {
-  jwt: string | undefined;
-  signer: ethers.Wallet;
+  jwt?: string;
+  signer?: ethers.Wallet;
 }
 
 function formatEther(balance: bigint): string {
@@ -26,6 +26,9 @@ function SendEthModal({jwt, signer}: Props) {
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   useEffect(() => {
+    if (signer === undefined) {
+      return;
+    }
     if (!jwt) {
       setBalance(0n);
     } else {
@@ -34,12 +37,13 @@ function SendEthModal({jwt, signer}: Props) {
   }, [jwt, signer])
 
   const fetchBalance = async() => {
+    if (signer === undefined) {
+      return;
+    }
     const account = await lib.jwtAccount.getAccount(jwt!, signer);
     const raw = await signer.provider!.getBalance(account.address);
     setBalance(raw);
     setBalanceFetched(true);
-
-    console.log(`Account: ${account.address} ${signer.address} `)
   }
 
   const onRecipientChange = (addr: string) => {
@@ -66,6 +70,9 @@ function SendEthModal({jwt, signer}: Props) {
     if (amount == 0n) {
       return;
     }
+    if (signer === undefined) {
+      return;
+    }
 
     setSubmitted(true);
 
@@ -90,12 +97,12 @@ function SendEthModal({jwt, signer}: Props) {
   }
 
   return (
-        <dialog id={SendEthModalId} className="modal">
-        <div className="modal-box">
-            <h3 className="font-bold text-lg">Send ETH!</h3>
-            <p className="pb-4 text-gray-400">
-              Balance: {!balanceFetched ? "fetching..." : formatEther(balance)}
-            </p>
+    <dialog id={SendEthModalId} className="modal">
+    <div className="modal-box">
+      <h3 className="font-bold text-lg">Send ETH!</h3>
+      <p className="pb-4 text-gray-400">
+        Balance: {!balanceFetched ? "fetching..." : formatEther(balance)}
+      </p>
             <div className="py-4 text-gray-600 ">
               <label className="input w-full mb-2">
                 Recipient

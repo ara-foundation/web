@@ -3,29 +3,38 @@ import { type NavigationNode } from "@scripts/navigation";
 import NavigationLi from "@components/lungta/NavigationElement.astro";
 
 interface Props {
-    node: NavigationNode;
+    node?: NavigationNode;
     offsetLeft?: boolean;
 }
 
 const { node, offsetLeft } = Astro.props;
-
 const listCss = "menu menu-lg bg-base-200 rounded-box w-56";
-if (node.props.slug == "resource") {
-    console.log(`Resource color is ${node.props.color}`)
-}
+
 ---
-<NavigationLi elementProps={node.props} offsetLeft={offsetLeft}>
-{
-    node.children && node.children.length > 0 && 
-    <ul class={listCss}>
-    {
-        node.children.map((child) => (
-            <Astro.self node={child} offsetLeft={true}></Astro.self>
-        ))
-    }
-    </ul>
+{node === undefined && 
+    <div>
+        Navigation Node
+        <ul>
+            <li>Sub Node</li>
+            <li>Sub Node</li>
+        </ul></ul>
+    <div>
 }
+
+{node && 
+<NavigationLi elementProps={node.props} offsetLeft={offsetLeft}>
+    {
+        node!.children && node!.children.length > 0 && 
+        <ul class={listCss}>
+        {
+            node!.children.map((child) => (
+                <Astro.self node={child} offsetLeft={true}></Astro.self>
+            ))
+        }
+        </ul>
+    }
 </NavigationLi>
+}
 
 <style>
     ul {

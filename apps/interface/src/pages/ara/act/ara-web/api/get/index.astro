@@ -1,0 +1,24 @@
+---
+// A list of APIs to call from the Ara Web
+// 
+// Creating an RPC
+// There are three types of RPCs
+//  - proxy
+//  - extension
+//  - independent
+//
+// Some are included in the website, some are listed from the blockchain. Other RPCs could be remote servers outside of Ara.
+// Whenever you write an API, make it available for all by registering it in Ara Blockchain.
+// The RPCs provides an ABI. ABI for the apps could accept Resource and output another resource.
+//
+// For example:
+//  Name: redirect
+//  Type: extension
+//  ClientCode: {JS code}
+//  Definition: Redirects to another page
+//  Input: ["https://atomic.ara.foundation/classes/url"]
+// 
+// For example an RPC to use for "Create Community" action. 
+//  Input: [list of resources]
+//  Output: [list of new resources]
+---

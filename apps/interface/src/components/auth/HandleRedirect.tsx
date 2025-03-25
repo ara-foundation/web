@@ -2,7 +2,7 @@ import { lib } from "@scripts/shieldlabs/libs";
 import { useEffect, useState } from "react";
 
 interface Props {
-    url: URL
+    url?: URL
     // any props that come into the component
 }
 
@@ -18,6 +18,10 @@ function handleRedirect({url}: Props) {
             setReady(e.toString());
         });
     });
+
+    if (url === undefined) {
+        return (<div>Handle Redirect (requires a URL property to be passed)</div>)
+    }
 
     if (!ready) {
         return (<div>{"Processing authentication..."}</div>);
