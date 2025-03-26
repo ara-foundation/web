@@ -1,0 +1,46 @@
+---
+import HeadContent from	"@components/HeadContent.astro";
+import { CONFIG } from "../config";
+import Row, {type RowProps} from "@layouts/Row.astro";
+import { RowSlug, ColumnSlug, fullSlug } from "@scripts/page";
+
+export type RowsProps = {[key in RowSlug]?: RowProps}
+
+interface Props {
+  	title?: string;
+  	description?: string;
+  	image?: string;
+  	rows?: RowsProps,
+}
+
+const { 
+	title = CONFIG.site_title, 
+	description = CONFIG.description, 
+	image = "/og-default.jpg",
+	rows,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-us">
+	<head>
+		<HeadContent title={title} description={description} image={image} />
+	</head>
+	<body>
+		<Row {...rows?.header}>
+			<slot name='header-left' slot={ColumnSlug.Left.toString()} />
+			<slot name='header-center' slot={ColumnSlug.Center.toString()} />
+			<slot name='header-right' slot={ColumnSlug.Right.toString()} />
+		</Row>
+		<Row {...rows?.content}>
+			<slot name='content-left' slot={ColumnSlug.Left.toString()} />
+			<slot name='content-center' slot={ColumnSlug.Center.toString()} />
+			<slot name='content-right' slot={ColumnSlug.Right} />
+		</Row>
+		<Row {...rows?.footer}>
+			<slot name='footer-left' slot={ColumnSlug.Left.toString()} />
+			<slot name='footer-center' slot={ColumnSlug.Center.toString()} />
+			<slot name='footer-right' slot={ColumnSlug.Right.toString()} />
+		</Row>
+	</body>
+</html>

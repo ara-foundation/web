@@ -5,31 +5,27 @@ import { getComponents } from "@scripts/component"
 import { 
     type SubNavigation, 
     NewAraNavigation, 
-    type NavigationNode, 
     RestNavigationKey, 
     restNavigationKeyToNavigationElement,
     navigationElementToNavigationNode,
     newAraWebNavigationNode } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
-import SideNavigation from "@components/lungta/SideNavigation.astro";
+import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 import ComponentHolder from "@components/ComponentHolder.astro"
 
 const araWebNavigation = newAraWebNavigationNode();
 
-const navigationNode: NavigationNode = {
-    props: {
-        title: "Component",
-        slug: "component",
-        color: "pink",
-        visible: true,
-    },// Here make the nested component for (web ara -> Act)
-    children: [
-        // GET REST
-        navigationElementToNavigationNode(restNavigationKeyToNavigationElement(RestNavigationKey.get))
-    ]
+// This page is the ara-web/component/get
+if (araWebNavigation.children) {
+    for (let child of araWebNavigation.children) {
+        if (child.props.slug === "component") {
+            const restElement = restNavigationKeyToNavigationElement(RestNavigationKey.get);
+            const restNode = navigationElementToNavigationNode(restElement);
+            child.children?.push(restNode)
+            break;
+        }
+    }
 }
-
-araWebNavigation.children?.push(navigationNode);
 
 const resourceSubNavigation: SubNavigation = {
     projectSlug: NewAraNavigation().props.slug,
@@ -37,12 +33,14 @@ const resourceSubNavigation: SubNavigation = {
     element: araWebNavigation,
 }
 
-const selectedPath = "ara/act/ara-web/component/get";
+const sideNavigation: SideNavigationProps = {
+    subNavigation: resourceSubNavigation,
+    selectedPath: "ara/act/ara-web/component/get"
+}
 const components = getComponents();
 ---
 
-<AraWebLayout>
-    <SideNavigation subNavigation={resourceSubNavigation} selectedPath={selectedPath} slot="left" />
+<AraWebLayout sideNavigation={sideNavigation}>
     <h1>List of Defined UI Components in Ara Web client</h1>
     <ul class="mt-4 ml-10">
         {
@@ -54,7 +52,7 @@ const components = getComponents();
                         {component.label ? component.label : component.fileName}
                     </h2>
                     <div class={"absolute top-5 right-5 badge badge-neutral"}>{component.category.name}</div>
-                        <div class="bg-gray-100">
+                        <div class="bg-gray-100 flex justify-center">
                             <ComponentHolder component={component}></ComponentHolder>
                         </div>
                     </div>

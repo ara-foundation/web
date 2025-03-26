@@ -251,7 +251,44 @@ export const newAraWebNavigationNode = (): NavigationNode => {
             color: "indigo",
             visible: true,
         },
-        children: []
+        children: [
+            {
+                props: {
+                    title: "Component",
+                    slug: "component",
+                    color: "pink",
+                    visible: true,
+                },
+                children: []
+            },
+            {
+                props: {
+                    title: "Page",
+                    slug: "page",
+                    color: "gray",
+                    visible: true,
+                },
+                children: []
+            },
+            {
+                props: {
+                    title: "Action",
+                    slug: "action",
+                    color: "green",
+                    visible: true,
+                },
+                children: []
+            },
+            {
+                props: {
+                    title: "Api",
+                    slug: "api",
+                    color: "brown",
+                    visible: true,
+                },
+                children: []
+            }
+        ]
     }
 }
 

@@ -1,19 +1,25 @@
 ---
-export interface Props {
-  rowClass?: string;
-  leftClass?: string;
-  rightClass?: string;
-  centerClass?: string;
-  fixToBottom?: boolean;
-  fixToTop?: boolean;
-}
+import { ColumnSlug, RowSlug } from "@scripts/page";
 
-let { rowClass, leftClass, rightClass, centerClass, fixToBottom, fixToTop } = Astro.props;
+export type RowProps = {
+    rowClass?: string;
+    columnClasses?: {
+        // Custom classes for the columns
+        [key in ColumnSlug]?: string;
+    },
+    fix?: {
+        // Fix The Row?
+        [key in RowSlug]?: boolean;
+    }
+}
+interface Props extends RowProps {}
+
+let { rowClass, fix, columnClasses } = Astro.props;
 
 let stickClass = "fixed inset-x-0 ";
-if (fixToBottom) {
+if (fix !== undefined && fix.footer) {
     stickClass += " bottom-0 z-1000"
-} else if (fixToTop) {
+} else if (fix !== undefined && fix.header) {
     stickClass += " top-0 z-1000"
 } else {
     stickClass = "";
@@ -22,13 +28,13 @@ if (fixToBottom) {
 ---
 
 <div class={"flex flex-row  " + (rowClass ?? "") + stickClass}>
-    <div class={"basis-1/6 " + (leftClass ?? "")}>
-        <slot name="left" />
+    <div class={"basis-1/6 " + (columnClasses?.left ?? "")}>
+        <slot name='left' />
     </div>
-    <div class={"basis-2/3 " + (centerClass ?? "")}>
-        <slot />
+    <div class={"basis-2/3 " + (columnClasses?.center ?? "")}>
+        <slot name='center' />
     </div>
-    <div class={"basis-1/6 " + (rightClass ?? "")}>
-        <slot name="right" />
+    <div class={"basis-1/6 " + (columnClasses?.right ?? "")}>
+        <slot name='right' />
     </div>
 </div>

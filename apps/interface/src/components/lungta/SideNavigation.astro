@@ -9,10 +9,12 @@ import {
  } from "@scripts/navigation";
 import NestedNavigation from "@components/lungta/NestedNavigation.astro";
 
-interface Props {
+export type SideNavigationProps = {
     subNavigation?: SubNavigation;
     selectedPath?: string;
 }
+
+interface Props extends SideNavigationProps {};
 
 const { subNavigation, selectedPath } = Astro.props;
 let DefaultNavigation = NewDefaultNavigation();

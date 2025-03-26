@@ -1,39 +1,178 @@
 ---
-import HeadContent from	"@components/HeadContent.astro";
-import Header from "@components/Header.astro";
-import Footer from "@components/Footer.astro";
-import { CONFIG } from "../config";
-import Row from "@layouts/Row.astro";
+import EmptyBodyLayout, { type RowsProps } from "@layouts/EmptyBodyLayout.astro";
+import { RowSlug, ColumnSlug, fullSlug, contentLeftSlug, contentRightSlug } from "@scripts/page";
+import {type RowProps} from "@layouts/Row.astro";
+import SideNavigation, {type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
+
+// HEADER
+// import Login from "@components/auth/Login"
+import Logo from '@components/header/LogoContainer.astro'
+import Notification from '@components/header/Notification.astro';
+import Login from "@components/auth/ZkLogin"
+// FOOTER
+import AraContact from "@components/lungta/AraContact"
+
+export type FooterAction = {
+	url: string;
+	label: string;
+}
 
 interface Props {
-  title?: string;
-  description?: string;
-  image?: string;
-  footerLink?: string;
-  footerText?: string;
+	footerAction?: FooterAction,
+	sideNavigation?: SideNavigationProps,
+}
+
+const headerProps: RowProps = {
+	fix: {
+		header: true
+	},
+	columnClasses: {
+		center: "flex justify-center"
+	}
+}
+const contentProps: RowProps = {
+	columnClasses: {
+		center: "mt-20",
+		left: "mt-20",
+		right: "mt-20"
+	}
+}
+
+const footerProps: RowProps = {
+	fix: {
+		footer: true,
+	}
+}
+
+const rowsProps: RowsProps = {
+	header: headerProps,
+	content: contentProps,
+	footer: footerProps,
 }
 
 const { 
-	title = CONFIG.site_title, 
-	description = CONFIG.description, 
-	image = "/og-default.jpg",
-	footerLink,
-	footerText,
+	footerAction,
+	sideNavigation,
 } = Astro.props;
+
+const headerLeftSlug = fullSlug(RowSlug.Header, ColumnSlug.Left);
+const headerCenterSlug = fullSlug(RowSlug.Header, ColumnSlug.Center);
+const headerRightSlug = fullSlug(RowSlug.Header, ColumnSlug.Right);
+
+const footerCenterSlug = fullSlug(RowSlug.Footer, ColumnSlug.Center);
+const footerRightSlug = fullSlug(RowSlug.Footer, ColumnSlug.Right);
 ---
 
-<!doctype html>
-<html lang="en-us">
-	<head>
-		<HeadContent title={title} description={description} image={image} />
-	</head>
-	<body>
-		<Header />
-		<Row centerClass="mt-20" leftClass="mt-20" rightClass="mt-20">
-			<slot name="left" slot="left" />
-			<slot />
-			<slot name="right" slot="right" />
-		</Row>
-		<Footer footerLink={footerLink} footerText={footerText} />
-	</body>
-</html>
+<EmptyBodyLayout rows={rowsProps}>
+	<!-- HEADER -->
+	<Logo slot={headerLeftSlug} />
+	<Notification text="Exclusive Early Adoper Version!" slot={headerCenterSlug} />
+	<Login client:only slot={headerRightSlug} />
+
+	<!-- CONTENT -->
+	<SideNavigation subNavigation={sideNavigation && sideNavigation.subNavigation} selectedPath={sideNavigation && sideNavigation.selectedPath} slot={contentLeftSlug} />
+	<!-- anything after side navigation, to show on the left side -->
+	<slot name="content-left" slot={contentLeftSlug} />
+	
+	<slot slot="content-center" />
+	<slot name="content-right" slot={contentRightSlug} />
+
+	<!-- FOOTER -->
+	{footerAction && 
+	<a 
+		href={footerAction.url} 
+		class="btn btn-primary py-6 px-10 mb-4" 
+		slot={footerCenterSlug}
+	>
+		{footerAction.label}
+	</a>
+	}
+	<AraContact client:load slot={footerRightSlug} />
+</EmptyBodyLayout>
+
+<script>
+	const hamburger = document.querySelector('.hamburger');
+    const menu = document.querySelector('.menu');
+
+    hamburger?.addEventListener('click', () => {
+        menu?.classList.toggle('active');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (event) => {
+    	const target = event.target as HTMLElement;
+        if (!target.closest('.nav') && menu?.classList.contains('active')) {
+            menu.classList.remove('active');
+        }
+    });
+</script>
+
+<style>
+    .header {
+        /* position: sticky; */
+        /* top: 0; */
+        /* display: flex; */
+        /* justify-content: space-between; */
+        /* align-items: baseline; */
+        /* background-color: var(--color-background); */
+        /* color: var(--color-text-base); */
+        /* box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
+        /* -webkit-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
+        /* -moz-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5); */
+        z-index: 1000;
+        /* border-bottom: 2px solid var(--color-border);  */
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        color: var(--color-text-base);
+    }
+
+    .logo a {
+        display: flex;
+        align-items: center;
+        padding: 0 0.25em;
+    }
+
+    .logo #home:hover {
+        color: var(--color-link);
+	}
+
+    .logo svg {
+        width: 32px;
+    }
+
+    .logo svg path {
+        fill: none;
+        stroke: var(--color-text-base);
+    }
+
+    .logo #home {
+        font-size: var(--step-1);
+        margin-right: 10px;
+        color: var(--color-text-base);
+        text-decoration: none;
+    }
+
+  	.center {
+    	display: flex;
+    	justify-content: center;
+    	/* align-items: center; */
+  	}
+
+	.footer {
+		/* background-color: var(--color-background);
+			color: var(--color-text-base);
+			box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+			-webkit-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+			-moz-box-shadow: 2px 9px 24px 0px rgba(0,0,0,0.5);
+			border-bottom: 2px solid var(--color-border);  */
+	}
+			
+	.center {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+</style>
