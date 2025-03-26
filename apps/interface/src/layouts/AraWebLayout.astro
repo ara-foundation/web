@@ -1,4 +1,11 @@
 ---
+/**
+ * The template that Ara Web itself uses.
+ * It's based on the primary layout (EmptyBodyLayout.astro) and populates
+ * The Top with the Ara Logo, Notification and Login,
+ * Meanwhile the footer is populated by Sever AI, optionally an action.
+ * And for the content, it's left is filled with the SideNavigation.
+ */
 import EmptyBodyLayout, { type RowsProps } from "@layouts/EmptyBodyLayout.astro";
 import { RowSlug, ColumnSlug, fullSlug, contentLeftSlug, contentRightSlug } from "@scripts/page";
 import {type RowProps} from "@layouts/Row.astro";
