@@ -1,4 +1,13 @@
 ---
-// TODO: make it through the API Call
-return Astro.redirect(`/ara/act/ara-web/component/get`)
+/**
+ * @this Page
+ * @param {string} Title Ara Web's Component's REST operations
+ * @param {string} Description Section of Ara Web to handle web components
+ */
+import RedirectExtension from "@components/rpc/extension/redirect.astro"
+
+const redirectUrl = "/ara/act/ara-web/component/get"
+const inputs: [string] = [redirectUrl]
 ---
+
+<RedirectExtension inputs={inputs}></RedirectExtension>

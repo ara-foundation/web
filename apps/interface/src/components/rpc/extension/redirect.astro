@@ -1,0 +1,17 @@
+---
+// An extension that redirects to another project
+import Extension, {type ExtensionProps} from "@components/rpc/extension/index.astro"
+
+// Redirect receives one argument.
+// The url to redirect to
+export type RedirectProps = Omit<ExtensionProps, 'inputs'> & { inputs: [string] };
+
+interface Props extends RedirectProps {}
+
+---
+
+<Extension 
+    {...Astro.props}
+    name="Redirect"
+    description="An extension that redirects the user to another web page"
+></Extension>

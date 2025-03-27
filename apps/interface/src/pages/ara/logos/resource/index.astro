@@ -1,4 +1,13 @@
 ---
-// TODO: make it through the API Call
-return Astro.redirect(`/ara/logos/resource/get`)
+/**
+ * @this Page
+ * @param {string} Title Ara Resources
+ * @param {string} Description Customize or browse the resource data types
+ */
+import RedirectExtension from "@components/rpc/extension/redirect.astro"
+
+const redirectUrl = "/ara/logos/resource/get"
+const inputs: [string] = [redirectUrl]
 ---
+
+<RedirectExtension inputs={inputs}></RedirectExtension>

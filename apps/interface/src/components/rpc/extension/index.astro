@@ -1,0 +1,21 @@
+---
+/**
+ * A generic extension.
+ */
+import { RpcType } from "@scripts/rpc";
+
+export type ExtensionProps = {
+    name?: string;  // for example redirect
+    description?: string; // for example: Redirects to another page
+    pageUrl?: string;   // The web page that called the extension
+    inputs?: any[],
+}
+
+interface Props extends ExtensionProps {};
+
+const { name, description } = Astro.props;
+
+---
+
+<div>'{name === undefined ? "Unknown" : name}' extension</div>
+<div>'{description === undefined ? <i>No description...</i> : description}</div>

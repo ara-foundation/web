@@ -1,0 +1,66 @@
+---
+/**
+ * The primary layout of the <body> in ara web pages by default.
+ * The <body> element is composed of the three rows with the following names:
+ * - header
+ * - content
+ * - footer
+ */
+import Row, {type RowProps} from "@layouts/Row.astro";
+import { RowSlug, ColumnSlug } from "@scripts/page";
+
+export type RowsProps = {[key in RowSlug]?: RowProps}
+
+interface Props {
+  	rows?: RowsProps,
+}
+
+let { 
+	rows,
+} = Astro.props;
+
+const rowBorderCss = 'border-1 border-dashed p-2 border-gray-400';
+const columnBorderCss = 'border-2 border-double mx-1 border-purple-300 flex items-center text-center p-2';
+
+// Set the gray-border to all rows and columns
+rows = rows !== undefined ? rows : {};
+
+rows.header = rows.header !== undefined ? rows.header : {}
+rows.header.rowClass = rows.header.rowClass !== undefined ? `${rows.header.rowClass} ${rowBorderCss}` : rowBorderCss;
+rows.header.columnClasses = rows.header.columnClasses !== undefined ? rows.header.columnClasses : {};
+rows.header.columnClasses.left = rows.header.columnClasses.left !== undefined ? `${rows.header.columnClasses.left} ${columnBorderCss}` : columnBorderCss;
+rows.header.columnClasses.center = rows.header.columnClasses.center !== undefined ? `${rows.header.columnClasses.center} ${columnBorderCss}` : columnBorderCss;
+rows.header.columnClasses.right = rows.header.columnClasses.right !== undefined ? `${rows.header.columnClasses.right} ${columnBorderCss}` : columnBorderCss;
+
+rows.content = rows.content !== undefined ? rows.content : {}
+rows.content.rowClass = rows.content.rowClass !== undefined ? `${rows.content.rowClass} ${rowBorderCss}` : rowBorderCss;
+rows.content.columnClasses = rows.content.columnClasses !== undefined ? rows.content.columnClasses : {};
+rows.content.columnClasses.left = rows.content.columnClasses.left !== undefined ? `${rows.content.columnClasses.left} ${columnBorderCss}` : columnBorderCss;
+rows.content.columnClasses.center = rows.content.columnClasses.center !== undefined ? `${rows.content.columnClasses.center} ${columnBorderCss}` : columnBorderCss;
+rows.content.columnClasses.right = rows.content.columnClasses.right !== undefined ? `${rows.content.columnClasses.right} ${columnBorderCss}` : columnBorderCss;
+
+rows.footer = rows.footer !== undefined ? rows.footer : {}
+rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowClass} ${rowBorderCss}` : rowBorderCss;
+rows.footer.columnClasses = rows.footer.columnClasses !== undefined ? rows.footer.columnClasses : {};
+rows.footer.columnClasses.left = rows.footer.columnClasses.left !== undefined ? `${rows.footer.columnClasses.left} ${columnBorderCss}` : columnBorderCss;
+rows.footer.columnClasses.center = rows.footer.columnClasses.center !== undefined ? `${rows.footer.columnClasses.center} ${columnBorderCss}` : columnBorderCss;
+rows.footer.columnClasses.right = rows.footer.columnClasses.right !== undefined ? `${rows.footer.columnClasses.right} ${columnBorderCss}` : columnBorderCss;
+
+---
+
+<Row {...rows?.header}>
+	<slot name='header-left' slot={ColumnSlug.Left.toString()} />
+	<slot name='header-center' slot={ColumnSlug.Center.toString()} />
+	<slot name='header-right' slot={ColumnSlug.Right.toString()} />
+</Row>
+<Row {...rows?.content}>
+	<slot name='content-left' slot={ColumnSlug.Left.toString()} />
+	<slot name='content-center' slot={ColumnSlug.Center.toString()} />
+	<slot name='content-right' slot={ColumnSlug.Right} />
+</Row>
+<Row {...rows?.footer}>
+	<slot name='footer-left' slot={ColumnSlug.Left.toString()} />
+	<slot name='footer-center' slot={ColumnSlug.Center.toString()} />
+	<slot name='footer-right' slot={ColumnSlug.Right.toString()} />
+</Row>
+

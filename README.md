@@ -53,18 +53,37 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Documentation
+# Guide
+Using RPCs within the pages.
+In order to use RPCs in the web pages, simply import the component.
+The inputs to the components must be passed as the data
 
-### Architecture
+# Contribution
+
+## Architecture
 Let's first explain the components that made up the Ara Web.
 
 The background is the same for all pages.
 All pages have the same classic web layout: `Header`, `Content`, `Footer`.
 Each layout also composed of three sections: `Left`, `Center`, `Right`.
 
-Below is the mockup with the rectangles defining layouts and sections. Red rectangles define the layouts. Yellow rectangles define the sections.
+**Read the below sections whenever you add a new component, page, action or RPC as a checklist**
 
-![Layouts](docs/layout.png)
+### Page
+To make the page valid for `src/scripts/page.ts` the `src/pages/**/*.astro` must have the [JSDoc](https://jsdoc.app/) comment at the beginning.
+
+The comment must have three parameters:
+* `@this Page` &ndash; indicate that this is the Page 
+* `@param {string} Title ${text...}` &ndash; The title of the web page
+* `@param {string} Description ${text...}` &ndash; The description of the web page
+
+### Components
+To make the components available, make sure that their `props` are always optional.
+As the components list page won't pass any property during a rendering.
+
+### RPCs
+In order to create the RPC, create a component that extends the RPC but overrides the Inputs, Outputs
+for the expected data types.
 
 ---
 
@@ -105,6 +124,7 @@ The colors were chosen using several tools to insure accessibility and contrast.
 - https://www.learnui.design/tools/accessible-color-generator.html
 - https://colorffy.com/mesh-gradient-generator (for the background gradient)
 
+---
 ## Credits
 
 Built by Tim Eaton - [timeaton.dev](https://timeaton.dev).

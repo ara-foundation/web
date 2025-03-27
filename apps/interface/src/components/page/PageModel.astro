@@ -1,0 +1,120 @@
+---
+/**
+ * The page model represents the page itself in the miniature way
+ */
+import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
+import { ColumnSlug, fullSlug, RowSlug, type Page } from "@scripts/page";
+
+interface Props {
+  	rows?: RowsProps,
+    page?: Page
+}
+
+let { 
+	rows,
+    page,
+} = Astro.props;
+
+const headerHeight = "min-h-12"
+const contentHeight = "min-h-48"
+const footerHeight = "min-h-12"
+const rpcsHeight = "min-h-24"
+
+rows = rows !== undefined ? rows : {};
+
+rows.header = rows.header !== undefined ? rows.header : {}
+rows.header.rowClass = rows.header.rowClass !== undefined ? `${rows.header.rowClass} ${headerHeight}` : headerHeight;
+
+rows.content = rows.content !== undefined ? rows.content : {}
+rows.content.rowClass = rows.content.rowClass !== undefined ? `${rows.content.rowClass} ${contentHeight}` : contentHeight;
+
+rows.footer = rows.footer !== undefined ? rows.footer : {}
+rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowClass} ${footerHeight}` : footerHeight;
+
+---
+
+<BodyLayout rows={rows}>
+    <div class="text-gray-500" slot={fullSlug(RowSlug.Header,ColumnSlug.Left)}>
+        {page?.components?.header?.left !== undefined && page.components.header.left.map((componentNode) => (
+            <div class="">{componentNode.name}</div>
+        ))}
+        {page?.components?.header?.left === undefined && "Header Left"}
+    </div>
+    <div class="text-gray-500 text-center" slot={fullSlug(RowSlug.Header,ColumnSlug.Center)}>
+        {page?.components?.header?.center !== undefined && page.components.header.center.map((componentNode) => (
+            <div class="" >{componentNode.name}</div>
+        ))}
+        {page?.components?.header?.center === undefined && "Header Center"}
+    </div>
+    <div class="text-gray-500 text-center" slot={fullSlug(RowSlug.Header,ColumnSlug.Right)}>
+        {page?.components?.header?.right !== undefined && page.components.header.right.map((componentNode) => (
+            <div class="">{componentNode.name}</div>
+        ))}
+        {page?.components?.header?.right === undefined && "Header Right"}
+    </div>
+
+    <div class="text-gray-500" slot={fullSlug(RowSlug.Content,ColumnSlug.Left)}>
+        {page?.components?.content?.left !== undefined && page.components.content.left.map((componentNode) => (
+            <div class="" >{componentNode.name}</div>
+        ))}
+        {page?.components?.content?.left === undefined && "Content Left"}
+    </div>
+    <div class="text-gray-500 text-center text-xs" slot={fullSlug(RowSlug.Content,ColumnSlug.Center)}>
+        {page?.components?.content?.center !== undefined && page.components.content.center.map((componentNode) => (
+            <div class="" >{componentNode.name}</div>
+        ))}
+        {page?.components?.content?.center === undefined && "Content Center"}
+    </div>
+    <div class="text-gray-500 text-center" slot={fullSlug(RowSlug.Content,ColumnSlug.Right)}>
+        {page?.components?.content?.right !== undefined && page.components.content.right.map((componentNode) => (
+            <div class="" >{componentNode.name}</div>
+        ))}
+        {page?.components?.content?.right === undefined && "Content Right"}
+    </div>
+
+    <div class="text-gray-500" slot={fullSlug(RowSlug.Footer,ColumnSlug.Left)}>
+        {page?.components?.footer?.left !== undefined && page.components.footer.left.map((componentNode) => (
+            <div class="" >{componentNode.name}</div>
+        ))}
+        {page?.components?.footer?.left === undefined && "Footer Left"}
+    </div>
+    <div class="text-gray-500 text-center" slot={fullSlug(RowSlug.Footer,ColumnSlug.Center)}>
+        {page?.components?.footer?.center !== undefined && page.components.footer.center.map((componentNode) => (
+            <div class="text-gray-100" >{componentNode.name}</div>
+        ))}
+        {page?.components?.footer?.center === undefined && "Footer Center"}
+    </div>
+    <div class="text-gray-500 text-center" slot={fullSlug(RowSlug.Footer,ColumnSlug.Right)}>
+        {page?.components?.footer?.right !== undefined && page.components.footer.right.map((componentNode) => (
+            <div class="text-gray-100" >{componentNode.name}</div>
+        ))}
+        {page?.components?.footer?.right === undefined && "Footer Right"}
+    </div>
+</BodyLayout>
+
+<div class={"flex flex-row p-2 " + rpcsHeight}>
+    <div class={"basis-1/3 "}>
+        <ul >
+            <li class="text-xs font-bold">Proxies</li>
+            {page?.rpcs?.proxy !== undefined && page.rpcs.proxy.map((componentNode) => (
+                <li>{componentNode.name}</li>
+            ))}
+        </ul>
+    </div>
+    <div class={"basis-1/3 "}>
+        <ul >
+            <li><b>Independent</b></li>
+            {page?.rpcs?.independent !== undefined && page.rpcs.independent.map((componentNode) => (
+                <li>{componentNode.name}</li>
+            ))}
+        </ul>
+    </div>
+    <div class={"basis-1/3 "}>
+        <ul >
+            <li class="text-sm font-bold">Extensions</li>
+            {page?.rpcs?.extension !== undefined && page.rpcs.extension.map((componentNode) => (
+                <li>{componentNode.name}</li>
+            ))}
+        </ul>
+    </div>
+</div>
