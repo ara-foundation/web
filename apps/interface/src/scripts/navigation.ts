@@ -1,13 +1,24 @@
-import { LungtaTypes } from "@scripts/lungtaTypes";
-
 /**
  * The top level navigation which is composed of the projects such as:
  * - Ara
  * - BookBike
- * - etc...
+ * - [project name]...
+ * 
+ * Terminology
+ * @param {NavigationElement} NavigationElement A Web UI element to represent the navigation element
+ * @param {NavigationNode} NavigationNode A navigation node in the navigation menu that are linked to each other
+ * @param {Navigation} Navigation A list of navigation nodes with the same parent
+ * @param {enum} RestNavigationKey A REST operation keys to use in the navigation
+ * @param {SubNavigation} SubNavigation A piece of navigation to inject into the @Navigation
+ * 
  */
+import { LungtaTypes } from "@scripts/lungtaTypes";
+
 export type Navigation = NavigationNode[];
 
+/**
+ * The ontology data is updated by the REST api, therefore we have the REST operations as navigation keys
+ */
 export enum RestNavigationKey {
     get = "get",
     post = "post",
@@ -18,6 +29,9 @@ export enum RestNavigationKey {
 /**
  * Add a custom navigation within the Lungta Model of the project.
  * For example its used to add sub-projects.
+ * @param {string} projectSlug the project to add into
+ * @param {LungtaTypes} lungta Where this navigation fits in the lungta model
+ * @param {NavigationElement} element the navigation element itself
  */
 export type SubNavigation = {
     projectSlug: string;
@@ -25,38 +39,38 @@ export type SubNavigation = {
     element: NavigationNode;
 }
 
+
+/**
+ * The Navigation Node in the Navigation
+ * @param {LungtaTypes} lungtaNavigation optionally pass the lungta where its fit in
+ * @param {NavigationElement} props the component properties
+ * @param {NavigationNode[]} children sub nodes
+ */
 export type NavigationNode = {
     lungtaNavigation?: LungtaTypes;
     props: NavigationElement;
     children?: NavigationNode[]
 }
 
-export const NewRestNavigation = (): NavigationNode[] => {
-    return [
-        {
-            props: restNavigationKeyToNavigationElement(RestNavigationKey.get),
-            children: [],
-        },
-        {
-            props: restNavigationKeyToNavigationElement(RestNavigationKey.post),
-            children: [],
-        },
-        {
-            props: restNavigationKeyToNavigationElement(RestNavigationKey.patch),
-            children: [],
-        },
-        {
-            props: restNavigationKeyToNavigationElement(RestNavigationKey.delete),
-            children: [],
-        }
-    ]
+/**
+ * Returns nodes for each Rest operation
+ * @returns {NavigationNode[]} list of navigation nodes for each REST operation
+ */
+export const newRestNavigation = (): NavigationNode[] => {
+    const nodes = [];
+    const restOperations = Object.keys(RestNavigationKey)
+    for (let restOp of restOperations) {
+        nodes.push(newRestNode(restOp as RestNavigationKey))
+    }
+
+    return nodes;
 }
 
 
 /**
  * Standard used colors for REST api accross dev platforms such codes are in StackOverflow Refs, GitHub issues.
  */
-export const restNavigationKeyToNavigationElement = (key: RestNavigationKey): NavigationElement => {
+export const newRestElement = (key: RestNavigationKey): NavigationElement => {
     switch (key) {
         case RestNavigationKey.get: {
             return {
@@ -93,6 +107,13 @@ export const restNavigationKeyToNavigationElement = (key: RestNavigationKey): Na
     }
 }
 
+export const newRestNode = (key: RestNavigationKey): NavigationNode => {
+    return {
+        props: newRestElement(key),
+        children: [],
+    }
+}
+
 /**
  * The smallest piece of navigation is the navigation element.
  */
@@ -111,7 +132,7 @@ export type NavigationElement = {
 //
 ////////////////////////////////////////////////////////////////////////////////////
 
-export const NewLungtaElement = (lungtaType: LungtaTypes): NavigationElement => {
+export const newLungtaElement = (lungtaType: LungtaTypes): NavigationElement => {
     if (lungtaType === LungtaTypes.Logos) {
         return {
             title: "Logos",
@@ -151,53 +172,55 @@ export const NewLungtaElement = (lungtaType: LungtaTypes): NavigationElement => 
     }
 }
 
-export const navigationElementToNavigationNode = (element: NavigationElement): NavigationNode => {
+export const elementToNode = (element: NavigationElement): NavigationNode => {
     return {
         props: element,
         children: [],
     }
 }
 
-export const NewLungta = (): NavigationNode[] => {
+export const newLungta = (): NavigationNode[] => {
             return [
                 {
-                    props: NewLungtaElement(LungtaTypes.Logos),
+                    props: newLungtaElement(LungtaTypes.Logos),
                     children: [],
                 },
                 {
-                    props: NewLungtaElement(LungtaTypes.Aurora),
+                    props: newLungtaElement(LungtaTypes.Aurora),
                     children: [],
                 },
                 {
-                    props: NewLungtaElement(LungtaTypes.Maydone),
+                    props: newLungtaElement(LungtaTypes.Maydone),
                     children: [],
                 },
                 {
-                    props: NewLungtaElement(LungtaTypes.Act),
+                    props: newLungtaElement(LungtaTypes.Act),
                     children: [],
                 },
                 {
-                    props: NewLungtaElement(LungtaTypes.Sangha),
+                    props: newLungtaElement(LungtaTypes.Sangha),
                     children: [],
                 }
             ]
 };
 
-export const NewAraNavigation = (): NavigationNode => {
+export const AraProjectSlug = "ara"
+
+export const newAraProject = (): NavigationNode => {
     return {
         props: {
             title: "Ara",
-            slug: "ara"
+            slug: AraProjectSlug,
         },
-        children: NewLungta()
+        children: newLungta()
     }
 }
 
-export const NewDefaultNavigation = (): Navigation => {
-    return [NewAraNavigation()];
+export const newDefault = (): Navigation => {
+    return [newAraProject()];
 }
 
-const selectPathInNavigationChildren = (oldSlugs: string[], nodes: NavigationNode[] | undefined): NavigationNode[] | undefined => {
+const nestedPathSelection = (oldSlugs: string[], nodes: NavigationNode[] | undefined): NavigationNode[] | undefined => {
     if (oldSlugs.length === 0 || nodes === undefined || nodes.length === 0) {
         return nodes;
     }
@@ -210,7 +233,7 @@ const selectPathInNavigationChildren = (oldSlugs: string[], nodes: NavigationNod
         } else {
             nodes[i].props.selected = true;
             nodes[i].props.visible = true;
-            nodes[i].children = selectPathInNavigationChildren(slugs, nodes[i].children);
+            nodes[i].children = nestedPathSelection(slugs, nodes[i].children);
         }
     }
     
@@ -226,6 +249,9 @@ export const selectPath = (selectedPath: string | undefined, navigation: Navigat
         return navigation;
     }
 
+    if (selectedPath.indexOf("/") === 0) {
+        slugs.shift();
+    }
     const projectSlug = slugs.shift();
 
     for (let projectIndex in navigation) {
@@ -236,7 +262,7 @@ export const selectPath = (selectedPath: string | undefined, navigation: Navigat
         } else {
             navigation[projectIndex].props.selected = true;
             navigation[projectIndex].props.visible = true;
-            navigation[projectIndex].children = selectPathInNavigationChildren(slugs, navigation[projectIndex].children);
+            navigation[projectIndex].children = nestedPathSelection(slugs, navigation[projectIndex].children);
         }
     }
 
@@ -281,8 +307,8 @@ export const newAraWebNavigationNode = (): NavigationNode => {
             },
             {
                 props: {
-                    title: "Api",
-                    slug: "api",
+                    title: "RPCs",
+                    slug: "rpc",
                     color: "brown",
                     visible: true,
                 },
@@ -291,6 +317,19 @@ export const newAraWebNavigationNode = (): NavigationNode => {
         ]
     }
 }
+
+export const newCommunityNavigationNode = (): NavigationNode => { 
+    return {
+        props: {
+            title: "Community",
+            slug: "community",
+            color: "red",
+            visible: true,
+        },
+        children: []
+    }
+}
+
 
 const setNodeUrls = (node: NavigationNode, prefix: string = ''): NavigationNode => {
     node.props.url = `${prefix}/${node.props.slug}`;

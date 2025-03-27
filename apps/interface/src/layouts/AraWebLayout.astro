@@ -6,9 +6,15 @@
  * Meanwhile the footer is populated by Sever AI, optionally an action.
  * And for the content, it's left is filled with the SideNavigation.
  */
-import EmptyBodyLayout, { type RowsProps } from "@layouts/EmptyBodyLayout.astro";
-import { RowSlug, ColumnSlug, fullSlug, contentLeftSlug, contentRightSlug } from "@scripts/page";
-import {type RowProps} from "@layouts/Row.astro";
+import EmptyBodyLayout from "@layouts/EmptyBodyLayout.astro";
+import { 
+	RowSlug, 
+	ColumnSlug, 
+	fullSlug, 
+	contentLeftSlug, 
+	contentRightSlug, 
+	type LayoutProps, 
+} from "@scripts/page";
 import SideNavigation, {type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
 
 // HEADER
@@ -28,41 +34,52 @@ interface Props {
 	footerAction?: FooterAction,
 	sideNavigation?: SideNavigationProps,
 	title?: string,
+	layoutProps?: LayoutProps,
 }
 
-const headerProps: RowProps = {
-	fix: {
-		header: true
-	},
-	columnClasses: {
-		center: "flex justify-center"
-	}
-}
-const contentProps: RowProps = {
-	columnClasses: {
-		center: "mt-20",
-		left: "mt-20",
-		right: "mt-20"
-	}
-}
-
-const footerProps: RowProps = {
-	fix: {
-		footer: true,
-	}
-}
-
-const rowsProps: RowsProps = {
-	header: headerProps,
-	content: contentProps,
-	footer: footerProps,
-}
-
-const { 
+let { 
 	footerAction,
 	sideNavigation,
 	title,
+	layoutProps,
 } = Astro.props;
+
+layoutProps ??= {}
+layoutProps.header ??= {}
+layoutProps.header.fix ??= {};
+layoutProps.header.columnClasses ??= {};
+layoutProps.content ??= {};
+layoutProps.content.columnClasses ??= {};
+layoutProps.footer ??= {}
+layoutProps.footer.fix ??= {};
+layoutProps.footer.columnClasses ??= {};
+
+// Add Ara Web's default parameters to the Layout
+if (layoutProps?.header?.fix?.header === undefined) {
+	layoutProps.header.fix.header = true;
+}
+if (layoutProps?.header?.columnClasses?.center === undefined) {
+	layoutProps!.header!.columnClasses!.center = "flex justify-center"
+} 
+
+if (layoutProps?.content?.columnClasses?.left === undefined) {
+	layoutProps.content!.columnClasses.left = "mt-20"
+} 
+if (layoutProps?.content?.columnClasses?.center === undefined) {
+	layoutProps.content.columnClasses!.center = "mt-20"
+} 
+if (layoutProps?.content?.columnClasses?.right === undefined) {
+	layoutProps.content.columnClasses!.right = "mt-20"
+} 
+
+if (layoutProps?.footer?.fix?.footer === undefined) {
+	layoutProps!.footer!.fix.footer = true;
+}
+if (layoutProps?.footer?.columnClasses?.center === undefined) {
+	layoutProps.footer.columnClasses.center = "flex justify-center"
+}
+
+console.log(layoutProps);
 
 const headerLeftSlug = fullSlug(RowSlug.Header, ColumnSlug.Left);
 const headerCenterSlug = fullSlug(RowSlug.Header, ColumnSlug.Center);
@@ -72,7 +89,7 @@ const footerCenterSlug = fullSlug(RowSlug.Footer, ColumnSlug.Center);
 const footerRightSlug = fullSlug(RowSlug.Footer, ColumnSlug.Right);
 ---
 
-<EmptyBodyLayout rows={rowsProps} title={title}>
+<EmptyBodyLayout rows={layoutProps} title={title}>
 	<!-- HEADER -->
 	<Logo slot={headerLeftSlug} />
 	<Notification text="Exclusive Early Adoper Version!" slot={headerCenterSlug} />

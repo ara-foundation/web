@@ -1,0 +1,13 @@
+---
+/**
+ * @this Page
+ * @param {string} Title Ara Web Actions
+ * @param {string} Description Customize or browse all available Actions in Ara Web
+ */
+import RedirectExtension from "@components/rpc/extension/redirect.astro"
+
+const redirectUrl = "/ara/act/ara-web/action/get"
+const inputs: [string] = [redirectUrl]
+---
+
+<RedirectExtension inputs={inputs}></RedirectExtension>

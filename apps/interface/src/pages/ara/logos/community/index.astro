@@ -1,0 +1,62 @@
+---
+/**
+ * @this Page
+ * @param {string} Title Community List
+ * @param {string} Description List of the communities and their projects
+ */
+import AraWebLayout, {type FooterAction} from '@layouts/AraWebLayout.astro';
+import Card from '@components/content/Card.astro';
+import {LungtaTypes} from "@scripts/lungtaTypes";
+import { 
+  newAraProject,
+  newCommunityNavigationNode,
+  type SubNavigation,
+} from "@scripts/navigation";
+import {type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
+
+const subNavigation: SubNavigation = {
+    projectSlug: newAraProject().props.slug,
+    lungta: LungtaTypes.Logos,
+    element: newCommunityNavigationNode(),
+}
+
+const sideNavigation: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: "/ara/logos/community"
+}
+
+const footerAction: FooterAction = {
+  url: "/ara/logos/post",
+  label: "Create your Community",
+}
+
+// BookBike
+const url = 'https://assets.api.uizard.io/api/cdn/stream/22f374e9-e658-489f-93b7-0fd727f7b539.png';
+const alt = "BookBike";
+const title = "BookBike";
+const descriptions = ["A bike rental aggregator.", "Available in South East Asia."];
+const posts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+const pageTitle = "Communities";
+---
+
+<AraWebLayout title={pageTitle} 
+  footerAction={footerAction}
+  sideNavigation={sideNavigation}
+>
+    <section>
+      <h2 class="solway-regular">Communities</h2>
+      <p class="text-sm text-gray-500 mb-4">The communities are build around the projects to develop and maintain them.</p>
+      <div class="grid grid-flow-row-dense grid-cols-3 space-x-8 space-y-8 ">
+          {posts.map(post => (
+              <Card
+                title={title}
+                descriptions={descriptions}
+                url={url}
+                alt={alt} 
+              />
+          ))}
+      </div>
+    </section>
+</AraWebLayout>
+

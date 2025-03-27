@@ -1,0 +1,150 @@
+---
+/**
+ * @this Page
+ * @param {string} Title Create a Sangha
+ * @param {string} Description Add community tokens
+ */
+import { library, icon, type Icon } from "@fortawesome/fontawesome-svg-core";
+import {faCrown, faPenRuler, faPen, faGlobe} from "@fortawesome/free-solid-svg-icons"
+
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import DoneModal from "@components/lungta/DoneModal.astro"
+import ThankYou from "@components/lungta/ThankYou"
+import {type LayoutProps, fullSlug, RowSlug, ColumnSlug} from "@scripts/page"
+import { type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
+import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+
+library.add(faCrown, faPenRuler, faPen, faGlobe);
+const crownIcon = icon({ prefix: "fas", iconName: faCrown.iconName });
+const penRulerIcon = icon({ prefix: "fas", iconName: faPenRuler.iconName });
+const penIcon = icon({ prefix: "fas", iconName: faPen.iconName });
+const globeIcon = icon({ prefix: "fas", iconName: faGlobe.iconName });
+
+
+type Token = {
+    name: string;
+    icon: Icon;
+}
+
+const tokens: Token[] = [
+    {
+        name: "Manager Token",
+        icon: crownIcon,
+    },
+    {
+        name: "Maintainer Token",
+        icon: penRulerIcon
+    },
+    {
+        name: "Contributor Token",
+        icon: penIcon
+    }
+];
+
+const layoutProps: LayoutProps = {
+    content: {
+        columnClasses: {
+            center: "flex flex-col px-4 h-full mt-20",
+            right: "pr-4 mt-20"
+        }
+    },
+}
+
+const cancelSlug = fullSlug(RowSlug.Content, ColumnSlug.Right);
+
+const subNavigation: SubNavigation = {
+    projectSlug: AraProjectSlug,
+    lungta: LungtaTypes.Sangha,
+    element: newRestNode(RestNavigationKey.post)
+}
+
+const sideNavigationProps: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: "/ara/sangha/post",
+}
+
+---
+
+<AraWebLayout 
+    title="Create Community managing tokens" 
+    layoutProps={layoutProps} 
+    sideNavigation={sideNavigationProps}
+>
+    <section>
+        <h2 class="pt-10 text-center">
+            Allow Tokens to be Purchased
+        </h2>
+        <div class="grid grid-cols-10 grid-rows-3 gap-4 mt-4">
+        {
+            tokens.map((token) => 
+                <div class="col-span-4 col-start-1">
+                    <div class="card grid h-20 flex-grow place-items-center">
+                        <label class="input input-bordered flex items-center gap-2">
+                            <Fragment set:html={token.icon.html} />
+                            <input type="text" class="grow" value={token.name} disabled />
+                        </label>
+                    </div>
+                </div>
+                <div class="col-end-6 divider divider-horizontal">
+                    <input type="checkbox" checked="checked" class="checkbox" />
+                </div>
+            )
+        }
+            <div class={"relative col-start-6 col-end-10 row-start-1 bg-red-300 row-span-3"}>
+                <h2 class="text-center text-sm p-2 font-normal">                                    
+                    <Fragment set:html={globeIcon.html} />
+                    Buy Page
+                </h2>
+                <ul class="pl-4 w-full">
+                    <li class="my-2">
+                        <label class="input input-bordered flex items-center gap-2">
+                            Maintainer Token Price
+                            <input type="number" class="grow" placeholder="2" />
+                            <span class="badge badge-info">$</span>
+                        </label>
+                    </li>
+                    <li class="my-2">
+                        <label class="input input-bordered flex items-center gap-2">
+                            Maintainer Token Price
+                            <input type="number" class="grow" placeholder="2" />
+                            <span class="badge badge-info">$</span>
+                        </label>
+                    </li>
+                    <li class="my-2">
+                        <label class="input input-bordered flex items-center gap-2">
+                            Maintainer Token Price
+                            <input type="number" class="grow" placeholder="2" />
+                            <span class="badge badge-info">$</span>
+                        </label>
+                    </li>
+                </ul>
+                <div class="bg-red-400 absolute bottom-0 p-2">
+                    Available on:
+                    <a class="link link-primary text-center">https://web.ara.foundation/tokens/book-bike</a>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-center mt-10">
+            <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
+        </div>
+    </section>
+    <section slot={cancelSlug}>
+        <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
+        <a href="/ara/logos/post" class="btn btn-outline btn-neutral w-full mb-4">Back to Project</a>
+        <a href="/ara/maydone/post" class="btn btn-outline btn-neutral w-full">Back to Budget</a>
+    </section>
+</AraWebLayout>
+<DoneModal />
+<ThankYou client:load />
+
+<style is:global>
+    /* Declare a custom CSS class to make the icon look right */
+    .svg-inline--fa {
+      overflow: visible;
+      box-sizing: content-box;
+      display: inline-block;
+      height: 1em;
+      vertical-align: -0.125em;
+    }
+</style>

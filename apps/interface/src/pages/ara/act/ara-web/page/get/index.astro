@@ -7,10 +7,9 @@
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { 
     type SubNavigation, 
-    NewAraNavigation, 
+    newAraProject, 
     RestNavigationKey, 
-    restNavigationKeyToNavigationElement,
-    navigationElementToNavigationNode,
+    newRestNode,
     newAraWebNavigationNode } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
@@ -23,16 +22,14 @@ const araWebNavigation = newAraWebNavigationNode();
 if (araWebNavigation.children) {
     for (let child of araWebNavigation.children) {
         if (child.props.slug === "page") {
-            const restElement = restNavigationKeyToNavigationElement(RestNavigationKey.get);
-            const restNode = navigationElementToNavigationNode(restElement);
-            child.children?.push(restNode)
+            child.children?.push(newRestNode(RestNavigationKey.get))
             break;
         }
     }
 }
 
 const resourceSubNavigation: SubNavigation = {
-    projectSlug: NewAraNavigation().props.slug,
+    projectSlug: newAraProject().props.slug,
     lungta: LungtaTypes.Act,
     element: araWebNavigation,
 }

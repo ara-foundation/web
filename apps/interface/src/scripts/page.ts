@@ -18,6 +18,20 @@ export enum ColumnSlug {
     Right = "right",
 }
 
+export type RowProps = {
+    rowClass?: string;
+    columnClasses?: {
+        // Custom classes for the columns
+        [key in ColumnSlug]?: string;
+    },
+    fix?: {
+        // Fix The Row?
+        [key in RowSlug]?: boolean;
+    }
+}
+
+export type LayoutProps = {[key in RowSlug]?: RowProps}
+
 export const fullSlug = (row: RowSlug, column: ColumnSlug): string => {
     return `${row}-${column}`
 }

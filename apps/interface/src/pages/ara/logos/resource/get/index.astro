@@ -7,11 +7,11 @@
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { 
     type SubNavigation, 
-    NewAraNavigation, 
+    newAraProject, 
     type NavigationNode, 
     RestNavigationKey, 
-    restNavigationKeyToNavigationElement,
-    navigationElementToNavigationNode } from "@scripts/navigation";
+    newRestElement,
+    elementToNode } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 import ListElement from "@components/resource/listElement.astro";
@@ -27,12 +27,12 @@ const resourceNavigation: NavigationNode = {
     },
     children: [
         // GET REST
-        navigationElementToNavigationNode(restNavigationKeyToNavigationElement(RestNavigationKey.get))
+        elementToNode(newRestElement(RestNavigationKey.get))
     ]
 }
 
 const resourceSubNavigation: SubNavigation = {
-    projectSlug: NewAraNavigation().props.slug,
+    projectSlug: newAraProject().props.slug,
     lungta: LungtaTypes.Logos,
     element: resourceNavigation,
 }

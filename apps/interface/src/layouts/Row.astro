@@ -3,19 +3,8 @@
  * Row Component defines the Row Layout which is composed of three columns.
  * The web page is the list of the Row components
  */
-import { ColumnSlug, RowSlug } from "@scripts/page";
+import { ColumnSlug, RowSlug, type RowProps } from "@scripts/page";
 
-export type RowProps = {
-    rowClass?: string;
-    columnClasses?: {
-        // Custom classes for the columns
-        [key in ColumnSlug]?: string;
-    },
-    fix?: {
-        // Fix The Row?
-        [key in RowSlug]?: boolean;
-    }
-}
 interface Props extends RowProps {}
 
 let { rowClass, fix, columnClasses } = Astro.props;

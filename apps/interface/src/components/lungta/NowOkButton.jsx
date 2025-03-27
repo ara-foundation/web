@@ -25,7 +25,7 @@ const Image = () => {
           document.getElementById("done_modal").close();
           console.warn(`Actually navigate to the web page of the project to start putting the tasks`);
 
-          window.location.replace("/lungta/act");
+          window.location.replace("/ara/logos/community");
         }}>
         {localAraToken ? "Close" : "Now, OK!"}
       </button> : null

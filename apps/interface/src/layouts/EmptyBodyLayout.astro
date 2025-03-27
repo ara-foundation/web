@@ -8,16 +8,15 @@
  */
 import HeadContent from	"@components/HeadContent.astro";
 import { CONFIG } from "../config";
-import Row, {type RowProps} from "@layouts/Row.astro";
-import { RowSlug, ColumnSlug, fullSlug } from "@scripts/page";
+import Row from "@layouts/Row.astro";
+import { ColumnSlug, type LayoutProps } from "@scripts/page";
 
-export type RowsProps = {[key in RowSlug]?: RowProps}
 
 interface Props {
   	title?: string;
   	description?: string;
   	image?: string;
-  	rows?: RowsProps,
+  	rows?: LayoutProps,
 }
 
 const { 

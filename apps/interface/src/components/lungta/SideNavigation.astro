@@ -1,10 +1,10 @@
 ---
 import { 
     type SubNavigation, 
-    NewDefaultNavigation, 
+    newDefault, 
     selectPath,
-    NewLungtaElement,
-    navigationElementToNavigationNode,
+    newLungtaElement,
+    elementToNode,
     setUrls
  } from "@scripts/navigation";
 import NestedNavigation from "@components/lungta/NestedNavigation.astro";
@@ -17,7 +17,7 @@ export type SideNavigationProps = {
 interface Props extends SideNavigationProps {};
 
 const { subNavigation, selectedPath } = Astro.props;
-let DefaultNavigation = NewDefaultNavigation();
+let DefaultNavigation = newDefault();
 
 // Inject the sub navigation into the default navigation
 if (subNavigation !== undefined) {
@@ -26,7 +26,7 @@ if (subNavigation !== undefined) {
             project.props.visible = true;
             if (project.children === undefined) {
                 project.children = [
-                    navigationElementToNavigationNode(NewLungtaElement(subNavigation.lungta))
+                    elementToNode(newLungtaElement(subNavigation.lungta))
                 ];
             }
             
