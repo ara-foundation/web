@@ -27,6 +27,7 @@ export type FooterAction = {
 interface Props {
 	footerAction?: FooterAction,
 	sideNavigation?: SideNavigationProps,
+	title?: string,
 }
 
 const headerProps: RowProps = {
@@ -60,6 +61,7 @@ const rowsProps: RowsProps = {
 const { 
 	footerAction,
 	sideNavigation,
+	title,
 } = Astro.props;
 
 const headerLeftSlug = fullSlug(RowSlug.Header, ColumnSlug.Left);
@@ -70,7 +72,7 @@ const footerCenterSlug = fullSlug(RowSlug.Footer, ColumnSlug.Center);
 const footerRightSlug = fullSlug(RowSlug.Footer, ColumnSlug.Right);
 ---
 
-<EmptyBodyLayout rows={rowsProps}>
+<EmptyBodyLayout rows={rowsProps} title={title}>
 	<!-- HEADER -->
 	<Logo slot={headerLeftSlug} />
 	<Notification text="Exclusive Early Adoper Version!" slot={headerCenterSlug} />
