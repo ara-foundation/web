@@ -1,0 +1,32 @@
+---
+import {type Button, type Link, isLinkView} from "@scripts/action";
+
+interface Props {
+    view?: Button | Link
+}
+
+const {view} = Astro.props;
+
+const isLink = isLinkView(view);
+
+---
+
+{
+    view !== undefined && !isLink && 
+    <p>Button</p>
+    <button class={"btn btn-primary " + view!.classes}>
+        {view!.label}
+    </button>
+}
+{
+    view !== undefined && isLink && 
+    <div>
+        <p>Link</p>
+        <a 
+        class={"btn btn-primary " + view!.classes}
+        href={(view as Link).url}
+    >
+        {view.label}
+    </a>
+    </div>
+}

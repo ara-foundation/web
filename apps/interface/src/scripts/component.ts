@@ -5,6 +5,7 @@ import GapContainer from "@components/auth/GapContainer";   // react typescript
 import AraContact from "@components/lungta/AraContact"      // react javascript
                                                             // WARNING: Every time whenever a new extension added, 
                                                             // add support here.
+
 export type ElementType = typeof Breadcrumbs | typeof GapContainer | typeof AraContact;
 
 export const getComponents = (): Component[] => {

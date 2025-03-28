@@ -1,0 +1,33 @@
+---
+import ActionView from "@components/action/ActionView.astro"
+import { type Trigger, type Link, layoutPathToSlug } from "@scripts/action"
+
+interface Props {
+    trigger?: Trigger
+}
+
+const {trigger} = Astro.props;
+---
+
+{trigger === undefined && 
+<div class="my-4 p-4 bg-gray-300">
+    <h2>Trigger</h2>
+    <p>Could be Link or a Button</p>
+    <div class="m-4 bg-blue-400" />
+    <p>Pages: <i>List of pages where its shown</i></p>
+    <p>Layout: <i>Where to show the trigger on the page</i></p>
+    <p>Fixed: <i>Fixed on the sceen?</i></p>
+</div>
+}
+
+{trigger !== undefined &&
+<div class="my-4 p-4 bg-gray-300">
+    <h3>Trigger as</h3>
+    <ActionView view={trigger.view} />
+    {trigger.pages !== undefined && 
+        <p>On Pages: {trigger.pages?.join(", ")}</p>
+    }
+    <p>At Layout: {layoutPathToSlug(trigger.layout)}</p>
+    <p>{trigger.fix === true ? "Fix to screen" : "Without fixing on screen"}</p>
+</div>
+}

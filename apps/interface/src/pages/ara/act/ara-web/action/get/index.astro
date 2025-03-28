@@ -4,10 +4,64 @@
  * @param {string} Title Ara Web's Actions List
  * @param {string} Description Page lists all the actions that Ara Web has
  */
-import RedirectExtension from "@components/rpc/extension/redirect.astro"
+import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { getActions, isLinkView, layoutPathToSlug } from "@scripts/action";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import { AraProjectSlug, newAraWebNavigationNode, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
+import { getPageByUrl } from "@scripts/page";
 
-const redirectUrl = "/ara/act/ara-web/page/get"
-const inputs: [string] = [redirectUrl]
+const actions = getActions();
+
+const url = "/ara/act/ara-web/action/get/";
+
+const araWebNavigation = newAraWebNavigationNode();
+
+// This page is the ara-web/component/get
+if (araWebNavigation.children) {
+    for (let child of araWebNavigation.children) {
+        if (child.props.slug === "action") {
+            const restNode = newRestNode(RestNavigationKey.get);
+            child.children?.push(restNode)
+            break;
+        }
+    }
+}
+
+const subNavigation: SubNavigation = {
+    projectSlug: AraProjectSlug,
+    lungta: LungtaTypes.Act,
+    element: araWebNavigation,
+}
+
+// SideNavigation
+const sideNavigationProps: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: url,
+}
+
 ---
 
-<RedirectExtension inputs={inputs}></RedirectExtension>
+<AraWebLayout
+    title="List of Actions"
+    sideNavigation={sideNavigationProps}
+>
+{actions.map((action) => (
+    <div class="bg-gray-200 p-2">
+        <h2>Action: {action.goal}</h2>
+        <p>{action.description}</p>
+        <p class="mt-2">Trigger is available as '{action.trigger.view.label}' {isLinkView(action.trigger.view) ? "Link" : "Button"}</p>
+        <p>At the `{layoutPathToSlug(action.trigger.layout)}` layout of the following pages:</p>
+        <ul>
+            {action.trigger.pages?.map(async (page) => (
+                <li class="ml-4">
+                    <a href={page} class="link-info">
+                        {(await getPageByUrl(page))?.title}
+                    </a>
+                </li>
+            ))}
+        </ul>
+        <a class="btn btn-primary" href={url + action.slug}>Details...</a>
+    </div>
+))}
+</AraWebLayout>

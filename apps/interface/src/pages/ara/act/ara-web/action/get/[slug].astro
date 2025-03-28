@@ -1,0 +1,110 @@
+---
+/**
+ * @this Page
+ * @param {string} Title A specific action page
+ * @param {string} Description A page with the details of the action
+ */
+import { getActions, getActionBySlug } from "@scripts/action";
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { ColumnSlug, fullSlug, RowSlug } from "@scripts/page";
+import ActionTrigger from "@components/action/ActionTrigger.astro";
+import ActionPage from "@components/action/ActionPage.astro";
+import { AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
+
+const cancelSlug = fullSlug(RowSlug.Content, ColumnSlug.Right);
+
+type DynamicParam = {
+    params: {
+        slug: string,
+    }
+}
+
+export async function getStaticPaths() {
+    const actions = getActions();
+
+    const params: DynamicParam[] = [];
+
+    for (let action of actions) {
+        let param = {
+            params: {
+                slug: action.slug,
+            }
+        }
+
+        params.push(param);
+    }
+
+    return params;
+}
+
+
+const { slug } = Astro.params;
+const action = getActionBySlug(slug);
+
+const parentUrl = "/ara/act/ara-web/action/get"
+
+if (action === undefined) {
+    return Astro.redirect(parentUrl)
+}
+
+// Sub Navigation
+const araWebNavigation = newAraWebNavigationNode();
+
+// This page is the ara-web/component/get
+if (araWebNavigation.children) {
+    for (let child of araWebNavigation.children) {
+        if (child.props.slug === "action") {
+            const restNode = newRestNode(RestNavigationKey.get);
+            const element: NavigationElement = {
+                title: action !== undefined ? action.goal : "Unknown action",
+                slug: action !== undefined ? action.slug : "slug",
+                color: 'primary',
+                visible: true,
+            }
+            const node = elementToNode(element);
+            restNode.children?.push(node)
+            
+            child.children?.push(restNode)
+            break;
+        }
+    }
+}
+
+const subNavigation: SubNavigation = {
+    projectSlug: AraProjectSlug,
+    lungta: LungtaTypes.Act,
+    element: araWebNavigation,
+}
+
+// SideNavigation
+const sideNavigationProps: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: `${parentUrl}/${action && action.slug}`,
+}
+
+
+---
+<AraWebLayout
+    title={"Action: " + action.goal}
+    sideNavigation={sideNavigationProps}
+>
+    <div>
+        <h2>{action.goal}</h2>
+        <p>{action.description}</p>
+        <ActionTrigger trigger={action.trigger} />
+        <div>
+            <h2>Flow</h2>
+            {action.flow.map((page) => (
+                <div class="bg-red-300 my-4 p-2">
+                    <ActionPage url={page.url} />
+                    <ActionTrigger trigger={page.trigger} />
+                </div>
+            ))}
+        </div>
+    </div>
+    <section slot={cancelSlug}>
+        <a href={parentUrl} class="btn btn-outline btn-error w-full mb-4">Back to List of Actions</a>
+    </section>
+</AraWebLayout>

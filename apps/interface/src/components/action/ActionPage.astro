@@ -1,0 +1,13 @@
+---
+import { getPageByUrl } from '@scripts/page';
+interface Props {
+    url?: string
+}
+
+const {url} = Astro.props;
+
+const page = await getPageByUrl(url);
+const pageTitle: string = page === undefined ? "No Title" : page.title 
+---
+
+<p>{pageTitle}</p>

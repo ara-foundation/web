@@ -1,7 +1,7 @@
 ---
 // An extension that redirects to another project
 import Extension from "@components/rpc/extension/index.astro"
-import {type ExtensionType} from "@scripts/rpc/extensions/redirect";
+import {type ExtensionType} from "@scripts/rpc";
 
 interface Props extends ExtensionType {}
 
@@ -9,6 +9,6 @@ interface Props extends ExtensionType {}
 
 <Extension 
     {...Astro.props}
-    name="Redirect"
-    description="An extension that redirects the user to another web page"
+    name="Alert"
+    description="Show a popup"
 ></Extension>

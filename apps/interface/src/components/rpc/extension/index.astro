@@ -2,16 +2,9 @@
 /**
  * A generic extension.
  */
-import { RpcType } from "@scripts/rpc";
+import { type ExtensionType } from "@scripts/rpc";
 
-export type ExtensionProps = {
-    name?: string;  // for example redirect
-    description?: string; // for example: Redirects to another page
-    pageUrl?: string;   // The web page that called the extension
-    inputs?: any[],
-}
-
-interface Props extends ExtensionProps {};
+interface Props extends ExtensionType {};
 
 const { name, description } = Astro.props;
 
