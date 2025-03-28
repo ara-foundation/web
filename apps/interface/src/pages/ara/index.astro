@@ -1,0 +1,13 @@
+---
+/**
+ * @this Page
+ * @param {string} Title Ara Project
+ * @param {string} Description Everything that is related to Ara Itself
+ */
+import RedirectExtension from "@components/rpc/extension/redirect.astro"
+
+const redirectUrl = "/ara/act/ara-web"
+const inputs: [string] = [redirectUrl]
+---
+
+<RedirectExtension inputs={inputs}></RedirectExtension>
