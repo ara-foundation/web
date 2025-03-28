@@ -7,7 +7,7 @@
 import AraWebLayout, {type FooterAction} from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { RowSlug, ColumnSlug, fullSlug, type LayoutProps } from "@scripts/page";
+import { RowSlug, ColumnSlug, layoutPath, type LayoutProps } from "@scripts/page";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 
 const footerAction: FooterAction = {
@@ -35,7 +35,7 @@ const sideNavigationProps: SideNavigationProps = {
     selectedPath: "/ara/logos/post",
 }
 
-const rightContentSlug = fullSlug(RowSlug.Content, ColumnSlug.Right);
+const rightContentSlug = layoutPath(RowSlug.Content, ColumnSlug.Right);
 ---
 
 <AraWebLayout 

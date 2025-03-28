@@ -1,23 +1,29 @@
-import { parse } from "@astrojs/compiler";
+import { parse, transform } from "@astrojs/compiler";
 import type { ComponentNode, ElementNode, RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
-import * as ts from "typescript";
 import { parse as commentParse} from "comment-parser";
 import type { RpcType } from "@scripts/rpc";
 
-// The pages engine.
-// List of pages and fetching them by this script. 
+/**
+ * RowSlug defines the types of the Rows in the page layout
+ */
 export enum RowSlug {
     Header = "header",
     Content = "content",
     Footer = "footer",
 }
+/**
+ * ColumnSlug defines the types of Columns in the page rows
+ */
 export enum ColumnSlug {
     Left = "left",
     Center = "center",
     Right = "right",
 }
 
+/**
+ * RowProps defines the row properties
+ */
 export type RowProps = {
     rowClass?: string;
     columnClasses?: {
@@ -30,14 +36,42 @@ export type RowProps = {
     }
 }
 
+/**
+ * A web page as a JSON-AD object
+ */
+export type Page = {
+    title: string;
+    description: string;
+    fileName: string;
+    components?: {
+        [key in RowSlug]?: {    // Rows
+            // Columns
+            [key in ColumnSlug]?: (ComponentNode|ElementNode)[]
+        }
+    };
+    rpcs?: {
+        [key in RpcType]?: ComponentNode[]
+    }
+    glob: unknown;
+}
+
+/**
+ * LayoutProps defines the each row property for the web page
+ */
 export type LayoutProps = {[key in RowSlug]?: RowProps}
 
-export const fullSlug = (row: RowSlug, column: ColumnSlug): string => {
+/**
+ * Converts the Row and Column to the full slug of the page layout slug
+ * @param row Row
+ * @param column Column
+ * @returns {string} is the path
+ */
+export const layoutPath = (row: RowSlug, column: ColumnSlug): string => {
     return `${row}-${column}`
 }
 
-export const contentLeftSlug = fullSlug(RowSlug.Content, ColumnSlug.Left);
-export const contentRightSlug = fullSlug(RowSlug.Content, ColumnSlug.Right);
+export const contentLeftPath = layoutPath(RowSlug.Content, ColumnSlug.Left);
+export const contentRightPath = layoutPath(RowSlug.Content, ColumnSlug.Right);
 
 export const getPages = async (): Promise<Page[]> => {
     // There are Markdown (.md extension) files that we won't count.
@@ -146,7 +180,17 @@ const extractMeta = (frontmatterCode: string, page: Page): boolean => {
     return false;
 }
 
-// TODO: make sure to parse the components to the respected areas
+/**
+ * Parses the Astro web page into the components and its frontmatter code.
+ * 
+ * Supports:
+ *  - Component
+ *  - Element types.
+ * The pure text components in the web pages are not considered.
+ * @todo make sure to parse the components to the respected areas
+ * @param ast A RootNode of the Astro Web Page
+ * @returns Components and Frontmatter
+ */
 const extractComponents = (ast: RootNode): {componentNodes: (ComponentNode|ElementNode)[], frontmatterCode: string} => {
     const componentNodes: (ComponentNode|ElementNode)[] = [];
     let frontmatterCode: string = "";
@@ -174,6 +218,14 @@ const extractComponents = (ast: RootNode): {componentNodes: (ComponentNode|Eleme
     return {componentNodes, frontmatterCode};
 }
 
+
+
+/**
+ *  @todo To identify the RPCs by components, use a special Typescript parser
+ *  For now we rely on the component names
+ * @param globs 
+ * @returns 
+ */
 const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]> => {
     let pages: Page[] = [];
 
@@ -193,7 +245,6 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
             position: false, // defaults to `true`
         });
 
-
         const {frontmatterCode, componentNodes} = extractComponents(result.ast);
 
         if (frontmatterCode.length === 0) {
@@ -209,9 +260,14 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
             pages.push(page);
             continue;
         } 
+
+        const extracted = extractMeta(frontmatterCode, page);
+        if (!extracted) {
+            pages.push(page)
+            continue;
+        }
         
-        // TODO To identify the RPCs by components, use a special Typescript parser
-        // For now we rely on the component names
+
         if (page.rpcs === undefined) {
             page.rpcs = {};
         }
@@ -219,38 +275,37 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
             page.components = {};
         }
             
-            for (let componentNode of componentNodes) {
-                if (componentNode.name.indexOf("Extension") !== -1) {
-                    if (page.rpcs.extension === undefined) {
-                        page.rpcs.extension = [componentNode as ComponentNode]
-                    } else {
-                        page.rpcs.extension.push(componentNode as ComponentNode);
-                    }
-                } else if (componentNode.name.indexOf("Proxy") !== -1) {
-                    if (page.rpcs.proxy === undefined) {
-                        page.rpcs.proxy = [componentNode as ComponentNode]
-                    } else {
-                        page.rpcs.proxy.push(componentNode as ComponentNode);
-                    }
-                } else if (componentNode.name.indexOf("Independent") !== -1) {
-                    if (page.rpcs.independent === undefined) {
-                        page.rpcs.independent = [componentNode as ComponentNode]
-                    } else {
-                        page.rpcs.independent.push(componentNode as ComponentNode);
-                    }
+        for (let componentNode of componentNodes) {
+            if (componentNode.name.indexOf("Extension") !== -1) {
+                if (page.rpcs.extension === undefined) {
+                    page.rpcs.extension = [componentNode as ComponentNode]
                 } else {
-                    // It's neither of the RPCs? Then for now let's just add them into the Main Slot
-                    if (page.components.content === undefined) {
-                        page.components.content = {};
-                    }
-                    if (page.components.content.center === undefined) {
-                        page.components.content.center = [];
-                    }
-                    page.components.content.center.push(componentNode);
+                    page.rpcs.extension.push(componentNode as ComponentNode);
                 }
+            } else if (componentNode.name.indexOf("Proxy") !== -1) {
+                if (page.rpcs.proxy === undefined) {
+                    page.rpcs.proxy = [componentNode as ComponentNode]
+                } else {
+                    page.rpcs.proxy.push(componentNode as ComponentNode);
+                }
+            } else if (componentNode.name.indexOf("Independent") !== -1) {
+                if (page.rpcs.independent === undefined) {
+                    page.rpcs.independent = [componentNode as ComponentNode]
+                } else {
+                    page.rpcs.independent.push(componentNode as ComponentNode);
+                }
+            } else {
+                // It's neither of the RPCs? Then for now let's just add them into the Main Slot
+                if (page.components.content === undefined) {
+                    page.components.content = {};
+                }
+                if (page.components.content.center === undefined) {
+                    page.components.content.center = [];
+                }
+                page.components.content.center.push(componentNode);
+            }
         }
 
-        extractMeta(frontmatterCode, page);
         pages.push(page);
         
     }
@@ -259,18 +314,3 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
 }
 
 
-export type Page = {
-    title: string;
-    description: string;
-    fileName: string;
-    components?: {
-        [key in RowSlug]?: {    // Rows
-            // Columns
-            [key in ColumnSlug]?: (ComponentNode|ElementNode)[]
-        }
-    };
-    rpcs?: {
-        [key in RpcType]?: ComponentNode[]
-    }
-    glob: unknown;
-}

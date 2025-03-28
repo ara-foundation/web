@@ -10,9 +10,9 @@ import EmptyBodyLayout from "@layouts/EmptyBodyLayout.astro";
 import { 
 	RowSlug, 
 	ColumnSlug, 
-	fullSlug, 
-	contentLeftSlug, 
-	contentRightSlug, 
+	layoutPath, 
+	contentLeftPath, 
+	contentRightPath, 
 	type LayoutProps, 
 } from "@scripts/page";
 import SideNavigation, {type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
@@ -79,12 +79,12 @@ if (layoutProps?.footer?.columnClasses?.center === undefined) {
 	layoutProps.footer.columnClasses.center = "flex justify-center"
 }
 
-const headerLeftSlug = fullSlug(RowSlug.Header, ColumnSlug.Left);
-const headerCenterSlug = fullSlug(RowSlug.Header, ColumnSlug.Center);
-const headerRightSlug = fullSlug(RowSlug.Header, ColumnSlug.Right);
+const headerLeftSlug = layoutPath(RowSlug.Header, ColumnSlug.Left);
+const headerCenterSlug = layoutPath(RowSlug.Header, ColumnSlug.Center);
+const headerRightSlug = layoutPath(RowSlug.Header, ColumnSlug.Right);
 
-const footerCenterSlug = fullSlug(RowSlug.Footer, ColumnSlug.Center);
-const footerRightSlug = fullSlug(RowSlug.Footer, ColumnSlug.Right);
+const footerCenterSlug = layoutPath(RowSlug.Footer, ColumnSlug.Center);
+const footerRightSlug = layoutPath(RowSlug.Footer, ColumnSlug.Right);
 ---
 
 <EmptyBodyLayout rows={layoutProps} title={title}>
@@ -94,12 +94,12 @@ const footerRightSlug = fullSlug(RowSlug.Footer, ColumnSlug.Right);
 	<Login client:only slot={headerRightSlug} />
 
 	<!-- CONTENT -->
-	<SideNavigation subNavigation={sideNavigation && sideNavigation.subNavigation} selectedPath={sideNavigation && sideNavigation.selectedPath} slot={contentLeftSlug} />
+	<SideNavigation subNavigation={sideNavigation && sideNavigation.subNavigation} selectedPath={sideNavigation && sideNavigation.selectedPath} slot={contentLeftPath} />
 	<!-- anything after side navigation, to show on the left side -->
-	<slot name="content-left" slot={contentLeftSlug} />
+	<slot name="content-left" slot={contentLeftPath} />
 	
 	<slot slot="content-center" />
-	<slot name="content-right" slot={contentRightSlug} />
+	<slot name="content-right" slot={contentRightPath} />
 
 	<!-- FOOTER -->
 	{footerAction && 

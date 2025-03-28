@@ -8,7 +8,7 @@ import type { SideNavigationProps } from "@components/lungta/SideNavigation.astr
 import AraWebLayout, {type FooterAction} from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { ColumnSlug, fullSlug, RowSlug, type LayoutProps } from "@scripts/page";
+import { ColumnSlug, layoutPath, RowSlug, type LayoutProps } from "@scripts/page";
 
 const footerAction: FooterAction = {
     url: "/ara/sangha/post",
@@ -24,7 +24,7 @@ const layoutProps: LayoutProps = {
     },
 }
 
-const cancelSlug = fullSlug(RowSlug.Content, ColumnSlug.Right);
+const cancelSlug = layoutPath(RowSlug.Content, ColumnSlug.Right);
 
 const subNavigation: SubNavigation = {
     projectSlug: AraProjectSlug,

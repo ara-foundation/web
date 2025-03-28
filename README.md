@@ -67,6 +67,15 @@ The background is the same for all pages.
 All pages have the same classic web layout: `Header`, `Content`, `Footer`.
 Each layout also composed of three sections: `Left`, `Center`, `Right`.
 
+### Terminology
+
+* `slug` &ndash; indicates the unique path for the resource. Used for web pages and components within the page
+* `path` &ndash; combination of one or more slugs that defines the URL of the component within the page
+* `url` &ndash; indicates the Path of the web page
+* `layout` &ndash; a web page composed of the rows
+* `row` &ndash; a row of web components that is composed of the columns
+* `column` &ndash; a column of the web page where we store the web components
+
 **Read the below sections whenever you add a new component, page, action or RPC as a checklist**
 
 ### Page
