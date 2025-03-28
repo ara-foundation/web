@@ -11,10 +11,8 @@ function handleRedirect({url}: Props) {
 
     useEffect(() => {
         lib.authProvider.handleRedirect(url).then(() => {
-            console.log(`Set it as done`);
             setReady('done');
         }).catch((e) => {
-            console.log(`Set the error: ${e.toString()}`);
             setReady(e.toString());
         });
     });

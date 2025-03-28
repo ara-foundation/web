@@ -35,7 +35,6 @@ export const POST: APIRoute = async ({ request }) => {
     })
     .parse(await request.json());
 
-    console.log(process.env.REGISTRY_OWNER_PRIVATE_KEY!);
   const privateKey = process.env.REGISTRY_OWNER_PRIVATE_KEY! as Hex;
   if (!privateKey) {
     return new Response(
@@ -91,7 +90,6 @@ export const POST: APIRoute = async ({ request }) => {
   if (pendingPublicKeys.length === 0) {
     return Response.json({ hash: null });
   }
-  console.log(`updating ${pendingPublicKeys.length} public keys`);
   try {
     const hash = await publicKeyRegistry.write.setPublicKeysValid([
       pendingPublicKeys.map((publicKey) => ({
@@ -109,7 +107,6 @@ export const POST: APIRoute = async ({ request }) => {
         }
     );
   } catch (e: any) {
-    console.error(e);
     return new Response(
         JSON.stringify({message: "Failed to send transaction"}), {
           status: 500,

@@ -12,3 +12,7 @@ interface Props extends ExtensionType {}
     name="Alert"
     description="Show a popup"
 ></Extension>
+
+<script>
+    alert(`Alert RPC Extension is called: ${Astro.props.inputs.join(", ")}`)
+</script>

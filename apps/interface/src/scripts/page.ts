@@ -250,15 +250,6 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
                 }
         }
 
-        console.log(`The web page file: ${filePath}`);
-        console.log(`The script of the page (${frontmatterCode.length} characters length):`)
-        console.log(frontmatterCode);
-        console.log(`The page has ${componentNodes.length} components`)
-        for (const child of componentNodes) {
-            console.log(`Component Name = ${child.name}`)
-            console.log(`Component Attributes:`)
-            console.log(child.attributes)
-        }
 
         extractMeta(frontmatterCode, page);
         pages.push(page);

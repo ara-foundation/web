@@ -103,14 +103,12 @@ function ZKLogin() {
     extendSessionInner().catch((e) => {
       console.error(`Error in extending the service: ${e}`)
     }).finally(() => {
-      console.log(`Set extend start to 0`);
       setExtendSessionStart(null);
       setExtendingCountdown(null);
     });
   }
 
   async function extendSessionInner() {
-    console.log("extend session");
     assert(jwt, "no session");
 
     // TODO: remove this
