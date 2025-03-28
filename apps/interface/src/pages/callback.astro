@@ -1,8 +1,8 @@
 ---
-import Layout from "@layouts/Layout.astro"
+import AraWebLayout from "@layouts/AraWebLayout.astro"
 import HandleRedirect from "@components/auth/HandleRedirect"
 ---
 
-<Layout>
+<AraWebLayout title="Redirecting...">
     <HandleRedirect client:only url={Astro.url} />
-</Layout>
+</AraWebLayout>

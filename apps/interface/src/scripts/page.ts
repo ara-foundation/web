@@ -250,7 +250,6 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
                 }
         }
 
-
         extractMeta(frontmatterCode, page);
         pages.push(page);
         

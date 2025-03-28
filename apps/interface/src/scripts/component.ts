@@ -1,12 +1,12 @@
 // The component engine.
 // List of components and fetching them by a simple class. 
-import Breadcrumbs from "@components/Breadcrumbs.astro"     // .astro
 import GapContainer from "@components/auth/GapContainer";   // react typescript
 import AraContact from "@components/lungta/AraContact"      // react javascript
+import type { Props } from "astro";
                                                             // WARNING: Every time whenever a new extension added, 
                                                             // add support here.
 
-export type ElementType = typeof Breadcrumbs | typeof GapContainer | typeof AraContact;
+export type ElementType = ((_props: Props) => any) | typeof GapContainer | typeof AraContact;
 
 export const getComponents = (): Component[] => {
     const layoutGlobs = import.meta.glob('../layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
