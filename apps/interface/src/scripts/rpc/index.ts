@@ -30,18 +30,37 @@ export type RpcCall = {
     component?: ElementType
 }
 
-export const rpcs: (ExtensionType)[] = [
-    {
-        name: "Redirect",
-        description: "Redirect to the page. Accepts only one parameter which is the url to redirect to",
-        slug: "redirect",
-    },
-    {
-        name: "Alert",
-        description: "Makes an alert call",
-        slug: "alert"
-    }
-]
+export type InputDescriptions = {
+    inputDescriptions: {
+        type: string;   // Type of the Input
+        description: string; // Explain the input
+    }[]
+};
+
+export const getRpcs = (): (ExtensionType & InputDescriptions)[] => {
+    return [
+        {
+            name: "Redirect",
+            description: "Redirect to the page. Accepts only one parameter which is the url to redirect to",
+            slug: "redirect",
+            rpcType: RpcType.Extension,
+            inputDescriptions: [{
+                type: "string",
+                description: "The URL to redirect the user"
+            }]
+        },
+        {
+            name: "Alert",
+            description: "Makes an alert call",
+            slug: "alert",
+            rpcType: RpcType.Extension,
+            inputDescriptions: [{
+                type: "string",
+                description: "The data to show on the Alert popup. Will be converted into a string"
+            }]
+        }
+    ]
+}
 
 // Available RPCs
 export const rpcCalls: {[key in RpcType]?: {

@@ -4,27 +4,64 @@
  * @param {string} Title RPCs List
  * @param {string} Description List of all available RPCs
  */
-// A list of APIs to call from the Ara Web
-// 
-// Creating an RPC
-// There are three types of RPCs
-//  - proxy
-//  - extension
-//  - independent
-//
-// Some are included in the website, some are listed from the blockchain. Other RPCs could be remote servers outside of Ara.
-// Whenever you write an API, make it available for all by registering it in Ara Blockchain.
-// The RPCs provides an ABI. ABI for the apps could accept Resource and output another resource.
-//
-// For example:
-//  Name: redirect
-//  Type: extension
-//  ClientCode: {JS code}
-//  Definition: Redirects to another page
-//  Input: ["https://atomic.ara.foundation/classes/url"]
-// 
-// For example an RPC to use for "Create Community" action. 
-//  Input: [list of resources]
-//  Output: [list of new resources]
+import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import { AraProjectSlug, newAraWebNavigationNode, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
+import { getRpcs } from "@scripts/rpc";
+
+const rpcs = getRpcs();
+
+const araWebNavigation = newAraWebNavigationNode();
+
+// This page is the ara-web/page/get
+if (araWebNavigation.children) {
+    for (let child of araWebNavigation.children) {
+        if (child.props.slug === "rpc") {
+            child.children?.push(newRestNode(RestNavigationKey.get))
+            break;
+        }
+    }
+}
+
+const subNavigation: SubNavigation = {
+    projectSlug: AraProjectSlug,
+    lungta: LungtaTypes.Act,
+    element: araWebNavigation,
+}
+
+const sideNavigationProps: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: Astro.url.pathname,
+}
+
 ---
-<p>Todo</p>
+<AraWebLayout 
+    title="RPCs list"
+    sideNavigation={sideNavigationProps}
+>
+    <h2>RPCs list</h2>
+    <p>Below are the available RPCs. RPC is the programming terminology which means calling a sofrware function</p>
+    {rpcs.map((rpc) => (
+        <div class="card w-full bg-gray-200 card-sm shadow-sm my-4">
+            <div class="card-body relative">
+                <h2 class="card-title">
+                    {rpc.name}
+                </h2>
+                <p>{rpc.description}</p>
+                <div class={"absolute top-5 right-5 badge badge-secondary"}>{rpc.rpcType}</div>
+                <div class={"absolute bottom-5 right-5 badge badge-info"}>Slug: {rpc.slug}</div>
+                <div class="bg-gray-100 w-full p-4">
+                    <h3 class="text-gray-400">Inputs</h3>
+                    <ul class="mt-2">
+                        {rpc.inputDescriptions.map((input) => (
+                            <li>
+                               <code class="text-sm sm:text-base inline-flex text-left items-center space-x-4 bg-gray-800 text-white rounded-lg p-1">{input.type}</code> &ndash; {input.description} 
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    ))}
+</AraWebLayout>
