@@ -2,82 +2,66 @@
  * RPCs are stored in the scripts to avoid
  * collision with the Astro Framework's Actions.
  */
+import {
+    RpcType,
+    type RpcCallType,
+    type RPC
+} from "@scripts/rpc/types"
+import { 
+    RPCData as redirectData,
+    newRpcCall as redirectCall,
+ } from "@scripts/rpc/extensions/redirect"
+import { 
+    RPCData as alertData,
+    newRpcCall as alertCall,
+} from "@scripts/rpc/extensions/alert"
 
-import type { ElementType } from "@scripts/component";
-import RedirectComponent from "@components/rpc/extension/redirect.astro"
-import AlertComponent from "@components/rpc/extension/alert.astro"
+const CallComponentPath = "components/rpc/call.astro";
 
-export enum RpcType {
-    Extension = "extension",
-    Independent = "independent",
-    Proxy = "proxy"
-}
-
-export type ExtensionType = {
-    name?: string;  // for example redirect
-    description?: string; // for example: Redirects to another page
-    pageUrl?: string;   // The web page that called the extension
-    inputs?: any[];
-    slug?: string;
-    rpcType?: RpcType.Extension;
-}
-
-export type RpcCall = {
-    slug: string; // RPC Call
-    rpcType: RpcType,
-    inputs: any[],
-    outputs?: any[],
-    component?: ElementType
-}
-
-export type InputDescriptions = {
-    inputDescriptions: {
-        type: string;   // Type of the Input
-        description: string; // Explain the input
-    }[]
-};
-
-export const getRpcs = (): (ExtensionType & InputDescriptions)[] => {
+export const getRpcs = (): RPC[] => {
     return [
-        {
-            name: "Redirect",
-            description: "Redirect to the page. Accepts only one parameter which is the url to redirect to",
-            slug: "redirect",
-            rpcType: RpcType.Extension,
-            inputDescriptions: [{
-                type: "string",
-                description: "The URL to redirect the user"
-            }]
-        },
-        {
-            name: "Alert",
-            description: "Makes an alert call",
-            slug: "alert",
-            rpcType: RpcType.Extension,
-            inputDescriptions: [{
-                type: "string",
-                description: "The data to show on the Alert popup. Will be converted into a string"
-            }]
-        }
+        redirectData,
+        alertData,
     ]
 }
 
+export const rpcBySlug = (slug: string): RPC|undefined => {
+    const rpcs = getRpcs();
+    console.log(`Look for ${slug} extension in ${rpcs.length} rpcs`);
+    for (const rpc of rpcs) {
+        console.log(`RPC:`);
+        console.log(rpc)
+        if (rpc.slug === slug) {
+            return rpc;
+        }
+    }
+
+    return undefined;
+}
+
+export const isRpcComponent = (filePath: string): boolean => {
+    return (filePath.indexOf(CallComponentPath) > -1);
+}
+ 
+export const rpcByComponentFilePath = (filePath: string): RPC|undefined => {
+    const rpcs = getRpcs();
+    for (const rpc of rpcs) {
+        if (rpc.componentFilePath !== undefined && filePath.indexOf(rpc.componentFilePath) > -1) {
+            return rpc;
+        }
+    }
+
+    return undefined;
+}
+
 // Available RPCs
-export const rpcCalls: {[key in RpcType]?: {
-    [key: string]: RpcCall}
-} = {
-    extension: {
-        "redirect": {
-            slug: "redirect",
-            rpcType: RpcType.Extension,
-            inputs: [],
-            component: RedirectComponent as ElementType
-        },
-        "alert": {
-            slug: "alert",
-            rpcType: RpcType.Extension,
-            inputs: [],
-            component: AlertComponent as ElementType
+export const rpcCalls = (): {[key in RpcType]?: {
+    [key: string]: RpcCallType}
+} => { 
+    return {
+        extension: {
+            [redirectData.slug]: redirectCall(),
+            [alertData.slug]: alertCall(),
         }
     }
 };

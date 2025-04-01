@@ -10,7 +10,7 @@ import EmptyBodyLayout from "@layouts/EmptyBodyLayout.astro";
 import { 
 	RowSlug, 
 	ColumnSlug, 
-	layoutPath, 
+	slugsToLayoutPath, 
 	contentLeftPath, 
 	contentRightPath, 
 	type LayoutProps, 
@@ -79,12 +79,12 @@ if (layoutProps?.footer?.columnClasses?.center === undefined) {
 	layoutProps.footer.columnClasses.center = "flex justify-center"
 }
 
-const headerLeftSlug = layoutPath(RowSlug.Header, ColumnSlug.Left);
-const headerCenterSlug = layoutPath(RowSlug.Header, ColumnSlug.Center);
-const headerRightSlug = layoutPath(RowSlug.Header, ColumnSlug.Right);
+const headerLeftSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Left);
+const headerCenterSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Center);
+const headerRightSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Right);
 
-const footerCenterSlug = layoutPath(RowSlug.Footer, ColumnSlug.Center);
-const footerRightSlug = layoutPath(RowSlug.Footer, ColumnSlug.Right);
+const footerCenterSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Center);
+const footerRightSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Right);
 ---
 
 <EmptyBodyLayout rows={layoutProps} title={title}>

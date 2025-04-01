@@ -42,8 +42,11 @@ const sideNavigation: SideNavigationProps = {
 const pages = await getPages();
 ---
 
-<AraWebLayout sideNavigation={sideNavigation}>
-    <h1>List of Defined UI Components in Ara Web client</h1>
+<AraWebLayout 
+    title="List of Web Pages"
+    sideNavigation={sideNavigation}
+>
+    <h1>List of Ara Web Pages</h1>
     <ul class="mt-4 ml-10">
         {
             pages.map((page) => (
@@ -55,7 +58,7 @@ const pages = await getPages();
                     </h2>
                     <p>{page.description}</p>
                     <div class={"absolute top-5 right-5 badge badge-secondary"}>Built-in</div>
-                    <div class={"absolute bottom-5 right-5 badge badge-neutral"}>{page.fileName}</div>
+                    <div class={"absolute bottom-1 right-5 badge badge-neutral"}>{page.fileName}</div>
                         <div class="bg-gray-100 w-full">
                             <PageModel page={page} ></PageModel>
                         </div>

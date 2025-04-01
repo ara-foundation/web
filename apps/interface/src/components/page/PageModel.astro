@@ -3,7 +3,8 @@
  * The page model represents the page itself in the miniature way
  */
 import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
-import { ColumnSlug, layoutPath, RowSlug, type Page } from "@scripts/page";
+import { ColumnSlug, slugsToLayoutPath, RowSlug, type Page } from "@scripts/page";
+import { rpcBySlug } from "@scripts/rpc";
 
 interface Props {
   	rows?: RowsProps,
@@ -34,57 +35,57 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
 ---
 
 <BodyLayout rows={rows}>
-    <div class="text-gray-500" slot={layoutPath(RowSlug.Header,ColumnSlug.Left)}>
+    <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Left)}>
         {page?.components?.header?.left !== undefined && page.components.header.left.map((componentNode) => (
             <div class="">{componentNode.name}</div>
         ))}
         {page?.components?.header?.left === undefined && "Header Left"}
     </div>
-    <div class="text-gray-500 text-center" slot={layoutPath(RowSlug.Header,ColumnSlug.Center)}>
+    <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Center)}>
         {page?.components?.header?.center !== undefined && page.components.header.center.map((componentNode) => (
             <div class="" >{componentNode.name}</div>
         ))}
         {page?.components?.header?.center === undefined && "Header Center"}
     </div>
-    <div class="text-gray-500 text-center" slot={layoutPath(RowSlug.Header,ColumnSlug.Right)}>
+    <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Right)}>
         {page?.components?.header?.right !== undefined && page.components.header.right.map((componentNode) => (
             <div class="">{componentNode.name}</div>
         ))}
         {page?.components?.header?.right === undefined && "Header Right"}
     </div>
 
-    <div class="text-gray-500" slot={layoutPath(RowSlug.Content,ColumnSlug.Left)}>
+    <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Left)}>
         {page?.components?.content?.left !== undefined && page.components.content.left.map((componentNode) => (
             <div class="" >{componentNode.name}</div>
         ))}
         {page?.components?.content?.left === undefined && "Content Left"}
     </div>
-    <div class="text-gray-500 text-center text-xs" slot={layoutPath(RowSlug.Content,ColumnSlug.Center)}>
+    <div class="text-gray-500 text-center text-xs" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Center)}>
         {page?.components?.content?.center !== undefined && page.components.content.center.map((componentNode) => (
             <div class="" >{componentNode.name}</div>
         ))}
         {page?.components?.content?.center === undefined && "Content Center"}
     </div>
-    <div class="text-gray-500 text-center" slot={layoutPath(RowSlug.Content,ColumnSlug.Right)}>
+    <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Right)}>
         {page?.components?.content?.right !== undefined && page.components.content.right.map((componentNode) => (
             <div class="" >{componentNode.name}</div>
         ))}
         {page?.components?.content?.right === undefined && "Content Right"}
     </div>
 
-    <div class="text-gray-500" slot={layoutPath(RowSlug.Footer,ColumnSlug.Left)}>
+    <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Left)}>
         {page?.components?.footer?.left !== undefined && page.components.footer.left.map((componentNode) => (
             <div class="" >{componentNode.name}</div>
         ))}
         {page?.components?.footer?.left === undefined && "Footer Left"}
     </div>
-    <div class="text-gray-500 text-center" slot={layoutPath(RowSlug.Footer,ColumnSlug.Center)}>
+    <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Center)}>
         {page?.components?.footer?.center !== undefined && page.components.footer.center.map((componentNode) => (
             <div class="text-gray-100" >{componentNode.name}</div>
         ))}
         {page?.components?.footer?.center === undefined && "Footer Center"}
     </div>
-    <div class="text-gray-500 text-center" slot={layoutPath(RowSlug.Footer,ColumnSlug.Right)}>
+    <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Right)}>
         {page?.components?.footer?.right !== undefined && page.components.footer.right.map((componentNode) => (
             <div class="text-gray-100" >{componentNode.name}</div>
         ))}
@@ -96,24 +97,35 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
     <div class={"basis-1/3 "}>
         <ul >
             <li class="text-xs font-bold">Proxies</li>
-            {page?.rpcs?.proxy !== undefined && page.rpcs.proxy.map((componentNode) => (
-                <li>{componentNode.name}</li>
+            {page?.rpcs?.proxy !== undefined && page.rpcs.proxy.map((rpcCall) => (
+                <li>
+                    {rpcBySlug(rpcCall.slug)?.name} 
+                    (Inputs: {rpcCall.inputs.join(",")})
+                    (Outputs: {rpcCall.outputs?.join(",")})
+                </li>
             ))}
         </ul>
     </div>
     <div class={"basis-1/3 "}>
         <ul >
             <li><b>Independent</b></li>
-            {page?.rpcs?.independent !== undefined && page.rpcs.independent.map((componentNode) => (
-                <li>{componentNode.name}</li>
+            {page?.rpcs?.independent !== undefined && page.rpcs.independent.map((rpcCall) => (
+                <li class="text-xs">
+                    {rpcBySlug(rpcCall.slug)?.name} 
+                    (Inputs: {rpcCall.inputs.join(",")})
+                    (Outputs: {rpcCall.outputs?.join(",")})
+                </li>
             ))}
         </ul>
     </div>
     <div class={"basis-1/3 "}>
         <ul >
             <li class="text-sm font-bold">Extensions</li>
-            {page?.rpcs?.extension !== undefined && page.rpcs.extension.map((componentNode) => (
-                <li>{componentNode.name}</li>
+            {page?.rpcs?.extension !== undefined && page.rpcs.extension.map((rpcCall) => (
+                <li class="text-xs">
+                    {rpcBySlug(rpcCall.slug)?.name}<br/>
+                    <span class="ml-2 text-sm">Inputs: {rpcCall.inputs.join(",")}</span>
+                </li>
             ))}
         </ul>
     </div>

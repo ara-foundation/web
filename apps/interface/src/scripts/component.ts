@@ -3,58 +3,11 @@
 import GapContainer from "@components/auth/GapContainer";   // react typescript
 import AraContact from "@components/lungta/AraContact"      // react javascript
 import type { Props } from "astro";
+import { globsToFileContents, type FileContent } from "@scripts/reflect/fileLevel";
                                                             // WARNING: Every time whenever a new extension added, 
                                                             // add support here.
 
 export type ElementType = ((_props: Props) => any) | typeof GapContainer | typeof AraContact;
-
-export const getComponents = (): Component[] => {
-    const layoutGlobs = import.meta.glob('../layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
-    const componentGlobs = import.meta.glob('../components/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
-
-    let components: Component[] = [];
-    components.push(...componentGlobToComponent(componentGlobs));
-    components.push(...componentGlobToComponent(layoutGlobs));
-
-    return components;
-}
-
-const componentGlobToComponent = (globs: Record<string, unknown>): Component[] => {
-    let components: Component[] = [];
-
-    for (let componentPath in globs) {
-        const component: Component = {
-            label: "",
-            description: "",
-            fileName: "",
-            category: componentCategories[0],
-            glob: globs[componentPath],
-        }
-
-        for (const componentCategory of componentCategories) {
-            const indexOf = componentPath.indexOf(componentCategory.slug)
-            if (indexOf === -1) {
-                continue;
-            }
-
-            const fileName = componentPath.substring(indexOf + componentCategory.slug.length)
-            component.category = componentCategory;
-            component.fileName = fileName;
-            components.push(component);
-            break;
-        }
-    }
-
-    return components;
-}
-
-
-// The first slug is Category, the second is component
-export const extensionToComponentSlugs = (): string[] => {
-    const slugs: string[] = [];
-
-    return slugs;
-}
 
 export type ComponentCategory = {
     name: string;
@@ -104,3 +57,62 @@ export type Component = {
     fileName: string;
     glob: unknown,
 }
+
+type JsxDev = {
+    fileName: string,
+    lineNumber: number,
+    columnNumber: number,
+}
+
+export const getComponents = async (): Promise<Component[]> => {
+    let globs = import.meta.glob('@layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
+    let globItems = import.meta.glob('@components/**/*.{astro,tsx,jsx}', {eager: true})
+    globs = {...globs, ...globItems};
+
+    const fileContents = await globsToFileContents(globs);
+    let components: Component[] = fileContentContentsToComponents(fileContents);
+
+    return components;
+}
+
+const fileContentContentsToComponents = (fileContents: FileContent[]): Component[] => {
+    let components: Component[] = [];
+
+    for (let fileContent of fileContents) {
+        if (fileContent.error) {
+            console.error(`File Error(${fileContent.filePath}): ${fileContent.error}`)
+            continue;
+        }
+        const component: Component = {
+            label: "",
+            description: "",
+            fileName: "",
+            category: componentCategories[0],
+            glob: fileContent.glob,
+        }
+
+        for (const componentCategory of componentCategories) {
+            const indexOf = fileContent.filePath.indexOf(componentCategory.slug)
+            if (indexOf === -1) {
+                continue;
+            }
+
+            const fileName = fileContent.filePath.substring(indexOf + componentCategory.slug.length)
+            component.category = componentCategory;
+            component.fileName = fileName;
+            components.push(component);
+            break;
+        }
+    }
+
+    return components;
+}
+
+
+// The first slug is Category, the second is component
+export const extensionToComponentSlugs = (): string[] => {
+    const slugs: string[] = [];
+
+    return slugs;
+}
+

@@ -4,10 +4,14 @@
  * @param {string} Title Ara Web Actions
  * @param {string} Description Customize or browse all available Actions in Ara Web
  */
-import RedirectExtension from "@components/rpc/extension/redirect.astro"
+import { newRpcCall, type RpcCallType } from "@scripts/rpc/extensions/redirect"
+import Call from "@components/rpc/call.astro";
 
+let rpcCall: RpcCallType = newRpcCall();
 const redirectUrl = "/ara/act/ara-web/action/get"
-const inputs: [string] = [redirectUrl]
+rpcCall.inputs = [redirectUrl]
+rpcCall = {...rpcCall, inputs: [redirectUrl]}
+
 ---
 
-<RedirectExtension inputs={inputs}></RedirectExtension>
+<Call rpcCall={rpcCall} />

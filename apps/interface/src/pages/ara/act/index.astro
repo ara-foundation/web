@@ -4,10 +4,13 @@
  * @param {string} Title Ara ACT
  * @param {string} Description All development goes here
  */
-import RedirectExtension from "@components/rpc/extension/redirect.astro"
+import { newRpcCall } from "@scripts/rpc/extensions/redirect"
+import Call from "@components/rpc/call.astro";
 
+const rpcCall = newRpcCall();
 const redirectUrl = "/ara/act/ara-web"
-const inputs: [string] = [redirectUrl]
+rpcCall.inputs = [redirectUrl]
+
 ---
 
-<RedirectExtension inputs={inputs}></RedirectExtension>
+<Call rpcCall={rpcCall} />

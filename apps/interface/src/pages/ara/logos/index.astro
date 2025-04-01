@@ -4,10 +4,13 @@
  * @param {string} Title Ara Logos
  * @param {string} Description All data that everyone agree or must be agreed on.
  */
-import RedirectExtension from "@components/rpc/extension/redirect.astro"
+import { newRpcCall } from "@scripts/rpc/extensions/redirect"
+import Call from "@components/rpc/call.astro";
 
+const rpcCall = newRpcCall();
 const redirectUrl = "/ara/logos/resource"
-const inputs: [string] = [redirectUrl]
+rpcCall.inputs = [redirectUrl]
+
 ---
 
-<RedirectExtension inputs={inputs}></RedirectExtension>
+<Call rpcCall={rpcCall} />

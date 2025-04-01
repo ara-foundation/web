@@ -1,8 +1,10 @@
-import { parse, transform } from "@astrojs/compiler";
-import type { ComponentNode, ElementNode, RootNode } from "@astrojs/compiler/types";
-import { readFile } from "node:fs/promises"
+import { parse, transform, type TransformResult } from "@astrojs/compiler";
+import type { ComponentNode, ElementNode } from "@astrojs/compiler/types";
 import { parse as commentParse} from "comment-parser";
-import type { RpcType } from "@scripts/rpc";
+import { RpcType, type RpcCallType } from "@scripts/rpc/types"
+import { globsToFileContents, PathType, type FileContent, type NodeType } from "@scripts/reflect/fileLevel"
+import { ComponentIdentity, Code } from "./reflect/codeLevel";
+
 
 /**
  * RowSlug defines the types of the Rows in the page layout
@@ -12,6 +14,7 @@ export enum RowSlug {
     Content = "content",
     Footer = "footer",
 }
+
 /**
  * ColumnSlug defines the types of Columns in the page rows
  */
@@ -36,6 +39,11 @@ export type RowProps = {
     }
 }
 
+export type LayoutSlugs = {
+    row?: RowSlug,
+    column: ColumnSlug,
+}
+
 /**
  * A web page as a JSON-AD object
  */
@@ -46,11 +54,11 @@ export type Page = {
     components?: {
         [key in RowSlug]?: {    // Rows
             // Columns
-            [key in ColumnSlug]?: (ComponentNode|ElementNode)[]
+            [key in ColumnSlug]?: (NodeType)[]
         }
     };
     rpcs?: {
-        [key in RpcType]?: ComponentNode[]
+        [key in RpcType]?: RpcCallType[]
     }
     glob: unknown;
 }
@@ -66,19 +74,18 @@ export type LayoutProps = {[key in RowSlug]?: RowProps}
  * @param column Column
  * @returns {string} is the path
  */
-export const layoutPath = (row: RowSlug, column: ColumnSlug): string => {
+export const slugsToLayoutPath = (row: RowSlug, column: ColumnSlug): string => {
     return `${row}-${column}`
 }
 
-export const contentLeftPath = layoutPath(RowSlug.Content, ColumnSlug.Left);
-export const contentRightPath = layoutPath(RowSlug.Content, ColumnSlug.Right);
+export const contentLeftPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Left);
+export const contentRightPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 export const getPages = async (): Promise<Page[]> => {
-    // There are Markdown (.md extension) files that we won't count.
-    // There are other pages that we won't count for now.
-    const araPagesGlobs = import.meta.glob(`../pages/ara/**/*.astro`, { eager: true })
+    const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
+    const fileContents = await globsToFileContents(globs);
 
-    return await pageGlobsToPages(araPagesGlobs);
+    return await fileContentsToPages(fileContents);
 }
 
 /**
@@ -181,44 +188,142 @@ const extractMeta = (frontmatterCode: string, page: Page): boolean => {
 }
 
 /**
- * Parses the Astro web page into the components and its frontmatter code.
- * 
- * Supports:
- *  - Component
- *  - Element types.
- * The pure text components in the web pages are not considered.
- * @todo make sure to parse the components to the respected areas
- * @param ast A RootNode of the Astro Web Page
- * @returns Components and Frontmatter
+ * Convert the Astro to the typescript so that we can use the Typescript AST manipulator to detect all components
+ * @param fileName a full path to the file name that ends with .astro extension
+ * @param astroSource a content of the file
+ * @returns {TransformResult}
  */
-const extractComponents = (ast: RootNode): {componentNodes: (ComponentNode|ElementNode)[], frontmatterCode: string} => {
-    const componentNodes: (ComponentNode|ElementNode)[] = [];
-    let frontmatterCode: string = "";
+const astroToTs = async(fileName: string, astroSource: string): Promise<TransformResult> => {
+    const result = await transform(astroSource, {
+        filename: fileName,
+        sourcemap: "both",
+        internalURL: "astro/runtime/server/index.js",
+    });
 
-    for (let i = 0; i < ast.children.length; i++) {
-        const child = ast.children[i];
-        if (child.type === "text") {
-            continue;
-        }
+    return result;
+}
 
-        if (child.type === "frontmatter") {
-            frontmatterCode = child.value;
-        }
-        else if (child.type === "component") {
-            componentNodes.push(child)
-        } else if (child.type === "element") {
-            componentNodes.push(child);
-        } else {
-            console.log(`The page has ${child.type} node`)
-            console.log(`Its data:`)
-            console.log(child)
+/**
+ * Validates the file content to be a page.
+ * The pages are for example only .astro files that has frontmatter and at least a one component.
+ * @param {FileContent} fileContent the parsed file
+ * @returns {Page}
+ */
+const validatedFileContentToPage = (fileContent: FileContent): {page: Page, error: boolean} => {
+    const page: Page = {
+        title: "Warning: Undefined",
+        description: "Not yet set",
+        fileName: fileContent.filePath.substring(fileContent.filePath.lastIndexOf("/src/pages") + "/src/pages".length),
+        glob: fileContent.glob,
+    }
+
+    if (fileContent.error !== undefined) {
+        page.title = "Error: File Content Not Parsed",
+        page.description = fileContent.error;
+        return {page, error: true};
+    }
+
+    if (fileContent.type !== PathType.Astro) {
+        page.title = "Warning: Unsupported page"
+        page.description = "Only astro files should be in the pages"
+        return {page, error: true};
+    }
+    if (fileContent.source === undefined) {
+        page.title = "Error: Missing the scripting part of the page",
+        page.description = "Missing the frontmatter in the page source code"
+        return {page, error: true};
+    }
+
+    if (fileContent.nodes === undefined) {
+        page.title = "Error: Missing any component"
+        page.description = "Missing any component in the web page"
+        return {page, error: true};
+    }
+
+    return {page, error: false};
+}
+
+/**
+ * Detect's the Component's layout within the page.
+ * If no component layout was given then it's considered to be at the default layout: content-center
+ * @param node
+ * @param {Code} astSource if attribute value is an expression, then find its value through traversing in the AST
+ */
+const detectComponentLayoutSlug = async (node: NodeType, astSource: Code): Promise<{error?: string, data?: LayoutSlugs}> => {
+    const data: LayoutSlugs = {column: ColumnSlug.Center}
+    const columnSlugs = Object.values(ColumnSlug).filter(value => typeof value === 'string') as string[];
+    const rowSlugs = Object.values(RowSlug).filter(value => typeof value === 'string') as string[];
+
+    const attr = astSource.attributeByName(node.attributes, "slot")
+    if (attr === undefined) {
+        data.row = RowSlug.Content;
+        data.column = ColumnSlug.Center;
+        return {
+            data
         }
     }
 
-    return {componentNodes, frontmatterCode};
+    const slotAttr = await astSource.identifyAttribute<string>(attr);
+    if (slotAttr.error) {
+        return {
+            error: `IdentifyAttributeError: ${slotAttr.error}`
+        }
+    }
+    if (slotAttr.data === undefined || slotAttr.data.length === 0) {
+        data.row = RowSlug.Content;
+        data.column = ColumnSlug.Center;
+        return {
+            data
+        }
+    }
+
+    let slugs: string[] = slotAttr.data.split("-");
+
+    if (slugs.length === 1) {
+        if (columnSlugs.indexOf(slugs[0]) > -1) {
+            data.column = slugs[0] as ColumnSlug
+        }
+    } else if (slugs.length === 2) {
+        if (columnSlugs.indexOf(slugs[1]) > -1) {
+            data.column = slugs[1] as ColumnSlug
+        
+            if (rowSlugs.indexOf(slugs[0]) > -1) {
+                data.row = slugs[0] as RowSlug
+            }
+        }
+    }
+    
+    return {data};
 }
 
+/**
+ * Add the component into the page at the layout
+ * @param node The component to add
+ * @param page The page itself
+ * @param layoutSlugs The layout to pass the page
+ * @returns {boolean} was it successful?
+ */
+const pushComponentAtLayoutSlugs = (node: NodeType, page: Page, layoutSlugs: LayoutSlugs): boolean => {
+    if (page.components === undefined) {
+        page.components = {};
+    }
 
+    if (layoutSlugs.row === undefined) {
+        return false;
+    }
+
+    if (page.components[layoutSlugs.row!] === undefined) {
+        page.components[layoutSlugs.row!] = {};
+    }
+
+    if (page.components[layoutSlugs.row!]![layoutSlugs.column] === undefined) {
+        page.components[layoutSlugs.row]![layoutSlugs.column] = [];
+    }
+
+    page.components[layoutSlugs.row!]![layoutSlugs.column]?.push(node);
+
+    return true;
+}
 
 /**
  *  @todo To identify the RPCs by components, use a special Typescript parser
@@ -226,47 +331,29 @@ const extractComponents = (ast: RootNode): {componentNodes: (ComponentNode|Eleme
  * @param globs 
  * @returns 
  */
-const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]> => {
+const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]> => {
     let pages: Page[] = [];
 
-    for (let glob in globs) {
-        const filePath = (globs[glob]).file as string;
-        const astroSourceBuffer = await readFile(filePath);
-        const astroSource = astroSourceBuffer.toString();
+    console.log(`TODO: Make sure that the page keeps the srcipts/component.ts=>Component instead using the Astro's Component value`);
 
-        const page: Page = {
-            title: "Error: Undefined",
-            description: "Not yet set",
-            fileName: filePath.substring(filePath.lastIndexOf("/src/pages") + "/src/pages".length),
-            glob: globs[glob],
+    let i = 0;
+
+    for (let fileContent of fileContents) {
+        if (i++ === 3) {
+            break;
+        } else if (i < 3) {
+            continue;
+        }
+        const {page, error} = validatedFileContentToPage(fileContent); 
+        if (error) {
+            pages.push(page);
+            continue;
         }
         
-        const result = await parse(astroSource, {
-            position: false, // defaults to `true`
-        });
-
-        const {frontmatterCode, componentNodes} = extractComponents(result.ast);
-
-        if (frontmatterCode.length === 0) {
-            page.title = "Error: Invalid Page",
-            page.description = "Missing the frontmatter in the page source code"
-            pages.push(page);
-            continue;
-        }
-
-        if (componentNodes.length === 0) {
-            page.title = "Error: Invalid Components"
-            page.description = "Missing any component in the web page"
-            pages.push(page);
-            continue;
-        } 
-
-        const extracted = extractMeta(frontmatterCode, page);
-        if (!extracted) {
+        if (!extractMeta(fileContent.source!, page)) {
             pages.push(page)
             continue;
         }
-        
 
         if (page.rpcs === undefined) {
             page.rpcs = {};
@@ -274,35 +361,89 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
         if (page.components === undefined) {
             page.components = {};
         }
+
+        const pageCode = new Code(fileContent.source!);
+
+        for (let componentNode of fileContent.nodes!) {
+            const layoutSlugs = await detectComponentLayoutSlug(componentNode, pageCode);
+            if (layoutSlugs.error !== undefined) {
+                page.title = `Can't detect the component layout for ${componentNode.name}`
+                page.description = `detectComponentLayoutSlug: ${layoutSlugs.error}`
+                pages.push(page)
+                continue;
+            } else if (layoutSlugs.data === undefined) {
+                page.title = `Stupid Medet, no error, no data?`
+                page.description = `Ask him to debug it, 
+                    and he will delegate to some intern that he doesn't like so that intern will be fired by himself`
+                pages.push(page);
+                continue;
+            }
             
-        for (let componentNode of componentNodes) {
-            if (componentNode.name.indexOf("Extension") !== -1) {
-                if (page.rpcs.extension === undefined) {
-                    page.rpcs.extension = [componentNode as ComponentNode]
-                } else {
-                    page.rpcs.extension.push(componentNode as ComponentNode);
+            const {id: componentRole, data: componentData, error} = await pageCode.identifyComponent(componentNode)
+            if (error !== undefined) {
+                page.title = `Error while identifying ${componentNode.name} component`
+                page.description = error;
+                pages.push(page);
+                continue;
+            }
+            // Let's detect the ComponentType
+            if (componentRole === ComponentIdentity.Undeclared) {
+                page.title = `Undefined component '${componentNode.name}'`
+                page.description = "The unsupported component"
+                pages.push(page);
+                continue;
+            } else if (componentRole === ComponentIdentity.Component) {
+                console.log(`TODO: page.fileContentsToPages ComponentIdentity, add support of Component`);
+                const pushed = pushComponentAtLayoutSlugs(componentData! as NodeType, page, layoutSlugs.data!);
+                if (!pushed) {
+                    page.title = "Undefined component path"
+                    page.description = `Unable to determine the layout of ${(componentData! as NodeType).name} in the page`
+                    pages.push(page);
+                    continue;
                 }
-            } else if (componentNode.name.indexOf("Proxy") !== -1) {
-                if (page.rpcs.proxy === undefined) {
-                    page.rpcs.proxy = [componentNode as ComponentNode]
-                } else {
-                    page.rpcs.proxy.push(componentNode as ComponentNode);
+            } else if (componentRole === ComponentIdentity.Rpc) {
+                if (page.rpcs === undefined) {
+                    page.rpcs = {};
                 }
-            } else if (componentNode.name.indexOf("Independent") !== -1) {
-                if (page.rpcs.independent === undefined) {
-                    page.rpcs.independent = [componentNode as ComponentNode]
-                } else {
-                    page.rpcs.independent.push(componentNode as ComponentNode);
+                if ((componentData as RpcCallType).rpcType === RpcType.Extension) {
+                    if (page.rpcs.extension === undefined) {
+                        page.rpcs.extension = [];
+                    }
+                    page.rpcs.extension.push(componentData)
+                } else if ((componentData as RpcCallType).rpcType === RpcType.Independent) {
+                    if (page.rpcs.independent === undefined) {
+                        page.rpcs.independent = [];
+                    }
+                    page.rpcs.independent.push(componentData)
+                } else if ((componentData as RpcCallType).rpcType === RpcType.Proxy) {
+                    if (page.rpcs.proxy === undefined) {
+                        page.rpcs.proxy = [];
+                    }
+                    page.rpcs.proxy.push(componentData)
                 }
+            } else if (componentRole === ComponentIdentity.Layout) {
+                if (componentNode.name === "AraWebLayout") {
+                    for (const child of componentNode.children) {
+                        if (child.type !== "component" && child.type !== "element") {
+                            continue;
+                        }
+                        // console.log(`The AraWebLayout ${child.type} kid attrs:`)
+                        // The attribute.name="slot"
+                        // The attribute.value = "slug"
+                        // console.log(child.attributes);
+                        const childLayoutPath = detectComponentLayoutSlug(child, pageCode)
+                        // console.log(`${componentNode.name} child's layout path: ${childLayoutPath?.row}-${childLayoutPath?.column}`)
+                        // console.log(`----------------------------`)
+                    }
+                }
+
+                console.log(`Layouts are not supported yet`);
+                page.title = "Layouts are not yet addable"
+                page.description = `Unable to determine the layout of ${(componentData! as NodeType).name} in the page`
+                pages.push(page);
+                continue;
             } else {
-                // It's neither of the RPCs? Then for now let's just add them into the Main Slot
-                if (page.components.content === undefined) {
-                    page.components.content = {};
-                }
-                if (page.components.content.center === undefined) {
-                    page.components.content.center = [];
-                }
-                page.components.content.center.push(componentNode);
+                console.log(`Component ${componentNode.name} was not identified`);
             }
         }
 
@@ -312,5 +453,3 @@ const pageGlobsToPages = async (globs: Record<string, unknown>): Promise<Page[]>
 
     return pages;
 }
-
-

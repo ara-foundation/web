@@ -76,6 +76,10 @@ Each layout also composed of three sections: `Left`, `Center`, `Right`.
 * `row` &ndash; a row of web components that is composed of the columns
 * `column` &ndash; a column of the web page where we store the web components
 
+---
+Web Components
+* `component` &ndash; 
+
 **Read the below sections whenever you add a new component, page, action or RPC as a checklist**
 
 ### Page
@@ -90,9 +94,33 @@ The comment must have three parameters:
 To make the components available, make sure that their `props` are always optional.
 As the components list page won't pass any property during a rendering.
 
+Also, update the component types in the `src/scripts/component.ts` to make sure list of components would detect it.
+
 ### RPCs
-In order to create the RPC, create a component that extends the RPC but overrides the Inputs, Outputs
-for the expected data types.
+
+#### Creating in Ara Web
+In order to create the RPC, create a new rpc script that defines RPC Types from `src/scripts/rpc/types.ts`.
+
+Then, add it to the `src/scripts/rpc/index.ts` list.
+
+> Todo: define what it calls and how it calls.
+> For example, how to describe that redirect function is somewhere in the code.
+> Or maybe to write a script and allow users to edit it, for example calling it as public_scripts.ts
+
+#### Using the RPC
+In order to use the RPC, we need to call it by passing inputs and optionally printing the outputs.
+The pages can declare that they use extensions by importing the `src/components/rpc/call.astro` component.
+The **Call** component receives the `src/scripts/rpc/types.ts>type RpcCallType` parameters as the component properties.
+Simply pass them.
+
+There are already predefined rpc calls defined as `type RpcCallType`. They are available in `src/scripts/rpc=>rpcBySlug(slug:string)`.
+
+### Scripts
+The scripts within the Ara Web are located in the `src/scripts` directory.
+Currently only typescript scripts are supported.
+
+#### Checklist to add new script
+If you are adding a new script other than Typescript, update the `src/scripts/reflect/script.ts` to support new extension.
 
 ---
 

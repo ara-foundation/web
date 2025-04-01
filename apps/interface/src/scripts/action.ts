@@ -4,7 +4,8 @@
 
 import type { ElementType } from "@scripts/component";
 import { ColumnSlug, RowSlug } from "@scripts/page";
-import { type RpcCall, rpcCalls } from "@scripts/rpc";
+import { rpcCalls } from "@scripts/rpc";
+import { type RpcCallType } from "@scripts/rpc/types";
 
 export type Button = {
     label?: string;    // For example: 'Create Community'
@@ -29,7 +30,7 @@ export type LayoutPath = {
  */
 export type Trigger = {
     view: Button | Link; // Button as a trigger
-    onClick?: RpcCall[];   // If `Trigger.view` is Button, for link its not necessary
+    onClick?: RpcCallType[];   // If `Trigger.view` is Button, for link its not necessary
     layout: LayoutPath;
     fix?: boolean;  // Fix the button or not?
     pages?: string[]    // Page paths that will show the action, if not given then probably its mixed with the page already
@@ -48,7 +49,7 @@ export type Action = {
     trigger: Trigger;
     flow: PageWithAction[];
     nonPageComponents?: ElementType[];  // Modals for example to put outside of the web page itself
-    onSuccess: RpcCall[]
+    onSuccess: RpcCallType[]
 }
 
 /**
@@ -58,22 +59,22 @@ export type Action = {
 const createCommunityButton: Button = {
     label: "Create Community",
 };
-const createCommunityClick: RpcCall[] = [
+const createCommunityClick: RpcCallType[] = [
     {
-        ...rpcCalls.extension!["redirect"],
+        ...rpcCalls().extension!["redirect"],
         inputs: ["/ara/logos/post"]
     }
 ]
-const createCommunitySuccess: RpcCall[] = [
+const createCommunitySuccess: RpcCallType[] = [
     {
-        ...rpcCalls.extension!["redirect"],
+        ...rpcCalls().extension!["redirect"],
         inputs: ["/ara/logos/community"]
     }
 ]
 
-const createCommunityEnd: RpcCall[] = [
+const createCommunityEnd: RpcCallType[] = [
     {
-        ...rpcCalls.extension!["alert"],
+        ...rpcCalls().extension!["alert"],
     }
 ]
 

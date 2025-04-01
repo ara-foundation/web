@@ -10,7 +10,7 @@ import {faCrown, faPenRuler, faPen, faGlobe} from "@fortawesome/free-solid-svg-i
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import DoneModal from "@components/lungta/DoneModal.astro"
 import ThankYou from "@components/lungta/ThankYou"
-import {type LayoutProps, layoutPath, RowSlug, ColumnSlug} from "@scripts/page"
+import {type LayoutProps, slugsToLayoutPath, RowSlug, ColumnSlug} from "@scripts/page"
 import { type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
@@ -51,7 +51,7 @@ const layoutProps: LayoutProps = {
     },
 }
 
-const cancelSlug = layoutPath(RowSlug.Content, ColumnSlug.Right);
+const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 const subNavigation: SubNavigation = {
     projectSlug: AraProjectSlug,
@@ -129,7 +129,7 @@ const sideNavigationProps: SideNavigationProps = {
             <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
         </div>
     </section>
-    <section slot={cancelSlug}>
+    <section slot={"center-" + cancelSlug}>
         <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
         <a href="/ara/logos/post" class="btn btn-outline btn-neutral w-full mb-4">Back to Project</a>
         <a href="/ara/maydone/post" class="btn btn-outline btn-neutral w-full">Back to Budget</a>

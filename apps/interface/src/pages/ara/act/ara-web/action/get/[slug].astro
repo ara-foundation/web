@@ -6,14 +6,14 @@
  */
 import { getActions, getActionBySlug } from "@scripts/action";
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { ColumnSlug, layoutPath, RowSlug } from "@scripts/page";
+import { ColumnSlug, slugsToLayoutPath, RowSlug } from "@scripts/page";
 import ActionTrigger from "@components/action/ActionTrigger.astro";
 import ActionPage from "@components/action/ActionPage.astro";
 import { AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 
-const cancelSlug = layoutPath(RowSlug.Content, ColumnSlug.Right);
+const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 type DynamicParam = {
     params: {
