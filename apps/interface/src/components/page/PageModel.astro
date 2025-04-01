@@ -99,9 +99,9 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
             <li class="text-xs font-bold">Proxies</li>
             {page?.rpcs?.proxy !== undefined && page.rpcs.proxy.map((rpcCall) => (
                 <li>
-                    {rpcBySlug(rpcCall.slug)?.name} 
-                    (Inputs: {rpcCall.inputs.join(",")})
-                    (Outputs: {rpcCall.outputs?.join(",")})
+                    <a class="link" href={"/ara/act/ara-web/rpc/get/" + rpcCall.slug}>{rpcBySlug(rpcCall.slug)?.name}</a><br/>
+                    <span class="ml-2 text-sm">Inputs: {rpcCall.inputs.join(",")}</span>
+                    <span class="ml-2 text-sm">Outputs: {rpcCall.outputs?.join(",")}</span>
                 </li>
             ))}
         </ul>
@@ -111,9 +111,9 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
             <li><b>Independent</b></li>
             {page?.rpcs?.independent !== undefined && page.rpcs.independent.map((rpcCall) => (
                 <li class="text-xs">
-                    {rpcBySlug(rpcCall.slug)?.name} 
-                    (Inputs: {rpcCall.inputs.join(",")})
-                    (Outputs: {rpcCall.outputs?.join(",")})
+                    <a class="link" href={"/ara/act/ara-web/rpc/get/" + rpcCall.slug}>{rpcBySlug(rpcCall.slug)?.name}</a><br/>
+                    <span class="ml-2 text-sm">Inputs: {rpcCall.inputs.join(",")}</span>
+                    <span class="ml-2 text-sm">Outputs: {rpcCall.outputs?.join(",")}</span>
                 </li>
             ))}
         </ul>
@@ -123,7 +123,7 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
             <li class="text-sm font-bold">Extensions</li>
             {page?.rpcs?.extension !== undefined && page.rpcs.extension.map((rpcCall) => (
                 <li class="text-xs">
-                    {rpcBySlug(rpcCall.slug)?.name}<br/>
+                    <a class="link" href={"/ara/act/ara-web/rpc/get/" + rpcCall.slug}>{rpcBySlug(rpcCall.slug)?.name}</a><br/>
                     <span class="ml-2 text-sm">Inputs: {rpcCall.inputs.join(",")}</span>
                 </li>
             ))}

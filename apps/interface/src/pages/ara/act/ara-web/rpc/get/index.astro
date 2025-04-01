@@ -9,6 +9,7 @@ import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newAraWebNavigationNode, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
 import { getRpcs } from "@scripts/rpc";
+import RpcCard from "@components/rpc/rpcCard.astro"
 
 const rpcs = getRpcs();
 
@@ -43,25 +44,10 @@ const sideNavigationProps: SideNavigationProps = {
     <h2>RPCs list</h2>
     <p>Below are the available RPCs. RPC is the programming terminology which means calling a sofrware function</p>
     {rpcs.map((rpc) => (
-        <div class="card w-full bg-gray-200 card-sm shadow-sm my-4">
-            <div class="card-body relative">
-                <h2 class="card-title">
-                    {rpc.name}
-                </h2>
-                <p>{rpc.description}</p>
-                <div class={"absolute top-5 right-5 badge badge-secondary"}>{rpc.rpcType}</div>
-                <div class={"absolute bottom-5 right-5 badge badge-info"}>Slug: {rpc.slug}</div>
-                <div class="bg-gray-100 w-full p-4">
-                    <h3 class="text-gray-400">Inputs</h3>
-                    <ul class="mt-2">
-                        {rpc.inputDescriptions.map((input) => (
-                            <li>
-                               <code class="text-sm sm:text-base inline-flex text-left items-center space-x-4 bg-gray-800 text-white rounded-lg p-1">{input.type}</code> &ndash; {input.description} 
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </div>
+        <RpcCard rpc={rpc}>
+            <a
+            class="btn btn-secondary" 
+            href={sideNavigationProps.selectedPath + "/" + rpc.slug}>Details</a>
+        </RpcCard>
     ))}
 </AraWebLayout>

@@ -1,0 +1,99 @@
+---
+/**
+ * @this Page
+ * @param {string} Title A specific action page
+ * @param {string} Description A page with the details of the action
+ */
+import AraWebLayout from "@layouts/AraWebLayout.astro"
+import { ColumnSlug, slugsToLayoutPath, RowSlug } from "@scripts/page";
+import {AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
+import { LungtaTypes } from "@scripts/lungtaTypes";
+import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
+import { getRpcs, rpcBySlug } from "@scripts/rpc";
+import RpcCard from "@components/rpc/rpcCard.astro"
+
+const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+
+type DynamicParam = {
+    params: {
+        slug: string,
+    }
+}
+
+export async function getStaticPaths() {
+    const rpcs = getRpcs();
+
+    const params: DynamicParam[] = [];
+
+    for (let rpc of rpcs) {
+        let param = {
+            params: {
+                slug: rpc.slug,
+            }
+        }
+
+        params.push(param);
+    }
+
+    return params;
+}
+
+
+const { slug } = Astro.params;
+const rpc = rpcBySlug(slug);
+
+const parentUrl = "/ara/act/ara-web/rpc/get"
+
+if (rpc === undefined) {
+    return Astro.redirect(parentUrl)
+}
+
+// Sub Navigation
+const araWebNavigation = newAraWebNavigationNode();
+
+// This page is the ara-web/component/get
+if (araWebNavigation.children) {
+    for (let child of araWebNavigation.children) {
+        if (child.props.slug === "rpc") {
+            const restNode = newRestNode(RestNavigationKey.get);
+            const element: NavigationElement = {
+                title: rpc !== undefined && rpc.name !== undefined ? rpc.name : "Unknown action",
+                slug: rpc !== undefined ? rpc.slug : "slug",
+                color: 'primary',
+                visible: true,
+            }
+            const node = elementToNode(element);
+            restNode.children?.push(node)
+            
+            child.children?.push(restNode)
+            break;
+        }
+    }
+}
+
+const subNavigation: SubNavigation = {
+    projectSlug: AraProjectSlug,
+    lungta: LungtaTypes.Act,
+    element: araWebNavigation,
+}
+
+// SideNavigation
+const sideNavigationProps: SideNavigationProps = {
+    subNavigation: subNavigation,
+    selectedPath: `${parentUrl}/${rpc && rpc.slug}`,
+}
+
+---
+<AraWebLayout
+    title={"RPC: " + rpc.name}
+    sideNavigation={sideNavigationProps}
+>
+    <div>
+        <h2>{rpc.name}</h2>
+        <p>{rpc.description}</p>
+        <RpcCard rpc={rpc} />
+    </div>
+    <section slot={cancelSlug}>
+        <a href={parentUrl} class="btn btn-outline btn-error w-full mb-4">Back to List of RPCs</a>
+    </section>
+</AraWebLayout>
