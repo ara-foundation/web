@@ -335,25 +335,26 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
     let pages: Page[] = [];
 
     console.log(`TODO: Make sure that the page keeps the srcipts/component.ts=>Component instead using the Astro's Component value`);
-
     let i = 0;
 
     for (let fileContent of fileContents) {
-        if (i++ === 3) {
+        if (++i === 2) {
             break;
-        } else if (i < 3) {
-            continue;
         }
+        console.log(`${pages.length} Page ${i}: FilePath = ${fileContent.filePath}`);
         const {page, error} = validatedFileContentToPage(fileContent); 
         if (error) {
             pages.push(page);
             continue;
         }
+        console.log(`${pages.length} Page ${i}: page from content path: ${JSON.stringify(page)}, error=${error}`)
         
         if (!extractMeta(fileContent.source!, page)) {
+            console.log(`${pages.length} Page ${i}: meta wasn't pushed: ${JSON.stringify(page)}`)
             pages.push(page)
             continue;
         }
+        console.log(`${pages.length} Page ${i}: meta been pushed: ${JSON.stringify(page)} component amount: ${fileContent.nodes?.length}`)
 
         if (page.rpcs === undefined) {
             page.rpcs = {};
@@ -363,8 +364,11 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
         }
 
         const pageCode = new Code(fileContent.source!);
+        console.log(`${pages.length} Page ${i}: detect components:`)
 
         for (let componentNode of fileContent.nodes!) {
+            console.log(`${pages.length} Page ${i}: component: ${componentNode.name}`)
+
             const layoutSlugs = await detectComponentLayoutSlug(componentNode, pageCode);
             if (layoutSlugs.error !== undefined) {
                 page.title = `Can't detect the component layout for ${componentNode.name}`
@@ -378,14 +382,18 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 pages.push(page);
                 continue;
             }
+            console.log(`${pages.length} Page ${i}: component: ${componentNode.name} layout was identified`)
             
             const {id: componentRole, data: componentData, error} = await pageCode.identifyComponent(componentNode)
             if (error !== undefined) {
                 page.title = `Error while identifying ${componentNode.name} component`
                 page.description = error;
                 pages.push(page);
+                console.log(`${pages.length} Page ${i}: component: ${componentNode.name} identification error: ${error}`)
                 continue;
             }
+            console.log(`${pages.length} Page ${i}: component: ${componentNode.name} identified as ${componentRole}`)
+            
             // Let's detect the ComponentType
             if (componentRole === ComponentIdentity.Undeclared) {
                 page.title = `Undefined component '${componentNode.name}'`
@@ -421,6 +429,7 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                     }
                     page.rpcs.proxy.push(componentData)
                 }
+                continue;
             } else if (componentRole === ComponentIdentity.Layout) {
                 if (componentNode.name === "AraWebLayout") {
                     for (const child of componentNode.children) {
@@ -446,9 +455,6 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 console.log(`Component ${componentNode.name} was not identified`);
             }
         }
-
-        pages.push(page);
-        
     }
 
     return pages;

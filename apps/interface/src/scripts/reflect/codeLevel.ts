@@ -595,6 +595,7 @@ export class Code {
 
         for (let child of astImport.getChildren()) {
             if (child instanceof StringLiteral) {
+                console.log(`IdentifyImportPath(literal=${literal}, astImport=${astImport.getText()}): StringLiteralChild=${child.getText()}`);
                 return { filePath: JSON.parse(child.getText()) };
             }
         }
