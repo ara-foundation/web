@@ -193,16 +193,15 @@ export class Code {
         if (leftSide instanceof Identifier) {
             if (leftSide.getText() !== identifier) {
                 return Result.ok(data);
-            } else {
-                const result = await this.identifyValue<T>(identifier, data, rightSide)
-                if (result.isFailure) {
-                    return Result.fail(
-                        `leftSide('${leftSide.getText()}') as Identifier: this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', rightSide='${rightSide.getText()}'): ${result.errorTitle}`,
-                        result.errorDescription!
-                    )
-                }
-                return Result.ok(result.getValue());
             }
+            const result = await this.identifyValue<T>(identifier, data, rightSide)
+            if (result.isFailure) {
+                return Result.fail(
+                    `leftSide('${leftSide.getText()}') as Identifier: this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', rightSide='${rightSide.getText()}'): ${result.errorTitle}`,
+                    result.errorDescription!
+                )
+            }
+            return Result.ok(result.getValue());
         } else if (leftSide instanceof PropertyAccessExpression) {
             const varIdentifier = leftSide.getChildAtIndex(0);
             const propertyIdentifier = leftSide.getChildAtIndex(2);
@@ -238,10 +237,13 @@ export class Code {
     }
 
     /**
-     * Identify the value of the identifier
+     * Identify the value of the identifier. It's called when we don't know
+     * what do we call, is it a variable declaration? A type declaration etc.
+     * 
+     * Currently supports Variable identification and enum identification.
      * @param {string} identifier identififer within the code
      */
-    private identifyValueByIdentifier = async(identifier: string): Promise<Result<IdentifiedNode>> => {
+    private identifyIdentifierRecursively = async(identifier: string): Promise<Result<IdentifiedNode>> => {
         let res = await this.identifyVariable(identifier, true);
         if (res.isSuccess) {
             return Result.ok({id: AstNodeIdentity.Variable, data: res.getValue()})
@@ -250,6 +252,37 @@ export class Code {
         res = await this.identifyEnum(identifier);
         if (res.isSuccess) {
             return Result.ok({id: AstNodeIdentity.Enum, data: res.getValue() as EnumMembers})
+        }
+
+        if (res.isFailure) {
+            // If the variable wasn't defined within the script, then find it on
+            // imports.
+            const importPath = this.identifyImportPath(identifier);
+            if (importPath.isFailure) {
+                return Result.fail(
+                    `identifier not defined within this ast, this.identifyImportPath(identifier='${identifier}': ${importPath.errorTitle}`,
+                    importPath.errorDescription!
+                )
+            }
+
+            const fileContentData = await fileContentByModulePath(importPath.getValue());
+            if (fileContentData.isFailure) {
+                return Result.fail(
+                    `identifier not defined within this ast, fileContentByModulePath(importPath='${importPath}'): ${fileContentData.errorTitle}`,
+                    fileContentData.errorDescription!
+                )
+            }
+
+            const subCode = new Code(fileContentData.getValue()!.source!);
+            const identified = await subCode.identifyIdentifierRecursively(identifier)
+            if (identified.isFailure) {
+                return Result.fail(
+                    `identifier not defined within this ast, subCode.identifyValueByIdentifier(identifier='${identifier}'): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            }
+
+            return Result.ok(identified.getValue())
         }
 
         return Result.fail(
@@ -317,36 +350,48 @@ export class Code {
         return Result.ok(enumMembers)
     }
 
+    /**
+     * ObjectLiteralExpression has three children:
+     * @child {Node} '{'
+     * @child {SyntaxList} anything
+     * @child Node '}'
+     * @param identifier 
+     * @param data 
+     * @param syntaxList 
+     */
+    private identifyObjectLiteral = async <T>(identifier: string|undefined, data: T, syntaxList: SyntaxList): Promise<Result<T>> => {
+        for (let i = 0; i < syntaxList.getChildCount(); i++) {
+            const child = syntaxList.getChildAtIndex(i);
+            // Delimeter is skipped
+            if (child.getText() === ",") {
+                continue;
+            }
+            const identified = await this.identifyValue<T>(identifier, data, child);
+            if (identified.isFailure) {
+                return Result.fail(
+                    `syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            } else {
+                data = {...identified.getValue()!};
+            }
+        }
+        return Result.ok(data)
+    }
+
     private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<Result<T>> => {
         if (exp instanceof ObjectLiteralExpression) {
-            // ObjectLiteralExpression has three children:
-            // @child {Node} '{'
-            // @child {SyntaxList} anything
-            // @child Node '}'
-            const syntaxList = exp.getChildAtIndex(1);
-            
-            //////////////////////////////////////////////////
-            //
-            // Remove here syntax as identify value
-            //
-            //////////////////////////////////////////////////
-            for (let i = 0; i < syntaxList.getChildCount(); i++) {
-                const child = syntaxList.getChildAtIndex(i);
-                // Delimeter is skipped
-                if (child.getText() === ",") {
-                    continue;
-                }
-                const identified = await this.identifyValue<T>(identifier, data, child);
-                if (identified.isFailure) {
-                    return Result.fail(
-                        `objectLiteral('${exp.getText()}')/syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
-                        identified.errorDescription!
-                    )
-                } else {
-                    data = {...identified.getValue()!};
-                }
+            const syntaxList = exp.getChildSyntaxList()!;
+
+            const identified = await this.identifyObjectLiteral<T>(identifier, data, syntaxList);
+            if (identified.isFailure) {
+                return Result.fail(
+                    `this.identifyObjectLiteral<T>(identifier='${identifier}', data='${JSON.stringify(data)}', syntaxList='${syntaxList.getText()}'): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            } else {
+                return Result.ok(identified.getValue())
             }
-            return Result.ok(data)
         } else if (exp instanceof SpreadAssignment) {
             const spreadSource = exp.getChildAtIndex(1);
             const identified = await this.identifyValue<T>(identifier, data, spreadSource);
@@ -416,58 +461,29 @@ export class Code {
             const propertyIdentifier = exp.getChildAtIndex(2);
 
             // Attempt to find the variable's value within this script            
-            const varValue = await this.identifyVariable(varIdentifier.getText());
-            if (varValue.isFailure) {
-                // If the variable wasn't defined within the script, then find it on
-                // imports.
-                const importPath = this.identifyImportPath(varIdentifier.getText());
-                if (importPath.isFailure) {
-                    return Result.fail(
-                        `propertyAccess('${exp.getText()}')/identifyVariable(varIdentifier='${varIdentifier}') not found, this.identifyImportPath(varIdentifier='${varIdentifier}'): ${importPath.errorTitle}`,
-                        importPath.errorDescription!
-                    )
-                }
-
-                const fileContentData = await fileContentByModulePath(importPath.getValue());
-                if (fileContentData.isFailure) {
-                    return Result.fail(
-                        `propertyAccess('${exp.getText()}')/identifyVariable(varIdentifier='${varIdentifier}') not found, this.fileContentByModulePath(importPath='${importPath.getValue()}'): ${fileContentData.errorTitle}`,
-                        fileContentData.errorDescription!
-                    )
-                }
-
-                const subCode = new Code(fileContentData.getValue()!.source!);
-                const identified = await subCode.identifyValueByIdentifier(varIdentifier.getText())
-                if (identified.isFailure) {
-                    return Result.fail(
-                        `propertyAccess('${exp.getText()}')/subCode(importPath='${importPath.getValue()}': ${identified.errorTitle}`,
-                        identified.errorDescription!
-                    )
-                }
-
-                if (identified.getValue().id === AstNodeIdentity.Enum) {
-                    let identifiedData = identified.getValue().data as EnumMembers;
-                    if (propertyIdentifier.getText() in identifiedData) {
-                        return Result.ok(identifiedData[propertyIdentifier.getText()] as T)
-                    } else {
-                        return Result.fail(
-                            `Invalid enum`,
-                            `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-                        )
-                    }
+            const identified = await this.identifyIdentifierRecursively(varIdentifier.getText());
+            if (identified.isFailure) {
+                return Result.fail(
+                    `propertyAccessExpression('${exp.getText()}')/this.identifyIdentifierRecursively(varIdentifier='${varIdentifier.getText()}'): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            }
+           
+            if (identified.getValue().id === AstNodeIdentity.Enum) {
+                let identifiedData = identified.getValue().data as EnumMembers;
+                if (propertyIdentifier.getText() in identifiedData) {
+                    return Result.ok(identifiedData[propertyIdentifier.getText()] as T)
                 } else {
-                    console.log(`The identified data is not an enum, then how to use it:`);
-                    console.log(identified)
+                    return Result.fail(
+                        `Invalid enum`,
+                        `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
+                    )
                 }
             } else {
-                return Result.ok(varValue.getValue() as T)
+                console.log(`The identified data is not an enum, then how to use it:`);
+                console.log(identified)
             }
         } else if (exp instanceof CallExpression) {
-            // The value clause is the function call? `foo()` will be turned into four nodes:
-            // 1: Identifier(foo), 
-            // 2: Node(\(), 
-            // 3: SyntaxList(""), 
-            // 4: Node(\))
             const exprResult = await this.identifyFunctionCall<T>(exp as CallExpression);
             return exprResult;
         } else if (exp instanceof StringLiteral) {
@@ -479,7 +495,7 @@ export class Code {
             console.log(exp);
             return Result.fail(
                 `Failed variable's node: '${exp.getText()}'`,
-                `The '${JSON.stringify(exp.getText())}' variable value's node is not handled by Ara Web yet. Change identifyVariableDeclaration() to fix it`
+                `The '${JSON.stringify(exp.getText())}' variable value's node is not handled by Ara Web yet. Change identifyValue() to fix it`
             )
         }
 
@@ -609,6 +625,11 @@ export class Code {
 
     /**
      * Calls the function and returns its result
+     * The value clause is the function call? `foo()` will be turned into four nodes:
+     *  1: Identifier(foo), 
+     *  2: Node(\(), 
+     *  3: SyntaxList(""), 
+     *  4: Node(\))
      * @param {CallExpression} exp the node with the function call
      * @returns {error?: string, data?: T}
      */
@@ -702,13 +723,12 @@ export class Code {
             );
         }
 
-        const childCount = varDeclaration.getValue().getChildCount();
-        const lastChild = varDeclaration.getValue().getChildAtIndex(childCount-1);
+        const lastChild = varDeclaration.getValue().getLastChild();
 
         const identifiedValue = await this.identifyValue<T>(identifier, {} as T, lastChild);
         if (identifiedValue.isFailure) {
             return Result.fail(
-                `identifyVariableValue(varDeclaration(identifier=${identifier})): ${identifiedValue.errorTitle}`,
+                `identifyVariable(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
                 identifiedValue.errorDescription!
             )
         }

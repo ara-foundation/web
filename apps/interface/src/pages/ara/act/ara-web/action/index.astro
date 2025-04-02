@@ -9,8 +9,10 @@ import Call from "@components/rpc/call.astro";
 
 let rpcCall: RpcCallType = newRpcCall();
 const redirectUrl = "/ara/act/ara-web/action/get"
-rpcCall.inputs = [redirectUrl]
-rpcCall = {...rpcCall, inputs: [redirectUrl]}
+const inputs: [string] = [redirectUrl]
+rpcCall = {...rpcCall, inputs}
+console.log(`Try also rpcCall without a value rpcCall = {...rpcCall, inputs: inputs} doesnt work`)
+console.log(`Try also rpcCall without a value rpcCall = {...rpcCall, inputs} doesnt work`)
 
 ---
 
