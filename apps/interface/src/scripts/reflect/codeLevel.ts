@@ -64,7 +64,7 @@ export class Code {
      * Used to evaluate various attributes by manipulating AST itself.
      * @returns {Code}
      */
-    clone = (): this => {
+    private clone = (): this => {
         return new (this.constructor as typeof Code)(this.code, this.tempCodeAmount) as this;
     }
 
@@ -81,6 +81,7 @@ export class Code {
             declarationKind: VariableDeclarationKind.Const, // defaults to "let"
             declarations: [{
               name: varName,
+              type: "string",
               initializer: exp,
             }],
         });
@@ -413,7 +414,7 @@ export class Code {
         } else if (exp instanceof PropertyAccessExpression) {
             const varIdentifier = exp.getChildAtIndex(0);
             const propertyIdentifier = exp.getChildAtIndex(2);
-            
+
             // Attempt to find the variable's value within this script            
             const varValue = await this.identifyVariable(varIdentifier.getText());
             if (varValue.isFailure) {
@@ -436,7 +437,6 @@ export class Code {
                 }
 
                 const subCode = new Code(fileContentData.getValue()!.source!);
-                console.log(`Sub Code path '${fileContentData.getValue().filePath}' for ${varIdentifier.getText()}`);
                 const identified = await subCode.identifyValueByIdentifier(varIdentifier.getText())
                 if (identified.isFailure) {
                     return Result.fail(
@@ -474,13 +474,32 @@ export class Code {
             // (data as any)[propertyIdentifier.getText()] = result.data
 
             // return {data}
+        } else if (exp instanceof CallExpression) {
+            // The value clause is the function call? `foo()` will be turned into four nodes:
+            // 1: Identifier(foo), 
+            // 2: Node(\(), 
+            // 3: SyntaxList(""), 
+            // 4: Node(\))
+            const exprResult = await this.identifyFunctionCall<T>(exp as CallExpression);
+            return exprResult;
+        } else if (exp instanceof StringLiteral) {
+            return Result.ok(
+                unquote(exp.getText()) as T,
+            )
+        } else {
+            console.log(`identifyValue child '${exp.getText()}'`);
+            console.log(exp);
+            return Result.fail(
+                `Failed variable's node: '${exp.getText()}'`,
+                `The '${JSON.stringify(exp.getText())}' variable value's node is not handled by Ara Web yet. Change identifyVariableDeclaration() to fix it`
+            )
         }
 
         console.log(`The '${exp.getText()}' not yet supported by Ara Web`)
         console.log(exp);
         console.log(`\n\n`)
         return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
-    }
+    } 
 
     /**
      * If the variable is updated by a function, then those functions are called by this method.
@@ -685,8 +704,6 @@ export class Code {
      * @returns {error?: string, data?: T}
      */
     private identifyVariable = async <T>(identifier: string, identifyUpdates: boolean = true): Promise<Result<T>> => {
-        const ret: {error?: string, data?: T} = {}
-
         // If Attribute name is an identifier, get variable statements that define them:
         // For example `const v: number = 1`
         const varDeclaration = this.identifyVariableDeclaration(identifier);
@@ -697,7 +714,10 @@ export class Code {
             );
         }
 
-        const identifiedValue = await this.identifyVariableValue<T>(varDeclaration.getValue()!.getChildren());
+        const childCount = varDeclaration.getValue().getChildCount();
+        const lastChild = varDeclaration.getValue().getChildAtIndex(childCount-1);
+
+        const identifiedValue = await this.identifyValue<T>(identifier, {} as T, lastChild);
         if (identifiedValue.isFailure) {
             return Result.fail(
                 `identifyVariableValue(varDeclaration(identifier=${identifier})): ${identifiedValue.errorTitle}`,
@@ -719,53 +739,4 @@ export class Code {
 
         return Result.ok(updated.getValue());
     }
-
-    /**
-     * Identify the variable's value (the right side and return it as T)
-     * @param {any[]} children list of Import Declaration's AST nodes
-     * @returns {error?: string, data?: T}
-     */
-    private identifyVariableValue = async <T>(children: any[]): Promise<Result<T>> => {
-        /**
-         * Identify the value of the variable declaration.
-         * The first child is the variable itself, so we skip it.
-         */
-        for (let i = 1; i < children.length; i++) {
-            const child = children[i];
-            // In variable declaration, some nodes are not part of the var, lets skip them
-            if (child.getText().indexOf('=') > -1 || 
-                child.getText() === ":" || 
-                child instanceof TypeReferenceNode) {
-                continue;
-            }
-
-            if (child instanceof CallExpression) {
-                // The value clause is the function call? `foo()` will be turned into four nodes:
-                // 1: Identifier(foo), 
-                // 2: Node(\(), 
-                // 3: SyntaxList(""), 
-                // 4: Node(\))
-                const exprResult = await this.identifyFunctionCall<T>(child as CallExpression);
-                return exprResult;
-            } else if (child instanceof Identifier) {
-                return await this.identifyVariable<T>(child.getText());
-            } else if (child instanceof StringLiteral) {
-                return Result.ok(
-                    unquote(child.getText()) as T,
-                )
-            } else {
-                console.log(child);
-                return Result.fail(
-                    `Failed variable's node: '${child.getText()}'`,
-                    `The '${JSON.stringify(child.getText())}' variable value's node is not handled by Ara Web yet. Change identifyVariableDeclaration() to fix it`
-                )
-            }
-        }
-
-        return Result.fail(
-            'Failed to detect any children', 
-            `Couldn't find any expected AST component to consider as the variable's value`
-        )
-    }
-
 }

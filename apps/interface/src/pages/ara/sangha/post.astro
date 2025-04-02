@@ -130,7 +130,8 @@ const sideNavigationProps: SideNavigationProps = {
             <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
         </div>
     </section>
-    <section slot={"center-" + cancelSlug}>
+    <!-- <section slot={"center-" + cancelSlug}> -->
+    <section slot={cancelSlug != undefined ? "center-" + cancelSlug: "data"}>
         <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
         <a href="/ara/logos/post" class="btn btn-outline btn-neutral w-full mb-4">Back to Project</a>
         <a href="/ara/maydone/post" class="btn btn-outline btn-neutral w-full">Back to Budget</a>

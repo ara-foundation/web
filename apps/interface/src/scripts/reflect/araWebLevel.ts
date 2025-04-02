@@ -219,7 +219,6 @@ export class PageTraits {
                 }
                 continue;
             } else if (componentRole === ComponentIdentity.Layout) {
-                console.log(`Component is layout, let's identify inner components: ${componentNode.name}`)
                 const identificationResult = await this.identifyLayoutComponents(componentNode);
                 if (identificationResult.isFailure) {
                     return Result.fail(
@@ -251,7 +250,7 @@ export class PageTraits {
      */
     private identifyLayoutComponents = async(layoutNode: NodeType): Promise<Result<Page>> => {
         for (const child of layoutNode.children) {
-            if (child.type === "text") {
+            if (child.type === "text" || child.type === "comment" || child.type === "doctype") {
                 continue;
             }
             if (child.type !== "component" && child.type !== "element") {
