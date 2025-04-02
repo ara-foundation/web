@@ -128,8 +128,6 @@ export const callFuncInModule = async <T>(modulePath: string, funcName: string, 
         return {error: `The ${modulePath} module path to call ${funcName} is not in the tracked directory`}
     }
 
-    console.log(`Module type: ${moduleType}`)
-
     if (moduleType === ModuleType.Script) {
         const script = await getScriptByPath(modulePath)
         if (script === undefined) {
@@ -217,9 +215,9 @@ const extractAstroComponents = (ast: RootNode): {componentNodes: NodeType[], fro
         } else if (child.type === "element") {
             componentNodes.push(child);
         } else {
-            // console.log(`The page has ${child.type} node`)
-            // console.log(`Its data:`)
-            // console.log(child)
+            console.log(`The page has ${child.type} node`)
+            console.log(`Its data:`)
+            console.log(child)
         }
     }
 

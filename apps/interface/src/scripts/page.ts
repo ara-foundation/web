@@ -363,13 +363,10 @@ const identifyLayoutComponents = async(layoutNode: NodeType, page: Page, code: C
  */
 const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]> => {
     let pages: Page[] = [];
-
-    let i = 0;
+    let i = 1;
 
     for (let fileContent of fileContents) {
-        if (++i === 2) {
-            break;
-        }
+        console.log(`File Content #${i++} at ${fileContent.filePath} to page`)
         let {page, error} = validatedFileContentToPage(fileContent); 
         if (error) {
             pages.push(page);

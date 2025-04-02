@@ -24,6 +24,7 @@ import { callFuncInModule, fileContentByModulePath, type NodeType } from "./file
 import type { RpcCallType } from "@scripts/rpc/types";
 import type { AttributeNode } from "@astrojs/compiler/types";
 import { isLayout } from "@scripts/component";
+import { unquote } from "@scripts/string";
 
 /**
  * Given the component, identify what it is
@@ -471,7 +472,7 @@ export class Code {
                             } else if (enumData.getText() === "=") {
                                 continue;
                             } else if (enumData instanceof StringLiteral) {
-                                propertyValue = JSON.parse(enumData.getText());
+                                propertyValue = unquote(enumData.getText());
                             } else if (enumData instanceof NumericLiteral) {
                                 propertyValue = JSON.parse(enumData.getText());
                             } else {
@@ -774,7 +775,7 @@ export class Code {
 
         for (let child of astImport.getChildren()) {
             if (child instanceof StringLiteral) {
-                return { filePath: JSON.parse(child.getText()) };
+                return { filePath: unquote(child.getText()) };
             }
         }
         ret.error = `The ${literal} was not found in the import declarations`
@@ -945,7 +946,7 @@ export class Code {
             } else if (child instanceof Identifier) {
                 return await this.identifyVariable<T>(child.getText());
             } else if (child instanceof StringLiteral) {
-                ret.data = JSON.parse(child.getText()) as T;
+                ret.data = unquote(child.getText()) as T;
                 ret.error = undefined;
                 return ret;
             } else {
