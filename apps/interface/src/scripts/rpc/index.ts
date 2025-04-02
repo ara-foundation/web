@@ -27,10 +27,7 @@ export const getRpcs = (): RPC[] => {
 
 export const rpcBySlug = (slug: string): RPC|undefined => {
     const rpcs = getRpcs();
-    console.log(`Look for ${slug} extension in ${rpcs.length} rpcs`);
     for (const rpc of rpcs) {
-        console.log(`RPC:`);
-        console.log(rpc)
         if (rpc.slug === slug) {
             return rpc;
         }
