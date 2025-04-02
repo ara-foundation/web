@@ -1,5 +1,3 @@
-import { parse, transform, type TransformResult } from "@astrojs/compiler";
-import type { ComponentNode, ElementNode } from "@astrojs/compiler/types";
 import { parse as commentParse} from "comment-parser";
 import { RpcType, type RpcCallType } from "@scripts/rpc/types"
 import { globsToFileContents, PathType, type FileContent, type NodeType } from "@scripts/reflect/fileLevel"
@@ -57,6 +55,7 @@ export type Page = {
             [key in ColumnSlug]?: (NodeType)[]
         }
     };
+    metaComponents?: (NodeType)[]
     rpcs?: {
         [key in RpcType]?: RpcCallType[]
     }
@@ -384,26 +383,13 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
         if (page.components === undefined) {
             page.components = {};
         }
+        if (page.metaComponents === undefined) {
+            page.metaComponents = [];
+        }
 
         const pageCode = new Code(fileContent.source!);
 
         for (let componentNode of fileContent.nodes!) {
-            // Remove it here, as we add it within the layouts
-            // All other components are added into meta objects
-            const layoutSlugs = await detectComponentLayoutSlug(componentNode, pageCode);
-            if (layoutSlugs.error !== undefined) {
-                page.title = `Can't detect the component layout for ${componentNode.name}`
-                page.description = `detectComponentLayoutSlug: ${layoutSlugs.error}`
-                pages.push(page)
-                continue;
-            } else if (layoutSlugs.data === undefined) {
-                page.title = `Stupid Medet, no error, no data?`
-                page.description = `Ask him to debug it, 
-                    and he will delegate to some intern that he doesn't like so that intern will be fired by himself`
-                pages.push(page);
-                continue;
-            }
-            
             const {id: componentRole, data: componentData, error} = await pageCode.identifyComponent(componentNode)
             if (error !== undefined) {
                 page.title = `Error while identifying ${componentNode.name} component`
@@ -419,13 +405,7 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 pages.push(page);
                 continue;
             } else if (componentRole === ComponentIdentity.Component) {
-                const pushed = pushComponentAtLayoutSlugs(componentData! as NodeType, page, layoutSlugs.data!);
-                if (!pushed) {
-                    page.title = "Undefined component path"
-                    page.description = `Unable to determine the layout of ${(componentData! as NodeType).name} in the page`
-                    pages.push(page);
-                    continue;
-                }
+                page.metaComponents?.push(componentData);
             } else if (componentRole === ComponentIdentity.Rpc) {
                 if (page.rpcs === undefined) {
                     page.rpcs = {};

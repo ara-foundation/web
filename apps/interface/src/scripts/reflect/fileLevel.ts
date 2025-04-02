@@ -5,9 +5,8 @@
 import { parse as AstroParse, transform, type TransformResult } from "@astrojs/compiler";
 import type { ComponentNode, ElementNode, RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
-import { parse as commentParse} from "comment-parser";
-import { JSDoc, Project, StringLiteral, SyntaxList } from "ts-morph";
-import type { MarkdownInstance, AstroInstance } from 'astro';
+import { Project } from "ts-morph";
+import type { AstroInstance } from 'astro';
 import PathModule from "node:path"
 import { identifyModuleType, ModuleType, trimPath } from "@scripts/reflect/module";
 import { getScriptByPath } from "@scripts/reflect/script";
