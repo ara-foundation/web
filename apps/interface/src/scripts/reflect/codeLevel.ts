@@ -72,8 +72,6 @@ export class Code {
      * @returns {T} the result of the expression
      */
     public identifyCodePiece = async <T>(exp: string): Promise<Result<T>> => {
-        const ret: {error?: string, data?: T} = {}
-
         const varName = "__ara_web_exp";
         let cloned = this.clone();
         cloned.ast.addVariableStatement({
@@ -85,7 +83,7 @@ export class Code {
         });
 
         // It may be not only identifier so clone and put it in the ast
-        var variable = await cloned.identifyVariable<T>(varName);
+        var variable = await cloned.identifyVariable<T>(varName, false);
         // Once the _ara_web_exp is turned into the statement, get it's value.
         if (variable.isFailure) {
             return Result.fail(
@@ -240,7 +238,7 @@ export class Code {
      * @param {string} identifier identififer within the code
      */
     private identifyValueByIdentifier = async(identifier: string): Promise<Result<IdentifiedNode>> => {
-        let res = await this.identifyVariable(identifier);
+        let res = await this.identifyVariable(identifier, true);
         if (res.isSuccess) {
             return Result.ok({id: AstNodeIdentity.Variable, data: res.getValue()})
         }
@@ -679,12 +677,11 @@ export class Code {
     /**
      * Given the argument, its the variable name, find the line where this variable was declared and
      * get its value.
-     * @param {string} varLiteral the variable name
+     * @param {string} identifier the variable name
+     * @param {boolean} identifyUpdates whether to look up for the changes?
      * @returns {error?: string, data?: T}
-     * @todo Make sure to identify the variable update after the assignment
-     * @todo Make sure to identify the variable update after function call (function maybe updating it)
      */
-    private identifyVariable = async <T>(identifier: string): Promise<Result<T>> => {
+    private identifyVariable = async <T>(identifier: string, identifyUpdates: boolean = true): Promise<Result<T>> => {
         const ret: {error?: string, data?: T} = {}
 
         // If Attribute name is an identifier, get variable statements that define them:
@@ -703,6 +700,10 @@ export class Code {
                 `identifyVariableValue(varDeclaration(identifier=${identifier})): ${identifiedValue.errorTitle}`,
                 identifiedValue.errorDescription!
             )
+        }
+
+        if (!identifyUpdates) {
+            return Result.ok(identifiedValue.getValue())
         }
 
         const updated = await this.identifyVariableUpdates<T>(identifier, identifiedValue.getValue()!);
