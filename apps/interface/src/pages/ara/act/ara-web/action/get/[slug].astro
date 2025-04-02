@@ -6,7 +6,8 @@
  */
 import { getActions, getActionBySlug } from "@scripts/action";
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { ColumnSlug, slugsToLayoutPath, RowSlug } from "@scripts/page";
+import { slugsToLayoutPath } from "@scripts/page";
+import { ColumnSlug, RowSlug } from "@scripts/araWebOntology";
 import ActionTrigger from "@components/action/ActionTrigger.astro";
 import ActionPage from "@components/action/ActionPage.astro";
 import { AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";

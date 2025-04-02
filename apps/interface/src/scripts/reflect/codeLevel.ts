@@ -4,11 +4,9 @@
  * @todo Make the components nested to each other
  * @todo Optimize the AST traverse
  * @todo fix the parsing of all pages
- * @todo make a split between AraWeb and Code levels
  * @todo change scripts/page.ts=>Page.components type to Component
  * @todo somehow we need to show on PageModal the meta components
  */
-import { isRpcComponent as isRpcCallComponent } from "@scripts/rpc";
 import { 
     CallExpression,
     Identifier, ImportClause, JSDoc, Project, SourceFile as TsSourceFile, StringLiteral, ts, TypeReferenceNode, 
@@ -26,37 +24,21 @@ import {
     EnumMember,
     NumericLiteral
 } from "ts-morph";
-import { callFuncInModule, fileContentByModulePath, type NodeType } from "./fileLevel";
-import type { RpcCallType } from "@scripts/rpc/types";
-import type { AttributeNode } from "@astrojs/compiler/types";
-import { isLayout } from "@scripts/component";
+import { callFuncInModule, fileContentByModulePath } from "@scripts/reflect/fileLevel";
 import { unquote } from "@scripts/string";
-
-/**
- * Given the component, identify what it is
- */
-export enum ComponentIdentity {
-    Rpc = "rpc",                   // RPCs are identified by the imported components
-    Layout = "layout",             // The page layout
-    Component = "component",       // Component
-    Undeclared = "undeclared",     // Unexpected
-}
+import { Result } from "@scripts/result";
 
 export enum AstNodeIdentity {
-    Undeclared,
     Variable,
     Enum,
 }
 
-export type ComponentData = NodeType | RpcCallType
-
-export type ComponentIdentificationResult = {
-    id: ComponentIdentity,
-    data?: any,
-    error?: string,
-}
-
 export type EnumMembers = {[key: string]: string|number};
+
+export type IdentifiedNode = {
+    id: AstNodeIdentity,
+    data?: EnumMembers|any,
+}
 
 export class Code {
     ast: TsSourceFile;
@@ -76,173 +58,6 @@ export class Code {
     }
 
     /**
-     * Identifies what kind of component and it's value
-     * @param componentNode Node that we need to identify
-     * @param source Source code if we need to determine the component as a module or the component attributes
-     * @returns {ComponentIdentity}
-     * 
-     * For now, it only supports components that were imported
-     */
-    public identifyComponent = async (componentNode: NodeType): Promise<ComponentIdentificationResult> => {
-        if (componentNode.type === "element") {
-            return {id: ComponentIdentity.Component, data: componentNode};
-        } else if (componentNode.type !== "component") {
-            // For future references, for now it supports component and element, so it won't be catched
-            return {id: ComponentIdentity.Undeclared, data: undefined, error: `Only component types supported`}
-        }
-        
-        const result = await this.identifyComponentInImports(componentNode);
-        if (result.error) {
-            return {
-                id: result.id,
-                error: `identifyComponentInImports(componentNode=${componentNode.name}): ${result.error}`
-            };
-        }
-        if (result.id !== ComponentIdentity.Undeclared) {
-            return result
-        }
-
-        return {id: ComponentIdentity.Undeclared};
-    }
-
-    /**
-     * Identify the component by its path by using the page's import statements.
-     * @param componentNode Component in the Astro file
-     * @param astSource The frontmatter code
-     * @returns {found: boolean, data: RpcCallType}
-     */
-    private identifyComponentInImports = async (componentNode: NodeType): Promise<ComponentIdentificationResult> => {
-        const ret: ComponentIdentificationResult = {
-            id: ComponentIdentity.Undeclared,
-            data: undefined,
-            error: undefined,
-        }
-
-        const astImport = this.identifyImportDeclaration(componentNode.name);
-        if (astImport === undefined) {
-            return {
-                id: ComponentIdentity.Undeclared,
-                error: `this.identifyImportDeclaration(componentNode.name=${componentNode.name})`
-            }
-        }
-
-        const importPath = this.identifyImportPath(componentNode.name);
-        if (importPath.error !== undefined) {
-            return {
-                id: ComponentIdentity.Undeclared,
-                error: `identifyImportPath(${componentNode.name}): ${importPath.error}`
-            }
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////
-        //
-        // Component was loaded as the import declaration, identify the type
-        //
-        /////////////////////////////////////////////////////////////////////////////////
-
-        //
-        // Component indicates an RPC Call?
-        //
-        if (isRpcCallComponent(importPath.filePath!)) {
-            ret.id = ComponentIdentity.Rpc;
-            const {error, data} = await this.identifyRpcCallComponent(componentNode);
-            if (error !== undefined) {
-                ret.error = `Component is RPC Call but error to identify component values: ${error}`;
-            } else {
-                ret.data = data;
-            }
-            return ret;
-        } else if (isLayout(importPath.filePath!)) {
-            ret.id = ComponentIdentity.Layout;
-            return ret;
-        }
-        
-        //
-        // Component indicates a layout?
-        //
-        ret.error = `Only RpcCalls and Layouts are identifiable for now`;
-
-        return ret;
-    }
-
-    /**
-     * Look up and retreive the attribute by its name
-     * @param {AttributeNode[]} attrs list of attributes of a sinle component 
-     * @param {string} name name of the attribute 
-     * @returns {AttributeNode}
-     */
-    public attributeByName = (attrs: AttributeNode[], name: string): AttributeNode|undefined => {
-        for (let callAttr of attrs) {
-            if (callAttr.name === name) {
-                return callAttr;
-            }
-        }
-    }
-
-    /**
-     * If the component is RPC Call, then find out its data by checking the script
-     * @param componentNode Component parameter
-     * @param astSource If the RPC Call is not a string literal but an expression that is defined in the script, then find 
-     * its value from traversing in the AST
-     * @returns {RpcCallType|undefined}
-     */
-    private identifyRpcCallComponent = async (componentNode: NodeType): Promise<{error?: string, data?: RpcCallType}> => {
-        const attrName = "rpcCall";
-        const attr = this.attributeByName(componentNode.attributes, attrName);
-        if (attr === undefined) {
-            return {
-                error: `The component <${componentNode.name}> doesn't have '${attrName}' attribute`
-            }
-        }
-
-        // Get the RPC Call value
-        const data = await this.identifyAttribute<RpcCallType>(attr);
-
-        if (data.error !== undefined) {
-            return {
-                error: `identifyAttribute(attr=${attr.name}): ${data.error}`
-            }
-        }
-
-        return data;
-    }
-
-    
-    /**
-     * Find the page attribute's value of the component.
-     * Expected to be called by identifyComponent()
-     * @param {AttributeNode} attr expression in the attribute
-     */
-    public identifyAttribute = async <T>(attr: AttributeNode, kind?: string): Promise<{error?: string, data?: T}> => {
-        const ret: {error?: string, data?: T} = {
-            error: undefined,
-            data: undefined,
-        }
-
-        if (kind !== undefined && attr.kind !== kind) {
-            return {error: `The '${attr.name}' attribute's is '${attr.kind}' of kind, when expected '${kind}' kind`}
-        }
-            
-        if (attr.kind === "quoted") {
-            ret.data = attr.value as T;
-            return ret;
-        } else if (attr.kind === "expression") {
-            const attrValue = await this.identifyCodePiece<T>(attr.value);
-            if (attrValue.error !== undefined) {
-                ret.error = `identifyCodePiece(attr.value=${attr.value}): ${attrValue.error}`
-                return ret;
-            }
-            ret.data = attrValue.data
-        } else {
-            return {
-                error: `For only coderLevel => identifyAttribute supports quoted and expression kind of attributes`
-            }
-        }
-
-        return ret;
-    }
-
-    /**
      * Clone the Code with the new AST.
      * Used to evaluate various attributes by manipulating AST itself.
      * @returns {Code}
@@ -256,7 +71,7 @@ export class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    private identifyCodePiece = async <T>(exp: string): Promise<{error?: string, data?: T}> => {
+    public identifyCodePiece = async <T>(exp: string): Promise<Result<T>> => {
         const ret: {error?: string, data?: T} = {}
 
         const varName = "__ara_web_exp";
@@ -272,37 +87,37 @@ export class Code {
         // It may be not only identifier so clone and put it in the ast
         var variable = await cloned.identifyVariable<T>(varName);
         // Once the _ara_web_exp is turned into the statement, get it's value.
-        if (variable.error !== undefined) {
-            return {error: `cloned.identifyVariable(varName=${varName}): ${variable.error}`}
-        }
-        if (variable.data === undefined) {
-            return {error: `cloned.identifyVariable(varName=${varName}): no error, no data, data must exist`}
+        if (variable.isFailure) {
+            return Result.fail(
+                `cloned.identifyVariable(varName=${varName}): ${variable.errorTitle}`,
+                variable.errorDescription!
+            )
         }
 
-        ret.data = variable.data;
-
-        return ret;
+        return Result.ok(variable.getValue())
     }
 
     /**
      * Variables values might be updated by assignment or by passing to the functions
      */
-    private identifyVariableUpdates = async <T>(identifier: string, data: T): Promise<{error?: string, data?: T}> => {
+    private identifyVariableUpdates = async <T>(identifier: string, data: T): Promise<Result<T>> => {
         const updatedInFunction = this.identifyVariableUpdateInFunction<T>(identifier, data);
-        if (updatedInFunction.error !== undefined) {
-            return {
-                error: `this.identifyVariableUpdateInFunction(identifier=${identifier}, data=${data}): ${updatedInFunction.error}`
-            }
+        if (updatedInFunction.isFailure) {
+            return Result.fail(
+                `this.identifyVariableUpdateInFunction(identifier=${identifier}, data=${data}): ${updatedInFunction.errorTitle}`,
+                updatedInFunction.errorDescription!
+            )
         }
 
-        const updatedInAssignment = await this.identifyVariableAssignments<T>(identifier, data);
-        if (updatedInAssignment.error !== undefined) {
-            return {
-                error: `this.identifyVariableAssignments(identifier=${identifier}, data=${data}): ${updatedInAssignment.error}`
-            }
+        const updatedInAssignment = await this.identifyVariableAssignments<T>(identifier, updatedInFunction.getValue());
+        if (updatedInAssignment.isFailure) {
+            return Result.fail(
+                `this.identifyVariableAssignments(identifier=${identifier}, updatedFunctionData=${updatedInFunction.getValue()}): ${updatedInAssignment.errorTitle}`,
+                updatedInAssignment.errorDescription!
+            )
         }
 
-        return {data};
+        return Result.ok(updatedInAssignment.getValue());
     }
 
     /**
@@ -311,49 +126,50 @@ export class Code {
      * @param data
      * @returns {error?: string, succeed: boolean}
      */
-    private identifyVariableAssignments = async <T>(identifier: string, data: T): Promise<{error?: string, data?: T}> => {
-        let ret: {error?: string, data?: T} = {};
+    private identifyVariableAssignments = async <T>(identifier: string, data: T): Promise<Result<T>> => {
+        let ret: Result<T> = Result.ok(data)
 
         // To make it variable assignment, make sure we track ExpressionStatements and BinaryExpressions
         for (let child of this.ast.getChildren()) {
             for (let subChild of child.getChildren()) {
                 if (subChild instanceof ExpressionStatement) {
                     const res = await this.identifyExpressionStatement<T>(identifier, data, subChild)
-                    if (res.error !== undefined) {
-                        ret.error = `identifyExpressionStatement(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.error}`
+                    if (res.isFailure) {
+                        ret = Result.fail(
+                            `identifyExpressionStatement(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.errorTitle}`,
+                            res.errorDescription!
+                        )
                     } else {
-                        data = res.data!
-                        return {data: res.data!};
+                        return Result.ok(res.getValue())
                     }
                 } else if (subChild instanceof BinaryExpression) {
                     const res = await this.identifyBinaryExpression<T>(identifier, data, subChild)
-                    if (res.error !== undefined) {
-                        return {
-                            error: `identifyExpressionStatement(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.error}`
-                        }
+                    if (res.isFailure) {
+                        return Result.fail(
+                            `identifyBinaryExpression(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.errorTitle}`,
+                            res.errorDescription!
+                        )
                     } else {
-                        data = res.data!
-                        return {
-                            data: res.data!
-                        };
+                        return Result.ok(res.getValue())
                     }
                 }
             }
         }
 
-        return ret;
+        return Result.ok(data);
     }
 
-    private identifyExpressionStatement = async<T>(identifier: string, data: T, exp: ExpressionStatement): Promise<{error?: string, data?: T}> => {
+    private identifyExpressionStatement = async<T>(identifier: string, data: T, exp: ExpressionStatement): Promise<Result<T>> => {
         for (let child of exp.getChildren()) {
             if (child instanceof BinaryExpression) {
                 const res = await this.identifyBinaryExpression<T>(identifier, data, child);
-                if (res.error !== undefined) {
-                    return {
-                        error: `identifyBinaryExpression(identifier=${identifier}, data=${JSON.stringify(data)}, child=${child.getText()}): ${res.error}`
-                    }
+                if (res.isFailure) {
+                    return Result.fail(
+                        `identifyBinaryExpression(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}'): ${res.errorTitle}`,
+                        res.errorDescription!
+                    )
                 }
-                return res;
+                return Result.ok(res.getValue());
             } else {
                 console.log(`identifyExpressionStatement only supports BinaryExpressions for now. You gave:`);
                 console.log(`Value='${child.getText()}'`);
@@ -362,48 +178,49 @@ export class Code {
             }
         }
 
-        return {
-            error: `Only Binary Expressions are supported in identifyExpressionStatement`,
-        }
+        return Result.fail(
+            `Unsupported expression statement`,
+            `Only Binary Expression is supported are supported for, the '${exp}' is not a binary expression'`
+        )
     }
 
-    private identifyBinaryExpression = async <T>(identifier: string, data: T, exp: BinaryExpression): Promise<{error?: string, data?: T}> => {
+    private identifyBinaryExpression = async <T>(identifier: string, data: T, exp: BinaryExpression): Promise<Result<T>> => {
         const leftSide = exp.getChildAtIndex(0);
         const rightSide = exp.getChildAtIndex(2);
     
         if (leftSide instanceof Identifier) {
             if (leftSide.getText() !== identifier) {
-                return {data};
+                return Result.ok(data);
             } else {
                 const result = await this.identifyValue<T>(identifier, data, rightSide)
-                if (result.error !== undefined) {
-                    return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): ${result.error}`}
+                if (result.isFailure) {
+                    return Result.fail(
+                        `leftSide('${leftSide.getText()}') as Identifier: this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', rightSide='${rightSide.getText()}'): ${result.errorTitle}`,
+                        result.errorDescription!
+                    )
                 }
-                if (result.data === undefined) {
-                    return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): no error, no data, inspect identifyValue`}
-                }
-                return result;
+                return Result.ok(result.getValue());
             }
         } else if (leftSide instanceof PropertyAccessExpression) {
             const varIdentifier = leftSide.getChildAtIndex(0);
             const propertyIdentifier = leftSide.getChildAtIndex(2);
             if (varIdentifier.getText() !== identifier) {
-                return {data};
+                return Result.ok(data);
             }
 
             const propertyValue = (data as any)[propertyIdentifier.getText()]
 
             const result = await this.identifyValue<typeof propertyValue>(propertyIdentifier.getText(), propertyValue, rightSide)
-            if (result.error !== undefined) {
-                return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): ${result.error}`}
-            }
-            if (result.data === undefined) {
-                return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): no error, no data, inspect identifyValue`}
+            if (result.isFailure) {
+                return Result.fail(
+                    `leftSide('${leftSide.getText()}') as PropertyAccessExpression: this.identifyValue(propertyIdentifier='${propertyIdentifier}', propertyValue='${JSON.stringify(propertyValue)}', rightSide='${rightSide.getText()}'): ${result.errorTitle}`,
+                    result.errorDescription!
+                )
             }
 
-            (data as any)[propertyIdentifier.getText()] = result.data
+            (data as any)[propertyIdentifier.getText()] = result.getValue()
 
-            return {data}
+            return Result.ok(data);
         } else {
             console.log(`identifyBinaryExpression ts='${exp.getText()}' has ${exp.getChildCount()} nodes, let's begin (NOT SUPPORTED)..`);
             console.log(`Left='${leftSide.getText()}'`);
@@ -411,7 +228,10 @@ export class Code {
             console.log(`Right=${rightSide.getText()}`);
             console.log(rightSide);
             console.log(`\identifyBinaryExpression end`);
-            return {error: `Only Identifier left side of binary are supported for now for '${leftSide.getText()}=${rightSide.getText()}'`}
+            return Result.fail(
+                `Unsupported left side of the binary`,
+                `Only Identifier or PropertyAccess are supported for now for '${leftSide.getText()}=${rightSide.getText()}'`
+            )
         }
     }
 
@@ -419,27 +239,21 @@ export class Code {
      * Identify the value of the identifier
      * @param {string} identifier identififer within the code
      */
-    private identifyValueByIdentifier = async(identifier: string): Promise<{error?: string, data?: any, identity: AstNodeIdentity}> => {
+    private identifyValueByIdentifier = async(identifier: string): Promise<Result<IdentifiedNode>> => {
         let res = await this.identifyVariable(identifier);
-        if (res.error === undefined) {
-            return {
-                data: res.data,
-                identity: AstNodeIdentity.Variable
-            }
+        if (res.isSuccess) {
+            return Result.ok({id: AstNodeIdentity.Variable, data: res.getValue()})
         }
 
         res = await this.identifyEnum(identifier);
-        if (res.error === undefined) {
-            return {
-                data: res.data,
-                identity: AstNodeIdentity.Enum
-            }
+        if (res.isSuccess) {
+            return Result.ok({id: AstNodeIdentity.Enum, data: res.getValue() as EnumMembers})
         }
 
-        return {
-            error: `Not identified`,
-            identity: AstNodeIdentity.Undeclared
-        }
+        return Result.fail(
+            `Identifier is not identified`,
+            `Its neither a variable nor enum which are supported for now`
+        )
     }
 
     /**
@@ -447,13 +261,14 @@ export class Code {
      * @param {string} identifier the enum name
      * @returns {error?: string, data? {[key: string]: string|number}} 
      */
-    private identifyEnum = async(identifier: string): Promise<{error?: string, data?: EnumMembers}> => {
+    private identifyEnum = async(identifier: string): Promise<Result<EnumMembers>> => {
         let enumMembers: EnumMembers = {};
         const enumDeclaration = this.ast.getEnum(identifier);
         if (enumDeclaration === undefined) {
-            return {
-                error: `The '${identifier}' enum's declaration not found in the AST`
-            };
+            return Result.fail(
+                `this.ast.getEnum(identifier='${identifier}')`,
+                `enum not found in AST`
+            );
         }
 
         let bracesOpened = false;
@@ -497,12 +312,10 @@ export class Code {
             }
         }
 
-        return {
-            data: enumMembers
-        }
+        return Result.ok(enumMembers)
     }
 
-    private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<{error?: string, data?: T}> => {
+    private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<Result<T>> => {
         if (exp instanceof ObjectLiteralExpression) {
             // ObjectLiteralExpression has three children:
             // @child {Node} '{'
@@ -521,51 +334,55 @@ export class Code {
                 if (child.getText() === ",") {
                     continue;
                 }
-                let identified: {
-                    error?: string;
-                    data?: T;
-                } = {};
-                identified = await this.identifyValue<T>(identifier, data, child);
-                
-                if (identified.error !== undefined) {
-                    return {
-                        error: `identifyingValue ${identifier} -> ObjectLiteral='${exp.getText()}' -> SyntaxList(${syntaxList.getText()}): identifyValue(${child.getText()}): ${identified.error}`
-                    }
+                const identified = await this.identifyValue<T>(identifier, data, child);
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `objectLiteral('${exp.getText()}')/syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    )
                 } else {
-                    data = {...identified.data!};
+                    data = {...identified.getValue()!};
                 }
             }
-            return {data: data}
+            return Result.ok(data)
         } else if (exp instanceof SpreadAssignment) {
             const spreadSource = exp.getChildAtIndex(1);
-            return await this.identifyValue<T>(identifier, data, spreadSource);
+            const identified = await this.identifyValue<T>(identifier, data, spreadSource);
+            if (identified.isFailure) {
+                return Result.fail(
+                    `spreadAssignment('${exp.getText()}')/spreadSource('${spreadSource.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', spreadSource='${spreadSource.getText()}'): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            } else {
+                return Result.ok(identified.getValue())    
+            }
         } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
             const property = exp.getChildAtIndex(0);
             const value = exp.getChildAtIndex(2);
-            const propertyValue = (data[property.getText()]);
+            const propertyValue = ((data as any)[property.getText()]);
             
             // Assigned value to the (data: T).object's property
-            const res = await this.identifyValue<typeof propertyValue>(property.getText(), (data as any)[property.getText()], value);
-            if (res.error !== undefined) {
-                return {
-                    error: `propertyAssignment -> right assigned value -> identifyValue(rightAssignedValue=${property.getText()},data=${(data as any)[property.getText()]}, exp=${value.getText()}): ${res.error}`
-                }
+            const res = await this.identifyValue<typeof propertyValue>(property.getText(), propertyValue, value);
+            if (res.isFailure) {
+                return Result.fail(
+                    `propertyAssignment('${exp.getText()}')/this.identifyValue(property='${property.getText()}', data='${JSON.stringify(propertyValue)}', value='${value.getText()}'): ${res.errorTitle}`,
+                    res.errorDescription!
+                )
             }
-            data[property.getText()] = res.data;
-            return {
-                data: data
-            }
+            (data as any)[property.getText()] = res.getValue();
+            return Result.ok(data);
         } else if (exp instanceof Identifier) {
             if (exp.getText() === identifier) {
-                return {data}
+                return Result.ok(data);
             } else {
                 const identified = await this.identifyVariable<T>(exp.getText())
-                if (identified.error !== undefined) {
-                    return {
-                        error: `identifying value of 'Identifier': identifyVariable(${exp.getText()}): ${identified.error}`
-                    }
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `identifier('${exp.getText()}')/this.identifyVariable(exp='${exp.getText()}': ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    );
                 }
-                return {data: identified.data}
+                return Result.ok(identified.getValue())
             }
         } else if (exp instanceof ArrayLiteralExpression) {
             const syntaxList = exp.getChildAtIndex(1);
@@ -581,73 +398,61 @@ export class Code {
                 let dataAtIndex = (data as any[])[oldIndex-1]
                 let identified = await this.identifyValue<typeof dataAtIndex>(identifier, data, child);
                 
-                if (identified.error !== undefined) {
-                    return {
-                        error: `identifyValue ${identifier} ->ArrayLiteralExpression='${exp.getText()}': SyntaxList('${syntaxList.getText()}): 'identifyValue(identifier=${identifier},data=${JSON.stringify(data)}, child=${child.getText}): ${identified.error}`
-                    }
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `ArrayLiteralExpression('${exp.getText()}')/syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    )
                 } else {
-                    data[oldIndex - 1] = identified.data! as typeof dataAtIndex;
+                    (data as Array<any>)[oldIndex - 1] = identified.getValue()! as typeof dataAtIndex;
                 }
             }
 
-            return {data}
+            return Result.ok(data);
         } else if (exp instanceof PropertyAccessExpression) {
             const varIdentifier = exp.getChildAtIndex(0);
             const propertyIdentifier = exp.getChildAtIndex(2);
             
             // Attempt to find the variable's value within this script            
             const varValue = await this.identifyVariable(varIdentifier.getText());
-            if (varValue.error !== undefined) {
+            if (varValue.isFailure) {
                 // If the variable wasn't defined within the script, then find it on
                 // imports.
                 const importPath = this.identifyImportPath(varIdentifier.getText());
-                if (importPath.error !== undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/identifyImportPath(varIdentifier='${varIdentifier}'): ${importPath.error}`
-                    }
-                } else if (importPath.filePath === undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/identifyImportPath(varIdentifer='${varIdentifier}'): no error, no data`
-                    }
+                if (importPath.isFailure) {
+                    return Result.fail(
+                        `propertyAccess('${exp.getText()}')/identifyVariable(varIdentifier='${varIdentifier}') not found, this.identifyImportPath(varIdentifier='${varIdentifier}'): ${importPath.errorTitle}`,
+                        importPath.errorDescription!
+                    )
                 }
 
-                const fileContentData = await fileContentByModulePath(importPath.filePath!);
-                if (fileContentData.error !== undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/fileContentByModulePath(importPath.filePath='${importPath.filePath}'): ${fileContentData.error}`
-                    }
-                } else if (fileContentData.data === undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/fileContentByModulePath(importPath.filePath='${importPath.filePath}'): no error, no data`
-                    }
+                const fileContentData = await fileContentByModulePath(importPath.getValue());
+                if (fileContentData.isFailure) {
+                    return Result.fail(
+                        `propertyAccess('${exp.getText()}')/identifyVariable(varIdentifier='${varIdentifier}') not found, this.fileContentByModulePath(importPath='${importPath.getValue()}'): ${fileContentData.errorTitle}`,
+                        fileContentData.errorDescription!
+                    )
                 }
 
-                const subCode = new Code(fileContentData.data!.source!);
+                const subCode = new Code(fileContentData.getValue()!.source!);
+                console.log(`Sub Code path '${fileContentData.getValue().filePath}' for ${varIdentifier.getText()}`);
                 const identified = await subCode.identifyValueByIdentifier(varIdentifier.getText())
-                if (identified.error !== undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/subCode.identify(varIdentifier='${varIdentifier.getText()}'): ${identified.error}`
-                    }
-                } else if (identified.data === undefined) {
-                    return {
-                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/subCode.identify(varIdentifier='${varIdentifier.getText()}'): no error, no data`
-                    }
-                } else if (identified.identity === AstNodeIdentity.Undeclared) {
-                    return {
-                        error: `subCode.identify(varIdentifier='${varIdentifier.getText()}'): no error, there is data, but node type is not identified`
-                    }
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `propertyAccess('${exp.getText()}')/subCode(importPath='${importPath.getValue()}': ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    )
                 }
 
-                if (identified.identity === AstNodeIdentity.Enum) {
-                    let identifiedData = identified.data as EnumMembers;
+                if (identified.getValue().id === AstNodeIdentity.Enum) {
+                    let identifiedData = identified.getValue().data as EnumMembers;
                     if (propertyIdentifier.getText() in identifiedData) {
-                        return {
-                            data: identifiedData[propertyIdentifier.getText()] as T
-                        }
+                        return Result.ok(identifiedData[propertyIdentifier.getText()] as T)
                     } else {
-                        return {
-                            error: `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-                        }
+                        return Result.fail(
+                            `Invalid enum`,
+                            `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
+                        )
                     }
                 } else {
                     console.log(`The identified data is not an enum, then how to use it:`);
@@ -669,8 +474,11 @@ export class Code {
 
             // return {data}
         }
-        
-        return {error: `identifyValue doesn't support the statement`}
+
+        console.log(`The '${exp.getText()}' not yet supported by Ara Web`)
+        console.log(exp);
+        console.log(`\n\n`)
+        return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
     }
 
     /**
@@ -680,8 +488,8 @@ export class Code {
      * @returns {error?: string, succeed: boolean}
      * @todo NOT IMPLMENETED
      */
-    private identifyVariableUpdateInFunction = <T>(identifier: string, data: T): {error?: string, data?: T} => {
-        return {data};
+    private identifyVariableUpdateInFunction = <T>(identifier: string, data: T): Result<T> => {
+        return Result.ok(data);
     }
 
 
@@ -691,21 +499,25 @@ export class Code {
      * @param {any[]} funcArgs function argument
      * @returns {error?: string, data?: T}
      */
-    private callFunc = async <T>(funcName: string, funcArgs: any[]): Promise<{error?: string, data?: T}> => {
-        
+    private callFunc = async <T>(funcName: string, funcArgs: any[]): Promise<Result<T>> => {
         // Find the function
-        const res = this.identifyImportPath<T>(funcName);
-        if (res.error !== undefined) {
-            return {error: `callFunc:  identifyLiteralInImports(funcName='${funcName}'): ${res.error}`}
+        const res = this.identifyImportPath(funcName);
+        if (res.isFailure) {
+            return Result.fail(
+                `this.identifyImportPath(funcName='${funcName}'): ${res.errorTitle}`,
+                res.errorDescription!
+            )
         }
 
-        if (res.filePath === undefined) {
-            return {error: `callFunc: '${funcName}' module and error are both undefined, check identifyLiteralInImports() and fix it`}
+        const moduleRes = await callFuncInModule<T>(res.getValue(), funcName, funcArgs);
+        if (moduleRes.isFailure) {
+            return Result.fail(
+                `callFuncInModule(modulePath='${res.getValue()}', funcName='${funcName}', funcArgs='${JSON.stringify(funcArgs)}')`,
+                moduleRes.errorDescription!
+            )
         }
 
-        const moduleRes = await callFuncInModule<T>(res.filePath, funcName, funcArgs);
-
-        return moduleRes;
+        return Result.ok(moduleRes.getValue());
     }
 
     /**
@@ -759,34 +571,32 @@ export class Code {
     }
 
     /**
-     * 
-     * @param literal 
-     * @param astImport 
-     * @returns 
+     * Identify the Import Path of the given identifier
+     * @param {string} identifier
+     * @param {ImportDeclaration} astImport 
+     * @returns {string} the module path
      */
-    private identifyImportPath = <T>(literal: string, astImport?: ImportDeclaration): {error?: string, filePath?: string} => {
-        const ret: {
-            error?: string,
-            filePath?: string,
-        } = {}
-
+    public identifyImportPath = (identifier: string, astImport?: ImportDeclaration): Result<string> => {
         if (astImport === undefined) {
-            astImport = this.identifyImportDeclaration(literal)
+            astImport = this.identifyImportDeclaration(identifier)
             if (astImport === undefined) {
-                return {
-                    error: `identifyImportDeclaration(literal=${literal}): not found`
-                }
+                return Result.fail(
+                    `this.identifyImportDeclaration(identifier='${identifier}')`,
+                    `The given identifier not found in the import declaration`
+                )
             }
         }
+
+        // Since identify import declaration was correct for sure it will occur
+        let result: Result<string> = Result.ok("");
 
         for (let child of astImport.getChildren()) {
             if (child instanceof StringLiteral) {
-                return { filePath: unquote(child.getText()) };
+                result = Result.ok(unquote(child.getText()))
             }
         }
-        ret.error = `The ${literal} was not found in the import declarations`
 
-        return ret;
+        return result;
     }
 
     /**
@@ -794,33 +604,18 @@ export class Code {
      * @param {CallExpression} exp the node with the function call
      * @returns {error?: string, data?: T}
      */
-    private identifyFunctionCall = async <T>(exp: CallExpression): Promise<{error?: string, data?: T}> => {
-        const ret: {
-            error?: string,
-            data?: T,
-        } = {}
-
-        if (exp === undefined) {
-            return {error: `Expression passed to getCallExpression is undefined`}
-        } else if (exp.getChildCount() < 3) {
-            return {error: `The expression passed to getCallExpression misses child nodes`};
-        }
-
+    private identifyFunctionCall = async <T>(exp: CallExpression): Promise<Result<T>> => {
         const identifier = exp.getChildAtIndex(0) as Identifier;
-        if (identifier === undefined) {
-            return {error: `The first node of call epxression passed to getCallExpression is not an identifier`}
-        }
         const funcName = identifier.getText();
         const funcArgs: any[] = [];
         let openParenthesis: boolean = false;
-        let closeParenthesis: boolean = false;
         for (let i = 1; i < exp.getChildCount(); i++) {
             const subChild = exp.getChildAtIndex(i);
             if (subChild.getText() === "(") {
                 openParenthesis = true;
             } else if (subChild.getText() === ")") {
-                closeParenthesis = true;
-            } else if (!(subChild instanceof SyntaxList) || subChild.getText() !== "") {
+                continue;
+            } else if (!(subChild instanceof SyntaxList) || subChild.getText() !== "" ) {
                 if (openParenthesis === false) {
                     continue;
                 }
@@ -830,54 +625,55 @@ export class Code {
                             continue;
                         }
                         let result = await this.identifyValue(funcArg.getText(), {}, funcArg);
-                        if (result.error !== undefined) {
-                            return {
-                                error: `identify one of many function argument by calling identifyValue(funcArg='${funcArg.getText()}'): ${result.error}`
-                            }
-                        } else if (result.data === undefined) {
-                            return {
-                                error: `identify one of many function argument by calling identifyValue(funcArg='${funcArg.getText()}'): no error, no data`
-                            }
+                        if (result.isFailure) {
+                            return Result.fail(
+                                `func arg is multiple arguments, SyntaxList('${subChild.getText()}'): this.identifyValue(funcArg='${funcArg.getText()}', {}, funcArg='${funcArg.getText()}'): ${result.errorTitle}`,
+                                result.errorDescription!
+                            )
                         } else {
-                            funcArgs.push(result.data)
+                            funcArgs.push(result.getValue())
                         }
                     }
                 } else {
                     let result = await this.identifyValue(subChild.getText(), {}, subChild);
-                    if (result.error !== undefined) {
-                        return {
-                            error: `identify the function argument by calling identifyValue(subChild='${subChild.getText()}'): ${result.error}`
-                        }
-                    } else if (result.data === undefined) {
-                        return {
-                            error: `identify the function argument by calling identifyValue(subChild='${subChild.getText()}'): no error, no data`
-                        }
+                    if (result.isFailure) {
+                        return Result.fail(
+                            `func arg is a single argument: this.identifyValue(subChild='${subChild.getText()}', {}, subChild='${subChild.getText()}'): ${result.errorTitle}`,
+                            result.errorDescription!
+                        )
                     } else {
-                        funcArgs.push(result.data)
+                        funcArgs.push(result.getValue())
                     }
                 }
             }
         }
 
-        if (closeParenthesis === false) {
-            return {error: `Failed to find close parenthessis of ${funcName} call in '${exp.getText()}'`}
+        const callResult = await this.callFunc<T>(funcName, funcArgs);
+        if (callResult.isFailure) {
+            return Result.fail(
+                `this.callFunc(funcName='${funcName}', funcArgs='${JSON.stringify(funcArgs)}'): ${callResult.errorTitle}`,
+                callResult.errorDescription!
+            )
         }
-        if (ret.error !== undefined) {
-            return {error: `The identifying the function call throw an error: ${ret.error}`}
-        } 
 
-        return await this.callFunc<T>(funcName, funcArgs);
+        return Result.ok(callResult.getValue());
     }
 
-    private identifyVariableDeclaration = (identifier: string): {error?: string, varDeclaration?: VariableDeclaration} => {
+    /**
+     * Get the variable declaration AST tree for the variable
+     * @param identifier The variable's name
+     * @returns {Result<VariableDeclaration>}
+     */
+    private identifyVariableDeclaration = (identifier: string): Result<VariableDeclaration> => {
         const varDeclaration = this.ast.getVariableDeclaration(identifier);
         if (varDeclaration === undefined) {
-            return {
-                error: `The '${identifier}' variable's declaration not found in the AST`
-            };
+            return Result.fail(
+                `this.ast.getVariableDeclaration(identifier='${identifier}')`,
+                `The '${identifier}' variable's declaration not found in the AST`
+            );
         }
 
-        return {varDeclaration}
+        return Result.ok(varDeclaration)
     }
 
     /**
@@ -888,36 +684,36 @@ export class Code {
      * @todo Make sure to identify the variable update after the assignment
      * @todo Make sure to identify the variable update after function call (function maybe updating it)
      */
-    private identifyVariable = async <T>(identifier: string): Promise<{error?: string, data?: T}> => {
+    private identifyVariable = async <T>(identifier: string): Promise<Result<T>> => {
         const ret: {error?: string, data?: T} = {}
 
         // If Attribute name is an identifier, get variable statements that define them:
         // For example `const v: number = 1`
         const varDeclaration = this.identifyVariableDeclaration(identifier);
-        if (varDeclaration.error !== undefined) {
-            return {
-                error: `identifyVariableDeclaration(identifier=${identifier}): ${varDeclaration.error}`
-            };
+        if (varDeclaration.isFailure) {
+            return Result.fail(
+                `this.identifyVariableDeclaration(identifier='${identifier}'): ${varDeclaration.errorTitle}`,
+                varDeclaration.errorDescription!
+            );
         }
 
-        const identifiedValue = await this.identifyVariableValue<T>(varDeclaration!.varDeclaration!.getChildren());
-        if (identifiedValue.error !== undefined) {
-            return {
-                error: `identifyVariableValue(varDeclaration(identifier=${identifier})): ${identifiedValue.error}`
-            }
-        }
-        if (identifiedValue.data === undefined) {
-            return {
-                error: `identifyVariableValue(varDeclaration(identifier=${identifier})): no error, no data`
-            }
+        const identifiedValue = await this.identifyVariableValue<T>(varDeclaration.getValue()!.getChildren());
+        if (identifiedValue.isFailure) {
+            return Result.fail(
+                `identifyVariableValue(varDeclaration(identifier=${identifier})): ${identifiedValue.errorTitle}`,
+                identifiedValue.errorDescription!
+            )
         }
 
-        const updated = await this.identifyVariableUpdates<T>(identifier, identifiedValue.data!);
-        if (updated.error !== undefined) {
-            return {error: `identifyVariableUpdates(identifier=${identifier},variable.data=${identifiedValue.data}): ${updated.error}`}
+        const updated = await this.identifyVariableUpdates<T>(identifier, identifiedValue.getValue()!);
+        if (updated.isFailure) {
+            return Result.fail(
+                `identifyVariableUpdates(identifier=${identifier}, data=${identifiedValue.getValue()}): ${updated.errorTitle}`,
+                updated.errorDescription!
+            )
         }
 
-        return updated;
+        return Result.ok(updated.getValue());
     }
 
     /**
@@ -925,9 +721,7 @@ export class Code {
      * @param {any[]} children list of Import Declaration's AST nodes
      * @returns {error?: string, data?: T}
      */
-    private identifyVariableValue = async <T>(children: any[]): Promise<{error?: string, data?: T}> => {
-        const ret: {error?: string, data?: T} = {}
-
+    private identifyVariableValue = async <T>(children: any[]): Promise<Result<T>> => {
         /**
          * Identify the value of the variable declaration.
          * The first child is the variable itself, so we skip it.
@@ -952,19 +746,22 @@ export class Code {
             } else if (child instanceof Identifier) {
                 return await this.identifyVariable<T>(child.getText());
             } else if (child instanceof StringLiteral) {
-                ret.data = unquote(child.getText()) as T;
-                ret.error = undefined;
-                return ret;
+                return Result.ok(
+                    unquote(child.getText()) as T,
+                )
             } else {
-                ret.error = `The variable value ${JSON.stringify(child.getText())} type variable's value side is not handled. Change identifyVariableDeclaration() to fix it`
                 console.log(child);
-                return ret;
+                return Result.fail(
+                    `Failed variable's node: '${child.getText()}'`,
+                    `The '${JSON.stringify(child.getText())}' variable value's node is not handled by Ara Web yet. Change identifyVariableDeclaration() to fix it`
+                )
             }
         }
 
-        ret.error = `Couldn't find any expected AST component to consider as the variable's value`
-
-        return ret;
+        return Result.fail(
+            'Failed to detect any children', 
+            `Couldn't find any expected AST component to consider as the variable's value`
+        )
     }
 
 }

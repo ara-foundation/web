@@ -3,7 +3,8 @@
  * The page model represents the page itself in the miniature way
  */
 import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
-import { ColumnSlug, slugsToLayoutPath, RowSlug, type Page } from "@scripts/page";
+import { slugsToLayoutPath } from "@scripts/page";
+import { ColumnSlug, RowSlug, type Page } from "@scripts/araWebOntology"
 import { rpcBySlug } from "@scripts/rpc";
 
 interface Props {

@@ -3,13 +3,15 @@
  * And returns the Components along with the AST
  */
 import { parse as AstroParse, transform, type TransformResult } from "@astrojs/compiler";
-import type { ComponentNode, ElementNode, RootNode } from "@astrojs/compiler/types";
+import type { RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
 import { Project } from "ts-morph";
 import type { AstroInstance } from 'astro';
 import PathModule from "node:path"
 import { identifyModuleType, ModuleType, trimPath } from "@scripts/reflect/module";
 import { getScriptByPath } from "@scripts/reflect/script";
+import { type NodeType } from "@scripts/araWebOntology";
+import { Result } from "@scripts/result";
 
 export enum PathType {
     Astro = ".astro",
@@ -20,7 +22,6 @@ export enum PathType {
     DirectoryOrUndefined = "",
 }
 
-export type NodeType = ComponentNode | ElementNode;
 
 /**
  * The content of any page will contain list of the nodes and code, usually a frontmatter.
@@ -116,7 +117,7 @@ export const globsToFileContents = async(globs: Record<string, () => Promise<unk
  * @returns {data?: T, error?: string}
  */
 export const callFuncInModule = async <T>(modulePath: string, funcName: string, funcArgs: any[]): 
-    Promise<{error?: string, data?: T}> => {
+    Promise<Result<T>> => {
     const ret: {
         error?: string,
         data?: T,
@@ -124,39 +125,55 @@ export const callFuncInModule = async <T>(modulePath: string, funcName: string, 
     
     const moduleType = identifyModuleType(modulePath);
     if (moduleType === ModuleType.Untracked) {
-        return {error: `The ${modulePath} module path to call ${funcName} is not in the tracked directory`}
+        return Result.fail(
+            `identifyModuleType(modulePath='${modulePath}')`,
+            `The ${modulePath} module path to call ${funcName} is not in the tracked directory`
+        )
     }
 
     if (moduleType === ModuleType.Script) {
         const script = await getScriptByPath(modulePath)
         if (script === undefined) {
-            return {error: `No script at ${modulePath}, make sure it exists or its the bug of getScriptByPath`}
+            return Result.fail(
+                `getScriptByPath(modulePath='${modulePath}')`,
+                `No script at ${modulePath}, make sure it exists or its the bug of getScriptByPath`
+            )
         }
-        ret.data = await (script.glob as any)[funcName](...funcArgs)
-    } else {
-        return {error: `callFuncInModule supports scripts only for now`}
+
+        let data = await (script.glob as any)[funcName](...funcArgs)
+        return Result.ok(data as T);
     }
 
-    return ret;
+    return Result.fail(
+        `Unsupported module`,
+        `The ${moduleType} kind of modules are not yet supported by Ara Web`
+    )
 }
 
-export const fileContentByModulePath = async(modulePath: string): Promise<{error?: string, data?: FileContent}> => {
+export const fileContentByModulePath = async(modulePath: string): Promise<Result<FileContent>> => {
     const moduleType = identifyModuleType(modulePath);
     if (moduleType === ModuleType.Untracked) {
-        return {error: `identifyValue(modulePath='${modulePath}')/identifyModuleType(modulePath='${modulePath}'): the module is not tracked`}
+        return Result.fail(
+            `identifyModuleType(modulePath='${modulePath}')`,
+            `The module path is not tracked by Ara Web`
+        )
     }
 
     if (moduleType === ModuleType.Script) {
         const script = await getScriptByPath(modulePath);
         if (script === undefined) {
-            return {error: `identifyValue(modulePath='${modulePath}')/getScriptPath(modulePath='${modulePath}'): the script wasn't returned by path`}
+            return Result.fail(
+                `moduleType=ModuleType.Script: getScriptByPath(modulePath='${modulePath}')`,
+                `The script is not defined in the scripts path, are you sure that file exists or has the valid file extension?`
+            )
         }
-        return {
-            data: script,
-        }
+        return Result.ok(script)
     } 
     
-    return {error: `identifyValue(modulePath='${modulePath}')/identifyModuleType(modulePath='${modulePath}'): only Scripts are supported for now`}
+    return Result.fail(
+        'Unsupported module type',
+        `Only Script modules are supported, not '${moduleType}' modules`
+    )
 }
 
 

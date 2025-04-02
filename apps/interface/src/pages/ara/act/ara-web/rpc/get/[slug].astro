@@ -5,7 +5,8 @@
  * @param {string} Description A page with the details of the action
  */
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { ColumnSlug, slugsToLayoutPath, RowSlug } from "@scripts/page";
+import { slugsToLayoutPath } from "@scripts/page";
+import { ColumnSlug, RowSlug } from "@scripts/araWebOntology";
 import {AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
