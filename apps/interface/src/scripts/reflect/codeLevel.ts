@@ -44,12 +44,14 @@ export class Code {
     ast: TsSourceFile;
     code: string;
     project: Project;
+    tempCodeAmount: number;
 
     /**
      * Convert the source code into the AST tree
      * @param source the typescript code
      */
-    constructor(code: string) {
+    constructor(code: string, tempCodeAmount = 0) {
+        this.tempCodeAmount = tempCodeAmount;
         this.code = code;
         this.project = new Project({
             useInMemoryFileSystem: true
@@ -63,7 +65,7 @@ export class Code {
      * @returns {Code}
      */
     clone = (): this => {
-        return new (this.constructor as typeof Code)(this.code) as this;
+        return new (this.constructor as typeof Code)(this.code, this.tempCodeAmount) as this;
     }
 
     /**
@@ -72,7 +74,8 @@ export class Code {
      * @returns {T} the result of the expression
      */
     public identifyCodePiece = async <T>(exp: string): Promise<Result<T>> => {
-        const varName = "__ara_web_exp";
+        this.tempCodeAmount++;
+        const varName = `__ara_web_exp_${this.tempCodeAmount}`;
         let cloned = this.clone();
         cloned.ast.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const, // defaults to "let"
