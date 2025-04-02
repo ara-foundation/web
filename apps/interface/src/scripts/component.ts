@@ -50,6 +50,8 @@ export const componentCategories: ComponentCategory[] = [{
     description: "Components that used to build nested components for pages"
 }];
 
+const AraWebLayoutPath = "layouts/AraWebLayout.astro";
+
 export type Component = {
     label: string;
     description: string;
@@ -58,11 +60,11 @@ export type Component = {
     glob: unknown,
 }
 
-type JsxDev = {
-    fileName: string,
-    lineNumber: number,
-    columnNumber: number,
+
+export const isLayout = (filePath: string): boolean => {
+    return (filePath.indexOf(AraWebLayoutPath) > -1);
 }
+ 
 
 export const getComponents = async (): Promise<Component[]> => {
     let globs = import.meta.glob('@layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file

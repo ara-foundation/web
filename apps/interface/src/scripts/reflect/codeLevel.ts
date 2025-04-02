@@ -16,11 +16,14 @@ import {
     PropertyAssignment,
     VariableDeclaration,
     ArrayLiteralExpression,
-    PropertyAccessExpression} from "ts-morph";
-import { callFuncInModule, type NodeType } from "./fileLevel";
+    PropertyAccessExpression,
+    EnumMember,
+    NumericLiteral
+} from "ts-morph";
+import { callFuncInModule, fileContentByModulePath, type NodeType } from "./fileLevel";
 import type { RpcCallType } from "@scripts/rpc/types";
 import type { AttributeNode } from "@astrojs/compiler/types";
-import { string } from "astro:schema";
+import { isLayout } from "@scripts/component";
 
 /**
  * Given the component, identify what it is
@@ -32,6 +35,12 @@ export enum ComponentIdentity {
     Undeclared = "undeclared",     // Unexpected
 }
 
+export enum AstNodeIdentity {
+    Undeclared,
+    Variable,
+    Enum,
+}
+
 export type ComponentData = NodeType | RpcCallType
 
 export type ComponentIdentificationResult = {
@@ -39,6 +48,8 @@ export type ComponentIdentificationResult = {
     data?: any,
     error?: string,
 }
+
+export type EnumMembers = {[key: string]: string|number};
 
 export class Code {
     ast: TsSourceFile;
@@ -75,7 +86,10 @@ export class Code {
         
         const result = await this.identifyComponentInImports(componentNode);
         if (result.error) {
-            return result;
+            return {
+                id: result.id,
+                error: `identifyComponentInImports(componentNode=${componentNode.name}): ${result.error}`
+            };
         }
         if (result.id !== ComponentIdentity.Undeclared) {
             return result
@@ -122,8 +136,7 @@ export class Code {
         //
         // Component indicates an RPC Call?
         //
-        const rpcDetected = isRpcCallComponent(importPath.filePath!);
-        if (rpcDetected) {
+        if (isRpcCallComponent(importPath.filePath!)) {
             ret.id = ComponentIdentity.Rpc;
             const {error, data} = await this.identifyRpcCallComponent(componentNode);
             if (error !== undefined) {
@@ -132,12 +145,15 @@ export class Code {
                 ret.data = data;
             }
             return ret;
+        } else if (isLayout(importPath.filePath!)) {
+            ret.id = ComponentIdentity.Layout;
+            return ret;
         }
         
         //
         // Component indicates a layout?
         //
-        ret.error = `Only RpcCalls are identifiable for now`;
+        ret.error = `Only RpcCalls and Layouts are identifiable for now`;
 
         return ret;
     }
@@ -345,7 +361,6 @@ export class Code {
     }
 
     private identifyBinaryExpression = async <T>(identifier: string, data: T, exp: BinaryExpression): Promise<{error?: string, data?: T}> => {
-        const ret: {error?: string, data?: T} = {};
         const leftSide = exp.getChildAtIndex(0);
         const rightSide = exp.getChildAtIndex(2);
     
@@ -393,7 +408,94 @@ export class Code {
         }
     }
 
-    private identifyValue = async <T>(identifier: string, data: T, exp: any): Promise<{error?: string, data?: T}> => {
+    /**
+     * Identify the value of the identifier
+     * @param {string} identifier identififer within the code
+     */
+    private identifyValueByIdentifier = async(identifier: string): Promise<{error?: string, data?: any, identity: AstNodeIdentity}> => {
+        let res = await this.identifyVariable(identifier);
+        if (res.error === undefined) {
+            return {
+                data: res.data,
+                identity: AstNodeIdentity.Variable
+            }
+        }
+
+        res = await this.identifyEnum(identifier);
+        if (res.error === undefined) {
+            return {
+                data: res.data,
+                identity: AstNodeIdentity.Enum
+            }
+        }
+
+        return {
+            error: `Not identified`,
+            identity: AstNodeIdentity.Undeclared
+        }
+    }
+
+    /**
+     * Identify whether the given identifier is the enum, if so, return it's values
+     * @param {string} identifier the enum name
+     * @returns {error?: string, data? {[key: string]: string|number}} 
+     */
+    private identifyEnum = async(identifier: string): Promise<{error?: string, data?: EnumMembers}> => {
+        let enumMembers: EnumMembers = {};
+        const enumDeclaration = this.ast.getEnum(identifier);
+        if (enumDeclaration === undefined) {
+            return {
+                error: `The '${identifier}' enum's declaration not found in the AST`
+            };
+        }
+
+        let bracesOpened = false;
+        for (let child of enumDeclaration.getChildren()) {
+            if (child.getText() === "{") {
+                bracesOpened = true;
+                continue;
+            } else if (child instanceof SyntaxList) {
+                if (!bracesOpened) {
+                    continue;
+                }
+                let propertyIndex = 0;
+                for (let listEl of child.getChildren()) {
+                    let propertyIdentifier: string = "";
+                    let propertyValue: string|number|undefined = undefined;
+                    // Could be an enum separator such as "," so we work with EnumMember
+                    if (listEl instanceof EnumMember) {
+                        let enumMember = listEl as EnumMember;
+                        for (let enumData of enumMember.getChildren()) {
+                            if (enumData instanceof Identifier) {
+                                propertyIdentifier = enumData.getText();
+                            } else if (enumData.getText() === "=") {
+                                continue;
+                            } else if (enumData instanceof StringLiteral) {
+                                propertyValue = JSON.parse(enumData.getText());
+                            } else if (enumData instanceof NumericLiteral) {
+                                propertyValue = JSON.parse(enumData.getText());
+                            } else {
+                                console.log(`enum (${identifier})'s enum member ${propertyIdentifier} is not a string literal, so we will use default numeration, catch it here in identifyEnum()`);
+                                console.log(enumData)
+                            }
+                        }
+
+                        if (propertyValue === undefined) {
+                            propertyValue = propertyIndex++;
+                        }
+
+                        enumMembers[propertyIdentifier] = propertyValue;
+                    }
+                }
+            }
+        }
+
+        return {
+            data: enumMembers
+        }
+    }
+
+    private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<{error?: string, data?: T}> => {
         if (exp instanceof ObjectLiteralExpression) {
             // ObjectLiteralExpression has three children:
             // @child {Node} '{'
@@ -482,6 +584,83 @@ export class Code {
             }
 
             return {data}
+        } else if (exp instanceof PropertyAccessExpression) {
+            const varIdentifier = exp.getChildAtIndex(0);
+            const propertyIdentifier = exp.getChildAtIndex(2);
+            
+            // Attempt to find the variable's value within this script            
+            const varValue = await this.identifyVariable(varIdentifier.getText());
+            if (varValue.error !== undefined) {
+                // If the variable wasn't defined within the script, then find it on
+                // imports.
+                const importPath = this.identifyImportPath(varIdentifier.getText());
+                if (importPath.error !== undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/identifyImportPath(varIdentifier='${varIdentifier}'): ${importPath.error}`
+                    }
+                } else if (importPath.filePath === undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/identifyImportPath(varIdentifer='${varIdentifier}'): no error, no data`
+                    }
+                }
+
+                const fileContentData = await fileContentByModulePath(importPath.filePath!);
+                if (fileContentData.error !== undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/fileContentByModulePath(importPath.filePath='${importPath.filePath}'): ${fileContentData.error}`
+                    }
+                } else if (fileContentData.data === undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/fileContentByModulePath(importPath.filePath='${importPath.filePath}'): no error, no data`
+                    }
+                }
+
+                const subCode = new Code(fileContentData.data!.source!);
+                const identified = await subCode.identifyValueByIdentifier(varIdentifier.getText())
+                if (identified.error !== undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/subCode.identify(varIdentifier='${varIdentifier.getText()}'): ${identified.error}`
+                    }
+                } else if (identified.data === undefined) {
+                    return {
+                        error: `identifyValue(identifier='${identifier}',exp='${exp.getText()}')/subCode.identify(varIdentifier='${varIdentifier.getText()}'): no error, no data`
+                    }
+                } else if (identified.identity === AstNodeIdentity.Undeclared) {
+                    return {
+                        error: `subCode.identify(varIdentifier='${varIdentifier.getText()}'): no error, there is data, but node type is not identified`
+                    }
+                }
+
+                if (identified.identity === AstNodeIdentity.Enum) {
+                    let identifiedData = identified.data as EnumMembers;
+                    if (propertyIdentifier.getText() in identifiedData) {
+                        return {
+                            data: identifiedData[propertyIdentifier.getText()] as T
+                        }
+                    } else {
+                        return {
+                            error: `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
+                        }
+                    }
+                } else {
+                    console.log(`The identified data is not an enum, then how to use it:`);
+                    console.log(identified)
+                }
+            }
+            
+            // const propertyValue = (data as any)[propertyIdentifier.getText()]
+
+            // const result = await this.identifyValue<typeof propertyValue>(propertyIdentifier.getText(), propertyValue, rightSide)
+            // if (result.error !== undefined) {
+            //     return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): ${result.error}`}
+            // }
+            // if (result.data === undefined) {
+            //     return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): no error, no data, inspect identifyValue`}
+            // }
+
+            // (data as any)[propertyIdentifier.getText()] = result.data
+
+            // return {data}
         }
         
         return {error: `identifyValue doesn't support the statement`}
@@ -595,7 +774,6 @@ export class Code {
 
         for (let child of astImport.getChildren()) {
             if (child instanceof StringLiteral) {
-                console.log(`IdentifyImportPath(literal=${literal}, astImport=${astImport.getText()}): StringLiteralChild=${child.getText()}`);
                 return { filePath: JSON.parse(child.getText()) };
             }
         }
@@ -639,7 +817,38 @@ export class Code {
                 if (openParenthesis === false) {
                     continue;
                 }
-                funcArgs.push(subChild);
+                if (subChild instanceof SyntaxList) {
+                    for (let funcArg of subChild.getChildren()) {
+                        if (funcArg.getText() === ",") {
+                            continue;
+                        }
+                        let result = await this.identifyValue(funcArg.getText(), {}, funcArg);
+                        if (result.error !== undefined) {
+                            return {
+                                error: `identify one of many function argument by calling identifyValue(funcArg='${funcArg.getText()}'): ${result.error}`
+                            }
+                        } else if (result.data === undefined) {
+                            return {
+                                error: `identify one of many function argument by calling identifyValue(funcArg='${funcArg.getText()}'): no error, no data`
+                            }
+                        } else {
+                            funcArgs.push(result.data)
+                        }
+                    }
+                } else {
+                    let result = await this.identifyValue(subChild.getText(), {}, subChild);
+                    if (result.error !== undefined) {
+                        return {
+                            error: `identify the function argument by calling identifyValue(subChild='${subChild.getText()}'): ${result.error}`
+                        }
+                    } else if (result.data === undefined) {
+                        return {
+                            error: `identify the function argument by calling identifyValue(subChild='${subChild.getText()}'): no error, no data`
+                        }
+                    } else {
+                        funcArgs.push(result.data)
+                    }
+                }
             }
         }
 

@@ -84,7 +84,6 @@ export const contentRightPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Ri
 export const getPages = async (): Promise<Page[]> => {
     const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
     const fileContents = await globsToFileContents(globs);
-
     return await fileContentsToPages(fileContents);
 }
 
@@ -185,22 +184,6 @@ const extractMeta = (frontmatterCode: string, page: Page): boolean => {
     }
 
     return false;
-}
-
-/**
- * Convert the Astro to the typescript so that we can use the Typescript AST manipulator to detect all components
- * @param fileName a full path to the file name that ends with .astro extension
- * @param astroSource a content of the file
- * @returns {TransformResult}
- */
-const astroToTs = async(fileName: string, astroSource: string): Promise<TransformResult> => {
-    const result = await transform(astroSource, {
-        filename: fileName,
-        sourcemap: "both",
-        internalURL: "astro/runtime/server/index.js",
-    });
-
-    return result;
 }
 
 /**
@@ -325,6 +308,53 @@ const pushComponentAtLayoutSlugs = (node: NodeType, page: Page, layoutSlugs: Lay
     return true;
 }
 
+const identifyLayoutComponents = async(layoutNode: NodeType, page: Page, code: Code): Promise<{error?: string, data?: Page}> => {
+    let ret: {
+        error?: string,
+        data?: Page,
+    } = {};
+
+    for (const child of layoutNode.children) {
+        if (child.type === "text") {
+            continue;
+        }
+        if (child.type !== "component" && child.type !== "element") {
+            return {
+                error: `Layout Node ${layoutNode.name}'s component ${child.type} is not a component nor element`
+            }
+        }
+
+        const {id: componentRole, data: componentData, error} = await code.identifyComponent(child)
+        if (error !== undefined) {
+            return {
+                error: `identifyLayoutComponents(layoutNode=${layoutNode.name},page='${page.title}')/code.identifyComponent(child=${child.name}): ${error}`
+            }
+        }
+        if (componentRole !== ComponentIdentity.Component) {
+            return {
+                error: `identifyLayoutComponents(layoutNode=${layoutNode.name},page='${page.title}')/code.identifyComponent(child=${child.name}): layouts could hold only nested components, not '${componentRole}' components`
+            }
+        }
+        const layoutSlugs = await detectComponentLayoutSlug(child, code)
+        if (layoutSlugs.error !== undefined) {
+            return {
+                error: `identifyLayoutComponents(layoutNode=${layoutNode.name},page=${page.title})/detectComponentLayoutSlug(child=${child.name}): ${layoutSlugs.error}`
+            }
+        }
+
+        const pushed = pushComponentAtLayoutSlugs(componentData! as NodeType, page, layoutSlugs.data!);
+        if (!pushed) {
+            return {
+                error: `identifyLayoutComponents(layoutNode=${layoutNode.name},page=${page.title})/pushComponentAtLayoutSlugs(componentData=${componentData!.name}): failed to push, no error`
+            }
+        } else {
+            ret.data = page;
+        }
+    }
+
+    return ret;
+}
+
 /**
  *  @todo To identify the RPCs by components, use a special Typescript parser
  *  For now we rely on the component names
@@ -334,27 +364,22 @@ const pushComponentAtLayoutSlugs = (node: NodeType, page: Page, layoutSlugs: Lay
 const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]> => {
     let pages: Page[] = [];
 
-    console.log(`TODO: Make sure that the page keeps the srcipts/component.ts=>Component instead using the Astro's Component value`);
     let i = 0;
 
     for (let fileContent of fileContents) {
         if (++i === 2) {
             break;
         }
-        console.log(`${pages.length} Page ${i}: FilePath = ${fileContent.filePath}`);
-        const {page, error} = validatedFileContentToPage(fileContent); 
+        let {page, error} = validatedFileContentToPage(fileContent); 
         if (error) {
             pages.push(page);
             continue;
         }
-        console.log(`${pages.length} Page ${i}: page from content path: ${JSON.stringify(page)}, error=${error}`)
         
         if (!extractMeta(fileContent.source!, page)) {
-            console.log(`${pages.length} Page ${i}: meta wasn't pushed: ${JSON.stringify(page)}`)
             pages.push(page)
             continue;
         }
-        console.log(`${pages.length} Page ${i}: meta been pushed: ${JSON.stringify(page)} component amount: ${fileContent.nodes?.length}`)
 
         if (page.rpcs === undefined) {
             page.rpcs = {};
@@ -364,11 +389,10 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
         }
 
         const pageCode = new Code(fileContent.source!);
-        console.log(`${pages.length} Page ${i}: detect components:`)
 
         for (let componentNode of fileContent.nodes!) {
-            console.log(`${pages.length} Page ${i}: component: ${componentNode.name}`)
-
+            // Remove it here, as we add it within the layouts
+            // All other components are added into meta objects
             const layoutSlugs = await detectComponentLayoutSlug(componentNode, pageCode);
             if (layoutSlugs.error !== undefined) {
                 page.title = `Can't detect the component layout for ${componentNode.name}`
@@ -382,17 +406,14 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 pages.push(page);
                 continue;
             }
-            console.log(`${pages.length} Page ${i}: component: ${componentNode.name} layout was identified`)
             
             const {id: componentRole, data: componentData, error} = await pageCode.identifyComponent(componentNode)
             if (error !== undefined) {
                 page.title = `Error while identifying ${componentNode.name} component`
                 page.description = error;
                 pages.push(page);
-                console.log(`${pages.length} Page ${i}: component: ${componentNode.name} identification error: ${error}`)
                 continue;
             }
-            console.log(`${pages.length} Page ${i}: component: ${componentNode.name} identified as ${componentRole}`)
             
             // Let's detect the ComponentType
             if (componentRole === ComponentIdentity.Undeclared) {
@@ -401,7 +422,6 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 pages.push(page);
                 continue;
             } else if (componentRole === ComponentIdentity.Component) {
-                console.log(`TODO: page.fileContentsToPages ComponentIdentity, add support of Component`);
                 const pushed = pushComponentAtLayoutSlugs(componentData! as NodeType, page, layoutSlugs.data!);
                 if (!pushed) {
                     page.title = "Undefined component path"
@@ -431,28 +451,18 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
                 }
                 continue;
             } else if (componentRole === ComponentIdentity.Layout) {
-                if (componentNode.name === "AraWebLayout") {
-                    for (const child of componentNode.children) {
-                        if (child.type !== "component" && child.type !== "element") {
-                            continue;
-                        }
-                        // console.log(`The AraWebLayout ${child.type} kid attrs:`)
-                        // The attribute.name="slot"
-                        // The attribute.value = "slug"
-                        // console.log(child.attributes);
-                        const childLayoutPath = detectComponentLayoutSlug(child, pageCode)
-                        // console.log(`${componentNode.name} child's layout path: ${childLayoutPath?.row}-${childLayoutPath?.column}`)
-                        // console.log(`----------------------------`)
-                    }
+                const layoutComponentsAdded = await identifyLayoutComponents(componentNode, page, pageCode);
+                if (layoutComponentsAdded.error !== undefined) {
+                    page.title = "Failed to identify layout components"
+                    page.description = layoutComponentsAdded.error
+                    pages.push(page);
+                    continue;
                 }
-
-                console.log(`Layouts are not supported yet`);
-                page.title = "Layouts are not yet addable"
-                page.description = `Unable to determine the layout of ${(componentData! as NodeType).name} in the page`
+                page = layoutComponentsAdded.data!;
                 pages.push(page);
                 continue;
             } else {
-                console.log(`Component ${componentNode.name} was not identified`);
+                console.log(`Component ${componentNode.name} was not identified. It's neither Layout, nor Component nor RPC Call`);
             }
         }
     }

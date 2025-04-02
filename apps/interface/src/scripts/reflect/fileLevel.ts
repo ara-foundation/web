@@ -128,6 +128,8 @@ export const callFuncInModule = async <T>(modulePath: string, funcName: string, 
         return {error: `The ${modulePath} module path to call ${funcName} is not in the tracked directory`}
     }
 
+    console.log(`Module type: ${moduleType}`)
+
     if (moduleType === ModuleType.Script) {
         const script = await getScriptByPath(modulePath)
         if (script === undefined) {
@@ -139,6 +141,25 @@ export const callFuncInModule = async <T>(modulePath: string, funcName: string, 
     }
 
     return ret;
+}
+
+export const fileContentByModulePath = async(modulePath: string): Promise<{error?: string, data?: FileContent}> => {
+    const moduleType = identifyModuleType(modulePath);
+    if (moduleType === ModuleType.Untracked) {
+        return {error: `identifyValue(modulePath='${modulePath}')/identifyModuleType(modulePath='${modulePath}'): the module is not tracked`}
+    }
+
+    if (moduleType === ModuleType.Script) {
+        const script = await getScriptByPath(modulePath);
+        if (script === undefined) {
+            return {error: `identifyValue(modulePath='${modulePath}')/getScriptPath(modulePath='${modulePath}'): the script wasn't returned by path`}
+        }
+        return {
+            data: script,
+        }
+    } 
+    
+    return {error: `identifyValue(modulePath='${modulePath}')/identifyModuleType(modulePath='${modulePath}'): only Scripts are supported for now`}
 }
 
 
