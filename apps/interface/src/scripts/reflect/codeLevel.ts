@@ -459,21 +459,9 @@ export class Code {
                     console.log(`The identified data is not an enum, then how to use it:`);
                     console.log(identified)
                 }
+            } else {
+                return Result.ok(varValue.getValue() as T)
             }
-            
-            // const propertyValue = (data as any)[propertyIdentifier.getText()]
-
-            // const result = await this.identifyValue<typeof propertyValue>(propertyIdentifier.getText(), propertyValue, rightSide)
-            // if (result.error !== undefined) {
-            //     return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): ${result.error}`}
-            // }
-            // if (result.data === undefined) {
-            //     return {error: `identifyValue(data=${data}, rightSide=${rightSide.getText}): no error, no data, inspect identifyValue`}
-            // }
-
-            // (data as any)[propertyIdentifier.getText()] = result.data
-
-            // return {data}
         } else if (exp instanceof CallExpression) {
             // The value clause is the function call? `foo()` will be turned into four nodes:
             // 1: Identifier(foo), 
