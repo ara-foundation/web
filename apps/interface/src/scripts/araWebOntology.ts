@@ -2,10 +2,10 @@
  * Global Shared Data Types of Ara
  * @todo make sure to not use the data types from @scripts/reflect/fileLevel
  */
-import type { ComponentNode, ElementNode } from "@astrojs/compiler/types";
+import type { ComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
 import { RpcType, type RpcCallType } from "@scripts/rpc/types"
 
-export type NodeType = ComponentNode | ElementNode;
+export type NodeType = ComponentNode | ElementNode | ExpressionNode;
 
 /**
  * RowSlug defines the types of the Rows in the page layout

@@ -6,6 +6,7 @@ import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
 import { slugsToLayoutPath } from "@scripts/page";
 import { ColumnSlug, RowSlug, type Page } from "@scripts/araWebOntology"
 import { rpcBySlug } from "@scripts/rpc";
+import { PageTraits } from "@scripts/reflect/araWebLevel";
 
 interface Props {
   	rows?: RowsProps,
@@ -38,57 +39,57 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
 <BodyLayout rows={rows}>
     <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Left)}>
         {page?.components?.header?.left !== undefined && page.components.header.left.map((componentNode) => (
-            <div class="">{componentNode.name}</div>
+            <div class="">{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.header?.left === undefined && "Header Left"}
     </div>
     <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Center)}>
         {page?.components?.header?.center !== undefined && page.components.header.center.map((componentNode) => (
-            <div class="" >{componentNode.name}</div>
+            <div class="" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.header?.center === undefined && "Header Center"}
     </div>
     <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Right)}>
         {page?.components?.header?.right !== undefined && page.components.header.right.map((componentNode) => (
-            <div class="">{componentNode.name}</div>
+            <div class="">{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.header?.right === undefined && "Header Right"}
     </div>
 
     <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Left)}>
         {page?.components?.content?.left !== undefined && page.components.content.left.map((componentNode) => (
-            <div class="" >{componentNode.name}</div>
+            <div class="" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.content?.left === undefined && "Content Left"}
     </div>
     <div class="text-gray-500 text-center text-xs" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Center)}>
         {page?.components?.content?.center !== undefined && page.components.content.center.map((componentNode) => (
-            <div class="" >{componentNode.name}</div>
+            <div class="" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.content?.center === undefined && "Content Center"}
     </div>
     <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Content,ColumnSlug.Right)}>
         {page?.components?.content?.right !== undefined && page.components.content.right.map((componentNode) => (
-            <div class="" >{componentNode.name}</div>
+            <div class="" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.content?.right === undefined && "Content Right"}
     </div>
 
     <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Left)}>
         {page?.components?.footer?.left !== undefined && page.components.footer.left.map((componentNode) => (
-            <div class="" >{componentNode.name}</div>
+            <div class="" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.footer?.left === undefined && "Footer Left"}
     </div>
     <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Center)}>
         {page?.components?.footer?.center !== undefined && page.components.footer.center.map((componentNode) => (
-            <div class="text-gray-100" >{componentNode.name}</div>
+            <div class="text-gray-100" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.footer?.center === undefined && "Footer Center"}
     </div>
     <div class="text-gray-500 text-center" slot={slugsToLayoutPath(RowSlug.Footer,ColumnSlug.Right)}>
         {page?.components?.footer?.right !== undefined && page.components.footer.right.map((componentNode) => (
-            <div class="text-gray-100" >{componentNode.name}</div>
+            <div class="text-gray-100" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.footer?.right === undefined && "Footer Right"}
     </div>

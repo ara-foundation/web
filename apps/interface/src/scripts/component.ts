@@ -60,11 +60,17 @@ export type Component = {
     glob: unknown,
 }
 
+export type Expression = {
+    prefix: string;
+    firstElement: Component;
+    suffix: string;
+}
+
 
 export const isLayout = (filePath: string): boolean => {
     return (filePath.indexOf(AraWebLayoutPath) > -1);
 }
- 
+
 
 export const getComponents = async (): Promise<Component[]> => {
     let globs = import.meta.glob('@layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
@@ -72,12 +78,12 @@ export const getComponents = async (): Promise<Component[]> => {
     globs = {...globs, ...globItems};
 
     const fileContents = await globsToFileContents(globs);
-    let components: Component[] = fileContentContentsToComponents(fileContents);
+    let components: Component[] = fileContentsToComponents(fileContents);
 
     return components;
 }
 
-const fileContentContentsToComponents = (fileContents: FileContent[]): Component[] => {
+const fileContentsToComponents = (fileContents: FileContent[]): Component[] => {
     let components: Component[] = [];
 
     for (let fileContent of fileContents) {
