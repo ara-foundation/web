@@ -2,9 +2,7 @@
  * The script that works with the code by turning it into the 
  * AST (Abstract Syntax Tree)
  * @todo Make the components nested to each other
- * @todo Optimize the AST traverse
  * @todo fix the parsing of all pages
- * @todo change scripts/page.ts=>Page.components type to Component
  * @todo somehow we need to show on PageModal the meta components
  */
 import { 

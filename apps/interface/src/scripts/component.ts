@@ -4,15 +4,31 @@ import GapContainer from "@components/auth/GapContainer";   // react typescript
 import AraContact from "@components/lungta/AraContact"      // react javascript
 import type { Props } from "astro";
 import { globsToFileContents, type FileContent } from "@scripts/reflect/fileLevel";
+import type { Component, ComponentCategory } from "@scripts/araWebOntology";
+import type { ComponentNode, ElementNode } from "@astrojs/compiler/types";
+import { capitalizeFirstLetter } from "@scripts/string";
+import { Result } from "@scripts/result";
                                                             // WARNING: Every time whenever a new extension added, 
                                                             // add support here.
 
 export type ElementType = ((_props: Props) => any) | typeof GapContainer | typeof AraContact;
 
-export type ComponentCategory = {
-    name: string;
-    slug: string;
-    description: string;
+const elementCategory: ComponentCategory = {
+    name: "WWW",
+    slug: "html",
+    description: `The basic web component that composes the Web Elements also known as HTML`,
+}
+
+export const expressionCategory: ComponentCategory = {
+    name: "Expression",
+    slug: "",
+    description: `The expression is the dynamic components inserted by Astro Framework`
+}
+
+export const layoutCategory: ComponentCategory = {
+    name: "Layout",
+    slug: "layouts/",
+    description: "Components that used to build nested components for pages"
 }
 
 export const componentCategories: ComponentCategory[] = [{
@@ -44,33 +60,78 @@ export const componentCategories: ComponentCategory[] = [{
     name: "General",
     slug: "components/",
     description: "General or global components"
-}, {
-    name: "Layout",
-    slug: "layouts/",
-    description: "Components that used to build nested components for pages"
-}];
+}, 
+    layoutCategory
+];
 
 const AraWebLayoutPath = "layouts/AraWebLayout.astro";
-
-export type Component = {
-    label: string;
-    description: string;
-    category: ComponentCategory;
-    fileName: string;
-    glob: unknown,
-}
-
-export type Expression = {
-    prefix: string;
-    firstElement: Component;
-    suffix: string;
-}
-
 
 export const isLayout = (filePath: string): boolean => {
     return (filePath.indexOf(AraWebLayoutPath) > -1);
 }
 
+/**
+ * Converts the ElementNode into a Component
+ * @param {ElementNode} element 
+ * @returns {Component}
+ */
+export const elementNodeToComponent = (element: ElementNode): Component => {
+    const component: Component = {
+        label: `<${capitalizeFirstLetter(element.name)}>`,
+        description: `Show the data`,
+        category: elementCategory,
+        fileName: ``,
+        glob: element
+    }
+
+    return component;
+}
+
+export const layoutNodeToComponent = (node: ComponentNode, filePath: string): Component => {
+    const component: Component = {
+        label: `<${capitalizeFirstLetter(node.name)}>`,
+        description: `Layout of the Elements`,
+        category: layoutCategory,
+        fileName: filePath,
+        glob: node
+    }
+
+    return component;
+}
+
+export const nodeToComponent = (node: ComponentNode, filePath: string): Result<Component> => {
+    const category = filePathToCategory(filePath);
+    if (category === undefined) {
+        return Result.fail(
+            `filePathToCategory(filePath='${filePath}')`,
+            `The ${node.name} not found in the Ara Web's built in components list`
+        )
+    }
+    
+    const component: Component = {
+        label: node.name,
+        description: "",
+        fileName: filePath,
+        category: componentCategories[0],
+        glob: node,
+    }
+
+    return Result.ok(component);
+}
+
+const filePathToCategory = (filePath: string): ComponentCategory|undefined => {
+    for (const componentCategory of componentCategories) {
+        const indexOf = filePath.indexOf(componentCategory.slug)
+        if (indexOf === -1) {
+            continue;
+        }
+
+        const fileName = filePath.substring(indexOf + componentCategory.slug.length)
+        return componentCategory;
+    }
+
+    return undefined;
+}
 
 export const getComponents = async (): Promise<Component[]> => {
     let globs = import.meta.glob('@layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file

@@ -4,12 +4,23 @@
 import { RpcType, type RpcCallType } from "@scripts/rpc/types";
 import { PathType, type FileContent } from "@scripts/reflect/fileLevel";
 import { Code } from "@scripts/reflect/codeLevel";
-import { ColumnSlug, RowSlug, type LayoutSlugs, type NodeType, type Page } from "@scripts/araWebOntology";
+import { 
+    ColumnSlug, 
+    RowSlug, 
+    type LayoutSlugs,
+    type Expression, 
+    type Page, 
+    ComponentIdentity, 
+    type IdentifiedComponent,
+    type ComponentNode,
+    type ComponentData,
+    type Component,
+} from "@scripts/araWebOntology";
 import { Result } from "@scripts/result";
 import { parse as commentParse} from "comment-parser";
-import { isRpcComponent as isRpcCallComponent } from "@scripts/rpc";
-import { isLayout, type Expression } from "@scripts/component";
-import type { AttributeNode, ExpressionNode, TextNode } from "@astrojs/compiler/types";
+import { isRpcComponent as isRpcCallComponent, rpcBySlug } from "@scripts/rpc";
+import { elementNodeToComponent, expressionCategory, isLayout, layoutNodeToComponent, nodeToComponent } from "@scripts/component";
+import type { AttributeNode, ExpressionNode, Node, TextNode } from "@astrojs/compiler/types";
 
 //////////////////////////////////////////////////////////////////
 //
@@ -17,23 +28,6 @@ import type { AttributeNode, ExpressionNode, TextNode } from "@astrojs/compiler/
 //
 //////////////////////////////////////////////////////////////////
 
-/**
- * What kind of component it is?
- */
-enum ComponentIdentity {
-    Rpc = "rpc",                    // RPCs are identified by the imported components
-    Layout = "layout",              // The page layout
-    Component = "component",        // Component
-    Expression = "expression",      // Expression
-    Undeclared = "undeclared",      // Unexpected
-}
-
-type ComponentData = NodeType | RpcCallType | Expression
-
-type IdentifiedComponent = {
-    id: ComponentIdentity,
-    data: ComponentData,
-}
 
 export class PageTraits {
     private page!: Page;
@@ -177,17 +171,6 @@ export class PageTraits {
     //
     //////////////////////////////////////////////////////////////////////////////
 
-    public static componentName = (componentNode: NodeType): string => {
-        let name = "";
-        if (componentNode.type === "expression") {
-            name = `expression(${(componentNode.children[0] as TextNode).value.split(".")[0]}...)`;
-        } else {
-            name = componentNode.name;
-        }
-        return name;
-    }
-
-
     /**
      * Identify each component within the page. All data of the page are represented as the components.
      * @returns {Result<Page>}
@@ -202,38 +185,38 @@ export class PageTraits {
                     identificationResult.errorDescription!
                 )
             }
-            const {id: componentRole, data: componentData} = identificationResult.getValue();
+            const identifiedComponent = identificationResult.getValue();
             
             // Let's detect the ComponentType
-            if (componentRole === ComponentIdentity.Undeclared) {
+            if (identifiedComponent.id === ComponentIdentity.Undeclared) {
                 return Result.fail(`code.identifyComponent(componentNode='${PageTraits.componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')
-            } else if (componentRole === ComponentIdentity.Component) {
-                this.page.metaComponents?.push(componentData as NodeType);
+            } else if (identifiedComponent.id === ComponentIdentity.Component || 
+                identifiedComponent.id === ComponentIdentity.Expression) {
+                this.page.metaComponents?.push(identifiedComponent);
                 continue;
-            } else if (componentRole === ComponentIdentity.Expression) {
-                this.page.metaComponents?.push(componentData as ExpressionNode)
-            } else if (componentRole === ComponentIdentity.Rpc) {
+            } else if (identifiedComponent.id === ComponentIdentity.Rpc) {
                 if (this.page.rpcs === undefined) {
                     this.page.rpcs = {};
                 }
-                if ((componentData as RpcCallType).rpcType === RpcType.Extension) {
+                const componentData = identifiedComponent as RpcCallType;
+                if (componentData.rpcType === RpcType.Extension) {
                     if (this.page.rpcs.extension === undefined) {
                         this.page.rpcs.extension = [];
                     }
-                    this.page.rpcs.extension.push(componentData as RpcCallType)
-                } else if ((componentData as RpcCallType).rpcType === RpcType.Independent) {
+                    this.page.rpcs.extension.push(componentData)
+                } else if (componentData.rpcType === RpcType.Independent) {
                     if (this.page.rpcs.independent === undefined) {
                         this.page.rpcs.independent = [];
                     }
-                    this.page.rpcs.independent.push(componentData as RpcCallType)
-                } else if ((componentData as RpcCallType).rpcType === RpcType.Proxy) {
+                    this.page.rpcs.independent.push(componentData)
+                } else if (componentData.rpcType === RpcType.Proxy) {
                     if (this.page.rpcs.proxy === undefined) {
                         this.page.rpcs.proxy = [];
                     }
-                    this.page.rpcs.proxy.push(componentData as RpcCallType)
+                    this.page.rpcs.proxy.push(componentData)
                 }
                 continue;
-            } else if (componentRole === ComponentIdentity.Layout) {
+            } else if (identifiedComponent.id === ComponentIdentity.Layout) {
                 const identificationResult = await this.identifyLayoutComponents(componentNode);
                 if (identificationResult.isFailure) {
                     return Result.fail(
@@ -263,7 +246,7 @@ export class PageTraits {
      * @returns {Result<Page>}
      * @todo Include the nested components
      */
-    private identifyLayoutComponents = async(layoutNode: NodeType): Promise<Result<Page>> => {
+    private identifyLayoutComponents = async(layoutNode: ComponentNode): Promise<Result<Page>> => {
         for (const child of layoutNode.children) {
             if (child.type === "text" || child.type === "comment" || child.type === "doctype") {
                 continue;
@@ -284,7 +267,6 @@ export class PageTraits {
                     identificationResult.errorDescription!
                 )
             }
-            const {id: _, data: componentData} = identificationResult.getValue();
 
             const layoutSlugsResult = await this.detectComponentLayoutSlug(child)
             if (layoutSlugsResult.isFailure) {
@@ -294,7 +276,7 @@ export class PageTraits {
                 )
             }
 
-            this.pushComponentAtLayoutSlugs(componentData! as NodeType, layoutSlugsResult.getValue());
+            this.pushComponentAtLayoutSlugs(identificationResult.getValue(), layoutSlugsResult.getValue());
         }
     
         return Result.ok(this.page);
@@ -305,7 +287,7 @@ export class PageTraits {
      * If no component layout was given then it's considered to be at the default layout: content-center
      * @param node
      */
-    private detectComponentLayoutSlug = async (node: NodeType): Promise<Result<LayoutSlugs>> => {
+    private detectComponentLayoutSlug = async (node: ComponentNode): Promise<Result<LayoutSlugs>> => {
         const data: LayoutSlugs = {column: ColumnSlug.Center}
         const columnSlugs = Object.values(ColumnSlug).filter(value => typeof value === 'string') as string[];
         const rowSlugs = Object.values(RowSlug).filter(value => typeof value === 'string') as string[];
@@ -355,7 +337,7 @@ export class PageTraits {
      * @param node The component to add
      * @param layoutSlugs The layout to pass the page
      */
-    private pushComponentAtLayoutSlugs = (node: NodeType, layoutSlugs: LayoutSlugs) => {
+    private pushComponentAtLayoutSlugs = (node: IdentifiedComponent, layoutSlugs: LayoutSlugs) => {
         if (this.page.components === undefined) {
             this.page.components = {};
         }
@@ -377,19 +359,93 @@ export class PageTraits {
     //
     //////////////////////////////////////////////////////////////////////////////////
 
-    private identifyExpression = async (componentNode: ExpressionNode): Promise<Result<ComponentData>> => {
-        const content = await this.identifyComponent(componentNode.children[1] as NodeType);
-        if (content.isFailure) {
-            return Result.fail(
-                `Invalid first element of expression:(component(1)='${componentNode.children[1].type}'): ${content.errorTitle}`,
-                `Let the first element to be not something like comment or anything that is node NodeType: ${content.errorDescription}`,
-            )
+    public static componentName = (component: ComponentNode|IdentifiedComponent): string => {
+        const identifiedComponent = (component as IdentifiedComponent);
+        if (identifiedComponent !== undefined) {
+            if (identifiedComponent.id === ComponentIdentity.Expression) {
+                return (identifiedComponent as Expression).label;
+            } else if (identifiedComponent.id === ComponentIdentity.Layout) {
+                return (identifiedComponent as Component).label
+            } else if (identifiedComponent.id === ComponentIdentity.Undeclared) {
+                return `Undeclared component`
+            } else if (identifiedComponent.id === ComponentIdentity.Rpc) {
+                const rpc = rpcBySlug((identifiedComponent as RpcCallType).slug)
+                return rpc === undefined ? (identifiedComponent as RpcCallType).slug : rpc.name!; 
+            } else if (identifiedComponent.id === ComponentIdentity.Component) {
+                return (identifiedComponent as Component).label;
+            }
+        }
+        component = component as ComponentNode;
+
+        if (component.type === "expression") {
+            return `Expression with ${component.children[0].type}`
+        }
+        return component.name;
+    }
+
+    public static isSupportedNode = (node: Node): boolean => {
+        return node.type === "component" || node.type === "element" || node.type === "expression"
+    }
+
+    private identifyExpression = async (componentNode: ExpressionNode): Promise<Result<Expression>> => {
+        const elements: IdentifiedComponent[] = [];
+        let prefix: string|undefined = undefined;
+        let suffix: string|undefined = undefined;
+        for (let i = 0; i< componentNode.children.length; i++) {
+            const child = componentNode.children[i];
+            if (prefix === undefined) {
+                if (child.type === "text") {
+                    prefix = child.value.trim();
+                    continue;
+                }
+            }
+            if (suffix === undefined) {
+                if (child.type === "text") {
+                    suffix = child.value.trim();
+                }
+            }
+            
+            if (!PageTraits.isSupportedNode(child)) {
+                console.log(`The expression has a child which is not supported by Ara Web yet:`);
+                console.log(child);
+                continue;
+            }
+            const content = await this.identifyComponent(child as ComponentNode);
+            if (content.isFailure) {
+                return Result.fail(
+                    `Invalid first element of expression:(component(i='${i}')='${componentNode.children[1].type}'): ${content.errorTitle}`,
+                    `Let the first element to be not something like comment or anything that is node NodeType: ${content.errorDescription}`,
+                )
+            }
+            elements.push(content.getValue());
+        }
+        if (prefix === undefined) {
+            if (elements.length === 0) {
+                prefix = `Undefined syntax in the page, Ara Web doesn't support it`
+            } else {
+                prefix = elements[0].id
+            }
+        }
+        if (suffix === undefined) {
+            if (elements.length === 0) {
+                suffix = `Undefined syntax in the page, Ara Web doesn't support it`
+            } else if (elements.length > 1) {
+                suffix = elements[elements.length-1].id
+            } else {
+                suffix = ``
+            }
         }
 
         const expression: Expression = {
-            prefix: (componentNode.children[0] as TextNode).value.trim(),
-            suffix: (componentNode.children[componentNode.children.length - 1] as TextNode).value.trim(),
-            firstElement: content.getValue().data,
+            category: expressionCategory,
+            description: ``,
+            fileName: ``,
+            glob: componentNode,
+
+            label: `<Expression>`,
+            prefix,
+            suffix,
+            elements: elements,
         }
 
         return Result.ok(expression);
@@ -400,9 +456,10 @@ export class PageTraits {
      * @param componentNode Node that we need to identify
      * @returns {IdentifiedComponent}
     */
-    public identifyComponent = async (componentNode: NodeType): Promise<Result<IdentifiedComponent>> => {
+    public identifyComponent = async (componentNode: ComponentNode): Promise<Result<IdentifiedComponent>> => {
         if (componentNode.type === "element") {
-            return Result.ok({id: ComponentIdentity.Component, data: componentNode})
+            const element = elementNodeToComponent(componentNode);
+            return Result.ok({...element, id: ComponentIdentity.Component})
         } else if (componentNode.type === "expression") {
                 const identificationResult = await this.identifyExpression(componentNode as ExpressionNode)
                 if (identificationResult.isFailure) {
@@ -412,8 +469,7 @@ export class PageTraits {
                     )
                 }
                 
-                
-                return Result.ok({id: ComponentIdentity.Expression, data: identificationResult.getValue() as ExpressionNode})
+                return Result.ok({id: ComponentIdentity.Expression, ...(identificationResult.getValue())})
         } 
         const pathResult = this.code.identifyImportPath(componentNode.name);
         if (pathResult.isFailure) {
@@ -444,21 +500,25 @@ export class PageTraits {
             } else {
                 return Result.ok({
                     id: ComponentIdentity.Rpc,
-                    data: identificationResult.getValue()
+                    ...identificationResult.getValue()
                 })
             }
         } else if (isLayout(pathResult.getValue())) {
             return Result.ok({
                 id: ComponentIdentity.Layout,
-                data: componentNode
+                ...layoutNodeToComponent(componentNode, pathResult.getValue())
             })
-        } else if (componentNode.type === "component") {           
-            return Result.ok({id: ComponentIdentity.Component, data: componentNode})
+        } else if (componentNode.type === "component") {          
+            const componentData = nodeToComponent(componentNode, pathResult.getValue()); 
+            if (componentData.isFailure) {
+                return Result.fail(
+                    `nodeToComponent(componentNode='${componentNode.name}', pathResult='${pathResult.getValue()}'): ${componentData.errorTitle}`,
+                    componentData.errorDescription!
+                )
+            }
+            return Result.ok({id: ComponentIdentity.Component, ...(componentData.getValue())})
         }
 
-        console.log(`Unsupported component type (${pathResult.getValue()})`);
-        console.log(componentNode)
-                
         return Result.fail(
             `Unsupported component type`,
             `Only RpcCalls and Layouts are identifiable for now`,
@@ -472,7 +532,7 @@ export class PageTraits {
      * its value from traversing in the AST
      * @returns {RpcCallType|undefined}
      */
-    private identifyRpcCallComponent = async (componentNode: NodeType): Promise<Result<RpcCallType>> => {
+    private identifyRpcCallComponent = async (componentNode: ComponentNode): Promise<Result<RpcCallType>> => {
         const attrName = "rpcCall";
         const attr = this.attributeByName(componentNode, attrName);
         if (attr === undefined) {
@@ -507,9 +567,9 @@ export class PageTraits {
      * @param {string} name name of the attribute 
      * @returns {AttributeNode}
     */
-    private attributeByName = (node: NodeType, name?: string): AttributeNode|undefined => {
+    private attributeByName = (node: ComponentNode, name?: string): AttributeNode|undefined => {
         if (node.type === "expression") {
-            return this.attributeByName(node.children[1] as NodeType)
+            return this.attributeByName(node.children[1] as ComponentNode)
         }
         for (let callAttr of node.attributes) {
             if (callAttr.name === name) {

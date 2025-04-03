@@ -1,6 +1,6 @@
 import { globsToFileContents, type FileContent } from "@scripts/reflect/fileLevel"
 import { PageTraits } from "./reflect/araWebLevel";
-import { type Page, RowSlug, ColumnSlug, type LayoutSlugs, type NodeType } from "@scripts/araWebOntology";
+import { type Page, RowSlug, ColumnSlug } from "@scripts/araWebOntology";
 
 /**
  * Converts the Row and Column to the full slug of the page layout slug
