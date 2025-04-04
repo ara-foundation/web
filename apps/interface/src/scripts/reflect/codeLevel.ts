@@ -219,7 +219,7 @@ export class Code {
                 }
                 return Result.ok(res.getValue());
             } else if (child instanceof CallExpression) {
-                Debug.log(`TODO: The call expression '${child.getText()}' not yet supported in identifyExpressionStatement`);
+                Debug.log(`\n\n\n\n\n\n\n\n\nTODO: The call expression '${child.getText()}' not yet supported in identifyExpressionStatement`);
             } else {
                 Debug.log(`identifyExpressionStatement only supports BinaryExpressions for now. You gave:`);
                 Debug.log(`Value='${child.getText()}'`);
@@ -982,7 +982,7 @@ export class Code {
 
     private exactIdentifier = (exp: any, identifier: string): string => {
         if (exp instanceof PropertyAssignment) {
-            return exp.getLastChild()!.getText();
+            return exp.getFirstChild()!.getText();
         } else if (exp instanceof SpreadAssignment) {
             return exp.getLastChild()!.getText();
         } else if (exp instanceof ShorthandPropertyAssignment) {
