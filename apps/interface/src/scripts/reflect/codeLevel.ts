@@ -21,7 +21,9 @@ import {
     PropertyAccessExpression,
     EnumMember,
     NumericLiteral,
-    ShorthandPropertyAssignment
+    ShorthandPropertyAssignment,
+    CommentStatement,
+    VariableStatement
 } from "ts-morph";
 import { callFuncInModule, fileContentByModulePath } from "@scripts/reflect/fileLevel";
 import { unquote } from "@scripts/string";
@@ -110,6 +112,7 @@ export class Code {
         Debug.log(`${varName} identified value = ${JSON.stringify(variable)}.`)
         // Once the _ara_web_exp is turned into the statement, get it's value.
         Debug.pop();
+        Debug.reset();
 
         if (variable.isFailure) {
             return Result.fail(
@@ -133,7 +136,11 @@ export class Code {
             )
         }
 
+        Debug.push(`identifyVariableAssingments(identifier='${identifier}', updatedInFunction='${JSON.stringify(updatedInFunction.getValue())}')`)
+
         const updatedInAssignment = await this.identifyVariableAssignments<T>(identifier, updatedInFunction.getValue());
+        Debug.pop();
+        Debug.log(`identify variable assignments for ${identifier} result = '${JSON.stringify(updatedInAssignment)}'`)
         if (updatedInAssignment.isFailure) {
             return Result.fail(
                 `this.identifyVariableAssignments(identifier=${identifier}, updatedFunctionData=${updatedInFunction.getValue()}): ${updatedInAssignment.errorTitle}`,
@@ -149,6 +156,7 @@ export class Code {
      * Returns TRUE, if no assignments were found
      * @param data
      * @returns {error?: string, succeed: boolean}
+     * @notice It won't return an error
      */
     private identifyVariableAssignments = async <T>(identifier: string, data: T): Promise<Result<T>> => {
         let ret: Result<T> = Result.ok(data)
@@ -159,13 +167,18 @@ export class Code {
             Debug.log(`There are '${childAmount}' expressions`)
             for (let subChild of child.getChildren()) {
                 if (subChild instanceof ExpressionStatement) {
+                    Debug.push(`expressionStatement(identifier='${identifier}',data='${JSON.stringify(data)}',subChild='${subChild.getText()}')`);
                     const res = await this.identifyExpressionStatement<T>(identifier, data, subChild)
+                    Debug.pop();
+                    Debug.log(`identifyExpressionStatement identified as ${JSON.stringify(res)}`);
                     if (res.isFailure) {
-                        ret = Result.fail(
+                        Debug.log(`return failure`);
+                        return Result.fail(
                             `identifyExpressionStatement(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.errorTitle}`,
                             res.errorDescription!
                         )
                     } else {
+                        Debug.log(`Return success`);
                         return Result.ok(res.getValue())
                     }
                 } else if (subChild instanceof BinaryExpression) {
@@ -178,6 +191,15 @@ export class Code {
                     } else {
                         return Result.ok(res.getValue())
                     }
+                } else if (subChild instanceof ImportDeclaration) {
+                    continue;
+                } else if (subChild instanceof CommentStatement) {
+                    continue;
+                } else if (subChild instanceof VariableStatement) {
+                    continue;
+                } else {
+                    Debug.log(`Unsupported expression statement ('${subChild.getText()}'):`)
+                    Debug.log(subChild)
                 }
             }
         }
@@ -196,10 +218,12 @@ export class Code {
                     )
                 }
                 return Result.ok(res.getValue());
+            } else if (child instanceof CallExpression) {
+                Debug.log(`TODO: The call expression '${child.getText()}' not yet supported in identifyExpressionStatement`);
             } else {
                 Debug.log(`identifyExpressionStatement only supports BinaryExpressions for now. You gave:`);
                 Debug.log(`Value='${child.getText()}'`);
-                Debug.log(JSON.stringify(child))
+                Debug.log(child)
                 Debug.log(`\n\n`);
             }
         }
@@ -395,6 +419,7 @@ export class Code {
             const child = syntaxList.getChildAtIndex(i);
             const childKey = `syntaxList Child (${i+1}/${syntaxList.getChildCount()})`;
             Debug.push(childKey)
+            Debug.log(`Check ${childKey} of object literal`)
             // Delimeter is skipped
             if (child.getText() === ",") {
                 Debug.log(`Skip the node as its a special character`)
@@ -413,8 +438,10 @@ export class Code {
                 )
             }
 
-            Debug.push(`exactValueType(child='${child.getText()}', childValueType='${JSON.stringify(childValueType)}', data='${JSON.stringify(data)}')`)
-            const exactValueResult = this.exactValueType<T>(child.getText()!, childValueType.getValue(), data);
+            const exactIdentifier = this.exactIdentifier(child, identifier!);
+            Debug.log(`For '${child.getText()}' expression of ${childValueType.getValue()} type, get exact identifier, our is '${identifier}', exact identifier = '${exactIdentifier}'`);
+            Debug.push(`exactValueType(child='${exactIdentifier}', childValueType='${JSON.stringify(childValueType)}', data='${JSON.stringify(data)}')`)
+            const exactValueResult = this.exactValueType<T>(exactIdentifier, childValueType.getValue(), data);
             Debug.pop()
             if (exactValueResult.isFailure) {
                 Debug.pop();
@@ -490,6 +517,7 @@ export class Code {
             Debug.pop();
             Debug.pop();
             if (identified.isFailure) {
+                Debug.log(`The object literal identification error: ${JSON.stringify(identified.errorTitle)}, description = ${identified.errorDescription}`);
                 return Result.fail(
                     `this.identifyObjectLiteral<T>(identifier='${identifier}', data='${JSON.stringify(data)}', syntaxList='${syntaxList.getText()}'): ${identified.errorTitle}`,
                     identified.errorDescription!
@@ -511,14 +539,17 @@ export class Code {
                 return Result.ok(identified.getValue())    
             }
         } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
+            Debug.log(`Property assignment '${exp.getText()}' of ${identifier} identifier`);
             const property = exp.getChildAtIndex(0);
             const value = exp.getChildAtIndex(2);
             Debug.push(`exp as PropertyAssignment(exp='${exp.getText()}')`)
             const propertyValue = ((data as Object)[property.getText()]);
             
+            const propertyIdentifier = `${identifier}.${property.getText()}`
+
             // Assigned value to the (data: T).object's property
-            Debug.push(`identifyValue<${typeof propertyValue}>(property='${property.getText()}',propertyValue='${JSON.stringify(propertyValue)}',value='${value.getText()}')`)
-            const res = await this.identifyValue<typeof propertyValue>(property.getText(), propertyValue, value);
+            Debug.push(`identifyValue<${typeof propertyValue}>(property='${propertyIdentifier}',propertyValue='${JSON.stringify(propertyValue)}',value='${value.getText()}')`)
+            const res = await this.identifyValue<typeof propertyValue>(propertyIdentifier, propertyValue, value);
             Debug.pop();
             Debug.pop();
             if (res.isFailure) {
@@ -918,10 +949,10 @@ export class Code {
 
 
         Debug.log(`Update the '${identifier}' variable with current data '${JSON.stringify(identifiedValue.getValue())}' if there are any updates`)
-        Debug.push(`this.identifyVariableUpdates<typeof value>(identifier='${identifier}',identifiedValue='${identifiedValue.getValue()}')`)
+        Debug.push(`this.identifyVariableUpdates<typeof value>(identifier='${identifier}',identifiedValue='${JSON.stringify(identifiedValue)}')`)
         const updated = await this.identifyVariableUpdates<typeof value>(identifier, identifiedValue.getValue()!);
         Debug.pop();
-        Debug.log(`identifyVariable <- identifyVariableUpdates, updated. The '${identifier}' variable updated data '${JSON.stringify(updated.getValue())}'`)
+        Debug.log(`identifyVariable <- identifyVariableUpdates, updated. The '${identifier}' variable updated data '${JSON.stringify(updated)}'`)
         if (updated.isFailure) {
             return Result.fail(
                 `identifyVariableUpdates(identifier=${identifier}, data=${identifiedValue.getValue()}): ${updated.errorTitle}`,
@@ -931,6 +962,18 @@ export class Code {
 
         return Result.ok(updated.getValue());
     }
+
+    private exactIdentifier = (exp: any, identifier: string): string => {
+        if (exp instanceof PropertyAssignment) {
+            return exp.getLastChild()!.getText();
+        } else if (exp instanceof SpreadAssignment) {
+            return exp.getLastChild()!.getText();
+        }
+        Debug.log(`The exact identifier of`)
+        Debug.log(exp)
+        return identifier;
+    }
+
 
     private exactValueType = <T>(identifier: string, val: ValueTypeString, t: T): Result<T|ValueType> => {
         if (val == ValueTypeString.default) {
