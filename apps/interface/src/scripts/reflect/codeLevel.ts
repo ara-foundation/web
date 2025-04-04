@@ -23,7 +23,8 @@ import {
     NumericLiteral,
     ShorthandPropertyAssignment,
     CommentStatement,
-    VariableStatement
+    VariableStatement,
+    ParenthesizedExpression
 } from "ts-morph";
 import { callFuncInModule, fileContentByModulePath } from "@scripts/reflect/fileLevel";
 import { unquote } from "@scripts/string";
@@ -170,15 +171,14 @@ export class Code {
                     Debug.push(`expressionStatement(identifier='${identifier}',data='${JSON.stringify(data)}',subChild='${subChild.getText()}')`);
                     const res = await this.identifyExpressionStatement<T>(identifier, data, subChild)
                     Debug.pop();
-                    Debug.log(`identifyExpressionStatement identified as ${JSON.stringify(res)}`);
                     if (res.isFailure) {
-                        Debug.log(`return failure`);
+                        Debug.log(`identifyExpressionStatement return failure: ${res.errorTitle}, ${res.errorDescription}`);
                         return Result.fail(
                             `identifyExpressionStatement(identifier=${identifier}, data=${data}, child=${subChild.getText()}): ${res.errorTitle}`,
                             res.errorDescription!
                         )
                     } else {
-                        Debug.log(`Return success`);
+                        Debug.log(`identifyExpressionStatement return success: ${JSON.stringify(res.getValue())}`);
                         return Result.ok(res.getValue())
                     }
                 } else if (subChild instanceof BinaryExpression) {
@@ -677,8 +677,25 @@ export class Code {
             Debug.pop();
 
             return Result.ok(data);
+        } else if (exp instanceof ParenthesizedExpression) {
+            const childAmount = exp.getChildCount();
+            if (childAmount !== 3) {
+                return Result.fail(
+                    `ParenthesizedExpression('${exp.getText()}')`,
+                    `Parenthesized expression must have 3 children, with '${childAmount}' children Ara Web is not supporting, contact to change identifyValue()`,
+                )    
+            }
+
+            const result = await this.identifyValue<T>(identifier, data, exp.getChildAtIndex(1));
+            if (result.isFailure) {
+                return Result.fail(
+                    `ParenthesizedExpression('${exp.getText()}'): this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', secondChild='${exp.getChildAtIndex(1).getText()}'): ${result.errorTitle}`,
+                    result.errorDescription!
+                )
+            }
+            return Result.ok(result.getValue());
         } else {
-            Debug.log(`identifyValue child '${exp.getText()}'`);
+            Debug.log(`The '${exp.getText()}' expression is not supported by identifyValue yet:`);
             Debug.log(exp);
             return Result.fail(
                 `Failed variable's node: '${exp.getText()}'`,
@@ -968,9 +985,9 @@ export class Code {
             return exp.getLastChild()!.getText();
         } else if (exp instanceof SpreadAssignment) {
             return exp.getLastChild()!.getText();
+        } else if (exp instanceof ShorthandPropertyAssignment) {
+            return exp.getText();
         }
-        Debug.log(`The exact identifier of`)
-        Debug.log(exp)
         return identifier;
     }
 
