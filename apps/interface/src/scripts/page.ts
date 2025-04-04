@@ -72,11 +72,11 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
 
     for (let fileContent of fileContents) {
         i++;
-        // if (i < 1) {
-        //     continue;
-        // } else if (i == 2) {
-        //     break;
-        // }
+        if (i < 3) {
+            continue;
+        } else if (i == 4) {
+            break;
+        }
         console.log(`File Content #${i} at ${fileContent.filePath} to page`)
         const pageTraitsResult = PageTraits.fromFileContent(fileContent!);
         if (pageTraitsResult.isFailure) {

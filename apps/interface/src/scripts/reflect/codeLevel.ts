@@ -20,11 +20,14 @@ import {
     ArrayLiteralExpression,
     PropertyAccessExpression,
     EnumMember,
-    NumericLiteral
+    NumericLiteral,
+    ShorthandPropertyAssignment
 } from "ts-morph";
 import { callFuncInModule, fileContentByModulePath } from "@scripts/reflect/fileLevel";
 import { unquote } from "@scripts/string";
 import { Result } from "@scripts/result";
+import { random, values } from "lodash-es";
+import { Debug } from "@scripts/debug";
 
 export enum AstNodeIdentity {
     Variable,
@@ -37,6 +40,18 @@ export type IdentifiedNode = {
     id: AstNodeIdentity,
     data?: EnumMembers|any,
 }
+export type Object = {[key: string]: ValueType};
+
+enum ValueTypeString {
+    default = "default",    // The type that was passed
+    string = "string",
+    number = "number",
+    array = "array",
+    object = "object",
+    property = "property",
+}
+
+export type ValueType = string | number | Array<ValueType> | Object
 
 export class Code {
     ast: TsSourceFile;
@@ -73,7 +88,7 @@ export class Code {
      */
     public identifyCodePiece = async <T>(exp: string): Promise<Result<T>> => {
         this.tempCodeAmount++;
-        const varName = `__ara_web_exp_${this.tempCodeAmount}`;
+        const varName = `__temp_var_${this.tempCodeAmount}`;
         let cloned = this.clone();
         cloned.ast.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const, // defaults to "let"
@@ -84,9 +99,18 @@ export class Code {
             }],
         });
 
+        Debug.push(`identifyCodePiece`)
+        Debug.log(`Entry from other module into code level.`)
+        Debug.log(`Identify '${exp}' expression, then assign to '${varName}' temporary variable.`)
+
+        Debug.push(`identifyVariable(varName='${varName}', update=false)`)
         // It may be not only identifier so clone and put it in the ast
         var variable = await cloned.identifyVariable<T>(varName, false);
+        Debug.pop()
+        Debug.log(`${varName} identified value = ${JSON.stringify(variable)}.`)
         // Once the _ara_web_exp is turned into the statement, get it's value.
+        Debug.pop();
+
         if (variable.isFailure) {
             return Result.fail(
                 `cloned.identifyVariable(varName=${varName}): ${variable.errorTitle}`,
@@ -94,7 +118,7 @@ export class Code {
             )
         }
 
-        return Result.ok(variable.getValue())
+        return Result.ok(variable.getValue() as T)
     }
 
     /**
@@ -131,6 +155,8 @@ export class Code {
 
         // To make it variable assignment, make sure we track ExpressionStatements and BinaryExpressions
         for (let child of this.ast.getChildren()) {
+            const childAmount = child.getChildCount()
+            Debug.log(`There are '${childAmount}' expressions`)
             for (let subChild of child.getChildren()) {
                 if (subChild instanceof ExpressionStatement) {
                     const res = await this.identifyExpressionStatement<T>(identifier, data, subChild)
@@ -171,10 +197,10 @@ export class Code {
                 }
                 return Result.ok(res.getValue());
             } else {
-                console.log(`identifyExpressionStatement only supports BinaryExpressions for now. You gave:`);
-                console.log(`Value='${child.getText()}'`);
-                console.log(child)
-                console.log(`\n\n`);
+                Debug.log(`identifyExpressionStatement only supports BinaryExpressions for now. You gave:`);
+                Debug.log(`Value='${child.getText()}'`);
+                Debug.log(JSON.stringify(child))
+                Debug.log(`\n\n`);
             }
         }
 
@@ -199,7 +225,7 @@ export class Code {
                     result.errorDescription!
                 )
             }
-            return Result.ok(result.getValue());
+            return Result.ok(result.getValue() as T);
         } else if (leftSide instanceof PropertyAccessExpression) {
             const varIdentifier = leftSide.getChildAtIndex(0);
             const propertyIdentifier = leftSide.getChildAtIndex(2);
@@ -221,12 +247,12 @@ export class Code {
 
             return Result.ok(data);
         } else {
-            console.log(`identifyBinaryExpression ts='${exp.getText()}' has ${exp.getChildCount()} nodes, let's begin (NOT SUPPORTED)..`);
-            console.log(`Left='${leftSide.getText()}'`);
-            console.log(leftSide)
-            console.log(`Right=${rightSide.getText()}`);
-            console.log(rightSide);
-            console.log(`\identifyBinaryExpression end`);
+            Debug.log(`identifyBinaryExpression ts='${exp.getText()}' has ${exp.getChildCount()} nodes, let's begin (NOT SUPPORTED)..`);
+            Debug.log(`Left='${leftSide.getText()}'`);
+            Debug.log(JSON.stringify(leftSide))
+            Debug.log(`Right=${rightSide.getText()}`);
+            Debug.log(JSON.stringify(rightSide));
+            Debug.log(`\identifyBinaryExpression end`);
             return Result.fail(
                 `Unsupported left side of the binary`,
                 `Only Identifier or PropertyAccess are supported for now for '${leftSide.getText()}=${rightSide.getText()}'`
@@ -241,18 +267,25 @@ export class Code {
      * Currently supports Variable identification and enum identification.
      * @param {string} identifier identififer within the code
      */
-    private identifyIdentifierRecursively = async(identifier: string): Promise<Result<IdentifiedNode>> => {
-        let res = await this.identifyVariable(identifier, true);
+    private identifyIdentifierRecursively = async <T>(identifier: string): Promise<Result<IdentifiedNode>> => {
+        Debug.log(`Check identifier '${identifier}' value as variable first`)
+        Debug.push(`identifyVariable(identifier='${identifier}', update=true)`)
+        const res = await this.identifyVariable<T>(identifier, true);
+        Debug.pop();
+        Debug.log(`The '${identifier}' identified value '${JSON.stringify(res)}'`)
         if (res.isSuccess) {
-            return Result.ok({id: AstNodeIdentity.Variable, data: res.getValue()})
+            Debug.log(`The '${identifier}' is a variable successfully parsed, return '${JSON.stringify(res.getValue() as T)}' successfully`)
+            const ok = Result.ok({id: AstNodeIdentity.Variable, data: res.getValue() as T})
+            Debug.log(`The result to return back '${JSON.stringify(ok)}'`)
+            return ok;
         }
 
-        res = await this.identifyEnum(identifier);
-        if (res.isSuccess) {
-            return Result.ok({id: AstNodeIdentity.Enum, data: res.getValue() as EnumMembers})
+        const enumRes = await this.identifyEnum(identifier);
+        if (enumRes.isSuccess) {
+            return Result.ok({id: AstNodeIdentity.Enum, data: enumRes.getValue() as EnumMembers})
         }
 
-        if (res.isFailure) {
+        if (enumRes.isFailure) {
             // If the variable wasn't defined within the script, then find it on
             // imports.
             const importPath = this.identifyImportPath(identifier);
@@ -330,8 +363,8 @@ export class Code {
                             } else if (enumData instanceof NumericLiteral) {
                                 propertyValue = JSON.parse(enumData.getText());
                             } else {
-                                console.log(`enum (${identifier})'s enum member ${propertyIdentifier} is not a string literal, so we will use default numeration, catch it here in identifyEnum()`);
-                                console.log(enumData)
+                                Debug.log(`enum (${identifier})'s enum member ${propertyIdentifier} is not a string literal, so we will use default numeration, catch it here in identifyEnum()`);
+                                Debug.log(JSON.stringify(enumData))
                             }
                         }
 
@@ -360,28 +393,102 @@ export class Code {
     private identifyObjectLiteral = async <T>(identifier: string|undefined, data: T, syntaxList: SyntaxList): Promise<Result<T>> => {
         for (let i = 0; i < syntaxList.getChildCount(); i++) {
             const child = syntaxList.getChildAtIndex(i);
+            const childKey = `syntaxList Child (${i+1}/${syntaxList.getChildCount()})`;
+            Debug.push(childKey)
             // Delimeter is skipped
             if (child.getText() === ",") {
+                Debug.log(`Skip the node as its a special character`)
+                Debug.pop();
                 continue;
             }
+
+            Debug.push(`identifyValueType(child='${child.getText()}')`)
+            const childValueType = this.identifyValueType(child);
+            Debug.pop()
+            if (childValueType.isFailure) {
+                Debug.pop();
+                return Result.fail(
+                    `syntaxList('${syntaxList.getText()}')/this.identifyValueType(child='${child.getText()}';i=${i}): ${childValueType.errorTitle}`,
+                    childValueType.errorDescription!
+                )
+            }
+
+            Debug.push(`exactValueType(child='${child.getText()}', childValueType='${JSON.stringify(childValueType)}', data='${JSON.stringify(data)}')`)
+            const exactValueResult = this.exactValueType<T>(child.getText()!, childValueType.getValue(), data);
+            Debug.pop()
+            if (exactValueResult.isFailure) {
+                Debug.pop();
+                return Result.fail(
+                    `syntaxList('${syntaxList.getText()}')/this.exactValueType(child='${child.getText()}';i=${i}, childValue='${childValueType.getValue()}', data='${JSON.stringify(data)}: ${exactValueResult.errorTitle}')`,
+                    exactValueResult.errorDescription!
+                )
+            }
+            const exactResult = exactValueResult.getValue();
+            Debug.log(`The exact value of '${child.getText()}' is '${JSON.stringify(exactResult)}'`);
+
+            Debug.push(`identifyValue<${typeof exactResult}>(identifier='${identifier}', exactResult='${JSON.stringify(exactResult)}',child='${child.getText()}')`)
             const identified = await this.identifyValue<T>(identifier, data, child);
+            Debug.pop();
+            Debug.log(`Identified '${identifier}' value as ${JSON.stringify(identified)}`)
             if (identified.isFailure) {
+                Debug.pop()
                 return Result.fail(
                     `syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
                     identified.errorDescription!
                 )
             } else {
-                data = {...identified.getValue()!};
+                Debug.log(`Perhaps ${JSON.stringify(data)} is not an Object? to be assigned as ${JSON.stringify(identified.getValue())}`)
+                Debug.pop()
+                const value: Object = identified.getValue() as Object
+                (data as Object) = {...value};
             }
         }
         return Result.ok(data)
     }
 
-    private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<Result<T>> => {
+    private identifyValueType = (exp: any): Result<ValueTypeString> => {
+        if (exp instanceof ObjectLiteralExpression) {
+            return Result.ok(ValueTypeString.object)
+        } else if (exp instanceof SpreadAssignment) {
+            return Result.ok(ValueTypeString.object);
+        } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
+            return Result.ok(ValueTypeString.property)
+        } else if (exp instanceof Identifier) {
+            return Result.ok(ValueTypeString.default);
+        } else if (exp instanceof ArrayLiteralExpression) {
+            return Result.ok(ValueTypeString.array)
+        } else if (exp instanceof PropertyAccessExpression) {
+            return Result.ok(ValueTypeString.property)
+        } else if (exp instanceof CallExpression) {
+            return Result.ok(ValueTypeString.default);
+            return Result.ok(ValueTypeString.object)
+        } else if (exp instanceof StringLiteral) {
+            return Result.ok(ValueTypeString.string)
+        } else if (exp instanceof ShorthandPropertyAssignment) {
+            return Result.ok(ValueTypeString.property)
+        }
+
+        return Result.fail(
+            `Can not detect the expression's value type`,
+            `The '${exp.getText()}' is not supported by Ara Web`
+        )
+    }
+
+    private identifyValue = async <T>(identifier: string|undefined, data: T, exp: any): Promise<Result<T|ValueType>> => {
+        Debug.log(`Identify the value of '${exp.getText()}' expression, optionally it's the value of '${identifier}', wich has '${JSON.stringify(data)}'`);
         if (exp instanceof ObjectLiteralExpression) {
             const syntaxList = exp.getChildSyntaxList()!;
+            Debug.push(`exp as ObjectLiteral`)
+            Debug.push(`SyntaxList(syntaxList='[${syntaxList.getText()}]')`)
+            Debug.log(`'${identifier}' identifier is the object literal with syntax list(child_length=${syntaxList.getChildCount()}) = [${syntaxList.getText()}]`)
+
+            Debug.push(`identifyObjectLiteral(identifier='${identifier}',data='${JSON.stringify(data)}',syntaxList='${syntaxList.getText()}')`)
 
             const identified = await this.identifyObjectLiteral<T>(identifier, data, syntaxList);
+            Debug.pop()
+            Debug.log(`identifyObjectLiteral identification result for '${identifier}' identifier = '${JSON.stringify(identified)}'`)
+            Debug.pop();
+            Debug.pop();
             if (identified.isFailure) {
                 return Result.fail(
                     `this.identifyObjectLiteral<T>(identifier='${identifier}', data='${JSON.stringify(data)}', syntaxList='${syntaxList.getText()}'): ${identified.errorTitle}`,
@@ -392,7 +499,9 @@ export class Code {
             }
         } else if (exp instanceof SpreadAssignment) {
             const spreadSource = exp.getChildAtIndex(1);
+            Debug.push(`exp as SpreadAssignment(spreadSource='${spreadSource.getText()}')`)
             const identified = await this.identifyValue<T>(identifier, data, spreadSource);
+            Debug.pop();
             if (identified.isFailure) {
                 return Result.fail(
                     `spreadAssignment('${exp.getText()}')/spreadSource('${spreadSource.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', spreadSource='${spreadSource.getText()}'): ${identified.errorTitle}`,
@@ -404,10 +513,14 @@ export class Code {
         } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
             const property = exp.getChildAtIndex(0);
             const value = exp.getChildAtIndex(2);
-            const propertyValue = ((data as any)[property.getText()]);
+            Debug.push(`exp as PropertyAssignment(exp='${exp.getText()}')`)
+            const propertyValue = ((data as Object)[property.getText()]);
             
             // Assigned value to the (data: T).object's property
+            Debug.push(`identifyValue<${typeof propertyValue}>(property='${property.getText()}',propertyValue='${JSON.stringify(propertyValue)}',value='${value.getText()}')`)
             const res = await this.identifyValue<typeof propertyValue>(property.getText(), propertyValue, value);
+            Debug.pop();
+            Debug.pop();
             if (res.isFailure) {
                 return Result.fail(
                     `propertyAssignment('${exp.getText()}')/this.identifyValue(property='${property.getText()}', data='${JSON.stringify(propertyValue)}', value='${value.getText()}'): ${res.errorTitle}`,
@@ -417,10 +530,17 @@ export class Code {
             (data as any)[property.getText()] = res.getValue();
             return Result.ok(data);
         } else if (exp instanceof Identifier) {
+            Debug.push(`exp as Identifier`)
             if (exp.getText() === identifier) {
+                Debug.log(`The '${identifier}' value is itself, so return it.`)
+                Debug.pop();
                 return Result.ok(data);
             } else {
+                Debug.push(`identifyVariable(exp='${exp.getText()}')`)
                 const identified = await this.identifyVariable<T>(exp.getText())
+                Debug.pop();
+
+                Debug.pop();
                 if (identified.isFailure) {
                     return Result.fail(
                         `identifier('${exp.getText()}')/this.identifyVariable(exp='${exp.getText()}': ${identified.errorTitle}`,
@@ -431,6 +551,7 @@ export class Code {
             }
         } else if (exp instanceof ArrayLiteralExpression) {
             const syntaxList = exp.getChildAtIndex(1);
+            Debug.push(`exp as ArrayLiteral(syntaxList='${syntaxList.getText()}')`)
 
             let oldIndex = 0;
             for (let i = 0; i < syntaxList.getChildCount(); i++) {
@@ -441,9 +562,11 @@ export class Code {
                 }
                 oldIndex++;
                 let dataAtIndex = (data as any[])[oldIndex-1]
-                let identified = await this.identifyValue<typeof dataAtIndex>(identifier, data, child);
+                Debug.log(`Get the '${dataAtIndex}' index from '${child}' oldIndex='${oldIndex - 1}', obj: '${JSON.stringify(data)}'`)
+                let identified = await this.identifyValue<ValueType>(i.toString(), dataAtIndex, child);
                 
                 if (identified.isFailure) {
+                    Debug.pop()
                     return Result.fail(
                         `ArrayLiteralExpression('${exp.getText()}')/syntaxList('${syntaxList.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', child='${child.getText()}';i=${i}): ${identified.errorTitle}`,
                         identified.errorDescription!
@@ -452,15 +575,19 @@ export class Code {
                     (data as Array<any>)[oldIndex - 1] = identified.getValue()! as typeof dataAtIndex;
                 }
             }
+            Debug.pop();
 
             return Result.ok(data);
         } else if (exp instanceof PropertyAccessExpression) {
             const varIdentifier = exp.getChildAtIndex(0);
             const propertyIdentifier = exp.getChildAtIndex(2);
-
+            Debug.push(`exp as PropertyAccess(${varIdentifier.getText()}.${propertyIdentifier.getText()})`)
+            Debug.push(`this.identifyIdentifierRecursively(varIdentifier='${varIdentifier.getText()}')`)
             // Attempt to find the variable's value within this script            
             const identified = await this.identifyIdentifierRecursively(varIdentifier.getText());
+            Debug.pop();
             if (identified.isFailure) {
+                Debug.pop();
                 return Result.fail(
                     `propertyAccessExpression('${exp.getText()}')/this.identifyIdentifierRecursively(varIdentifier='${varIdentifier.getText()}'): ${identified.errorTitle}`,
                     identified.errorDescription!
@@ -469,6 +596,7 @@ export class Code {
            
             if (identified.getValue().id === AstNodeIdentity.Enum) {
                 let identifiedData = identified.getValue().data as EnumMembers;
+                Debug.pop();
                 if (propertyIdentifier.getText() in identifiedData) {
                     return Result.ok(identifiedData[propertyIdentifier.getText()] as T)
                 } else {
@@ -478,28 +606,58 @@ export class Code {
                     )
                 }
             } else {
-                console.log(`The identified data is not an enum, then how to use it:`);
-                console.log(identified)
+                Debug.log(`The identified data is not an enum, then how to use it:`);
+                Debug.log(JSON.stringify(identified))
+                Debug.pop();
             }
         } else if (exp instanceof CallExpression) {
+            Debug.push(`exp as Function Call`)
+            Debug.push(`this.identifyFunctionCall(exp='${exp.getText()}')`)
             const exprResult = await this.identifyFunctionCall<T>(exp as CallExpression);
+            Debug.pop();
+            Debug.pop();
             return exprResult;
         } else if (exp instanceof StringLiteral) {
             return Result.ok(
                 unquote(exp.getText()) as T,
             )
+        } else if (exp instanceof ShorthandPropertyAssignment) {
+            const propertyIdentifier = exp.getChildAtIndex(0);
+            Debug.push(`exp as ShortHandPropertyAssignment`)
+            // Attempt to find the variable's value within this script            
+            const propertyValue = (data as Object)[propertyIdentifier.getText()]
+            Debug.log(`The '${propertyIdentifier.getText()}' is the property name of ${identifier} identifier, whose value = '${JSON.stringify(data)}', and a variable in the script`)
+            Debug.push(`this.identifyIdentifierRecursively<typeof ${typeof propertyValue}>(propertyIdentifier='${propertyIdentifier.getText()}')`)
+            const identified = await this.identifyIdentifierRecursively<typeof propertyValue>(propertyIdentifier.getText());
+            Debug.pop();
+            Debug.log(`Property that was identified: '${propertyIdentifier.getText()}', identified result = ${JSON.stringify(identified.getValue())}, current property value = ${JSON.stringify(propertyValue)}`)
+            Debug.log(`Property that was identified: '${propertyIdentifier.getText()}', data = ${JSON.stringify(data)}`)
+            if (identified.isFailure) {
+                Debug.pop();
+                return Result.fail(
+                    `shorthandPropertyAssignment('${exp.getText()}')/this.identifyIdentifierRecursively(propertyIdentifier='${propertyIdentifier.getText()}'): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            }
+
+            (data as Object)[propertyIdentifier.getText()] = identified.getValue().data
+            Debug.log(`The updated object:`)
+            Debug.log(JSON.stringify(data))
+            Debug.pop();
+
+            return Result.ok(data);
         } else {
-            console.log(`identifyValue child '${exp.getText()}'`);
-            console.log(exp);
+            Debug.log(`identifyValue child '${exp.getText()}'`);
+            Debug.log(exp);
             return Result.fail(
                 `Failed variable's node: '${exp.getText()}'`,
                 `The '${JSON.stringify(exp.getText())}' variable value's node is not handled by Ara Web yet. Change identifyValue() to fix it`
             )
         }
 
-        console.log(`The '${exp.getText()}' not yet supported by Ara Web`)
-        console.log(exp);
-        console.log(`\n\n`)
+        Debug.log(`The '${exp.getText()}' not yet supported by Ara Web`)
+        Debug.log(JSON.stringify(exp));
+        Debug.log(`\n\n`)
         return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
     } 
 
@@ -564,14 +722,14 @@ export class Code {
         
             const namespaceImport = astImport.getNamespaceImport();
             if (namespaceImport !== undefined) {
-                console.log(`TODODODODODODO Namespace imports:`)
-                console.log(namespaceImport)
+                Debug.log(`TODODODODODODO Namespace imports:`)
+                Debug.log(JSON.stringify(namespaceImport))
             }
 
             const astAttr = astImport.getAttributes()
             if (astAttr !== undefined) {
-                console.log(`TODODODODODODO Import attributes:`)
-                console.log(astAttr)
+                Debug.log(`TODODODODODODO Import attributes:`)
+                Debug.log(JSON.stringify(astAttr))
             }
 
             for (let child of astImport.getChildren()) {
@@ -583,6 +741,7 @@ export class Code {
                     for (let importClauseChild of child.getChildren()) {
                         if (importClauseChild instanceof Identifier && 
                             importClauseChild.getText() === literal) {
+                                
                                 return astImport;
                         }
                     }
@@ -710,7 +869,7 @@ export class Code {
      * @param {boolean} identifyUpdates whether to look up for the changes?
      * @returns {error?: string, data?: T}
      */
-    private identifyVariable = async <T>(identifier: string, identifyUpdates: boolean = true): Promise<Result<T>> => {
+    private identifyVariable = async <T>(identifier: string, identifyUpdates: boolean = true): Promise<Result<T|ValueType>> => {
         // If Attribute name is an identifier, get variable statements that define them:
         // For example `const v: number = 1`
         const varDeclaration = this.identifyVariableDeclaration(identifier);
@@ -722,8 +881,30 @@ export class Code {
         }
 
         const lastChild = varDeclaration.getValue().getLastChild();
+        Debug.log(`Assign '${lastChild?.getText()}' result to '${identifier}' variable`)
 
-        const identifiedValue = await this.identifyValue<T>(identifier, {} as T, lastChild);
+        Debug.push(`this.identifyValueType(lastChild='${lastChild}')`)
+        const identfiedValueType = this.identifyValueType(lastChild);
+        Debug.pop();
+        if (identfiedValueType.isFailure) {
+            return Result.fail(
+                `lastChild='${lastChild?.getText()}'/this.identifyValueType(lastChild='${lastChild?.getText()}'): ${identfiedValueType.errorTitle}`,
+                identfiedValueType.errorDescription!
+            )
+        }
+        const randomValue = this.exactValueType(identifier, identfiedValueType.getValue(), {})
+        if (randomValue.isFailure) {
+            return Result.fail(
+                `lastChild='${lastChild?.getText()}'/this.exactValueType(identifier='${identifier}'), idenfierValueType='${identfiedValueType.getValue()}': ${randomValue.errorTitle}`,
+                randomValue.errorDescription!
+            )
+        }
+        const value = randomValue.getValue();
+        Debug.log(`The '${identifier}' identifier needs '${lastChild?.getText()}' expression, type: '${ValueTypeString[identfiedValueType.getValue()]}', current: '${JSON.stringify(value)}' value`)
+        Debug.push(`this.identifyValue(indetifier='${identifier}',value='${JSON.stringify(value)}',lastChild='${lastChild?.getText()}')`)
+        const identifiedValue = await this.identifyValue<typeof value>(identifier, value, lastChild);
+        Debug.pop();
+        Debug.log(`The '${identifier}' identified value = '${JSON.stringify(identifiedValue)}'`)
         if (identifiedValue.isFailure) {
             return Result.fail(
                 `identifyVariable(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
@@ -735,7 +916,12 @@ export class Code {
             return Result.ok(identifiedValue.getValue())
         }
 
-        const updated = await this.identifyVariableUpdates<T>(identifier, identifiedValue.getValue()!);
+
+        Debug.log(`Update the '${identifier}' variable with current data '${JSON.stringify(identifiedValue.getValue())}' if there are any updates`)
+        Debug.push(`this.identifyVariableUpdates<typeof value>(identifier='${identifier}',identifiedValue='${identifiedValue.getValue()}')`)
+        const updated = await this.identifyVariableUpdates<typeof value>(identifier, identifiedValue.getValue()!);
+        Debug.pop();
+        Debug.log(`identifyVariable <- identifyVariableUpdates, updated. The '${identifier}' variable updated data '${JSON.stringify(updated.getValue())}'`)
         if (updated.isFailure) {
             return Result.fail(
                 `identifyVariableUpdates(identifier=${identifier}, data=${identifiedValue.getValue()}): ${updated.errorTitle}`,
@@ -744,5 +930,38 @@ export class Code {
         }
 
         return Result.ok(updated.getValue());
+    }
+
+    private exactValueType = <T>(identifier: string, val: ValueTypeString, t: T): Result<T|ValueType> => {
+        if (val == ValueTypeString.default) {
+            return Result.ok(t);
+        }
+
+        if (val == ValueTypeString.array) {
+            return Result.ok([] as ValueType[])
+        }
+        if (val === ValueTypeString.number) {
+            return Result.ok(0 as number)
+        } else if (val === ValueTypeString.string) {
+            return Result.ok("" as string);
+        } else if (val === ValueTypeString.object) {
+            return Result.ok(t as Object)
+        } else if (val === ValueTypeString.property) {
+            let obj = t as Object;
+            Debug.log(`Value type is property`);
+            if (identifier in obj) {
+                return Result.ok(obj[identifier] as ValueType)
+            } else {
+                return Result.fail(
+                    `The value type is property, but the data is not a property`,
+                    `The '${identifier}' not a property of ${JSON.stringify(t)}`
+                )
+            }
+        }
+
+        return Result.fail(
+            `No matching data was found`,
+            `The ${val} not handled`
+        );
     }
 }

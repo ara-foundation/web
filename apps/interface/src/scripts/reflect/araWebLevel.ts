@@ -13,7 +13,6 @@ import {
     ComponentIdentity, 
     type IdentifiedComponent,
     type ComponentNode,
-    type ComponentData,
     type Component,
 } from "@scripts/araWebOntology";
 import { Result } from "@scripts/result";
@@ -604,7 +603,7 @@ export class PageTraits {
                 `Ara Web supports quoted and expression kind of attributes only`
             )
         }
-        
+
         const attrValue = await this.code.identifyCodePiece<T>(attr.value);
         if (attrValue.isFailure) {
             return Result.fail(
