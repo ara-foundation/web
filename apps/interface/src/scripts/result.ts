@@ -40,8 +40,14 @@ export class Result<T> {
       return new Result<U>(true, undefined, undefined, value);
     }
   
-    public static fail<U> (errorTitle: string, errorDescription: string): Result<U> {
-      return new Result<U>(false, errorTitle, errorDescription);
+    public static fail<U> (errorTitle: string|{errorTitle: string, errorDescription: string}, errorDescription?: string): Result<U> {
+      if (typeof errorTitle === "string") {
+        if (errorDescription === undefined) {
+          throw `Error Description is undefined, pass it please as the second argument of Result.fail`
+        }
+        return new Result<U>(false, errorTitle, errorDescription);
+      }
+      return new Result<U>(false, errorTitle.errorTitle, errorTitle.errorDescription);
     }
   
     public static combine (results: Result<any>[]) : Result<any> {

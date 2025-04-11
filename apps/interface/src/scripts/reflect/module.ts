@@ -1,4 +1,8 @@
+import { Debug } from "@scripts/debug";
+import { getNodejsModuleByPath } from "./enabledNodejsModule";
+
 export enum ModuleType {
+    NodeJsModule = "node_modules",
     Script = "scripts",
     Component = "components",
     Page = "pages",
@@ -19,7 +23,7 @@ export const trimPath = (path: string): string => {
  * @param {string} path the file path 
  * @returns {ModuleType}
  */
-export const identifyModuleType = (path: string): ModuleType => {
+export const identifyModuleType = async (path: string): Promise<ModuleType> => {
     path = trimPath(path);
     if (path.indexOf(ModuleType.Script) > -1) {
         return ModuleType.Script;
@@ -33,6 +37,13 @@ export const identifyModuleType = (path: string): ModuleType => {
     if (path.indexOf(ModuleType.Layout) > -1) {
         return ModuleType.Layout;
     } 
+    Debug.push(`getNodejsModulePath()`, {path: path})
+    const nodeJsModule = await getNodejsModuleByPath(path);
+    Debug.pop();
+    Debug.log(`Returned the node js module by path? ${nodeJsModule !== undefined}`)
+    if (nodeJsModule !== undefined) {
+        return ModuleType.NodeJsModule;
+    }
 
     return ModuleType.Untracked;
 }

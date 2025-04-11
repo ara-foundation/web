@@ -5,13 +5,15 @@
 import { parse as AstroParse, transform, type TransformResult } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
-import { Project } from "ts-morph";
 import type { AstroInstance } from 'astro';
 import PathModule from "node:path"
 import { identifyModuleType, ModuleType, trimPath } from "@scripts/reflect/module";
 import { getScriptByPath } from "@scripts/reflect/script";
-import { type NodeType } from "@scripts/araWebOntology";
+import { type ComponentNode } from "@scripts/araWebOntology";
 import { Result } from "@scripts/result";
+import { Debug } from "@scripts/debug";
+import { getNodejsModuleByPath } from "./enabledNodejsModule";
+import type { ValueType } from "./codeLevel/types";
 
 export enum PathType {
     Astro = ".astro",
@@ -27,13 +29,21 @@ export enum PathType {
  * The content of any page will contain list of the nodes and code, usually a frontmatter.
  */
 export type FileContent = {
-    nodes?: NodeType[], 
+    nodes?: ComponentNode[], 
     source?: string,
     type: PathType,
     filePath: string,
     error?: string,
     glob?: unknown,
 }
+
+export type IdentifiedFileContent = {
+    fileContent: FileContent,
+    modulePath: string,
+    moduleType: ModuleType,
+}
+
+let cache: {[key: string]: IdentifiedFileContent} = {};
 
 /**
  * Detects the file type by the file extension, if not supported file then return PathType.DirectoryOrUndefined.
@@ -59,9 +69,6 @@ const detectPathType = (filePath: string): PathType => {
     return PathType.DirectoryOrUndefined;
 }
 
-const astProject = new Project({
-    useInMemoryFileSystem: true
-})
 
 /** 
  * For Pages: There are Markdown (.md extension) files that we won't count.
@@ -109,6 +116,21 @@ export const globsToFileContents = async(globs: Record<string, () => Promise<unk
     return contents;
 }
 
+export const identifierInModule = async (modulePath: string, identifier: string) => {
+    const module = await import(modulePath);
+    const  {Icon} = await import(modulePath);
+    Debug.log(`\n\Module '${modulePath}' was returned check '${identifier}':`);
+    Debug.log(module);
+    Debug.log(`\n\nThe default of module:`)
+    Debug.log(module.default)
+    Debug.log(`The identifier exists in Module?`)
+    Debug.log(module[identifier])
+    Debug.log(`The Icon exists in Module?`)
+    Debug.log(Icon)
+    Debug.log(`Has library and icon`)
+    Debug.log(module['icon'])
+}
+
 /**
  * Calls and returns the result of call as T
  * @param {string} modulePath 
@@ -116,42 +138,39 @@ export const globsToFileContents = async(globs: Record<string, () => Promise<unk
  * @param {any[]} funcArgs 
  * @returns {data?: T, error?: string}
  */
-export const callFuncInModule = async <T>(modulePath: string, funcName: string, funcArgs: any[]): 
-    Promise<Result<T>> => {
-    const ret: {
-        error?: string,
-        data?: T,
-    } = {}
+export const callFuncInModule = async (modulePath: string, funcName: string, funcArgs: any[]): 
+    Promise<Result<ValueType>> => {
     
-    const moduleType = identifyModuleType(modulePath);
-    if (moduleType === ModuleType.Untracked) {
+    Debug.push(`fileContentByModulePath()`, {modulePath})
+    const identified = await fileContentByModulePath(modulePath);
+    Debug.pop();
+    if (identified.isFailure) {
         return Result.fail(
-            `identifyModuleType(modulePath='${modulePath}')`,
-            `The ${modulePath} module path to call ${funcName} is not in the tracked directory`
+            `fileContentByModulePath(modulePath: '${modulePath}'): ${identified.errorTitle}`,
+            identified.errorDescription!
         )
     }
 
-    if (moduleType === ModuleType.Script) {
-        const script = await getScriptByPath(modulePath)
-        if (script === undefined) {
-            return Result.fail(
-                `getScriptByPath(modulePath='${modulePath}')`,
-                `No script at ${modulePath}, make sure it exists or its the bug of getScriptByPath`
-            )
-        }
-
-        let data = await (script.glob as any)[funcName](...funcArgs)
-        return Result.ok(data as T);
+    if (identified.getValue().moduleType === ModuleType.Script) {
+        let data = await (identified.getValue().fileContent.glob as any)[funcName](...funcArgs)
+        return Result.ok(data as ValueType);
+    } else if (identified.getValue().moduleType === ModuleType.NodeJsModule) {
+        let data = await (identified.getValue().fileContent.glob as any)[funcName](...funcArgs)
+        return Result.ok(data as ValueType);
     }
 
     return Result.fail(
-        `Unsupported module`,
-        `The ${moduleType} kind of modules are not yet supported by Ara Web`
+        `Unsupported module type`,
+        `The ${identified.getValue().moduleType} kind of modules are not yet supported by Ara Web, update callFuncInModule()`
     )
 }
 
-export const fileContentByModulePath = async(modulePath: string): Promise<Result<FileContent>> => {
-    const moduleType = identifyModuleType(modulePath);
+const identifyFileContent = async (modulePath: string): Promise<Result<IdentifiedFileContent>> => {
+    Debug.push(`identifyModuleType()`, {path: modulePath})
+    const moduleType = await identifyModuleType(modulePath);
+    Debug.pop();
+    Debug.log(`The identified module type:`)
+    Debug.log(moduleType)
     if (moduleType === ModuleType.Untracked) {
         return Result.fail(
             `identifyModuleType(modulePath='${modulePath}')`,
@@ -167,13 +186,52 @@ export const fileContentByModulePath = async(modulePath: string): Promise<Result
                 `The script is not defined in the scripts path, are you sure that file exists or has the valid file extension?`
             )
         }
-        return Result.ok(script)
-    } 
+        return Result.ok({modulePath, moduleType, fileContent: script})
+    } else if (moduleType === ModuleType.NodeJsModule) {
+        const module = await getNodejsModuleByPath(trimPath(modulePath));
+        if (module === undefined) {
+            return Result.fail(
+                `moduleType=ModuleType.NodeJsModule: getNodejsModuleByPath(modulePath: '${modulePath}')`,
+                `The module is not enabled, are you sure that file exists and has valid extension?`
+            )
+        } else {
+            return Result.ok({modulePath, moduleType, fileContent: module})
+        }
+    }
     
     return Result.fail(
         'Unsupported module type',
         `Only Script modules are supported, not '${moduleType}' modules`
     )
+}
+
+/**
+ * Get the file content loaded from modulePath.
+ * It first attempts to load the data from the internal file content cache.
+ * If doesn't exist, then identifies the file content, then caches the file content
+ * before sending the file content back to the user.
+ * @param {string} modulePath the module's path within the Ara Web
+ * @returns 
+ */
+export const fileContentByModulePath = async(modulePath: string): Promise<Result<IdentifiedFileContent>> => {
+    if (modulePath in cache) {
+        return Result.ok(cache[modulePath]);
+    }
+
+    Debug.log(`The file content cache doesn't have the '${modulePath}' file content, identify it`);
+    Debug.push(`identifyFileContent()`, {modulePath})
+    const identified = await identifyFileContent(modulePath);
+    Debug.pop();
+
+    if (identified.isFailure) {
+        return Result.fail(
+            `identifyFileContent(modulePath: '${modulePath}'): ${identified.errorTitle}`,
+            identified.errorDescription!
+        )
+    }
+    cache[modulePath] = identified.getValue();
+
+    return Result.ok(identified.getValue());
 }
 
 
@@ -213,8 +271,8 @@ const parseAstroFile = async (fileContent: FileContent, astroSource: string): Pr
  * @param ast A RootNode of the Astro Web Page
  * @returns Components and Frontmatter
  */
-const extractAstroComponents = (ast: RootNode): {componentNodes: NodeType[], frontmatterCode: string} => {
-    const componentNodes: NodeType[] = [];
+const extractAstroComponents = (ast: RootNode): {componentNodes: ComponentNode[], frontmatterCode: string} => {
+    const componentNodes: ComponentNode[] = [];
     let frontmatterCode: string = "";
 
     for (let i = 0; i < ast.children.length; i++) {

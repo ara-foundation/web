@@ -27,13 +27,27 @@ export class Debug {
         Debug.instance._log(msg);
     }
 
-    public static push = (title: string) => {
+    public static push = (title: string, parameters?: {[key: string]: string}) => {
+        if (parameters === undefined) {
+            Debug.instance._log(`---> '${title}'()`)
+        } else {
+            let flattened: string[] = [];
+            for (let key in parameters) {
+                flattened.push(`${key}: '${parameters[key]}'`)
+            }
+            Debug.instance._log(`---> '${title}'(${flattened.join(",")})`)
+        }
         Debug.instance.stack.push(title);
     }
 
     // Delete the last
     public static pop = () => {
-        Debug.instance.stack.pop();
+        if (Debug.instance.stack.length === 0) {
+            Debug.instance._log(`Calling pop() but no stack of pushed data`);
+            return;
+        }
+        const needle = Debug.instance.stack.pop();
+        Debug.instance._log(`<--- ${needle}`)
         if (Debug.instance.stack.length === 0) {
             Debug.instance.lineCounter = 0;
         }
@@ -53,18 +67,33 @@ export class Debug {
         }
     }
 
+    public static error = (errorTitle: string, errorDescription: string, additionalData: any): {errorTitle: string, errorDescription: string} => {
+        Debug.instance._error(errorTitle, errorDescription, additionalData)
+        return {errorTitle, errorDescription}
+    }
+
     //////////////////////////////////////////
     // 
     // Internal
     //
     ////////////////////////////////////////////
 
+    private _error = (title: string, description: string, additionalData: any): void => {
+        console.log(`${this.lineCounter}) Encountered an error: ${title}`);
+        console.log(`${description}`)
+        console.log(`The error stack trace:`)
+        console.log(this.stack.join("\t->"))
+    }
+
     private _log = (msg: any) => {
-        const nodeTree = this.stackNodeTree();
+        let nodeTree = this.stackNodeTree();
+        if (nodeTree.length > 0) {
+            nodeTree += ":"
+        }
         if (typeof msg === "string") {
-            console.log(`${this.lineCounter++}) ${nodeTree}: ${msg}\n`);
+            console.log(`${this.lineCounter++}) ${nodeTree} ${msg}`);
         } else {
-            console.log(`${this.lineCounter++}) ${nodeTree}: Non string data:`)
+            console.log(`${this.lineCounter++}) ${nodeTree} non string data:`)
             console.log(msg);
         }
     }

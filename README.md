@@ -115,11 +115,37 @@ Simply pass them.
 
 There are already predefined rpc calls defined as `type RpcCallType`. They are available in `src/scripts/rpc=>rpcBySlug(slug:string)`.
 
-### Scripts
+## Scripts
 The scripts within the Ara Web are located in the `src/scripts` directory.
 Currently only typescript scripts are supported.
 
-#### Checklist to add new script
+## Reflection on the code itself
+The `src/scripts/reflect` is a module that turns the code into a JSON, and vice versa
+the JSON into the code.
+
+It parses the data in the whole data structure of the web site and then turns it into the minimal components available for the user.
+
+### Module
+Each node.js file is called as a module.
+*Reflect* supports various modules but not all due to safety or complexity reasons.
+To navigate through the modules, they are categorized according to the directories.
+For example, `Page` module category indicates the scripts (a.k.a modules) in the `src/pages` directory.
+
+#### NodeJS Modules
+Ara Web does support pre-built modules that consists the Ara Web itself.
+The third-party modules (in `node_modules`) nor NodeJS built in modules are not supported by default.
+But sometimes we need them as well. For example the icon components, or additional UI components.
+
+Ara Web must know at the built time which of the third party modules you are going to use.
+Therefore, we have the `src/scripts/reflect/enabledNodejsModule.ts` where
+the supported modules are imported via the Vite plugin's glob pattern. 
+
+> Contributor Tip
+> To support the third party modules, double check them for security.
+> Then, add them into the `src/scripts/reflect/enabledNodejsModule.ts` script.
+
+---
+## Checklist to add new script
 If you are adding a new script other than Typescript, update the `src/scripts/reflect/script.ts` to support new extension.
 
 ---

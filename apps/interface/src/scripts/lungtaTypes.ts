@@ -5,3 +5,7 @@ export enum LungtaTypes {
     Act = "act",
     Sangha = "sangha"
 }
+
+export type SampleType = {
+    hello?: string;
+}

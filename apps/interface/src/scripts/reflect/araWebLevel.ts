@@ -477,8 +477,6 @@ export class PageTraits {
                 pathResult.errorDescription!,
             )
         }
-        console.log(`Path Result:`)
-        console.log(pathResult.getValue())
 
         /////////////////////////////////////////////////////////////////////////////////
         //

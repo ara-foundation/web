@@ -4,7 +4,7 @@
  * @param {string} Title Create a Sangha
  * @param {string} Description Add community tokens
  */
-import { library, icon, type Icon } from "@fortawesome/fontawesome-svg-core";
+import { library, icon, type Icon, type Icon as NewIcon } from "@fortawesome/fontawesome-svg-core";
 import {faCrown, faPenRuler, faPen, faGlobe} from "@fortawesome/free-solid-svg-icons"
 
 import AraWebLayout from "@layouts/AraWebLayout.astro"
@@ -14,16 +14,16 @@ import { slugsToLayoutPath } from "@scripts/page"
 import {type LayoutProps, RowSlug, ColumnSlug} from "@scripts/araWebOntology"
 import { type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { LungtaTypes } from "@scripts/lungtaTypes";
+import { LungtaTypes, type SampleType as Type2 } from "@scripts/lungtaTypes";
 
 library.add(faCrown, faPenRuler, faPen, faGlobe);
-const crownIcon = icon({ prefix: "fas", iconName: faCrown.iconName });
+export const crownIcon: Icon = icon({ prefix: "fas", iconName: faCrown.iconName })
 const penRulerIcon = icon({ prefix: "fas", iconName: faPenRuler.iconName });
 const penIcon = icon({ prefix: "fas", iconName: faPen.iconName });
 const globeIcon = icon({ prefix: "fas", iconName: faGlobe.iconName });
 
 
-type Token = {
+export type Token = {
     name: string;
     icon: Icon;
 }
@@ -130,8 +130,10 @@ const sideNavigationProps: SideNavigationProps = {
             <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
         </div>
     </section>
+    <section slot={(!cancelSlug).toString()}>
+    <!-- <section slot={cancelSlug && "center-valid"}> -->
     <!-- <section slot={"center-" + cancelSlug}> -->
-    <section slot={cancelSlug != undefined ? "center-" + cancelSlug: "data"}>
+    <!-- <section slot={cancelSlug != undefined ? "center-" + cancelSlug: "data"}> -->
         <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
         <a href="/ara/logos/post" class="btn btn-outline btn-neutral w-full mb-4">Back to Project</a>
         <a href="/ara/maydone/post" class="btn btn-outline btn-neutral w-full">Back to Budget</a>

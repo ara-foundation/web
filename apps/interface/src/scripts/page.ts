@@ -72,9 +72,9 @@ const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]>
 
     for (let fileContent of fileContents) {
         i++;
-        if (i < 3) {
+        if (i < fileContents.length) {
             continue;
-        } else if (i == 4) {
+        } else if (i == fileContents.length + 1) {
             break;
         }
         console.log(`File Content #${i} at ${fileContent.filePath} to page`)
