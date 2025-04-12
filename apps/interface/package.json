@@ -10,7 +10,8 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/compiler": "^2.11.0",
@@ -59,7 +60,12 @@
     "ts-morph": "^25.0.1",
     "usehooks-ts": "^3.1.1",
     "viem": "^2.23.8",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "@ara-web/ts-enhancement": "workspace:^",
+    "@ara-web/component-engine": "workspace:*",
+    "@ara-web/rpc-engine": "workspace:*",
+    "@ara-web/reflect": "workspace:*",
+    "@ara-web/ara-link": "workspace:*"
   },
   "devDependencies": {
     "@tomic/cli": "^0.40.0",

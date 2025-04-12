@@ -1,4 +1,4 @@
-import { AUTH } from "config";
+import { AUTH } from "../../../config.js";
 import { zklogin } from "@shield-labs/zklogin";
 import { ChainService, provider } from "./chain.js";
 import { JwtAccountService } from "./services/JwtAccountService.js";

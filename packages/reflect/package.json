@@ -1,0 +1,36 @@
+{
+  "private": true,
+  "name": "@ara-web/reflect",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Reflect on it's own code structure and alter it",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ara-web/component-engine": "workspace:*",
+    "@ara-web/rpc-engine": "workspace:*",
+    "@ara-web/ts-enhancement": "workspace:*",
+    "@ara-web/ara-link": "workspace:*",
+    "@astrojs/compiler": "^2.11.0",
+    "astro": "^5.6.1",
+    "comment-parser": "^1.4.1",
+    "ts-morph": "^25.0.1"
+  },
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "pnpm _chore && rm -rf dist && astro build",
+    "prepublishOnly": "pnpm test:lint && astro build",
+    "_chore": "pnpm i"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./file-level": {
+      "types": "./src/fileLevel.ts",
+      "default": "./src/fileLevel.js"
+    }
+  }
+}

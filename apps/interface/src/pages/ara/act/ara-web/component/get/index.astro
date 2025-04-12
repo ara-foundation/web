@@ -11,7 +11,8 @@ import {
     newAraProject, 
     RestNavigationKey, 
     newAraWebNavigationNode, 
-newRestNode} from "@scripts/navigation";
+    newRestNode
+} from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 import ComponentHolder from "@components/ComponentHolder.astro"
@@ -40,30 +41,39 @@ const sideNavigation: SideNavigationProps = {
     selectedPath: "ara/act/ara-web/component/get"
 }
 const components = await getComponents();
+
+
 ---
 
 <AraWebLayout 
     title="List of Web Components"
     sideNavigation={sideNavigation}
 >
-    <h1>List of Defined UI Components in Ara Web client</h1>
-    <ul class="mt-4 ml-10">
-        {
-            components.map((component) => (
-            <li class="m-4">
-                <div class="card w-full bg-base-100 card-sm shadow-sm ">
-                    <div class="card-body relative">
-                    <h2 class="card-title">
-                        {component.label ? component.label : component.fileName}
-                    </h2>
-                    <div class={"absolute top-5 right-5 badge badge-neutral"}>{component.category.name}</div>
-                        <div class="bg-gray-100 flex justify-center">
-                            <ComponentHolder component={component}></ComponentHolder>
+    {
+        components.isFailure ? 
+        <div>
+            <h1>{components.errorTitle}</h1>
+            <div>{components.errorDescription}</div>
+        </div> :
+        <h1>List of Defined UI Components in Ara Web client</h1>
+        <ul class="mt-4 ml-10">
+            {
+                components.getValue().map((component) => (
+                <li class="m-4">
+                    <div class="card w-full bg-base-100 card-sm shadow-sm ">
+                        <div class="card-body relative">
+                        <h2 class="card-title">
+                            {component.label ? component.label : component.fileName}
+                        </h2>
+                        <div class={"absolute top-5 right-5 badge badge-neutral"}>{component.category.name}</div>
+                            <div class="bg-gray-100 flex justify-center">
+                                <ComponentHolder component={component}></ComponentHolder>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </li>
-            ))
-        }
-    </ul>
+                </li>
+                ))
+            }
+        </ul>
+    }
 </AraWebLayout>

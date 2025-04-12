@@ -1,0 +1,29 @@
+{
+  "name": "@ara-web/rpc-engine",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm _chore && astro dev",
+    "build": "pnpm _chore && rm -rf dist && astro build",
+    "prepublishOnly": "pnpm test:lint && astro build",
+    "_chore": "pnpm i"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@ara-web/ts-enhancement": "workspace:*"
+  },
+  "devDependencies": {
+    "astro": "^5.6.1",
+    "@types/react": "^19.0.10",
+    "vite": "^5.2.11"
+
+  },
+  "peerDependencies": {
+    "astro": "^4.0.0 || ^5.0.0"
+  }
+}

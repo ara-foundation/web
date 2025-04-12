@@ -1,7 +1,7 @@
 import { bnToLimbStrArray } from "@mach-34/noir-bignum-paramgen";
 import { utils } from "@shield-labs/utils";
-import deployments from "@shield-labs/zklogin-contracts/deployments.json";
-import circuit from "@shield-labs/zklogin-contracts/noir/target/jwt_account.json";
+import deployments from "@shield-labs/zklogin-contracts/deployments.json" with { type: "json" };;
+import circuit from "@shield-labs/zklogin-contracts/noir/target/jwt_account.json" with { type: "json" };;
 import { isEqual } from "lodash-es";
 import { Base64, Bytes, Hex } from "ox";
 import { assert } from "ts-essentials";

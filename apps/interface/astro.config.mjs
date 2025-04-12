@@ -1,5 +1,5 @@
 import { defineConfig } from "astro/config";
-import { CONFIG } from "./src/config";
+import { CONFIG } from "./src/config.js";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import tailwindcss from "@tailwindcss/vite";
@@ -20,16 +20,6 @@ export default defineConfig({
       langs: [],
     },
   },
-  content: {
-    collections: {
-      posts: {
-        schema: "src/content/config.ts#posts",
-      },
-      finds: {
-        schema: "src/content/config.ts#finds",
-      },
-    },
-  },
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
@@ -40,11 +30,6 @@ export default defineConfig({
     },
     build: {
       target: "esnext",
-    },
-    test: {
-      hookTimeout: 99999999,
-      testTimeout: 99999999,
-      teardownTimeout: 99999999,
     },
   },
 });

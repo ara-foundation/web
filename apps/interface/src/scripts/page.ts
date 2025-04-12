@@ -1,6 +1,5 @@
-import { globsToFileContents, type FileContent } from "@scripts/reflect/fileLevel"
-import { PageTraits } from "./reflect/araWebLevel";
-import { type Page, RowSlug, ColumnSlug } from "@scripts/araWebOntology";
+import { globsToPages } from "@ara-web/reflect"
+import { type Page, RowSlug, ColumnSlug, Result } from "@ara-web/ts-enhancement";
 
 /**
  * Converts the Row and Column to the full slug of the page layout slug
@@ -15,10 +14,9 @@ export const slugsToLayoutPath = (row: RowSlug, column: ColumnSlug): string => {
 export const contentLeftPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Left);
 export const contentRightPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
-export const getPages = async (): Promise<Page[]> => {
+export const getPages = async (): Promise<Result<Page[]>> => {
     const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
-    const fileContents = await globsToFileContents(globs);
-    return await fileContentsToPages(fileContents);
+    return await globsToPages(globs);
 }
 
 /**
@@ -37,7 +35,11 @@ export const getPageByUrl = async(url: string | undefined): Promise<Page|undefin
 
     const pages = await getPages();
 
-    for (const page of pages) {
+    if (pages.isFailure) {
+        return undefined;
+    }
+
+    for (const page of pages.getValue()) {
         const pageUrl = fileNameToUrl(page.fileName);
         if (url === pageUrl) {
             return page;
@@ -60,49 +62,3 @@ const fileNameToUrl = (fileName: string): string => {
     return fileName.substring(0, fileName.indexOf(".astro"));
 }
 
-/**
- *  @todo To identify the RPCs by components, use a special Typescript parser
- *  For now we rely on the component names
- * @param globs 
- * @returns 
- */
-const fileContentsToPages = async (fileContents: FileContent[]): Promise<Page[]> => {
-    let pages: Page[] = [];
-    let i = 0;
-
-    for (let fileContent of fileContents) {
-        i++;
-        if (i < fileContents.length) {
-            continue;
-        } else if (i == fileContents.length + 1) {
-            break;
-        }
-        console.log(`File Content #${i} at ${fileContent.filePath} to page`)
-        const pageTraitsResult = PageTraits.fromFileContent(fileContent!);
-        if (pageTraitsResult.isFailure) {
-            pages.push({
-                title: `PageTraits.fromFileContent: ${pageTraitsResult.errorTitle}`,
-                description: pageTraitsResult.errorDescription!,
-                fileName: fileContent.filePath,
-                glob: fileContent.glob,
-            })
-            continue;
-        }
-
-        const pageTraits: PageTraits = pageTraitsResult.getValue();
-        const identificationResult = await pageTraits.identifyComponents();
-        if (identificationResult.isFailure) {
-            pages.push({
-                title: `PageTraits.identifyComponents: ${identificationResult.errorTitle}`,
-                description: identificationResult.errorDescription!,
-                fileName: fileContent.filePath,
-                glob: fileContent.glob,
-            })
-            continue;
-        } else {
-            pages.push(identificationResult.getValue())
-        }
-    }
-
-    return pages;
-}

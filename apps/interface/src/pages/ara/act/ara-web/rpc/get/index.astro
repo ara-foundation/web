@@ -8,8 +8,7 @@ import type { SideNavigationProps } from "@components/lungta/SideNavigation.astr
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newAraWebNavigationNode, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { getRpcs } from "@scripts/rpc";
-import RpcCard from "@components/rpc/rpcCard.astro"
+import { getRpcs, AstroComponentRpcCard } from "../../../../../../../../../packages/rpc-engine/src";
 
 const rpcs = getRpcs();
 
@@ -44,10 +43,10 @@ const sideNavigationProps: SideNavigationProps = {
     <h2>RPCs list</h2>
     <p>Below are the available RPCs. RPC is the programming terminology which means calling a sofrware function</p>
     {rpcs.map((rpc) => (
-        <RpcCard rpc={rpc}>
+        <AstroComponentRpcCard rpc={rpc}>
             <a
             class="btn btn-secondary" 
             href={sideNavigationProps.selectedPath + "/" + rpc.slug}>Details</a>
-        </RpcCard>
+        </AstroComponentRpcCard>
     ))}
 </AraWebLayout>

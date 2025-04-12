@@ -144,11 +144,26 @@ the supported modules are imported via the Vite plugin's glob pattern.
 > To support the third party modules, double check them for security.
 > Then, add them into the `src/scripts/reflect/enabledNodejsModule.ts` script.
 
+### Links to other stuff
+The pages are parsed through PageTraits in Reflect.
+But PageTraits that wraps the Page with the Components, File Content and RPCs.
+However, the RPCs and Components are defined outside of Reflect.
+
+We need to make the Reflect internally without depending on other components.
+And at the same time, we need to make sure the other modules are not depend on the Reflect.
+
 ---
 ## Checklist to add new script
 If you are adding a new script other than Typescript, update the `src/scripts/reflect/script.ts` to support new extension.
 
 ---
+
+## Component Engine
+```
+pnpm install @ara-web/component-engine
+```
+
+The component engine converts the Web Framework's Node's to the Ara Web Ontology Components.
 
 ## Getting Started
 

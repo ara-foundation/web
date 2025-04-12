@@ -4,13 +4,12 @@
  * @param {string} Title Available RPCs in Ara Web
  * @param {string} Description Customize or browse all available RPCs in Ara Website
  */
-import { newRpcCall } from "@scripts/rpc/extensions/redirect"
-import Call from "@components/rpc/call.astro";
+import { ExtensionsRedirect, AstroComponentCall } from "@ara-web/rpc-engine"
 
-const rpcCall = newRpcCall();
+const rpcCall = ExtensionsRedirect.newRpcCall();
 const redirectUrl = "/ara/act/ara-web/rpc/get"
 rpcCall.inputs = [redirectUrl]
 
 ---
 
-<Call rpcCall={rpcCall} />
+<AstroComponentCall rpcCall={rpcCall} />

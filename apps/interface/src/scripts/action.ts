@@ -1,11 +1,12 @@
 /**
  * Actions are defining the user flow
+ * 
+ * @requires RPCEngine url(@ara-web/rpc-engine) the RPC Engine
  */
 
-import type { ElementType } from "@scripts/component";
-import { ColumnSlug, RowSlug } from "@scripts/page";
-import { rpcCalls } from "@scripts/rpc";
-import { type RpcCallType } from "@scripts/rpc/types";
+import { ColumnSlug, RowSlug, type IdentifiedComponent } from "@ara-web/ts-enhancement";
+import { rpcCalls } from "@ara-web/rpc-engine";
+import { type RpcCallType } from "@ara-web/rpc-engine";
 
 export type Button = {
     label?: string;    // For example: 'Create Community'
@@ -48,7 +49,7 @@ export type Action = {
     description: string; 
     trigger: Trigger;
     flow: PageWithAction[];
-    nonPageComponents?: ElementType[];  // Modals for example to put outside of the web page itself
+    nonPageComponents?: IdentifiedComponent[];  // Modals for example to put outside of the web page itself
     onSuccess: RpcCallType[]
 }
 

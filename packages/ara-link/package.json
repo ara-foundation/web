@@ -1,0 +1,23 @@
+{
+  "name": "@ara-web/ara-link",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ara Link",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && pnpm build",
+    "_chore": "pnpm i"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@ara-web/ts-enhancement": "workspace:*"
+  }
+}

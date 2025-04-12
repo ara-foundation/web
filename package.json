@@ -3,17 +3,16 @@
     "type": "module",
     "private": true,
     "scripts": {
-      "release": "pnpm changeset version && git add . && git commit -m\"chore: release\" && pnpm changeset publish && git push && git push --tags"
+      "build": "turbo run build",
+      "dev": "turbo run dev",
+      "lint": "turbo run lint"
     },
     "devDependencies": {
+      "turbo": "latest",
       "@changesets/cli": "^2.27.10",
       "prettier-plugin-svelte": "^3.2.7",
       "typescript": "^5.6.3"
     },
-    "pnpm": {
-      "patchedDependencies": {
-        "@aztec/bb.js": "patches/@aztec__bb.js.patch"
-      }
-    }
+    "packageManager": "pnpm@10.6.1"
   }
   

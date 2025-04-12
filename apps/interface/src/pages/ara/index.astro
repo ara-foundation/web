@@ -4,13 +4,11 @@
  * @param {string} Title Ara Project
  * @param {string} Description Everything that is related to Ara Itself
  */
-import { newRpcCall } from "@scripts/rpc/extensions/redirect"
-import Call from "@components/rpc/call.astro";
-
-const rpcCall = newRpcCall();
+ import { ExtensionsRedirect, AstroComponentCall } from "@ara-web/rpc-engine"
+const rpcCall = ExtensionsRedirect.newRpcCall();
 const redirectUrl = "/ara/act/ara-web"
 rpcCall.inputs = [redirectUrl]
 
 ---
 
-<Call rpcCall={rpcCall} />
+<AstroComponentCall rpcCall={rpcCall} />

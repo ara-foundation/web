@@ -7,6 +7,8 @@
       "downlevelIteration": true,
       "esModuleInterop": true,
       "verbatimModuleSyntax": true,
+      "moduleResolution": "node16",
+      "module": "Node16",
       "lib": [
         "dom",
         "es2016"

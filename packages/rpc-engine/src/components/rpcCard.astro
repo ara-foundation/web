@@ -1,0 +1,34 @@
+---
+import type { RPC } from '../types';
+
+interface Props {
+    rpc?: RPC
+}
+
+const {rpc} = Astro.props;
+
+---
+
+<div class="card w-full bg-gray-200 card-sm shadow-sm my-4">
+    <div class="card-body relative">
+        <h2 class="card-title">
+            {rpc !== undefined ? rpc.name: "RPC Name"}
+        </h2>
+        <p>{rpc !== undefined ? rpc.description: "Rpc description"}</p>
+        <div class={"absolute top-5 right-5 badge badge-secondary"}>{rpc !== undefined ? rpc.rpcType : "Proxy|Extension|Independent"}</div>
+        <div class={"absolute bottom-5 right-5 badge badge-info"}>Slug: {rpc !== undefined ? rpc.slug : "[slug]"}</div>
+        <div class="bg-gray-100 w-full p-4">
+            <h3 class="text-gray-400">Inputs</h3>
+            <ul class="mt-2">
+                {rpc !== undefined && rpc.inputDescriptions.map((input) => (
+                    <li>
+                       <code class="text-sm sm:text-base inline-flex text-left items-center space-x-4 bg-gray-800 text-white rounded-lg p-1">{input.type}</code> &ndash; {input.description} 
+                    </li>
+                ))}
+            </ul>
+        </div>
+        <div class="card-action">
+            <slot />
+        </div>
+    </div>
+</div>

@@ -2,18 +2,6 @@
   "name": "@shield-labs/zklogin",
   "version": "0.6.1",
   "type": "module",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "src"
-  ],
   "scripts": {
     "dev": "pnpm _chore && tsc -w",
     "build": "pnpm _chore && rm -rf dist && tsc",
@@ -24,6 +12,13 @@
     "prepublishOnly": "pnpm test:lint && pnpm build",
     "_chore": "pnpm i"
   },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+
   "dependencies": {
     "@aztec/bb.js": "0.65.2",
     "@mach-34/noir-bignum-paramgen": "1.1.2",

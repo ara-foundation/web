@@ -4,10 +4,9 @@
  * @param {string} Title Ara Web Actions
  * @param {string} Description Customize or browse all available Actions in Ara Web
  */
-import { newRpcCall, type RpcCallType } from "@scripts/rpc/extensions/redirect"
-import Call from "@components/rpc/call.astro";
+import { AstroComponentCall, ExtensionsRedirect } from "@ara-web/rpc-engine";
 
-let rpcCall: RpcCallType = newRpcCall();
+let rpcCall: ExtensionsRedirect.RpcCallType = ExtensionsRedirect.newRpcCall();
 const redirectUrl = "/ara/act/ara-web/action/get"
 const inputs: [string] = [redirectUrl]
 rpcCall = {...rpcCall, inputs}
@@ -15,4 +14,4 @@ console.log(`Console log is not handled`)
 
 ---
 
-<Call rpcCall={rpcCall} />
+<AstroComponentCall rpcCall={rpcCall} />

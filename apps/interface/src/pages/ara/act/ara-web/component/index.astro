@@ -4,13 +4,12 @@
  * @param {string} Title Ara Web's Component's REST operations
  * @param {string} Description Section of Ara Web to handle web components
  */
-import { newRpcCall } from "@scripts/rpc/extensions/redirect"
-import Call from "@components/rpc/call.astro";
+import { ExtensionsRedirect, AstroComponentCall } from "@ara-web/rpc-engine";
 
-const rpcCall = newRpcCall();
+const rpcCall = ExtensionsRedirect.newRpcCall();
 const redirectUrl = "/ara/act/ara-web/component/get"
 rpcCall.inputs = [redirectUrl]
 
 ---
 
-<Call rpcCall={rpcCall} />
+<AstroComponentCall rpcCall={rpcCall} />

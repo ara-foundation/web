@@ -1,0 +1,21 @@
+{
+  "name": "@ara-web/ts-enhancement",
+  "type": "module",
+  "author": "Medet Ahmetson",
+  "license": "ISC",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && pnpm build",
+    "_chore": "pnpm i"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

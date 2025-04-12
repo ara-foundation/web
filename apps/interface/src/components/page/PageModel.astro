@@ -4,9 +4,9 @@
  */
 import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
 import { slugsToLayoutPath } from "@scripts/page";
-import { ColumnSlug, RowSlug, type Page } from "@scripts/araWebOntology"
-import { rpcBySlug } from "@scripts/rpc";
-import { PageTraits } from "@scripts/reflect/araWebLevel";
+import { ColumnSlug, RowSlug, type Page } from "@ara-web/ts-enhancement"
+import { rpcBySlug } from "../../../../../packages/rpc-engine/src";
+import { PageTraits } from "@ara-web/reflect";
 
 interface Props {
   	rows?: RowsProps,

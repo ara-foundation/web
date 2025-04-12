@@ -6,12 +6,11 @@
  */
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { slugsToLayoutPath } from "@scripts/page";
-import { ColumnSlug, RowSlug } from "@scripts/araWebOntology";
+import { ColumnSlug, RowSlug } from "@ara-web/ts-enhancement";
 import {AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
-import { getRpcs, rpcBySlug } from "@scripts/rpc";
-import RpcCard from "@components/rpc/rpcCard.astro"
+import { getRpcs, rpcBySlug, AstroComponentRpcCard } from "../../../../../../../../../packages/rpc-engine/src";
 
 const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
@@ -92,7 +91,7 @@ const sideNavigationProps: SideNavigationProps = {
     <div>
         <h2>{rpc.name}</h2>
         <p>{rpc.description}</p>
-        <RpcCard rpc={rpc} />
+        <AstroComponentRpcCard rpc={rpc} />
     </div>
     <section slot={cancelSlug}>
         <a href={parentUrl} class="btn btn-outline btn-error w-full mb-4">Back to List of RPCs</a>
