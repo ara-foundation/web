@@ -1,4 +1,5 @@
-export { globsToPages } from "./page"
-export * from "./module"
-export { globsToComponents } from './component'
-export {PageTraits} from "./pageTraits"
+export { globsToPages } from "./page.js"
+export * from "./module.js"
+export { globsToComponents } from './component.js'
+export { PageTraits } from "./pageTraits.js"
+export { Reflect, type ModuleGlobs } from "./Reflect.js"

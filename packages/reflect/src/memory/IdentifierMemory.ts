@@ -1,10 +1,9 @@
 import { AraLink } from "@ara-web/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, type IdentifiedNode, type Identifiers } from "./types";
-import { ReflectAraLink } from "../araLink/ReflectAraLink";
+import { AstNodeType, type IdentifiedNode, type Identifiers } from "../codeLevel/types.js";
+import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 
-
-export class Memory {
+export abstract class IdentifierMemory {
     private _identifiers: Identifiers = {};
 
     constructor() {
@@ -76,8 +75,8 @@ export class Memory {
         return identifiers;
     }
 
-    public print = (filterKey?: string, filterValue?: any): void => {
-        Debug.push(`Memory`, {'filterKey': filterKey!, 'filterValue': filterValue})
+    public print (filterKey?: string, filterValue?: any): void {
+        Debug.push(`Identifier Memory`, {'filterKey': filterKey!, 'filterValue': filterValue})
         Debug.log(`There are ${this.identifiersCount()} identifiers in memory:`);
         for (let identifier in this._identifiers) {
             let node = this._identifiers[identifier];

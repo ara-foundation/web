@@ -13,8 +13,8 @@ import type { LayoutSlugs, Expression, Page, IdentifiedComponent, Component } fr
 // -- AST
 // -- Components
 import { RpcType, type RpcCallType, isRpcComponent as isRpcCallComponent, rpcBySlug } from "@ara-web/rpc-engine";
-import { PathType, type FileContent } from "./fileLevel";
-import { Code } from "./codeLevel";
+import { FileExtension, type FileContent } from "./fileLevel.js";
+import { Code } from "./codeLevel.js";
 // Make sure that we move the component
 import { expressionCategory, type ComponentNode, ComponentEngine } from "@ara-web/component-engine";
 
@@ -91,7 +91,7 @@ export class PageTraits {
             return Result.fail("file content is invalid", `fileLevel error: ${this.fileContent.error}`);
         }
     
-        if (this.fileContent.type !== PathType.Astro) {
+        if (this.fileContent.fileExtension !== FileExtension.Astro) {
             return Result.fail("Unsupported page type", "Only .astro files should be in the pages")
         }
         if (this.fileContent.source === undefined) {

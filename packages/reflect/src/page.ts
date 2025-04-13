@@ -1,6 +1,6 @@
 import { type Page, Result } from "@ara-web/ts-enhancement";
-import { globsToFileContents } from "./fileLevel";
-import { PageTraits } from "./pageTraits";
+import { globsToFileContents } from "./fileLevel.js";
+import { PageTraits } from "./pageTraits.js";
 
 /**
  *  @todo To identify the RPCs by components, use a special Typescript parser

@@ -1,9 +1,8 @@
 // The component engine.
 // List of components and fetching them by a simple class. 
 
-import { globsToFileContents, type FileContent } from "./fileLevel";
-import { ModuleType } from "./module";
-import { type Component, type ComponentCategory, Result } from "@ara-web/ts-enhancement";
+import { type FileContent } from "./fileLevel.js";
+import { type Component, Result } from "@ara-web/ts-enhancement";
 
 import { ComponentEngine, componentCategories } from "@ara-web/component-engine"
 
@@ -69,39 +68,25 @@ import { ComponentEngine, componentCategories } from "@ara-web/component-engine"
 //     )
 // }
 
-export const globsToComponents = async (globs: Record<string, unknown>): Promise<Result<Component[]>> => {
-    const fileContents = await globsToFileContents(globs);
-    let components: Component[] = [];
-
-    for (let fileContent of fileContents) {
-        if (fileContent.error) {
-            console.error(`File Error(${fileContent.filePath}): ${fileContent.error}`)
-            continue;
-        }
-        const component: Component = {
-            label: "",
-            description: "",
-            fileName: "",
-            category: componentCategories[0],
-            glob: fileContent.glob,
-        }
-
-        const componentId = ComponentEngine.modulePathToCategoryFileName(fileContent.filePath);
-        if (componentId.isFailure) {
-            return Result.fail(
-                `modulePathToCategory(modulePath: '${fileContent.filePath}'): ${componentId.errorTitle}`,
-                componentId.errorDescription!
-            )
-        }
-        const {fileName, category} = componentId.getValue()!
-        component.category = category;
-        component.fileName = fileName;
-        components.push(component);
-
-        break;
+export const fileContentToComponent = async (fileContent: FileContent): Promise<Result<Component>> => {
+    const component: Component = {
+        label: "",
+        description: "",
+        fileName: "",
+        category: componentCategories[0],
+        glob: fileContent.glob,
     }
 
-    return Result.ok(components);
+    const componentId = ComponentEngine.modulePathToCategoryFileName(fileContent.filePath);
+    if (componentId.isFailure) {
+        return Result.fail(
+            `modulePathToCategory(modulePath: '${fileContent.filePath}'): ${componentId.errorTitle}`,
+            componentId.errorDescription!
+        )
+    }
+    const {fileName, category} = componentId.getValue()!
+    component.category = category;
+    component.fileName = fileName;
+
+    return Result.ok(component);
 }
-
-

@@ -1,22 +1,22 @@
 /**
- * Coder is the module that parses the files.
- * And returns the Components along with the AST
+ * The file level works with the contents and the file system.
+ * And returns the FileContent from globs as a source code, and astro components.
+ * 
+ * Receives the GLOBS and returns FileContents.
  */
 import { parse as AstroParse, transform, type TransformResult } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
 import type { AstroInstance } from 'astro';
 import PathModule from "node:path"
-import { identifyModuleType, ModuleType, trimPath } from "./module";
-import { getScriptByPath } from "./script";
+import { identifyModuleType, ModuleType, trimPath } from "./module.js";
+import { getScriptByPath } from "./script.js";
 import { Result, Debug } from "@ara-web/ts-enhancement";
-import { getNodejsModuleByPath } from "./enabledNodejsModule";
-import type { ValueType } from "./codeLevel/types";
-// Todo remove the component reference
-// Todo remove the component reference
-import type { ComponentNode } from "@ara-web/component-engine";
+import { getNodejsModuleByPath } from "./enabledNodejsModule.js";
+import type { ValueType } from "./codeLevel/types.js";
+import type { AstroNode } from "@ara-web/component-engine";
 
-export enum PathType {
+export enum FileExtension {
     Astro = ".astro",
     Tsx = ".tsx",
     Jsx = ".jsx",
@@ -25,14 +25,14 @@ export enum PathType {
     DirectoryOrUndefined = "",
 }
 
-
 /**
  * The content of any page will contain list of the nodes and code, usually a frontmatter.
+ * Component nodes and source code splitted
  */
 export type FileContent = {
-    nodes?: ComponentNode[], 
+    nodes?: AstroNode[], 
     source?: string,
-    type: PathType,
+    fileExtension: FileExtension,
     filePath: string,
     error?: string,
     glob?: unknown,
@@ -49,27 +49,63 @@ let cache: {[key: string]: IdentifiedFileContent} = {};
 /**
  * Detects the file type by the file extension, if not supported file then return PathType.DirectoryOrUndefined.
  * @param filePath the full path to the file within the Ara Web
- * @returns {PathType}
+ * @returns {FileExtension}
  */
-const detectPathType = (filePath: string): PathType => {
+const getFileExtension = (filePath: string): FileExtension => {
     const extensionIndex = filePath.lastIndexOf(".");
     if (extensionIndex === -1) {
-        return PathType.DirectoryOrUndefined;
+        return FileExtension.DirectoryOrUndefined;
     }
 
     const extension = filePath.substring(extensionIndex);
 
-    const pathTypes = Object.keys(PathType)
+    const pathTypes = Object.keys(FileExtension)
     for (const pathType of pathTypes) {
-        const key = pathType as keyof typeof PathType;
-        if (PathType[key] === extension) {
-            return PathType[key];
+        const key = pathType as keyof typeof FileExtension;
+        if (FileExtension[key] === extension) {
+            return FileExtension[key];
         }
     }
 
-    return PathType.DirectoryOrUndefined;
+    return FileExtension.DirectoryOrUndefined;
 }
 
+/**
+ * @param modulePath The module path is used to define the absolute path to the file
+ * @param glob 
+ * @returns 
+ */
+export const globToFileContent = async (modulePath: string, glob: Promise<unknown> | unknown): Promise<Result<FileContent>> => {
+    // Astro framework adds the absolute file paths.
+    let filePath = (glob as AstroInstance).file as string;
+    if (filePath === undefined) {
+        filePath = process.cwd() + PathModule.resolve(modulePath);
+    }
+    const fileContent: FileContent = {
+        filePath,
+        fileExtension: getFileExtension(filePath),
+        glob: glob,
+    }
+
+    if (fileContent.fileExtension === FileExtension.DirectoryOrUndefined) {
+        return Result.fail(
+            `The path is directory or undefined`,
+            `Ara Web doesn't support '${filePath}' file path derived from '${modulePath}' module path`
+        )
+    } 
+
+    const sourceBuffer = await readFile(filePath);
+    const source = sourceBuffer.toString();
+
+    if (fileContent.fileExtension !== FileExtension.Astro) {
+        fileContent.source = source;
+        fileContent.nodes = [];
+        fileContent.error = undefined;
+        return Result.ok(fileContent);
+    }
+
+    return Result.ok(await parseAstroFile(fileContent, source));
+}
 
 /** 
  * For Pages: There are Markdown (.md extension) files that we won't count.
@@ -90,11 +126,11 @@ export const globsToFileContents = async(globs: Record<string, () => Promise<unk
         }
         const fileContent: FileContent = {
             filePath,
-            type: detectPathType(filePath),
+            fileExtension: getFileExtension(filePath),
             glob: globs[glob],
         }
 
-        if (fileContent.type === PathType.DirectoryOrUndefined) {
+        if (fileContent.fileExtension === FileExtension.DirectoryOrUndefined) {
             fileContent.error = "Filepath is not supported by Ara Web"
             contents.push(fileContent);
             continue;
@@ -103,7 +139,7 @@ export const globsToFileContents = async(globs: Record<string, () => Promise<unk
         const sourceBuffer = await readFile(filePath);
         const source = sourceBuffer.toString();
 
-        if (fileContent.type !== PathType.Astro) {
+        if (fileContent.fileExtension !== FileExtension.Astro) {
             fileContent.source = source;
             fileContent.nodes = [];
             fileContent.error = undefined;
@@ -254,7 +290,7 @@ export const fileContentByModulePath = async(modulePath: string): Promise<Result
  * @returns {Promise<FileContent>} fileContent with the `nodes` and `code` properties set
  */
 const parseAstroFile = async (fileContent: FileContent, astroSource: string): Promise<FileContent> => {
-    if (fileContent.type !== PathType.Astro) {
+    if (fileContent.fileExtension !== FileExtension.Astro) {
         return fileContent;
     }
     

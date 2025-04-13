@@ -1,5 +1,5 @@
 import { Debug } from "@ara-web/ts-enhancement";
-import { getNodejsModuleByPath } from "./enabledNodejsModule";
+import { getNodejsModuleByPath } from "./enabledNodejsModule.js";
 
 export enum ModuleType {
     NodeJsModule = "node_modules",

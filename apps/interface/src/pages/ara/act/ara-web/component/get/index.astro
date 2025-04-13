@@ -5,7 +5,7 @@
  * @param {string} Description A list of web components that user can define and use with the Resources.
  */
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { getComponents } from "@scripts/component"
+import Reflect from "@scripts/reflect"
 import { 
     type SubNavigation, 
     newAraProject, 
@@ -40,9 +40,7 @@ const sideNavigation: SideNavigationProps = {
     subNavigation: resourceSubNavigation,
     selectedPath: "ara/act/ara-web/component/get"
 }
-const components = await getComponents();
-
-
+const components = await Reflect.getComponents();
 ---
 
 <AraWebLayout 
@@ -54,7 +52,13 @@ const components = await getComponents();
         <div>
             <h1>{components.errorTitle}</h1>
             <div>{components.errorDescription}</div>
-        </div> :
+        </div> : 
+        components.getValue().length === 0 ? 
+            <div class="text-center">
+                <h2>No components were found :(</h2>
+                <p>Stupid Medet, has to fix it, contact him!</p>
+            </div>
+        :
         <h1>List of Defined UI Components in Ara Web client</h1>
         <ul class="mt-4 ml-10">
             {

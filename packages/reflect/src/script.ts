@@ -1,5 +1,5 @@
-import { type FileContent, globsToFileContents } from "./fileLevel";
-import { trimPath } from "./module";
+import { type FileContent, globsToFileContents } from "./fileLevel.js";
+import { trimPath } from "./module.js";
 
 /**
  * @returns Returns the file contents of the path

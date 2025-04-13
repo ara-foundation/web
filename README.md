@@ -1,10 +1,12 @@
 # Ara Web
 
-Ara &ndash; Build Modular Apps, share your experience and get help from others.
+Ara Web is a collaboration tool 
+that exposes it's source code to the user,
+which users can customize using AI.
+The result of customization, as well as collaboration efforts are
+then published on the Blockchain.
 
-A collaboration platform with the financial transparency, community building and custom AI agents for your needs.
-
-To export the data:
+To run the sample server that will us atomic data:
 
 ```
 docker-compose run atomic-server export -p /atomic-storage-export/data.json

@@ -7,9 +7,9 @@ import JsxComponent from "./JsxEmptyComponent"; // react javascript
 import { type Component, type ComponentCategory, StringTraits, Result } from "@ara-web/ts-enhancement";
 
 // Which types of Components supported?
-export type ComponentNode = ElementNode | ExpressionNode | AstroComponentNode
+export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
 // WARNING: Every time whenever a new extension added, add support here.
-export type ElementType = ((_props: Props) => any) | typeof TsxComponent | typeof JsxComponent;
+export type AstroNodeType = ((_props: Props) => any) | typeof TsxComponent | typeof JsxComponent;
 
 const elementCategory: ComponentCategory = {
     name: "WWW",

@@ -3,8 +3,8 @@
  */
 import { Identifier, ImportClause, StringLiteral, type ImportDeclaration } from "ts-morph";
 import { Result, Debug, StringTraits, AraWebModuleSlugs } from "@ara-web/ts-enhancement";
-import { AstNodeType, type IdentifiedNode, type Identifiers, type ValueType } from "./types";
-import { isNonImportantNode, isOneOfIdentifiers } from "./astNode";
+import { AstNodeType, type IdentifiedNode, type Identifiers, type ValueType } from "./types.js";
+import { isNonImportantNode, isOneOfIdentifiers } from "./astNode.js";
 import { AraLink, PurlProtocol } from "@ara-web/ara-link";
 
 const identifyImportDefaultIdentifier = (astImport: ImportDeclaration): Result<string|undefined> => {

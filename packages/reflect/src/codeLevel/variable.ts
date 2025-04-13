@@ -4,10 +4,10 @@
 
 import { ArrayTypeNode, Identifier, SyntaxList, TypeReferenceNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, type IdentifiedNode, type Identifiers } from "./types";
-import type { Memory } from "./memory";
-import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers } from "./astNode";
-import { ReflectAraLink } from "../araLink/ReflectAraLink";
+import { AstNodeType, type IdentifiedNode, type Identifiers } from "./types.js";
+import type { Memory } from "../Reflect.js";
+import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers } from "./astNode.js";
+import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 
 const identifyVariableDeclarationList = (varDeclarationList: VariableDeclarationList, identifierNode: IdentifiedNode, memory: Memory): Result<Identifiers> => {
     let identifiers: Identifiers = {};

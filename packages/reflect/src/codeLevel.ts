@@ -35,14 +35,23 @@ import {
 } from "ts-morph";
 import { AraLink } from "@ara-web/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { callFuncInModule, fileContentByModulePath } from "./fileLevel";
-import { type ValueType, type Identifiers, type IdentifiedNode, AstNodeType, type EnumMembers, type TypeDeclaration, type IdentifiedNodeDataType, ValueTypeString } from "./codeLevel/types";
-import { Memory } from "./codeLevel/memory";
-import { identifyImportDeclarations } from "./codeLevel/importDeclaration";
-import { defineVariableDeclaration } from "./codeLevel/variable";
-import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers, isTypeKeyword } from "./codeLevel/astNode";
+import { callFuncInModule, fileContentByModulePath } from "./fileLevel.js";
+import { 
+    type ValueType, 
+    type Identifiers, 
+    type IdentifiedNode, 
+    AstNodeType, 
+    type EnumMembers, 
+    type TypeDeclaration, 
+    type IdentifiedNodeDataType, 
+    ValueTypeString 
+} from "./codeLevel/types.js";
+import { Memory } from "./Reflect.js";
+import { identifyImportDeclarations } from "./codeLevel/importDeclaration.js";
+import { defineVariableDeclaration } from "./codeLevel/variable.js";
+import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers, isTypeKeyword } from "./codeLevel/astNode.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "./araLink/ReflectAraLink";
+import { ReflectAraLink } from "./araLink/ReflectAraLink.js";
 
 export type Object = {[key: string]: ValueType};
 

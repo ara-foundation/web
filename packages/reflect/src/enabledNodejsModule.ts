@@ -1,5 +1,5 @@
 import { Debug } from "@ara-web/ts-enhancement";
-import { globsToFileContents, type FileContent } from "./fileLevel";
+import { globsToFileContents, type FileContent } from "./fileLevel.js";
 
 export const getNodeJsModules = async (): Promise<FileContent[]> => {
     // const globs = import.meta.glob([
