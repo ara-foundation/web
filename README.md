@@ -1,10 +1,23 @@
 # Ara Web
 
-Ara Web is a collaboration tool 
-that exposes it's source code to the user,
-which users can customize using AI.
-The result of customization, as well as collaboration efforts are
-then published on the Blockchain.
+Inspirational?
+If the terminology is specific, write the definitions in my own words
+for eli5.
+
+More creative freedom in the software,
+But also, more accessible technical know-hows common man.
+
+Main goal: Collaborate with the help of others, or with
+the resources of others.
+
+Ara Web's goal is to decentralize software ownership.
+It's a collaboration tool that exposes its own source code to the user.
+But instead of manual source code management,
+Ara Provides various AI assistants to boost the efficiency of your project development.
+
+Projects made in Ara, as well as website customizations are then stored on the blockchain as interlinked graph data. Whenever, you charge for the software,
+Ara Blockchain distributes the funds to all contributors. Which means,
+building a thriving open source economy on a global scale
 
 To run the sample server that will us atomic data:
 

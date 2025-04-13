@@ -41,6 +41,8 @@ const sideNavigation: SideNavigationProps = {
     selectedPath: "ara/act/ara-web/component/get"
 }
 const components = await Reflect.getComponents();
+const layouts = await Reflect.getLayouts();
+
 ---
 
 <AraWebLayout 
@@ -48,20 +50,36 @@ const components = await Reflect.getComponents();
     sideNavigation={sideNavigation}
 >
     {
-        components.isFailure ? 
+        components.isFailure || layouts.isFailure ? 
         <div>
-            <h1>{components.errorTitle}</h1>
-            <div>{components.errorDescription}</div>
+            <h1>{components.errorTitle || layouts.errorTitle}</h1>
+            <div>{components.errorDescription || layouts.errorDescription}</div>
         </div> : 
-        components.getValue().length === 0 ? 
+        (components.getValue().length + layouts.getValue().length) === 0 ? 
             <div class="text-center">
-                <h2>No components were found :(</h2>
+                <h2>No components or layouts were found :(</h2>
                 <p>Stupid Medet, has to fix it, contact him!</p>
             </div>
         :
         <h1>List of Defined UI Components in Ara Web client</h1>
         <ul class="mt-4 ml-10">
             {
+                layouts.getValue().map((component) => (
+                <li class="m-4">
+                    <div class="card w-full bg-base-100 card-sm shadow-sm ">
+                        <div class="card-body relative">
+                        <h2 class="card-title">
+                            {component.label ? component.label : component.fileName}
+                        </h2>
+                        <div class={"absolute top-5 right-5 badge badge-neutral"}>{component.category.name}</div>
+                            <div class="bg-gray-100 flex justify-center">
+                                <ComponentHolder component={component}></ComponentHolder>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                ))
+            } {
                 components.getValue().map((component) => (
                 <li class="m-4">
                     <div class="card w-full bg-base-100 card-sm shadow-sm ">
@@ -77,6 +95,7 @@ const components = await Reflect.getComponents();
                     </div>
                 </li>
                 ))
+                
             }
         </ul>
     }

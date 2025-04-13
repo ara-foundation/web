@@ -8,6 +8,9 @@ export type ModuleGlobs = {
     [key in ModuleType]?: Record<string, unknown>;
 };
 
+/**
+ * Reflect is the main source to Reflect on the website itself.
+ */
 export class Reflect {
     // Category => Path => ModuleMemory Instance
     private _modules: {[key in ModuleType]?: {[key: string]: ModuleMemory<Component|Page|unknown>}} = {}
@@ -137,7 +140,7 @@ export class Reflect {
             )
         }
 
-        const modules = this._modules[ModuleType.Component];
+        const modules = this._modules[ModuleType.Component] as {[key: string]: ModuleMemory<Component>};;
         if (modules === undefined) {
             return Result.ok([])
         }
@@ -148,7 +151,7 @@ export class Reflect {
             const moduleMemory = modules[modulePath];
             
             if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as Component);
+                components.push(moduleMemory.content);
                 continue;
             }
 
@@ -171,6 +174,52 @@ export class Reflect {
     }
 
     /**
+     * Returns the all the layout components
+     */
+    public getLayouts = async (): Promise<Result<Component[]>> => {
+        this.putGlobs();
+        const fileContentsPut = await this.putFileContents();
+        if (fileContentsPut.isFailure) {
+            return Result.fail(
+                `this.putFileContents(): ${fileContentsPut.errorTitle}`,
+                fileContentsPut.errorDescription!
+            )
+        }
+
+        const modules = this._modules[ModuleType.Layout] as {[key: string]: ModuleMemory<Component>};;
+        if (modules === undefined) {
+            return Result.ok([])
+        }
+
+        const components: Component[] = [];
+
+        for (let modulePath in modules) {
+            const moduleMemory = modules[modulePath];
+            
+            if (moduleMemory.content !== undefined) {
+                components.push(moduleMemory.content);
+                continue;
+            }
+
+            if (moduleMemory.fileContent === undefined) {
+                continue;
+            }
+
+            const component = await fileContentToComponent(moduleMemory.fileContent)
+            if (component.isFailure) {
+                return Result.fail(
+                    `fileContentToComponent(modulePath: '${moduleMemory.modulePath}'): ${component.errorTitle}`,
+                    component.errorDescription!
+                )
+            }
+            this._modules[ModuleType.Layout]![modulePath].content = component.getValue();
+            components.push(component.getValue())
+        }
+
+        return Result.ok(components);
+    }
+
+    /**
      * Returns all the pages
      * @returns {Result<Page[]>}
      */
@@ -184,16 +233,37 @@ export class Reflect {
             )
         }
 
-        const pageModules = this._modules[ModuleType.Page];
-        if (pageModules === undefined) {
+        const modules = this._modules[ModuleType.Page] as {[key: string]: ModuleMemory<Page>};
+        if (modules === undefined) {
             return Result.ok([])
         }
 
-        // How it goes?
-        const modules = Object.values(pageModules);
+        const components: Page[] = [];
 
-        // Check is there a page?
-        // If not, then simply call globToPage from the PageTraits.
+        for (let modulePath in modules) {
+            const moduleMemory = modules[modulePath];
+            
+            if (moduleMemory.content !== undefined) {
+                components.push(moduleMemory.content as Page);
+                continue;
+            }
+
+            if (moduleMemory.fileContent === undefined) {
+                continue;
+            }
+
+            const component = await fileContentToComponent(moduleMemory.fileContent)
+            if (component.isFailure) {
+                return Result.fail(
+                    `fileContentToComponent(modulePath: '${moduleMemory.modulePath}'): ${component.errorTitle}`,
+                    component.errorDescription!
+                )
+            }
+            this._modules[ModuleType.Component]![modulePath].content = component.getValue();
+            components.push(component.getValue())
+        }
+
+        return Result.ok(components);
     }
 
     /**
