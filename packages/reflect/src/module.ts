@@ -46,13 +46,27 @@ export const fileNameToUrl = (fileName: string): string => {
 /**
  * @param url Usually an import clause, which is turned into the file
  */
-export const urlToFileName = (url: string, fileExtension = FileExtension.Typescript): string => {
+export const urlToFileNames = (url: string, fileExtension?: FileExtension.Typescript): string[] => {
     const identifiedFileExtension = getFileExtension(url);
     if (identifiedFileExtension.isSuccess) {
-        return url;
+        return [url];
     }
     
-    return url + fileExtension;
+    if (fileExtension !== undefined) {
+        return [url + fileExtension];
+    }
+
+    const urls: string[] = [];
+    for (const ext in FileExtension) {
+        const enumKey = ext as keyof typeof FileExtension
+        const value = FileExtension[enumKey]
+
+        if (typeof value === "string") {
+            urls.push(url + FileExtension[enumKey])
+        }
+    }
+
+    return urls;
 }
 
 

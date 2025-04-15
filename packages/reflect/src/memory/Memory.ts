@@ -3,7 +3,7 @@
 //  Page -> Index -> memory of index
 
 import { Debug, Result, type Component, type Page } from "@ara-web/ts-enhancement";
-import { ModuleType, trimPath, urlToFileName } from "../module.js";
+import { ModuleType, trimPath, urlToFileNames } from "../module.js";
 import { ModuleMemory } from "./ModuleMemory.js";
 import { getScriptByPath } from "../script.js";
 
@@ -77,9 +77,11 @@ export class Memory {
         }
         if (modules[modulePath] === undefined) {
             for (let memoizedPath in modules) {
-                const trimmedPath = urlToFileName(trimPath(modulePath));
-                if (memoizedPath.indexOf(trimmedPath) === 0) {
-                    return modules[memoizedPath] as ModuleMemory<T>;
+                const trimmedPaths = urlToFileNames(trimPath(modulePath));
+                for (let trimmedPath of trimmedPaths) {
+                    if (memoizedPath.indexOf(trimmedPath) === 0) {
+                        return modules[memoizedPath] as ModuleMemory<T>;
+                    }
                 }
             }
         }
