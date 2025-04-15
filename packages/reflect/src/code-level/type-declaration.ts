@@ -132,7 +132,7 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
     const propertySignatureChildren = AstNode.fromTsNode(propertySignature).getChildren(
         [], 
         [AstNode.isNonImportantNode, AstNode.isIdentifier], 
-        [":", ","]
+        [":", ",", "?"] // ? at the end of the property indicates it's optional.
     )
     const propertySignatureCount = propertySignatureChildren.length;
 
