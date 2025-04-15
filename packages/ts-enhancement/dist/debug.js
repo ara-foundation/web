@@ -25,11 +25,8 @@ export class Debug {
             Debug.instance._log(`---> '${title}'()`);
         }
         else {
-            let flattened = [];
-            for (let key in parameters) {
-                flattened.push(`${key}: '${parameters[key]}'`);
-            }
-            Debug.instance._log(`---> '${title}'(${flattened.join(",")})`);
+            Debug.instance._log(`---> '${title}' with properties`);
+            Debug.instance._log(parameters);
         }
         Debug.instance.stack.push(title);
     };
@@ -89,7 +86,7 @@ export class Debug {
             console.log(`${this.lineCounter++}) ${nodeTree} ${msg}`);
         }
         else {
-            console.log(`${this.lineCounter++}) ${nodeTree} non string data:`);
+            console.log(`${this.lineCounter++}) ${nodeTree}:`);
             console.log(msg);
         }
     };
