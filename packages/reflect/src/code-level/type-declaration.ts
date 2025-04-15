@@ -31,7 +31,8 @@ import {
     TypeAliasDeclaration,
     TypeLiteralNode,
     PropertySignature,
-    Expression
+    Expression,
+    ArrayTypeNode
 } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
@@ -51,6 +52,7 @@ import { emptyValueByType } from "./value-level.js";
 // Type Declarations
 //
 /////////////////////////////////////////////////////////////////////////////////////////////
+
 
 const identifyExpression = (identifier: string, expression: Expression): Result<ValueType> => {
     const expCount = expression.getChildCount();
@@ -124,6 +126,48 @@ const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<stri
     return Result.ok(typeRefAraLink);
 }
 
+const identifyTypeValue = (identifier: string, node: Node): Result<ValueType> => {
+    // Expressions such as type keywords 'string', 'number', etc
+    // Hold only one key
+    if (AstNode.isExpression(node)) {
+        const identifedExpression = identifyExpression(identifier, node as Expression);
+        if (identifedExpression.isFailure) {
+            return Result.fail(
+                `this.identifyExpression(identifier: '${identifier}', expression: '${node.getText()}'): ${identifedExpression.errorTitle}`,
+                identifedExpression.errorDescription!
+            )
+        }
+        return Result.ok(identifedExpression.getValue())
+    } else if (AstNode.isTypeRef(node)) {
+        const identifiedTypeRefLink = referencedTypeLink(node as TypeReferenceNode)
+        if (identifiedTypeRefLink.isFailure) {
+            return Result.fail(
+                `this.referencedTypeLink(astNode: '${node.getText()}'): ${identifiedTypeRefLink.errorTitle}`,
+                identifiedTypeRefLink.errorDescription!
+            )
+        }
+        return Result.ok(identifiedTypeRefLink.getValue());
+    } else if (AstNode.isTypeLiteral(node)) {
+        Debug.push(`typeLiteralAstNodeToTypeDeclaration()`, {typeLiteral: node.getText()})
+        const identifiedTypeLiteral = typeLiteralAstNodeToTypeDeclaration(node as TypeLiteralNode)
+        Debug.pop()
+        if (identifiedTypeLiteral.isFailure) {
+            return Result.fail(
+                `this.typeLiteralAstNodeToTypeDeclaration(astNode: '${node.getText()}'): ${identifiedTypeLiteral.errorTitle}`,
+                identifiedTypeLiteral.errorDescription!
+            )
+        }
+        return Result.ok(identifiedTypeLiteral.getValue());
+    } else {
+        const err = Debug.error(
+            `The '${identifier}' property's '${node.getText()}' expression is uncatched by Ara Web`,
+                `Update the identifyTypeValue()`,
+                node
+        )
+        return Result.fail(err)
+    }
+}
+
 const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature): Result<TypeDeclaration> => {
     const typeDeclaration: TypeDeclaration = {}
     let propertySignatureIdentifier = propertySignature.getChildAtIndex(0);
@@ -147,48 +191,15 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
     for (let propertySignatureIndex = 0; propertySignatureIndex < propertySignatureCount; propertySignatureIndex++) {
         const propertySignatureChild = propertySignatureChildren[propertySignatureIndex].tsNode;
 
-        // Expressions such as type keywords 'string', 'number', etc
-        // Hold only one key
-        if (AstNode.isExpression(propertySignatureChild)) {
-            const identifedExpression = identifyExpression(propertySignatureIdentifier.getText(), propertySignatureChild as Expression);
-            if (identifedExpression.isFailure) {
-                return Result.fail(
-                    `this.identifyExpression(identifier: '${propertySignatureIdentifier.getText()}', expression: '${propertySignatureChild.getText()}'): ${identifedExpression.errorTitle}`,
-                    identifedExpression.errorDescription!
-                )
-            }
-            typeDeclaration[propertySignatureIdentifier.getText()] = identifedExpression.getValue();
-            return Result.ok(typeDeclaration);
-        } else if (AstNode.isTypeRef(propertySignatureChild)) {
-            const identifiedTypeRefLink = referencedTypeLink(propertySignatureChild as TypeReferenceNode)
-            if (identifiedTypeRefLink.isFailure) {
-                return Result.fail(
-                    `this.referencedTypeLink(astNode: '${propertySignatureChild.getText()}'): ${identifiedTypeRefLink.errorTitle}`,
-                    identifiedTypeRefLink.errorDescription!
-                )
-            }
-            typeDeclaration[propertySignatureIdentifier.getText()] = identifiedTypeRefLink.getValue();
-            return Result.ok(typeDeclaration);
-        } else if (AstNode.isTypeLiteral(propertySignatureChild)) {
-            Debug.push(`typeLiteralAstNodeToTypeDeclaration()`, {typeLiteral: propertySignatureChild.getText()})
-            const identifiedTypeLiteral = typeLiteralAstNodeToTypeDeclaration(propertySignatureChild as TypeLiteralNode)
-            Debug.pop()
-            if (identifiedTypeLiteral.isFailure) {
-                return Result.fail(
-                    `this.typeLiteralAstNodeToTypeDeclaration(astNode: '${propertySignatureChild.getText()}'): ${identifiedTypeLiteral.errorTitle}`,
-                    identifiedTypeLiteral.errorDescription!
-                )
-            }
-            typeDeclaration[propertySignatureIdentifier.getText()] = identifiedTypeLiteral.getValue();
-            return Result.ok(typeDeclaration);
-        } else {
-            const err = Debug.error(
-                `The ${propertySignatureIndex}/${propertySignatureCount-1} child '${propertySignatureChild.getText()}' of TypeLiteral '${propertySignature.getText()}' is uncatched by Ara Web`,
-                `Update the propertySignatureToTypeDeclaration()`,
-                propertySignatureChild
+        const identifiedValue = identifyTypeValue(propertySignatureIdentifier.getText(), propertySignatureChild);   
+        if (identifiedValue.isFailure) {
+            return Result.fail(
+                `Property ${propertySignatureIndex}/${propertySignatureCount-1}) identifyTypeValue(identifier: '${propertySignatureIdentifier.getText()}', astNode: '${propertySignatureChild.getText()}'): ${identifiedValue.errorTitle}`,
+                identifiedValue.errorDescription!
             )
-            return Result.fail(err)
         }
+        typeDeclaration[propertySignatureIdentifier.getText()] = identifiedValue.getValue();
+        return Result.ok(typeDeclaration);
     }
 
     return Result.fail(
