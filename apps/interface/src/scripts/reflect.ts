@@ -56,6 +56,17 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
         }
     }
 
+    // AraWeb's RPC Engine
+    const glob4 = import.meta.glob(
+        './../../node_modules/@ara-web/rpc-engine/src/index.ts', {eager: true}
+    );
+
+    for (let modulePath in glob4) {
+        moduleGlobs["@ara-web/rpc-engine"] = {
+            glob: glob4[modulePath],
+        }
+    }
+
     return moduleGlobs;
 }
 
