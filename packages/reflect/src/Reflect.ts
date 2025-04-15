@@ -7,6 +7,7 @@ import { globToUiContent } from "./ui-level/ui-content.js";
 import { identifyComponents, uiContentToPage } from "./ui-level/page-level.js";
 import { Code } from "./code-level/Code.js";
 import { Memory } from "./memory/Memory.js";
+import type { AstNode } from "./code-level/ast-node.js";
 
 type PageTraits = {
     page: Page,
@@ -506,7 +507,7 @@ export class Reflect {
             if (importIdentifiersCount > 0) {
                 Debug.log(`The identified types:`)
                 for (let identifier in identifiers.getValue()) {
-                    Debug.log(identifiers.getValue()[identifier])
+                    Debug.log(((identifiers.getValue()[identifier]) as AstNode).data)
                 }
                 pageMemories[modulePath].addIdentifiers(identifiers.getValue());
             }

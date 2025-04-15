@@ -24,6 +24,7 @@ export enum ValueTypeString {
 
 export type EnumMembers = {[key: string]: string|number};
 
+// Types as objects
 export type TypeDeclaration = {[key: string]: ValueType};
 
 /**

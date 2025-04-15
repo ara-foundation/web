@@ -39,7 +39,7 @@ import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
 import { callFuncInModule } from "../fileLevel.js";
 import { importDeclarationToAstIdentifiers } from "./import-declaration.js";
 import { defineVariableDeclaration } from "./variable.js";
-import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType, type TypeDeclaration } from "./ast-node.js";
+import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType, type TypeDeclaration, type GenericTypeDeclaration } from "./ast-node.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
@@ -133,8 +133,39 @@ const identifyExpression = (identifier: string, expression: Expression): Result<
     }
 }
 
-const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
+const isGenericType = (typeRefNode: TypeReferenceNode): boolean => {
+    const children = AstNode.fromTsNode(typeRefNode).getChildren([], [AstNode.isNonImportantNode]);
+    if (children.length !== 4) {
+        return false;
+    }
+    return (children[1].tsNode.getText() === "<" && children[3].tsNode.getText() === ">");
+}
+
+const genericTypeValue = (typeRefNode: TypeReferenceNode): AstNode[] => {
+    return AstNode.fromTsNode(typeRefNode.getChildAtIndex(2)).getChildren([], [AstNode.isNonImportantNode], [","]);
+}
+
+const identifyGenericTypeValue = (typeNode: AraLink<string>, typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
+    const nodes = genericTypeValue(typeRefNode);
+    const nodeValues: ValueType[] = [];
+    for (let nodeIndex in nodes) {
+        const node = nodes[nodeIndex]
+        const nodeValue = identifyTypeValue(`generic_${typeRefNode.getText()}_${nodeIndex}`, node.tsNode)
+        if (nodeValue.isFailure) {
+            return Result.fail(
+                `Generic key ${nodeIndex}) this.identifyTypeValue(expression: '${typeRefNode.getText()}'): ${nodeValue.errorTitle}`,
+                nodeValue.errorDescription!
+            )
+        }
+        nodeValues.push(nodeValue.getValue())
+    }
+
+    return Result.ok(typeNode.copyWithProperties({'generic_values': nodeValues}))
+}
+
+const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<string>|GenericTypeDeclaration> => {
     const typeRefIdentifier = typeRefNode.getChildAtIndex(0)
+    Debug.log(`Referenced type link '${typeRefNode.getText()}' has ${typeRefNode.getChildCount()} nodes`);
     if (!AstNode.isIdentifier(typeRefIdentifier)) {
         const err = Debug.error(
             `The property value type is a type reference, but the '${typeRefIdentifier.getText()}' doesn't support it`,
@@ -146,6 +177,17 @@ const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<stri
     }
 
     const typeRefAraLink = ReflectAraLink.linkToIdentifier(typeRefIdentifier.getText());
+
+    if (isGenericType(typeRefNode)) {
+        const identifiedGenericValue = identifyGenericTypeValue(typeRefAraLink, typeRefNode);
+        if (identifiedGenericValue.isFailure) {
+            return Result.fail(
+                `this.identifyExpression(expression: '${typeRefNode.getText()}'): ${identifiedGenericValue.errorTitle}`,
+                identifiedGenericValue.errorDescription!
+            )
+        } 
+        return Result.ok(identifiedGenericValue.getValue())
+    }
     return Result.ok(typeRefAraLink);
 }
 
@@ -214,6 +256,7 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
         )
         return Result.fail(err)
     }
+    const propertyIdentifier = propertySignatureIdentifier.getText();
 
     const propertySignatureChildren = AstNode.fromTsNode(propertySignature).getChildren(
         [], 
@@ -225,14 +268,20 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
     for (let propertySignatureIndex = 0; propertySignatureIndex < propertySignatureCount; propertySignatureIndex++) {
         const propertySignatureChild = propertySignatureChildren[propertySignatureIndex].tsNode;
 
-        const identifiedValue = identifyTypeValue(propertySignatureIdentifier.getText(), propertySignatureChild);   
+        Debug.push(`identifyTypeValue()`, {identifier: propertyIdentifier, node: propertySignatureChild.getText()})
+        const identifiedValue = identifyTypeValue(propertyIdentifier, propertySignatureChild);
+        Debug.pop();
+        Debug.log(`Property '${propertyIdentifier}' value identified:`);
+        Debug.log(identifiedValue)
+        Debug.log(`Property '${propertyIdentifier}' value against:`);
+        Debug.log(propertySignatureChild)
         if (identifiedValue.isFailure) {
             return Result.fail(
-                `Property ${propertySignatureIndex}/${propertySignatureCount-1}) identifyTypeValue(identifier: '${propertySignatureIdentifier.getText()}', astNode: '${propertySignatureChild.getText()}'): ${identifiedValue.errorTitle}`,
+                `Property ${propertySignatureIndex}/${propertySignatureCount-1}) identifyTypeValue(identifier: '${propertyIdentifier}', astNode: '${propertySignatureChild.getText()}'): ${identifiedValue.errorTitle}`,
                 identifiedValue.errorDescription!
             )
         }
-        typeDeclaration[propertySignatureIdentifier.getText()] = identifiedValue.getValue();
+        typeDeclaration[propertyIdentifier] = identifiedValue.getValue();
         return Result.ok(typeDeclaration);
     }
 
