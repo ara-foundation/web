@@ -188,8 +188,6 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
                 `Update the propertySignatureToTypeDeclaration()`,
                 propertySignatureChild
             )
-            Debug.log(`The node of '${propertySignatureChild.getText()}'`)
-            Debug.log(propertySignatureChild)
             return Result.fail(err)
         }
     }
