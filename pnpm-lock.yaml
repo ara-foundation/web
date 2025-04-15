@@ -23,9 +23,6 @@ importers:
 
   apps/interface:
     dependencies:
-      '@ara-web/ara-link':
-        specifier: workspace:*
-        version: link:../../packages/ara-link
       '@ara-web/component-engine':
         specifier: workspace:*
         version: link:../../packages/component-engine
@@ -196,12 +193,6 @@ importers:
         specifier: ^5.0.0-beta.8
         version: 5.0.0
 
-  packages/ara-link:
-    dependencies:
-      '@ara-web/ts-enhancement':
-        specifier: workspace:*
-        version: link:../ts-enhancement
-
   packages/component-engine:
     dependencies:
       '@ara-web/ts-enhancement':
@@ -328,9 +319,6 @@ importers:
 
   packages/reflect:
     dependencies:
-      '@ara-web/ara-link':
-        specifier: workspace:*
-        version: link:../ara-link
       '@ara-web/component-engine':
         specifier: workspace:*
         version: link:../component-engine
@@ -355,9 +343,6 @@ importers:
 
   packages/rpc-engine:
     dependencies:
-      '@ara-web/ara-link':
-        specifier: workspace:*
-        version: link:../ara-link
       '@ara-web/ts-enhancement':
         specifier: workspace:*
         version: link:../ts-enhancement

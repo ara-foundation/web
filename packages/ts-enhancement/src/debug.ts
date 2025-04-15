@@ -78,10 +78,17 @@ export class Debug {
     ////////////////////////////////////////////
 
     private _error = (title: string, description: string, additionalData: any): void => {
-        console.log(`${this.lineCounter}) Encountered an error: ${title}`);
-        console.log(`${description}`)
+        console.log(`ERROR at ${this.lineCounter})`)
+        console.log(title);
+        console.log(description)
+        if (additionalData) {
+            console.log(`Additional data to check`);
+            console.log(additionalData)
+            console.log(`\n\n`);
+        }
+        if (additionalData !== undefined)
         console.log(`The error stack trace:`)
-        console.log(this.stack.join("\t->"))
+        console.log(this.stack.join("\t->") + "\n\n")
     }
 
     private _log = (msg: any) => {

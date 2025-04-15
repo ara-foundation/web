@@ -15,8 +15,7 @@
     }
   },
   "dependencies": {
-    "@ara-web/ts-enhancement": "workspace:*",
-    "@ara-web/ara-link": "workspace:*"
+    "@ara-web/ts-enhancement": "workspace:*"
   },
   "devDependencies": {
     "astro": "^5.6.1",

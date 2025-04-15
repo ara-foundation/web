@@ -68,10 +68,17 @@ export class Debug {
     //
     ////////////////////////////////////////////
     _error = (title, description, additionalData) => {
-        console.log(`${this.lineCounter}) Encountered an error: ${title}`);
-        console.log(`${description}`);
-        console.log(`The error stack trace:`);
-        console.log(this.stack.join("\t->"));
+        console.log(`ERROR at ${this.lineCounter})`);
+        console.log(title);
+        console.log(description);
+        if (additionalData) {
+            console.log(`Additional data to check`);
+            console.log(additionalData);
+            console.log(`\n\n`);
+        }
+        if (additionalData !== undefined)
+            console.log(`The error stack trace:`);
+        console.log(this.stack.join("\t->") + "\n\n");
     };
     _log = (msg) => {
         let nodeTree = this.stackNodeTree();

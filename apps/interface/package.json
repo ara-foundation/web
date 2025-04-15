@@ -64,8 +64,7 @@
     "@ara-web/ts-enhancement": "workspace:^",
     "@ara-web/component-engine": "workspace:*",
     "@ara-web/rpc-engine": "workspace:*",
-    "@ara-web/reflect": "workspace:*",
-    "@ara-web/ara-link": "workspace:*"
+    "@ara-web/reflect": "workspace:*"
   },
   "devDependencies": {
     "@tomic/cli": "^0.40.0",

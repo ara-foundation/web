@@ -11,7 +11,6 @@
     "@ara-web/component-engine": "workspace:*",
     "@ara-web/rpc-engine": "workspace:*",
     "@ara-web/ts-enhancement": "workspace:*",
-    "@ara-web/ara-link": "workspace:*",
     "@astrojs/compiler": "^2.11.0",
     "astro": "^5.6.1",
     "comment-parser": "^1.4.1",
