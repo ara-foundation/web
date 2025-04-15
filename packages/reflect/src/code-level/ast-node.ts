@@ -1,5 +1,5 @@
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Identifier, ImportDeclaration, JSDoc, Node, StringLiteral } from "ts-morph";
+import { CommentTypeElement, Expression, Identifier, ImportDeclaration, JSDoc, Node, StringLiteral, TypeAliasDeclaration, TypeLiteralNode, TypeReferenceNode } from "ts-morph";
 
 export enum AstNodeType {
     Variable = "variable",
@@ -147,6 +147,8 @@ export class AstNode {
     public static isNonImportantNode = (child: Node): boolean => {
         if (child instanceof JSDoc) {
             return true;
+        } else if (child instanceof CommentTypeElement) {
+            return true;
         } else if (child.getText() === ";") {
             return true;
         }
@@ -190,5 +192,21 @@ export class AstNode {
 
     public static isImportDeclaration = (child: Node): boolean => {
         return child instanceof ImportDeclaration;
+    }
+
+    public static isTypeDeclaration = (child: Node): boolean => {
+        return child instanceof TypeAliasDeclaration
+    }
+
+    public static isExpression = (child: Node): boolean => {
+        return child instanceof Expression
+    }
+
+    public static isTypeRef = (child: Node): boolean => {
+        return child instanceof TypeReferenceNode;
+    }
+
+    public static isTypeLiteral = (child: Node): boolean => {
+        return child instanceof TypeLiteralNode;
     }
 }
