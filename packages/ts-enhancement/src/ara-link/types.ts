@@ -1,4 +1,4 @@
-import { type EnumlikeKeyValue, type WithGetTextMethod } from "../keyValue.js"
+import { type ObjectLikeKeyValue, type WithGetTextMethod } from "../keyValue.js"
 import { isEqualArray } from "../array.js"
 export const PurlProtocol = "purl";
 
@@ -12,9 +12,9 @@ export class AraLink<T> {
     private _protocol: string;
     private _slugs: string[];
     private _resource: string|T;
-    private _properties: EnumlikeKeyValue;
+    private _properties: ObjectLikeKeyValue;
 
-    constructor (protocol: string, resource: string|T, slugsOrProperties?: string[]|EnumlikeKeyValue, properties?: EnumlikeKeyValue) {
+    constructor (protocol: string, resource: string|T, slugsOrProperties?: string[]|ObjectLikeKeyValue, properties?: ObjectLikeKeyValue) {
         const slugs = slugsOrProperties === undefined ? undefined :
          Array.isArray(slugsOrProperties) ? slugsOrProperties : undefined;
         properties = ((properties !== undefined) ? properties :
@@ -35,7 +35,7 @@ export class AraLink<T> {
         return this;
     }
 
-    public copyWithProperties = (properties: EnumlikeKeyValue): AraLink<T> => {
+    public copyWithProperties = (properties: ObjectLikeKeyValue): AraLink<T> => {
         const araLink = new AraLink(this._protocol, this._resource, this._slugs, properties);
         return araLink;
     }
@@ -85,7 +85,7 @@ export class AraLink<T> {
             if (properties.length > 0 && properties[properties.length - 1] !== "&") {
                 properties += "&"
             }
-            properties += `${key}=${this._properties[key]}`
+            properties += `${key}=${(this._properties as any)[key]}`
         }
         if (properties.length > 0) {
             properties = "?" + properties;
