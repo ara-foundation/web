@@ -53,6 +53,29 @@ import { emptyValueByType } from "./value-level.js";
 //
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+const identifyArrayType = (arrayNode: ArrayTypeNode): Result<ValueType> => {
+    if (arrayNode.getChildCount() !== 3) {
+        return Result.fail(
+            `The variable '${arrayNode.getText()}' type is doesn't have 4 elements.`,
+            `Ara supports One Dimensional array type declaration only, update identifyArrayType()`
+        )
+    }
+
+    const arrayType = identifyTypeValue(`_array_index`, arrayNode.getChildAtIndex(0))
+    if (arrayType.isFailure) {
+        return Result.fail(
+            `identifyTypeValue(identifier: '_array_index', exp: '${arrayNode.getText()}'): ${arrayType.errorTitle}`,
+            arrayType.errorDescription!
+        )
+    }
+
+    if (arrayType.getValue() instanceof AraLink) {
+        const typeRefLink = (arrayType.getValue() as AraLink<string>)
+        return Result.ok(typeRefLink.copyWithProperties({'type': 'array'}))
+    }
+    
+    return Result.ok([arrayType.getValue()] as Array<ValueType>)
+}
 
 const identifyExpression = (identifier: string, expression: Expression): Result<ValueType> => {
     const expCount = expression.getChildCount();
@@ -158,11 +181,22 @@ const identifyTypeValue = (identifier: string, node: Node): Result<ValueType> =>
             )
         }
         return Result.ok(identifiedTypeLiteral.getValue());
+    } else if (AstNode.isArrayTypeDeclaration(node)) {
+        Debug.push(`identifyArrayType()`, {typeLiteral: node.getText()})
+        const identifiedArrayValue = identifyArrayType(node as ArrayTypeNode);
+        Debug.pop()
+        if (identifiedArrayValue.isFailure) {
+            return Result.fail(
+                `this.identifyArrayType(astNode: '${node.getText()}'): ${identifiedArrayValue.errorTitle}`,
+                identifiedArrayValue.errorDescription!
+            )
+        }
+        return Result.ok(identifiedArrayValue.getValue());
     } else {
         const err = Debug.error(
             `The '${identifier}' property's '${node.getText()}' expression is uncatched by Ara Web`,
-                `Update the identifyTypeValue()`,
-                node
+            `Update the identifyTypeValue()`,
+            node
         )
         return Result.fail(err)
     }

@@ -492,19 +492,23 @@ export class Reflect {
             }
 
             // Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
-            const importIdentifiers = contents[modulePath].code.getTypeIdentifiers(memory);
+            const identifiers = contents[modulePath].code.getTypeIdentifiers(memory);
             // Debug.pop();
-            if (importIdentifiers.isFailure) {
+            if (identifiers.isFailure) {
                 return Result.fail(
-                    `code.getTypeIdentifiers(): ${importIdentifiers.errorTitle}`,
-                    importIdentifiers.errorDescription!
+                    `code.getTypeIdentifiers(): ${identifiers.errorTitle}`,
+                    identifiers.errorDescription!
                 )
             }
             
-            const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
+            const importIdentifiersCount = Object.keys(identifiers.getValue()).length;
             Debug.log(`Identified '${importIdentifiersCount}' amount of type declarations, check that they are AstNode.Type`);
             if (importIdentifiersCount > 0) {
-                pageMemories[modulePath].addIdentifiers(importIdentifiers.getValue());
+                Debug.log(`The identified types:`)
+                for (let identifier in identifiers.getValue()) {
+                    Debug.log(identifiers.getValue()[identifier])
+                }
+                pageMemories[modulePath].addIdentifiers(identifiers.getValue());
             }
         }
 
