@@ -252,10 +252,10 @@ export class Reflect {
 
         //---------------------------------------------------------------
         //
-        // The Linted nodes
+        // The Linted import identifiers
         //
         //---------------------------------------------------------------
-        // Debug.push("Linted nodes:")
+        // Debug.push("Linted import identifiers:")
         // count = 0;
         // for (let moduleType in this._memory.memories) {
         //     const modules = this._memory.memories[moduleType as ModuleType];
@@ -269,6 +269,17 @@ export class Reflect {
         //     }
         // }
         // Debug.pop()
+        
+        const identifiedTypes = await this.identifyTypes<Page>(ModuleType.Page, pageTraits.getValue(), pageModules);
+        if (identifiedTypes.isFailure) {
+            return Result.fail(
+                `this.identifyTypes(): ${identifiedTypes.errorTitle}`,
+                identifiedTypes.errorDescription!
+            )
+        } else {
+            this._memory.putModuleMemories(ModuleType.Page, pageModules);
+        }
+
         
         /**
          * Identify the elements by converting them into the Components of the web page.
@@ -454,6 +465,46 @@ export class Reflect {
             const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
             if (importIdentifiersCount > 0) {
                 memory.addIdentifiers(depsIdentified.getValue());
+            }
+        }
+
+        return Result.ok();
+    }
+
+    private identifyTypes = async <T>(contentModuleType: ModuleType, contents: AllPageTraits, pageMemories: {[key: string]: ModuleMemory<Page>}): Promise<Result<undefined>> => {
+        for (let modulePath in contents) {
+            // It's from the cache.
+            // It's from the cache.
+            if (contents[modulePath].uiContent === undefined) {
+                continue;
+            } else if (contents[modulePath].code === undefined) {
+                continue;
+            }
+
+            // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
+            const memory = this._memory.getModuleMemory<T>(contentModuleType, modulePath);
+            // Debug.pop();
+            if (memory === undefined) {
+                return Result.fail(
+                    `this._memory.getModuleMemory(moduleType: '${contentModuleType}', modulePath: '${modulePath}'): Module not found`,
+                    `The memory doesn't have the '${modulePath}' module of '${contentModuleType}' type`
+                )
+            }
+
+            // Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
+            const importIdentifiers = contents[modulePath].code.getTypeIdentifiers(memory);
+            // Debug.pop();
+            if (importIdentifiers.isFailure) {
+                return Result.fail(
+                    `code.getTypeIdentifiers(): ${importIdentifiers.errorTitle}`,
+                    importIdentifiers.errorDescription!
+                )
+            }
+            
+            const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
+            Debug.log(`Identified '${importIdentifiersCount}' amount of type declarations, check that they are AstNode.Type`);
+            if (importIdentifiersCount > 0) {
+                pageMemories[modulePath].addIdentifiers(importIdentifiers.getValue());
             }
         }
 

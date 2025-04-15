@@ -44,6 +44,7 @@ import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ModuleType } from "../module.js";
 import type { Memory } from "../memory/Memory.js";
+import { typeDeclarationToAstIdentifier } from "./type-declaration.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -82,7 +83,7 @@ export class Code {
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
-    // Memory
+    // Import Declarations
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -125,38 +126,13 @@ export class Code {
      * @returns 
      */
     public getLintedImportIdentifiers = async <T>(memory: ModuleMemory<T>, memories: Memory): Promise<Result<AstIdentifiers>> => {
-        const importIdentifiers  = memory.getIdentifiers(AstNode.isImportedNode)
+        const identifiers  = memory.getIdentifiers(AstNode.isImportedNode)
 
-        const importIdentifiersCount = Object.keys(importIdentifiers).length;
+        const importIdentifiersCount = Object.keys(identifiers).length;
         if (importIdentifiersCount == 0) {
-            return Result.ok(importIdentifiers);
-        }
-            
-        // Debug.push(`this.lintImportedIdentifiers<T>()`, {moduleType, modulePath, identifiers: `${importIdentifiersCount} imports`})
-        const lintedIdentifiers = await this.lintImportedIdentifiers<T>(memory, importIdentifiers, memories);
-        // Debug.pop();
-        if (lintedIdentifiers.isFailure) {
-            const err = Debug.error(
-                `this.lintImportedIdentifiers<T>(): ${lintedIdentifiers.errorTitle}`,
-                lintedIdentifiers.errorDescription!,
-                importIdentifiers,
-            )
-            return Result.fail(err)
+            return Result.ok(identifiers);
         }
 
-        return Result.ok(lintedIdentifiers.getValue());
-    }
-
-    /**
-     * Lint the identfiers of 'modulePath' in 'moduleType' category.
-     * The identifiers are fetched from the memory.
-     * @param moduleType 
-     * @param modulePath 
-     * @param identifiers 
-     * @param memories 
-     * @returns 
-     */
-    private lintImportedIdentifiers = async <T>(memory: ModuleMemory<T>, identifiers: AstIdentifiers, memories: Memory): Promise<Result<AstIdentifiers>> => {
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
 
@@ -194,185 +170,40 @@ export class Code {
         return Result.ok(identifiers);
     }
 
-    private defineVariableDeclarations = <T>(memory: ModuleMemory<T>): Result<AstIdentifiers> => {
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Type Declarations
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Returns all the types defined in this code.
+     * @param memory 
+     * @returns 
+     */
+    public getTypeIdentifiers = <T>(memory: ModuleMemory<T>): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            for (let i = 0; i < child.getChildCount(); i++) {
-                const subChild = child.getChildAtIndex(i)
-                // Get All Variable Statements from the code's AST
-                if (!(subChild instanceof VariableStatement)) {
-                    continue;
-                }
-                // Debug.push('defineVariableDeclaration()', {'varStatement': subChild.getText()})
-                const identified = defineVariableDeclaration(subChild, memory);
-                // Debug.pop();
-                if (identified.isFailure) {
+            const typeDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isTypeDeclaration])
+
+            for (let typeDeclaration of typeDeclarations) {
+                Debug.log(`The type declaration found in the code '${typeDeclaration.tsNode.getText()}':`);
+                Debug.log(typeDeclaration);
+                Debug.push(`typeDeclarationToAstIdentifier()`, {'astImport': typeDeclaration.tsNode.getText()})
+                const identifiedTypeDeclaration = typeDeclarationToAstIdentifier(typeDeclaration.tsNode as TypeAliasDeclaration);
+                Debug.pop();
+                if (identifiedTypeDeclaration.isFailure) {
                     return Result.fail(
-                        `this.defineVariableDeclaration(varStatement='${subChild.getText()}'): ${identified.errorTitle}`,
-                        identified.errorDescription!
+                        `typeDeclarationToAstIdentifier(astImport='${typeDeclaration.tsNode.getText()}'): ${identifiedTypeDeclaration.errorTitle}`,
+                        identifiedTypeDeclaration.errorDescription!
                     )
                 }
-                identifiers = {...identifiers, ...identified.getValue()}
+                identifiers[identifiedTypeDeclaration.getValue().identifier!] = identifiedTypeDeclaration.getValue();
             }
         }
 
         return Result.ok(identifiers);
     }
-
-    private identifyTypeDeclarations = <T>(memory: ModuleMemory<T>): Result<AstIdentifiers> => {
-        let identifiers: AstIdentifiers = {};
-        for (let child of this.ast.getChildren()) {
-            for (let i = 0; i < child.getChildCount(); i++) {
-                const subChild = child.getChildAtIndex(i)
-                if (!(subChild instanceof TypeAliasDeclaration)) {
-                    continue;
-                } 
-
-                let identifiedNode: AstNode = {
-                    nodeType: AstNodeType.Type,
-                    constant: true,
-                }
-                let identifier: string = '';
-
-                const childCount = subChild.getChildCount();
-                // Child = 0 is the keyword
-                for (let i = 0; i < childCount; i++) {
-                    const typeChild = subChild.getChildAtIndex(i);
-                    if (isExportKeyword(typeChild)) {
-                        identifiedNode.public = true;
-                        continue;
-                    } else if (isTypeKeyword(typeChild)) {
-                        continue;
-                    } else if (typeChild instanceof Identifier) {
-                        identifier = StringTraits.unquote(typeChild.getText());
-                        identifiedNode.identifier = identifier;
-                        continue;
-                    } else if (isOneOfIdentifiers(typeChild, "=")) {
-                        continue;
-                    } else if (!(typeChild instanceof TypeLiteralNode)) {
-                        Debug.log(`The child ${i}/${childCount-1} is '${typeChild.getText()}' not a TypeLiteralNode`)
-                        Debug.log(typeChild);
-                        return Result.fail(
-                            `The type declaration's node '${typeChild.getText()}' is not supported by Ara Web`,
-                            `Update the identifierTypeDeclarations() function`,
-                        )
-                    }
-
-                    const typeDeclaration: TypeDeclaration = {}
-                    const typeLiteralSyntaxList = typeChild.getChildAtIndex(1) as SyntaxList;
-                    const typeLiteralNodesCount = typeLiteralSyntaxList.getChildCount();
-                    for (let typeLiteralIndex = 0; typeLiteralIndex < typeLiteralNodesCount; typeLiteralIndex++) {
-                        const typeLiteralNode = typeLiteralSyntaxList.getChildAtIndex(typeLiteralIndex);
-                        if (!(typeLiteralNode instanceof PropertySignature)) {
-                            Debug.log(`The type literal node ${typeLiteralIndex}/${typeLiteralNodesCount-1} is not a property signature, but '${typeLiteralNode.getText()}':`)
-                            Debug.log(typeLiteralNode);
-                            return Result.fail(
-                                `The type literal node expects the property signature`,
-                                `The '${typeLiteralNode.getText()}' is not a property signature, update the identifierTypeDeclarations(memory)`
-                            )
-                        }
-
-                        const propertySignature = typeLiteralNode as PropertySignature;
-                        const propertySignatureCount = propertySignature.getChildCount();
-                        let propertySignatureIdentifier = propertySignature.getChildAtIndex(0);
-                        if (!(propertySignatureIdentifier instanceof Identifier)) {
-                            Debug.log(`The '${propertySignature.getText()}' first child '${propertySignatureIdentifier.getText()}' is not identifier`);
-                            Debug.log(propertySignatureIdentifier)
-                            return Result.fail(
-                                `The '${propertySignature.getText()}' first child expected to be an Identifier`,
-                                `Ara Web doesn't support the '${propertySignatureIdentifier.getText()}', update the identifierTypeDeclarations()`
-                            )
-                        }
-
-                        for (let propertySignatureIndex = 1; propertySignatureIndex < propertySignatureCount; propertySignatureIndex++) {
-                            const propertySignatureChild = propertySignature.getChildAtIndex(propertySignatureIndex);
-                            if (isNonImportantNode(propertySignatureChild)) {
-                                continue;
-                            }
-                            if (isOneOfIdentifiers(propertySignatureChild, ":")) {
-                                continue;
-                            }
-
-                            // Expressions such as type keywords 'string', 'number', etc
-                            // Hold only one key
-                            if (propertySignatureChild instanceof Expression) {
-                                const expCount = propertySignatureChild.getChildCount();
-                                if (expCount !== 0) {
-                                    return Result.fail(
-                                        `The Ara Web works with no child expression, your '${propertySignatureChild.getText()}' expression has '${expCount}' children`,
-                                        `Update the identifierTypeDeclarations()`
-                                    )
-                                }
-                                const expValue = propertySignatureChild.getText();
-                                if (expValue === "string") {
-                                    const value = this.emptyValueByType(propertySignatureIdentifier.getText(), ValueTypeString.string);
-                                    if (value.isFailure) {
-                                        return Result.fail(
-                                            `this.exactValueType<string>(identifier: '${propertySignatureIdentifier.getText()}', val: '${ValueTypeString.string}', t: ""); ${value.errorTitle}`,
-                                            value.errorDescription!
-                                        )
-                                    }
-                                    typeDeclaration[propertySignatureIdentifier.getText()] = value.getValue();
-                                } else if (expValue === "number") {
-                                    const value = this.emptyValueByType(propertySignatureIdentifier.getText(), ValueTypeString.number);
-                                    if (value.isFailure) {
-                                        return Result.fail(
-                                            `this.exactValueType<number>(identifier: '${propertySignatureIdentifier.getText()}', val: '${ValueTypeString.number}', t: 0); ${value.errorTitle}`,
-                                            value.errorDescription!
-                                        )
-                                    }
-                                    typeDeclaration[propertySignatureIdentifier.getText()] = value.getValue();
-                                } else if (expValue === "boolean") {
-                                    const value = this.emptyValueByType(propertySignatureIdentifier.getText(), ValueTypeString.boolean);
-                                    if (value.isFailure) {
-                                        return Result.fail(
-                                            `this.exactValueType<boolean>(identifier: '${propertySignatureIdentifier.getText()}', val: '${ValueTypeString.boolean}', t: false); ${value.errorTitle}`,
-                                            value.errorDescription!
-                                        )
-                                    }
-                                    typeDeclaration[propertySignatureIdentifier.getText()] = value.getValue();
-                                } else {
-                                    Debug.log(`The '${expValue}' expression is not supported by Ara`);
-                                    Debug.log(propertySignatureChild);
-                                    return Result.fail(
-                                        `The '${expValue}' expression is not supported by Ara`,
-                                        `update identifierTypeDeclarations(memory)`
-                                    )
-                                }
-                            } else if (propertySignatureChild instanceof TypeReferenceNode) {
-                                const typeRefCount = propertySignatureChild.getChildCount();
-                                const typeRefIdentifier = propertySignatureChild.getChildAtIndex(0)
-                                if (!(typeRefIdentifier instanceof Identifier)) {
-                                    Debug.log(`The '${identifier}' type's '${propertySignatureIdentifier.getText()}' property value is type reference, but Ara Supports type ref by identifier only`)
-                                    Debug.log(typeRefIdentifier)
-                                    return Result.fail(
-                                        `The property value type is a type reference, but the '${typeRefIdentifier.getText()}' doesn't support it`,
-                                        `Ara Web supports Identifiers as type ref nodes, update indetifierTypeDeclarations() to support it`
-                                    )
-                                }
-
-                                const typeRefAraLink = ReflectAraLink.linkToIdentifier(typeRefIdentifier.getText());
-                                typeDeclaration[propertySignatureIdentifier.getText()] = typeRefAraLink;
-                            } else {
-                                Debug.log(`Type signature ${propertySignatureIndex}/${propertySignatureCount-1}: '${propertySignatureChild.getText()}' undefined node type`)
-                                Debug.log(propertySignatureChild);
-                                return Result.fail(
-                                    `The ${propertySignature}/${propertySignatureCount-1} child '${propertySignatureChild.getText()}' of TypeLiteral '${subChild.getText()}' is uncatched by Ara Web`,
-                                    `Update the identifyTypeDeclarations()`,
-                                )
-                            }
-                        }
-                    }
-                    identifiedNode.data = typeDeclaration;
-
-                    identifiers[identifier] = identifiedNode;
-                }
-            }
-        }
-
-        return Result.ok(identifiers);
-    }
-
 
     /**
      * If the types refer to another types, then replace them with {}
@@ -414,6 +245,32 @@ export class Code {
 
         return Result.ok();
     }
+
+    private defineVariableDeclarations = <T>(memory: ModuleMemory<T>): Result<AstIdentifiers> => {
+        let identifiers: AstIdentifiers = {};
+        for (let child of this.ast.getChildren()) {
+            for (let i = 0; i < child.getChildCount(); i++) {
+                const subChild = child.getChildAtIndex(i)
+                // Get All Variable Statements from the code's AST
+                if (!(subChild instanceof VariableStatement)) {
+                    continue;
+                }
+                // Debug.push('defineVariableDeclaration()', {'varStatement': subChild.getText()})
+                const identified = defineVariableDeclaration(subChild, memory);
+                // Debug.pop();
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `this.defineVariableDeclaration(varStatement='${subChild.getText()}'): ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    )
+                }
+                identifiers = {...identifiers, ...identified.getValue()}
+            }
+        }
+
+        return Result.ok(identifiers);
+    }
+
 
     private lintVariables = async <T>(memory: ModuleMemory<T>): Promise<Result<undefined>> => {
         const varIdentifiers = memory.identifiersByType(AstNodeType.Variable)
@@ -639,7 +496,7 @@ export class Code {
     
 
         Debug.push(`this.identifierTypeDeclarations`, {'memory': `with '${memory.identifiersCount()}' identifiers`})
-        const typeIdentifiers = this.identifyTypeDeclarations(memory);
+        const typeIdentifiers = this.getTypeIdentifiers(memory);
         Debug.pop();
         if (typeIdentifiers.isFailure) {
             return Result.fail(
