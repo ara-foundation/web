@@ -32,14 +32,15 @@ import {
     TypeLiteralNode,
     PropertySignature,
     Expression,
-    ArrayTypeNode
+    ArrayTypeNode,
+    TypeParameterDeclaration
 } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
 import { callFuncInModule } from "../fileLevel.js";
 import { importDeclarationToAstIdentifiers } from "./import-declaration.js";
 import { defineVariableDeclaration } from "./variable.js";
-import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType, type TypeDeclaration, type GenericTypeDeclaration } from "./ast-node.js";
+import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType, type TypeDeclaration } from "./ast-node.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
@@ -133,20 +134,20 @@ const identifyExpression = (identifier: string, expression: Expression): Result<
     }
 }
 
-const isGenericType = (typeRefNode: TypeReferenceNode): boolean => {
-    const children = AstNode.fromTsNode(typeRefNode).getChildren([], [AstNode.isNonImportantNode]);
+const isGenericRefType = (typeRefNode: TypeReferenceNode): boolean => {
+    const children = AstNode.fromTsNode(typeRefNode).getChildrenByTsNode([], [AstNode.isNonImportantNode]);
     if (children.length !== 4) {
         return false;
     }
     return (children[1].tsNode.getText() === "<" && children[3].tsNode.getText() === ">");
 }
 
-const genericTypeValue = (typeRefNode: TypeReferenceNode): AstNode[] => {
-    return AstNode.fromTsNode(typeRefNode.getChildAtIndex(2)).getChildren([], [AstNode.isNonImportantNode], [","]);
+const genericRefValueNodes = (typeRefNode: TypeReferenceNode): AstNode[] => {
+    return AstNode.fromTsNode(typeRefNode.getChildAtIndex(2)).getChildrenByTsNode([], [AstNode.isNonImportantNode], [","]);
 }
 
-const identifyGenericTypeValue = (typeNode: AraLink<string>, typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
-    const nodes = genericTypeValue(typeRefNode);
+const identifyGenericRefValue = (typeNode: AraLink<string>, typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
+    const nodes = genericRefValueNodes(typeRefNode);
     const nodeValues: ValueType[] = [];
     for (let nodeIndex in nodes) {
         const node = nodes[nodeIndex]
@@ -163,7 +164,7 @@ const identifyGenericTypeValue = (typeNode: AraLink<string>, typeRefNode: TypeRe
     return Result.ok(typeNode.copyWithProperties({'generic_values': nodeValues}))
 }
 
-const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<string>|GenericTypeDeclaration> => {
+const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
     const typeRefIdentifier = typeRefNode.getChildAtIndex(0)
     Debug.log(`Referenced type link '${typeRefNode.getText()}' has ${typeRefNode.getChildCount()} nodes`);
     if (!AstNode.isIdentifier(typeRefIdentifier)) {
@@ -178,8 +179,8 @@ const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<stri
 
     const typeRefAraLink = ReflectAraLink.linkToIdentifier(typeRefIdentifier.getText());
 
-    if (isGenericType(typeRefNode)) {
-        const identifiedGenericValue = identifyGenericTypeValue(typeRefAraLink, typeRefNode);
+    if (isGenericRefType(typeRefNode)) {
+        const identifiedGenericValue = identifyGenericRefValue(typeRefAraLink, typeRefNode);
         if (identifiedGenericValue.isFailure) {
             return Result.fail(
                 `this.identifyExpression(expression: '${typeRefNode.getText()}'): ${identifiedGenericValue.errorTitle}`,
@@ -189,6 +190,63 @@ const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<stri
         return Result.ok(identifiedGenericValue.getValue())
     }
     return Result.ok(typeRefAraLink);
+}
+
+const identifyGenericDeclaration = (genericNode: TypeParameterDeclaration): Result<AstNode> => {
+    const nodes = AstNode.fromTsNode(genericNode).getChildrenByTsNode([], [AstNode.isNonImportantNode], []);
+    const paramCount = nodes.length;
+    if (paramCount === 0) {
+        return Result.fail(
+            `The '${genericNode.getText()}' doesn't have any node`,
+            `Please pass the correct type parameter declaration, or help to improve Medet's misclick`
+        )
+    }
+
+    if (!AstNode.isIdentifier(nodes[0].tsNode)) {
+        const err = Debug.error(
+            `The first node '${nodes[0].tsNode.getText()}' is not identifier`,
+            `Please update the Ara Web to support this feature or perhaps you made a mistake in your syntax? ;)`,
+            nodes[0].tsNode
+        );
+
+        return Result.fail(err)
+    }
+
+    let identifiedNode = AstNode.fromTsNode(genericNode);
+    identifiedNode.constant = true;
+    identifiedNode.nodeType = AstNodeType.Type;
+    identifiedNode.identifier = nodes[0].tsNode.getText();
+    identifiedNode.data = {};
+    identifiedNode.dataType = ValueTypeString.object;
+
+    for (let paramCounter = 1; paramCounter < paramCount; paramCounter++) {
+        const paramNode = nodes[paramCounter];
+        if (!AstNode.isKeyword(paramNode.tsNode, ["extends"])) {
+            const err = Debug.error(
+                `The second parameter of generic declaration is not 'extends'`,
+                `Ara Web doesn't support the '${paramNode.tsNode.getText()}' as the ${paramCounter+1} node. Please update identifyGeneric()`,
+                paramNode
+            )
+            return Result.fail(err);
+        }
+        // Check the data type
+        paramCounter++;
+        if (paramCounter >= paramCount) {
+            return Result.fail(`Failed to identify the parameter.`, `The param after 'extends' expected, but not given`)
+        }
+        const nextParamNode = nodes[paramCounter];
+        const nextParamValue = identifyTypeValue(identifiedNode.identifier, nextParamNode.tsNode);
+        if (nextParamValue.isFailure) {
+            return Result.fail(
+                `identifyTypeValue(identifier: '${identifiedNode.identifier}', node: ${nextParamNode.tsNode.getText()}): ${nextParamValue.errorTitle}`,
+                nextParamValue.errorDescription!
+            )
+        }
+        identifiedNode.data = nextParamValue.getValue();
+        continue;
+    }
+
+    return Result.ok(identifiedNode)
 }
 
 const identifyTypeValue = (identifier: string, node: Node): Result<ValueType> => {
@@ -258,7 +316,7 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
     }
     const propertyIdentifier = propertySignatureIdentifier.getText();
 
-    const propertySignatureChildren = AstNode.fromTsNode(propertySignature).getChildren(
+    const propertySignatureChildren = AstNode.fromTsNode(propertySignature).getChildrenByTsNode(
         [], 
         [AstNode.isNonImportantNode, AstNode.isIdentifier], 
         [":", ",", "?"] // ? at the end of the property indicates it's optional.
@@ -296,7 +354,7 @@ const propertySignatureToTypeDeclaration = (propertySignature: PropertySignature
 const typeLiteralAstNodeToTypeDeclaration = (typeLiteral: TypeLiteralNode): Result<TypeDeclaration> => {
     // Working with the type literal
     let typeDeclaration: TypeDeclaration = {}
-    const typeLiteralSyntaxList = AstNode.fromTsNode(typeLiteral.getChildAtIndex(1) as SyntaxList).getChildren([], [AstNode.isNonImportantNode], [","]);
+    const typeLiteralSyntaxList = AstNode.fromTsNode(typeLiteral.getChildAtIndex(1) as SyntaxList).getChildrenByTsNode([], [AstNode.isNonImportantNode], [","]);
     const typeLiteralNodesCount = typeLiteralSyntaxList.length;
         
     for (let typeLiteralIndex = 0; typeLiteralIndex < typeLiteralNodesCount; typeLiteralIndex++) {
@@ -335,7 +393,7 @@ export const typeDeclarationToAstIdentifier = (typeDeclaration: TypeAliasDeclara
     let identifier: string = '';
 
     // Type declaration has 'type' keyword and '=' sign to skip.
-    const children = identifiedNode.getChildren([], [AstNode.isTypeKeyword], ["="]);
+    const children = identifiedNode.getChildrenByTsNode([], [AstNode.isTypeKeyword], ["="]);
     // Child = 0 is the keyword
     for (let i = 0; i < children.length; i++) {
         const typeChild = children[i];
@@ -346,9 +404,26 @@ export const typeDeclarationToAstIdentifier = (typeDeclaration: TypeAliasDeclara
             identifier = StringTraits.unquote(typeChild.tsNode.getText());
             identifiedNode.identifier = identifier;
             continue;
-        } else if (!AstNode.isTypeLiteral(typeChild.tsNode)) {
+        } else if (AstNode.isGenericLiteral(typeChild.tsNode)) {
+            const typeAstNodes = AstNode.getGenericLiteralOpenedSyntaxList(typeChild.tsNode);
+            Debug.log(`The '${typeChild.tsNode.getText()}' is generic type declaration beginning, with: ${typeAstNodes.length} amount of generic types`);
+            for (let typeAstNode of typeAstNodes) {
+                Debug.log(`Generic type declaration '${typeAstNode.tsNode.getText()}':`);
+                if (!(typeAstNode.tsNode instanceof TypeParameterDeclaration)) {
+                    return Result.fail(`Type Parameter expected for generic types`, 'Please correct the syntax code')
+                }
+                const identifiedData = identifyGenericDeclaration(typeAstNode.tsNode as TypeParameterDeclaration);
+                if (identifiedData.isFailure) {
+                    return Result.fail(`identifyGenericDeclaration(genericNode: '${typeAstNode.tsNode.getText()}'): ${identifiedData}`, identifiedData.errorDescription!)
+                }
+                identifiedNode.putMemoryData(identifiedData.getValue());
+            }
+            i += AstNode.GenericNodeLength - 1;
+            continue;
+        }
+        else if (!AstNode.isTypeLiteral(typeChild.tsNode)) {
             const err = Debug.error(
-                `Unsupported type declaration's node, expected TypeLiteralNode for ${typeChild.tsNode.getText()}`,
+                `Unsupported type declaration's node, expected TypeLiteralNode for '${typeChild.tsNode.getText()}' expression`,
                 `Update the typeDeclarationToAstIdentifiers() function`,
                 typeChild.tsNode
             )

@@ -507,7 +507,7 @@ export class Reflect {
             if (importIdentifiersCount > 0) {
                 Debug.log(`The identified types:`)
                 for (let identifier in identifiers.getValue()) {
-                    Debug.log(((identifiers.getValue()[identifier]) as AstNode).data)
+                    Debug.log(((identifiers.getValue()[identifier]) as AstNode))
                 }
                 pageMemories[modulePath].addIdentifiers(identifiers.getValue());
             }

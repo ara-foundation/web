@@ -1,5 +1,6 @@
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ArrayTypeNode, CommentTypeElement, Expression, Identifier, ImportDeclaration, JSDoc, Node, StringLiteral, TypeAliasDeclaration, TypeLiteralNode, TypeReferenceNode } from "ts-morph";
+import { Debug } from "@ara-web/ts-enhancement";
+import { ArrayTypeNode, CommentTypeElement, Expression, Identifier, ImportDeclaration, JSDoc, Node, StringLiteral, SyntaxList, TypeAliasDeclaration, TypeLiteralNode, TypeReferenceNode } from "ts-morph";
 
 export enum AstNodeType {
     Variable = "variable",
@@ -38,6 +39,8 @@ export type ValueType = string | number | Array<any> | Object | boolean | EnumMe
 export type IdentifiedNodeDataType = ValueTypeString | AraLink<ValueType>;
 
 export class AstNode {
+    public static readonly GenericNodeLength = 3;
+
     nodeType?: AstNodeType;
     constant?: boolean;
     public?: boolean;   // If the module exposes it
@@ -45,6 +48,7 @@ export class AstNode {
     data?: ValueType;
     importPath?: AraLink<ValueType>;    // the import identifier
     identifier?: string;              // If the ast node has an alias, then alias is the second parameter
+    private _nodeMemory?: AstNode[];                  // Anything defined and available within the Ast Node, means ast data
     private _tsNode: Node;
 
     public get tsNode(): Node {
@@ -65,6 +69,36 @@ export class AstNode {
     // Traits
     //
     //----------------------------------------------------------
+    public putMemoryData(astNode: AstNode): void {
+        if (this._nodeMemory === undefined) {
+            this._nodeMemory = [astNode];
+            return;
+        }
+
+        this._nodeMemory.push(astNode);
+    }
+
+    public memoryDataLength(): number {
+        if (this._nodeMemory === undefined) {
+            return 0;
+        }
+        return this._nodeMemory.length;
+    }
+
+    public getMemoryData(index: number): AstNode|undefined {
+        if (index < 0) {
+            return undefined;
+        }
+        if (this._nodeMemory === undefined || this._nodeMemory.length <= index) {
+            return undefined;
+        }
+        return this._nodeMemory[index];
+    }
+
+    public deleteMemoryData(): void {
+        this._nodeMemory = undefined;
+    }
+    
     public isImportedNode = (): boolean => {
         return (this.importPath !== undefined)
     }
@@ -83,7 +117,7 @@ export class AstNode {
      * @param skipKeywords 
      * @returns 
      */
-    public getChildren = (includeFilters?: ((child: Node) => boolean)[], skipFilters?: ((child: Node) => boolean)[], skipKeywords?: string[]): AstNode[] => {
+    public getChildrenByTsNode = (includeFilters?: ((child: Node) => boolean)[], skipFilters?: ((child: Node) => boolean)[], skipKeywords?: string[]): AstNode[] => {
         const children = this._tsNode.getChildren();
         const astNodes: AstNode[] = [];
 
@@ -213,5 +247,32 @@ export class AstNode {
 
     public static isArrayTypeDeclaration = (child: Node): boolean => {
         return child instanceof ArrayTypeNode
+    }
+
+    public static isGenericLiteral = (node: Node): boolean => {
+        if (node.getText() !== "<") {
+            return false;
+        }
+        Debug.log(`Check is next of generic literal is syntax list? ${node.getNextSibling()?.getText()}`);
+        const syntaxList = node.getNextSibling();
+        if (syntaxList === undefined || !(syntaxList instanceof SyntaxList)) {
+            return false;
+        }
+    
+        if (syntaxList.getNextSibling() === undefined || syntaxList.getNextSibling()?.getText() !== ">") {
+            return false;
+        }
+    
+        return true;
+    }
+    
+    public static getGenericLiteralOpenedSyntaxList = (genericLiteral: Node): AstNode[] => {
+        const syntaxList = genericLiteral.getNextSibling();
+        if (syntaxList === undefined || !(syntaxList instanceof SyntaxList)) {
+            return [];
+        }
+    
+        return AstNode.fromTsNode(syntaxList).getChildrenByTsNode([], [AstNode.isNonImportantNode], [","]);
+
     }
 }

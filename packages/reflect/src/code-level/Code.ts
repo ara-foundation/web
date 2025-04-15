@@ -97,7 +97,7 @@ export class Code {
     public getImportedIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            const importDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isImportDeclaration])
+            const importDeclarations = AstNode.fromTsNode(child).getChildrenByTsNode([AstNode.isImportDeclaration])
 
             for (let importDeclaration of importDeclarations) {
                 // Debug.push(`importDeclarationToAstIdentifiers()`, {'astImport': importDeclaration.tsNode.getText()})
@@ -184,7 +184,7 @@ export class Code {
     public getTypeIdentifiers = <T>(memory: ModuleMemory<T>): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            const typeDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isTypeDeclaration])
+            const typeDeclarations = AstNode.fromTsNode(child).getChildrenByTsNode([AstNode.isTypeDeclaration])
 
             for (let typeDeclaration of typeDeclarations) {
                 Debug.log(`The type declaration found in the code '${typeDeclaration.tsNode.getText()}':`);

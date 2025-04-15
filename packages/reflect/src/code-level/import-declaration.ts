@@ -15,7 +15,7 @@ import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
  * @returns {AraLink<string>} Link to the import
  */
 const getModuleLink = (astImport: ImportDeclaration): Result<AraLink<string>> => {
-    const children = AstNode.fromTsNode(astImport).getChildren( 
+    const children = AstNode.fromTsNode(astImport).getChildrenByTsNode( 
         [],
         [AstNode.isIdentifier, AstNode.isNonImportantNode],
         ["import", "from"]
@@ -60,7 +60,7 @@ const getModuleLink = (astImport: ImportDeclaration): Result<AraLink<string>> =>
  * @returns 
  */
 const identifyImportDefaultIdentifier = (astImport: ImportDeclaration): Result<string|undefined> => {
-    const children = AstNode.fromTsNode(astImport).getChildren(
+    const children = AstNode.fromTsNode(astImport).getChildrenByTsNode(
         [],
         [AstNode.isString, AstNode.isNonImportantNode],
         ["import", "from"]
@@ -126,7 +126,7 @@ const identifyNamedImports = (astImport: ImportDeclaration, importPath: AraLink<
 
             for (let i = 0; i < namedImports.length; i++) {
                 const namedImport = namedImports[i];
-                const namedChildren = AstNode.fromTsNode(namedImport).getChildren([], [AstNode.isNonImportantNode], [','])
+                const namedChildren = AstNode.fromTsNode(namedImport).getChildrenByTsNode([], [AstNode.isNonImportantNode], [','])
                 const namedImportChildCount = namedChildren.length;
                 if (namedImportChildCount === 0) {
                     continue;

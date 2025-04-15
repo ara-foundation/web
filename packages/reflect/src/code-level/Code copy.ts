@@ -94,7 +94,7 @@ export class Code {
     public getImportIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            const importDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isImportDeclaration])
+            const importDeclarations = AstNode.fromTsNode(child).getChildrenByTsNode([AstNode.isImportDeclaration])
 
             for (let importDeclaration of importDeclarations) {
                 // Debug.push(`importDeclarationToAstIdentifiers()`, {'astImport': subChild.getText()})
