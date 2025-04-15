@@ -109,7 +109,6 @@ const identifyExpression = (identifier: string, expression: Expression): Result<
 }
 
 const referencedTypeLink = (typeRefNode: TypeReferenceNode): Result<AraLink<string>> => {
-    const typeRefCount = typeRefNode.getChildCount();
     const typeRefIdentifier = typeRefNode.getChildAtIndex(0)
     if (!AstNode.isIdentifier(typeRefIdentifier)) {
         const err = Debug.error(
