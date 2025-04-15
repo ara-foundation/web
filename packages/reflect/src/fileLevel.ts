@@ -13,23 +13,15 @@ import { identifyModuleType, ModuleType, trimPath } from "./module.js";
 import { getScriptByPath } from "./script.js";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { getNodejsModuleByPath } from "./enabledNodejsModule.js";
-import type { ValueType } from "./codeLevel/types.js";
+import type { ValueType } from "./code-level/ast-node.js";
 import type { AstroNode } from "@ara-web/component-engine";
 
-export enum FileExtension {
-    Astro = ".astro",
-    Tsx = ".tsx",
-    Jsx = ".jsx",
-    Typescript = ".ts",
-    Javascript = ".js",
-    DirectoryOrUndefined = "",
-}
 
 /**
  * The content of any page will contain list of the nodes and code, usually a frontmatter.
  * Component nodes and source code splitted
  */
-export type FileContent = {
+export type UiContent = {
     nodes?: AstroNode[], 
     source?: string,
     fileExtension: FileExtension,
@@ -39,49 +31,26 @@ export type FileContent = {
 }
 
 export type IdentifiedFileContent = {
-    fileContent: FileContent,
+    fileContent: UiContent,
     modulePath: string,
     moduleType: ModuleType,
 }
 
 let cache: {[key: string]: IdentifiedFileContent} = {};
 
-/**
- * Detects the file type by the file extension, if not supported file then return PathType.DirectoryOrUndefined.
- * @param filePath the full path to the file within the Ara Web
- * @returns {FileExtension}
- */
-const getFileExtension = (filePath: string): FileExtension => {
-    const extensionIndex = filePath.lastIndexOf(".");
-    if (extensionIndex === -1) {
-        return FileExtension.DirectoryOrUndefined;
-    }
-
-    const extension = filePath.substring(extensionIndex);
-
-    const pathTypes = Object.keys(FileExtension)
-    for (const pathType of pathTypes) {
-        const key = pathType as keyof typeof FileExtension;
-        if (FileExtension[key] === extension) {
-            return FileExtension[key];
-        }
-    }
-
-    return FileExtension.DirectoryOrUndefined;
-}
 
 /**
  * @param modulePath The module path is used to define the absolute path to the file
  * @param glob 
  * @returns 
  */
-export const globToFileContent = async (modulePath: string, glob: Promise<unknown> | unknown): Promise<Result<FileContent>> => {
+export const globToFileContent = async (modulePath: string, glob: Promise<unknown> | unknown): Promise<Result<UiContent>> => {
     // Astro framework adds the absolute file paths.
     let filePath = (glob as AstroInstance).file as string;
     if (filePath === undefined) {
         filePath = process.cwd() + PathModule.resolve(modulePath);
     }
-    const fileContent: FileContent = {
+    const fileContent: UiContent = {
         filePath,
         fileExtension: getFileExtension(filePath),
         glob: glob,
@@ -116,15 +85,15 @@ export const globToFileContent = async (modulePath: string, glob: Promise<unknow
  * For now we rely on the component names
  * @param globs
 */
-export const globsToFileContents = async(globs: Record<string, () => Promise<unknown>> | Record<string, unknown>): Promise<FileContent[]> => {
-    let contents: FileContent[] = [];
+export const globsToFileContents = async(globs: Record<string, () => Promise<unknown>> | Record<string, unknown>): Promise<UiContent[]> => {
+    let contents: UiContent[] = [];
 
     for (let glob in globs) {
         let filePath = (globs[glob] as AstroInstance).file as string;
         if (filePath === undefined) {
             filePath = process.cwd() + PathModule.resolve(glob);
         }
-        const fileContent: FileContent = {
+        const fileContent: UiContent = {
             filePath,
             fileExtension: getFileExtension(filePath),
             glob: globs[glob],
@@ -202,94 +171,14 @@ export const callFuncInModule = async (modulePath: string, funcName: string, fun
     )
 }
 
-const identifyFileContent = async (modulePath: string): Promise<Result<IdentifiedFileContent>> => {
-    Debug.push(`identifyModuleType()`, {path: modulePath})
-    const moduleType = await identifyModuleType(modulePath);
-    Debug.pop();
-    Debug.log(`The identified module type:`)
-    Debug.log(moduleType)
-    if (moduleType === ModuleType.Untracked) {
-        return Result.fail(
-            `identifyModuleType(modulePath='${modulePath}')`,
-            `The module path is not tracked by Ara Web`
-        )
-    }
-
-    if (moduleType === ModuleType.Script) {
-        const script = await getScriptByPath(modulePath);
-        if (script === undefined) {
-            return Result.fail(
-                `moduleType=ModuleType.Script: getScriptByPath(modulePath='${modulePath}')`,
-                `The script is not defined in the scripts path, are you sure that file exists or has the valid file extension?`
-            )
-        }
-        return Result.ok({modulePath, moduleType, fileContent: script})
-    } else if (moduleType === ModuleType.Layout) {
-        Debug.log(`Module '${modulePath}' is layout, get the layout: Unsupported yet`)
-        // const fileContent = await componentFileContent(modulePath, moduleType);
-        // if (fileContent.isFailure) {
-        //     return Result.fail(
-        //         `getComponentByPath(modulePath: '${modulePath}', moduleType: '${moduleType}'): ${fileContent.errorTitle}`,
-        //         fileContent.errorDescription!
-        //     )
-        // }
-
-        // return Result.ok({modulePath, moduleType, fileContent: fileContent.getValue()})
-    } else if (moduleType === ModuleType.NodeJsModule) {
-        const module = await getNodejsModuleByPath(trimPath(modulePath));
-        if (module === undefined) {
-            return Result.fail(
-                `moduleType=ModuleType.NodeJsModule: getNodejsModuleByPath(modulePath: '${modulePath}')`,
-                `The module is not enabled, are you sure that file exists and has valid extension?`
-            )
-        } else {
-            return Result.ok({modulePath, moduleType, fileContent: module})
-        }
-    }
-    
-    return Result.fail(
-        'Unsupported module type',
-        `Only Script modules are supported, not '${moduleType}' modules`
-    )
-}
-
-/**
- * Get the file content loaded from modulePath.
- * It first attempts to load the data from the internal file content cache.
- * If doesn't exist, then identifies the file content, then caches the file content
- * before sending the file content back to the user.
- * @param {string} modulePath the module's path within the Ara Web
- * @returns 
- */
-export const fileContentByModulePath = async(modulePath: string): Promise<Result<IdentifiedFileContent>> => {
-    if (modulePath in cache) {
-        return Result.ok(cache[modulePath]);
-    }
-
-    Debug.log(`The file content cache doesn't have the '${modulePath}' file content, identify it`);
-    Debug.push(`identifyFileContent()`, {modulePath})
-    const identified = await identifyFileContent(modulePath);
-    Debug.pop();
-
-    if (identified.isFailure) {
-        return Result.fail(
-            `identifyFileContent(modulePath: '${modulePath}'): ${identified.errorTitle}`,
-            identified.errorDescription!
-        )
-    }
-    cache[modulePath] = identified.getValue();
-
-    return Result.ok(identified.getValue());
-}
-
 
 /**
  * Sets the code and nodes properties of the file content if it's an Astro file
- * @param {FileContent} fileContent the file parameters 
+ * @param {UiContent} fileContent the file parameters 
  * @param astroSource through the file system we read the content of the file
- * @returns {Promise<FileContent>} fileContent with the `nodes` and `code` properties set
+ * @returns {Promise<UiContent>} fileContent with the `nodes` and `code` properties set
  */
-const parseAstroFile = async (fileContent: FileContent, astroSource: string): Promise<FileContent> => {
+const parseAstroFile = async (fileContent: UiContent, astroSource: string): Promise<UiContent> => {
     if (fileContent.fileExtension !== FileExtension.Astro) {
         return fileContent;
     }
@@ -319,8 +208,8 @@ const parseAstroFile = async (fileContent: FileContent, astroSource: string): Pr
  * @param ast A RootNode of the Astro Web Page
  * @returns Components and Frontmatter
  */
-const extractAstroComponents = (ast: RootNode): {componentNodes: ComponentNode[], frontmatterCode: string} => {
-    const componentNodes: ComponentNode[] = [];
+const extractAstroComponents = (ast: RootNode): {componentNodes: AstroNode[], frontmatterCode: string} => {
+    const componentNodes: AstroNode[] = [];
     let frontmatterCode: string = "";
 
     for (let i = 0; i < ast.children.length; i++) {
@@ -337,7 +226,7 @@ const extractAstroComponents = (ast: RootNode): {componentNodes: ComponentNode[]
         } else if (child.type === "element") {
             componentNodes.push(child);
         } else {
-            console.log(`The page has ${child.type} node`)
+            console.log(`The page has unsupported ${child.type} node, Update the extractAstroComponents in Reflect`)
             console.log(`Its data:`)
             console.log(child)
         }

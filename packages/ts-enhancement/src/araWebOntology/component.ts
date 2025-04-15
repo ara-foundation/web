@@ -2,6 +2,7 @@
  * Global Shared Data Types of Ara
  */
 import { type RpcCallType } from "./rpc.js"
+import { AraLink } from "../ara-link/types.js";
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -18,7 +19,7 @@ export type Component = {
     label: string;
     description: string;
     category: ComponentCategory;
-    fileName: string;
+    modulePath: string;
     glob: unknown,
 }
 
@@ -39,7 +40,8 @@ export enum ComponentIdentity {
     Undeclared = "undeclared",      // Unexpected
 }
 
-export type IdentifiedComponent = ComponentData & {
+export type IdentifiedComponent = {
+    data: ComponentData|AraLink<any>
     id: ComponentIdentity,
 }
 

@@ -1,7 +1,7 @@
 import { Debug } from "@ara-web/ts-enhancement";
-import { globsToFileContents, type FileContent } from "./fileLevel.js";
+import { globsToFileContents, type UiContent } from "./fileLevel.js";
 
-export const getNodeJsModules = async (): Promise<FileContent[]> => {
+export const getNodeJsModules = async (): Promise<UiContent[]> => {
     // const globs = import.meta.glob([
     //     // @fortawesome/free-solig-svg-icons
     //     '../../../node_modules/@fortawesome/free-solid-svg-icons/index.mjs',
@@ -16,7 +16,7 @@ export const getNodeJsModules = async (): Promise<FileContent[]> => {
     return [];
 }
 
-export const getNodejsModuleByPath = async (path: string): Promise<FileContent|undefined> => {
+export const getNodejsModuleByPath = async (path: string): Promise<UiContent|undefined> => {
     const nodeJsModules = await getNodeJsModules();
     Debug.log(`There are ${nodeJsModules.length} modules`);
     for (let nodeJsModule of nodeJsModules) {

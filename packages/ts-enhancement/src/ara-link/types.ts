@@ -1,5 +1,12 @@
-import { type EnumlikeKeyValue, isEqualArray, type WithGetTextMethod } from "@ara-web/ts-enhancement"
+import { type EnumlikeKeyValue, type WithGetTextMethod } from "../keyValue.js"
+import { isEqualArray } from "../array.js"
 export const PurlProtocol = "purl";
+
+/**
+ * Ara Web protocol and Ara Web's Modules
+ */
+export const AraWebProtocol: string = "ara-web";
+export const AraWebModuleSlugs: string[] = ["ara-web", "module"]
 
 export class AraLink<T> {
     private _protocol: string;

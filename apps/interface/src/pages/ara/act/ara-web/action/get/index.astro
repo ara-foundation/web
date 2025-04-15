@@ -8,8 +8,8 @@ import type { SideNavigationProps } from "@components/lungta/SideNavigation.astr
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { getActions, isLinkView, layoutPathToSlug } from "@scripts/action";
 import { LungtaTypes } from "@scripts/lungtaTypes";
+import Reflect from "@scripts/reflect";
 import { AraProjectSlug, newAraWebNavigationNode, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { getPageByUrl } from "@scripts/page";
 
 const actions = getActions();
 
@@ -56,7 +56,7 @@ const sideNavigationProps: SideNavigationProps = {
             {action.trigger.pages?.map(async (page) => (
                 <li class="ml-4">
                     <a href={page} class="link-info">
-                        {(await getPageByUrl(page))?.title}
+                        {(await Reflect.getPageByUrl(page))?.title}
                     </a>
                 </li>
             ))}

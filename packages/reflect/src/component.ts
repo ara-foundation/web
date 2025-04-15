@@ -1,10 +1,10 @@
 // The component engine.
 // List of components and fetching them by a simple class. 
 
-import { type FileContent } from "./fileLevel.js";
 import { type Component, Result } from "@ara-web/ts-enhancement";
 
 import { ComponentEngine, componentCategories } from "@ara-web/component-engine"
+import type { ModuleMemory } from "./memory/ModuleMemory.js";
 
 // export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
 //     const componentId = modulePathToCategoryFileName(modulePath);
@@ -68,25 +68,25 @@ import { ComponentEngine, componentCategories } from "@ara-web/component-engine"
 //     )
 // }
 
-export const fileContentToComponent = async (fileContent: FileContent): Promise<Result<Component>> => {
+export const fileContentToComponent = async (memory: ModuleMemory<unknown>): Promise<Result<Component>> => {
     const component: Component = {
         label: "",
         description: "",
-        fileName: "",
+        modulePath: "",
         category: componentCategories[0],
-        glob: fileContent.glob,
+        glob: memory.glob,
     }
 
-    const componentId = ComponentEngine.modulePathToCategoryFileName(fileContent.filePath);
+    const componentId = ComponentEngine.modulePathToCategoryFileName(memory.modulePath);
     if (componentId.isFailure) {
         return Result.fail(
-            `modulePathToCategory(modulePath: '${fileContent.filePath}'): ${componentId.errorTitle}`,
+            `modulePathToCategory(modulePath: '${memory.modulePath}'): ${componentId.errorTitle}`,
             componentId.errorDescription!
         )
     }
     const {fileName, category} = componentId.getValue()!
     component.category = category;
-    component.fileName = fileName;
+    component.modulePath = fileName;
 
     return Result.ok(component);
 }

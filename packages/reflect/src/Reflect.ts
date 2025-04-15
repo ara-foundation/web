@@ -1,22 +1,43 @@
 import { Debug, Result, type Component, type Page } from "@ara-web/ts-enhancement";
-import { ModuleType } from "./module.js";
+import { fileNameToUrl, ModuleType } from "./module.js";
 import { ModuleMemory } from "./memory/ModuleMemory.js";
-import { globToFileContent } from "./fileLevel.js";
+import { type UiContent } from "./ui-level/ui-content.js";
 import { fileContentToComponent } from "./component.js";
+import { globToUiContent } from "./ui-level/ui-content.js";
+import { identifyComponents, uiContentToPage } from "./ui-level/page-level.js";
+import { Code } from "./code-level/Code.js";
+import { Memory } from "./memory/Memory.js";
+
+type PageTraits = {
+    page: Page,
+    uiContent?: UiContent,
+    code?: Code,
+}
+
+type AllPageTraits = {[key: string]: PageTraits};
 
 export type ModuleGlobs = {
-    [key in ModuleType]?: Record<string, unknown>;
-};
+    [key: string]: {                // Module path
+        glob: unknown,
+    }
+}
+
+export type CategorizedModuleGlobs = {
+    [key in ModuleType]?: ModuleGlobs
+}
+
 
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
 export class Reflect {
     // Category => Path => ModuleMemory Instance
-    private _modules: {[key in ModuleType]?: {[key: string]: ModuleMemory<Component|Page|unknown>}} = {}
-    private _autoImportFunc?: () => ModuleGlobs;
+    private _memory: Memory;
+    private _autoImportFunc?: () => CategorizedModuleGlobs;
 
-    constructor() {}
+    constructor() {
+        this._memory = new Memory();
+    }
 
     //****************************************************************
     // 
@@ -30,18 +51,18 @@ export class Reflect {
      * Put the glob files into the reflect memory.
      * If the moduleGlobs are not given, then it will dynamically load the
      * globs when other public function are inserted.
-     * @param {ModuleGlobs?} moduleGlobs optional.
+     * @param {CategorizedModuleGlobs?} moduleGlobs optional.
      * @notice To enable auto import, simply call the this.putAutoGlobImport(funcReference)
      */
-    public putGlobs = (moduleGlobs?: ModuleGlobs): boolean => {
+    public putGlobs = (moduleGlobs?: CategorizedModuleGlobs): Result<undefined> => {
         if (moduleGlobs === undefined) {
             if (this._autoImportFunc === undefined) {
-                return false;
+                return Result.ok();
             }
         
             moduleGlobs = this._autoImportFunc();
             if (moduleGlobs === undefined) {
-                return false;
+                return Result.ok();
             }
         }
 
@@ -53,72 +74,41 @@ export class Reflect {
                 continue;
             }
 
-            if (this._modules[moduleType] === undefined) {
-                this._modules[moduleType] = {};
-            }
-
             for (let modulePath in categoryModules) {
-                const glob = categoryModules[modulePath];
+                const glob = categoryModules[modulePath].glob;
                 if (moduleType === ModuleType.Component || moduleType === ModuleType.Layout) {
-                    this._modules[moduleType][modulePath] = new ModuleMemory<Component>(moduleType, modulePath, glob);
+                    const moduleMemory = new ModuleMemory<Component>(moduleType, modulePath, glob);
+                    this._memory.putModuleMemory(moduleType, modulePath, moduleMemory);
                 } else if (moduleType === ModuleType.Page) {
-                    this._modules[moduleType][modulePath] = new ModuleMemory<Page>(moduleType, modulePath, glob);
-                } else if (moduleType === ModuleType.NodeJsModule || moduleType === ModuleType.Script) {
-                    this._modules[moduleType][modulePath] = new ModuleMemory<unknown>(moduleType, modulePath, glob);
+                    const moduleMemory = new ModuleMemory<Page>(moduleType, modulePath, glob);
+                    this._memory.putModuleMemory(moduleType, modulePath, moduleMemory);
+                } else if (moduleType === ModuleType.NodeJsModule) {
+                    const moduleMemory = new ModuleMemory<unknown>(moduleType, modulePath, glob);
+                    this._memory.putModuleMemory(moduleType, modulePath, moduleMemory);
+                } else if (moduleType === ModuleType.Script) {
+                    const moduleMemory = new ModuleMemory<unknown>(moduleType, modulePath, glob);
+                    this._memory.putModuleMemory(moduleType, modulePath, moduleMemory);
+                } else {
+                    return Result.fail(
+                        `The module '${modulePath}' of '${moduleType}' type is not supported by Reflect, update putGlobs()`
+                    )
                 }
             }
 
             // Delete the orphans
             const modulePaths = Object.keys(categoryModules);
-            let deletedModulePaths = Object.keys(this._modules[moduleType]).filter((modulePath) => (!modulePaths.includes(modulePath)))
-
-            for (let orphan of deletedModulePaths) {
-                delete this._modules[moduleType][orphan]
-            }
+            this._memory.cleanMemoryExcept(moduleType, modulePaths);
         }
 
-        return true;
+        return Result.ok();
     }
 
     /**
      * Put a function that loads the globs whenever any function is called.
      * @param importFunc 
      */
-    public putAutoGlobImporter = (importFunc: (() => ModuleGlobs)|undefined) => {
+    public putAutoGlobImporter = (importFunc?: (() => CategorizedModuleGlobs)) => {
         this._autoImportFunc = importFunc;
-    }
-
-    /**
-     * Using each of the globs, it converts them into the files.
-     * @returns 
-     */
-    private putFileContents = async (): Promise<Result<undefined>> => {
-        for (let moduleCategory in this._modules) {
-            let moduleType = moduleCategory as ModuleType;
-
-            const categoryModules = this._modules[moduleType];
-            if (categoryModules === undefined) {
-                continue;
-            }
-
-            for (let modulePath in categoryModules) {
-                const moduleMemory = categoryModules[modulePath]
-                if (moduleMemory.fileContent === undefined) {
-                    const result = await globToFileContent(moduleMemory.modulePath, moduleMemory.glob);
-                    if (result.isFailure) {
-                        return Result.fail(
-                            `globToFileContent(modulePath: '${moduleMemory.modulePath}'): ${result.errorTitle}`,
-                            result.errorDescription!
-                        )
-                    }
-                    categoryModules[modulePath].fileContent = result.getValue();
-                }
-            }
-
-            this._modules[moduleType] = categoryModules;
-        }
-
-        return Result.ok();
     }
     
     //****************************************************************
@@ -128,19 +118,13 @@ export class Reflect {
     //****************************************************************
 
     /**
-     * Returns the all the components
+     * Returns the all the components.
+     * Components are not evaluated by internal structures.
      */
     public getComponents = async (): Promise<Result<Component[]>> => {
         this.putGlobs();
-        const fileContentsPut = await this.putFileContents();
-        if (fileContentsPut.isFailure) {
-            return Result.fail(
-                `this.putFileContents(): ${fileContentsPut.errorTitle}`,
-                fileContentsPut.errorDescription!
-            )
-        }
 
-        const modules = this._modules[ModuleType.Component] as {[key: string]: ModuleMemory<Component>};;
+        const modules = this._memory.getModuleMemories<Component>(ModuleType.Component);
         if (modules === undefined) {
             return Result.ok([])
         }
@@ -155,18 +139,14 @@ export class Reflect {
                 continue;
             }
 
-            if (moduleMemory.fileContent === undefined) {
-                continue;
-            }
-
-            const component = await fileContentToComponent(moduleMemory.fileContent)
+            const component = await fileContentToComponent(moduleMemory)
             if (component.isFailure) {
                 return Result.fail(
                     `fileContentToComponent(modulePath: '${moduleMemory.modulePath}'): ${component.errorTitle}`,
                     component.errorDescription!
                 )
             }
-            this._modules[ModuleType.Component]![modulePath].content = component.getValue();
+            this._memory.putModuleContent<Component>(ModuleType.Component, modulePath, component.getValue());
             components.push(component.getValue())
         }
 
@@ -178,15 +158,8 @@ export class Reflect {
      */
     public getLayouts = async (): Promise<Result<Component[]>> => {
         this.putGlobs();
-        const fileContentsPut = await this.putFileContents();
-        if (fileContentsPut.isFailure) {
-            return Result.fail(
-                `this.putFileContents(): ${fileContentsPut.errorTitle}`,
-                fileContentsPut.errorDescription!
-            )
-        }
 
-        const modules = this._modules[ModuleType.Layout] as {[key: string]: ModuleMemory<Component>};;
+        const modules = this._memory.getModuleMemories<Component>(ModuleType.Layout);
         if (modules === undefined) {
             return Result.ok([])
         }
@@ -201,18 +174,14 @@ export class Reflect {
                 continue;
             }
 
-            if (moduleMemory.fileContent === undefined) {
-                continue;
-            }
-
-            const component = await fileContentToComponent(moduleMemory.fileContent)
+            const component = await fileContentToComponent(moduleMemory)
             if (component.isFailure) {
                 return Result.fail(
                     `fileContentToComponent(modulePath: '${moduleMemory.modulePath}'): ${component.errorTitle}`,
                     component.errorDescription!
                 )
             }
-            this._modules[ModuleType.Layout]![modulePath].content = component.getValue();
+            this._memory.putModuleContent<Component>(ModuleType.Layout, modulePath, component.getValue());
             components.push(component.getValue())
         }
 
@@ -223,73 +192,244 @@ export class Reflect {
      * Returns all the pages
      * @returns {Result<Page[]>}
      */
-    public getPages = async () => {
+    public getPages = async (): Promise<Result<Page[]>> => {
         this.putGlobs();
-        const fileContentsPut = await this.putFileContents();
-        if (fileContentsPut.isFailure) {
-            return Result.fail(
-                `this.putFileContents(): ${fileContentsPut.errorTitle}`,
-                fileContentsPut.errorDescription!
-            )
-        }
 
-        const modules = this._modules[ModuleType.Page] as {[key: string]: ModuleMemory<Page>};
-        if (modules === undefined) {
+        const pageModules = this._memory.getModuleMemories<Page>(ModuleType.Page);
+        if (pageModules === undefined) {
             return Result.ok([])
         }
 
-        const components: Page[] = [];
-
-        for (let modulePath in modules) {
-            const moduleMemory = modules[modulePath];
-            
-            if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as Page);
-                continue;
-            }
-
-            if (moduleMemory.fileContent === undefined) {
-                continue;
-            }
-
-            const component = await fileContentToComponent(moduleMemory.fileContent)
-            if (component.isFailure) {
-                return Result.fail(
-                    `fileContentToComponent(modulePath: '${moduleMemory.modulePath}'): ${component.errorTitle}`,
-                    component.errorDescription!
-                )
-            }
-            this._modules[ModuleType.Component]![modulePath].content = component.getValue();
-            components.push(component.getValue())
+        const pageTraits = await this.getPageTraits(pageModules)
+        if (pageTraits.isFailure) {
+            return Result.fail(
+                `this.getPageTraits(): ${pageTraits.errorTitle}`,
+                pageTraits.errorDescription!
+            )
         }
 
-        return Result.ok(components);
+        const importsIdentifed = await this.identifyImports(pageTraits.getValue(), pageModules);
+        if (importsIdentifed.isFailure) {
+            return Result.fail(
+                `this.identifyImports(): ${importsIdentifed.errorTitle}`,
+                importsIdentifed.errorDescription!
+            )
+        } else {
+            this._memory.putModuleMemories(ModuleType.Page, pageModules);
+        }
+
+        let count = 0;
+        Debug.push("Identified nodes (but print Reflect only):")
+        for (let moduleType in this._memory.memories) {
+            const modules = this._memory.memories[moduleType as ModuleType];
+            for (let modulePath in modules) {
+                let identifiers = modules[modulePath].getIdentifiers();
+                for (let identifier in identifiers) {
+                    count++;
+                    if (identifier === "Reflect") {
+                        Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' node identified`)
+                        Debug.log(identifiers[identifier])
+                    }
+                }
+            }
+        }
+        Debug.pop();
+        
+        Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
+        const importsLinted = await this.lintImports<Page>(ModuleType.Page, pageTraits.getValue());
+        Debug.pop()
+        if (importsLinted.isFailure) {
+            return Result.fail(
+                `this.importsLinted(): ${importsLinted.errorTitle}`,
+                importsLinted.errorDescription!
+            )
+        }
+
+        Debug.log(`Page dependencies were linted:`);
+        Debug.log(`The identified data to return back`);
+        count = 0;
+        Debug.push("Linted nodes:")
+        for (let moduleType in this._memory.memories) {
+            const modules = this._memory.memories[moduleType as ModuleType];
+            for (let modulePath in modules) {
+                let identifiers = modules[modulePath].getIdentifiers();
+                for (let identifier in identifiers) {
+                    count++;
+                    Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' linted`)
+                    if (identifier === "Reflect") {
+                        Debug.log(identifiers[identifier])
+                    }
+                }
+            }
+        }
+        Debug.pop()
+        const pages = Object.keys(pageTraits.getValue()).map((modulePath) => (pageTraits.getValue()[modulePath].page))
+        return Result.ok(pages);
+
+        // // Identify the compoents.
+        // // TODO: make it part of previous code, by skipping
+        // // the dynamic data part.
+        // for (let modulePath in contents) {
+        //     // It's from the cache.
+        //     if (contents[modulePath].uiContent === undefined) {
+        //         continue;
+        //     }
+
+        //     const identificationResult = await identifyComponents(contents[modulePath].page, contents[modulePath].uiContent, contents[modulePath].code!);
+        //     if (identificationResult.isFailure) {
+        //         return Result.fail(
+        //                 `identifyComponents: ${identificationResult.errorTitle}`,
+        //                 identificationResult.errorDescription!,
+        //         )
+        //     } else {
+        //         this._modules[ModuleType.Page]![modulePath].content = identificationResult.getValue();
+        //         contents.push(identificationResult.getValue())
+        //     }
+        // }
+
+        // // Lint the component's dynamic values
+        // for (let modulePath in contents) {
+        //     // It's from the cache.
+        //     if (contents[modulePath].uiContent === undefined) {
+        //         continue;
+        //     }
+        // }
+
+        // const pages = Object.keys(contents).map((modulePath) => (contents[modulePath].page))
+
+        // return Result.ok(pages);
     }
 
     /**
-     * For debug purpose, dump the reflect to print everything.
-     * @param filterKey 
-     * @param filterValue 
+     * Returns a page by it's path
      */
-    public print = (filterKey?: string, filterValue?: any): void => {
-        Debug.push(`Memory Dump`)
-        for (let moduleCategory in this._modules) {
-            Debug.log(`The '${moduleCategory}' modules:`);
-            const moduleType = moduleCategory as ModuleType;
-            const categoryModules = this._modules[moduleType];
+    getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
+        if (url === undefined) {
+            return undefined;
+        }
+        if (url.length === 0) {
+            return undefined;
+        }
+        if (url[url.length - 1] === "/") {
+            url = url.substring(0, url.length - 1);
+        }
 
-            for (let modulePath in categoryModules) {
-                Debug.log(`The '${modulePath}' module:`);
-                categoryModules[modulePath].print(filterKey, filterValue)
+        const pages = await this.getPages();
+
+        if (pages.isFailure) {
+            return undefined;
+        }
+
+        for (const page of pages.getValue()) {
+            const pageUrl = fileNameToUrl(page.fileName);
+            if (url === pageUrl) {
+                return page;
             }
         }
-        
-        Debug.pop();
+
+        return undefined;
     }
 
     //************************************************************** */
     //
-    // Private
+    // Private methods of the pages
     //
     //************************************************************** */
+
+    private getPageTraits = async (modules: {[key: string]: ModuleMemory<Page>}): Promise<Result<AllPageTraits>>  => {
+        const contents: AllPageTraits = {}
+
+        //
+        // Validate the modules as valid content, then extract their data.
+        //
+        for (let modulePath in modules) {
+            const moduleMemory = modules[modulePath];
+
+            contents[modulePath] = {page: {} as Page}
+
+            if (moduleMemory.content !== undefined) {
+                contents[modulePath].page = (moduleMemory.content as Page)
+                contents[modulePath].uiContent = undefined;
+                continue;
+            }
+
+            const uiContent = await globToUiContent(moduleMemory.modulePath, moduleMemory.glob);
+            if (uiContent.isFailure) {
+                return Result.fail(
+                    `globToUiContent(modulePath: '${moduleMemory.modulePath}'): ${uiContent.errorTitle}`,
+                    uiContent.errorDescription!
+                )
+            }
+
+            const page = uiContentToPage(uiContent.getValue());
+            if (page.isFailure) {
+                return Result.fail(
+                    `PageTraits.fromFileContent: ${page.errorTitle}`,
+                    page.errorDescription!,
+                )
+            }
+
+            contents[modulePath].page = page.getValue()
+            contents[modulePath].uiContent = uiContent.getValue()
+        }
+
+        return Result.ok(contents);
+    }
+
+    //
+    // Import all data
+    //
+    private identifyImports = async (pageTraits: AllPageTraits, pageMemories: {[key: string]: ModuleMemory<Page>}): Promise<Result<undefined>> => {
+        for (let modulePath in pageTraits) {
+            // It's from the cache.
+            if (pageTraits[modulePath].uiContent === undefined) {
+                continue;
+            }
+
+            pageTraits[modulePath].code = new Code(pageTraits[modulePath].uiContent!.source!)
+            
+            // Debug.push(`code.getImportIdentifiers()`, {memory: modulePath})
+            const importIdentifiers = pageTraits[modulePath].code.getImportIdentifiers();
+            // Debug.pop();
+            if (importIdentifiers.isFailure) {
+                return Result.fail(
+                    `code.getImportIdentifiers(): ${importIdentifiers.errorTitle}`,
+                    importIdentifiers.errorDescription!
+                )
+            }
+            
+            const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
+            if (importIdentifiersCount > 0) {
+                pageMemories[modulePath].addIdentifiers(importIdentifiers.getValue());
+            }
+        }
+
+        return Result.ok();
+    }
+
+    // Calls the code's lintDependencies.
+    // LintImports will get the data from the remote modules.
+    // Then, will apply them into the identifiers node data types, and data parameters.
+    private lintImports = async <T>(contentModuleType: ModuleType, contents: AllPageTraits): Promise<Result<undefined>> => {
+        for (let modulePath in contents) {
+            // It's from the cache.
+            if (contents[modulePath].uiContent === undefined) {
+                continue;
+            } else if (contents[modulePath].code === undefined) {
+                continue;
+            }
+
+            // Debug.push(`code.lintDependencies()`, {memory: modulePath})
+            const depsIdentified = await contents[modulePath].code.lintDependencies<T>(contentModuleType, modulePath, this._memory)
+            // Debug.pop();
+            if (depsIdentified.isFailure) {
+                return Result.fail(
+                    `code.lintDependencies(modulePath: '${modulePath}'): ${depsIdentified.errorTitle}`,
+                    depsIdentified.errorDescription!
+                )
+            }
+        }
+
+        return Result.ok();
+    }
 }

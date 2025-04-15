@@ -1,13 +1,11 @@
 import { Debug } from "@ara-web/ts-enhancement";
-import { IdentifierMemory } from "./IdentifierMemory.js";
+import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
 import type { ModuleType } from "../module.js";
-import type { FileContent } from "../fileLevel.js";
 
-export class ModuleMemory<T> extends IdentifierMemory {
+export class ModuleMemory<T> extends AstIdentifierMemory {
     private _moduleType: ModuleType;
     private _modulePath: string;
     private _glob: unknown;
-    private _fileContent?: FileContent;
     private _content?: T;
 
     constructor(moduleType: ModuleType, modulePath: string, glob: unknown) {
@@ -35,14 +33,6 @@ export class ModuleMemory<T> extends IdentifierMemory {
     public get glob(): unknown {
         return this._glob;
     } 
-
-    public get fileContent(): FileContent|undefined {
-        return this._fileContent;
-    }
-
-    public set fileContent(file: FileContent) {
-        this._fileContent = file;
-    }
 
     public get content(): T|undefined {
         return this._content;

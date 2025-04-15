@@ -5,6 +5,7 @@ import TsxComponent from "./TsxEmptyComponent"; // react typescript
 import JsxComponent from "./JsxEmptyComponent"; // react javascript
 
 import { type Component, type ComponentCategory, StringTraits, Result } from "@ara-web/ts-enhancement";
+import { AraWebModuleSlugs, PurlProtocol, type AraLink } from "@ara-web/ts-enhancement/ara-link";
 
 // Which types of Components supported?
 export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
@@ -65,7 +66,15 @@ export const componentCategories: ComponentCategory[] = [{
 const AraWebLayoutPath = "layouts/AraWebLayout.astro";
 
 export class ComponentEngine {
-    public static isLayoutModulePath = (filePath: string): boolean => {
+    public static isLayoutModuleLink = (araLink: AraLink<string>): boolean => {
+        if (!araLink.isCorrectPath(PurlProtocol, AraWebModuleSlugs)) {
+            return false;
+        }
+    
+        return ComponentEngine.isLayoutModulePath(araLink.resource);
+    }
+    
+    private static isLayoutModulePath = (filePath: string): boolean => {
         return (filePath.indexOf(AraWebLayoutPath) > -1);
     }
     /**
@@ -78,7 +87,7 @@ export class ComponentEngine {
             label: `<${StringTraits.capitalizeFirstLetter(element.name)}>`,
             description: `Show the data`,
             category: elementCategory,
-            fileName: ``,
+            modulePath: ``,
             glob: element
         }
 
@@ -90,7 +99,7 @@ export class ComponentEngine {
             label: `<${StringTraits.capitalizeFirstLetter(node.name)}>`,
             description: `Layout of the Elements`,
             category: layoutCategory,
-            fileName: filePath,
+            modulePath: filePath,
             glob: node
         }
 
@@ -109,7 +118,7 @@ export class ComponentEngine {
         const component: Component = {
             label: node.name,
             description: "",
-            fileName: filePath,
+            modulePath: filePath,
             category: componentCategories[0],
             glob: node,
         }

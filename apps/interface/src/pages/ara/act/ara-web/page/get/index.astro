@@ -13,8 +13,9 @@ import {
     newAraWebNavigationNode } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
-import { getPages } from "@scripts/page";
+import Reflect from "@scripts/reflect";
 import PageModel from "@components/page/PageModel.astro";
+import { Debug } from "@ara-web/ts-enhancement";
 
 const araWebNavigation = newAraWebNavigationNode();
 
@@ -39,7 +40,9 @@ const sideNavigation: SideNavigationProps = {
     selectedPath: "ara/act/ara-web/page/get"
 }
 
-const pages = await getPages();
+Debug.push("Reflect.getPages()")
+const pages = await Reflect.getPages();
+Debug.pop();
 
 ---
 

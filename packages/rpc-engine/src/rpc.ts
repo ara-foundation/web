@@ -15,6 +15,7 @@ import {
     RPCData as alertData,
     newRpcCall as alertCall,
 } from "./extensions/alert"
+import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
 
 const CallComponentPath = "components/rpc/call.astro";
 
@@ -36,8 +37,16 @@ export const rpcBySlug = (slug: string): RPC|undefined => {
     return undefined;
 }
 
-export const isRpcComponent = (filePath: string): boolean => {
-    return (filePath.indexOf(CallComponentPath) > -1);
+export const isRpcCallComponentLink = (araLink: AraLink<string>): boolean => {
+    if (!araLink.isCorrectPath(PurlProtocol, AraWebModuleSlugs)) {
+        return false;
+    }
+
+    return isRpcComponentModulePath(araLink.resource);
+}
+
+const isRpcComponentModulePath = (modulePath: string): boolean => {
+    return (modulePath.indexOf(CallComponentPath) > -1);
 }
  
 export const rpcByComponentFilePath = (filePath: string): RPC|undefined => {

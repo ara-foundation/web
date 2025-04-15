@@ -1,16 +1,16 @@
-import { AraLink } from "@ara-web/ara-link";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, type IdentifiedNode, type Identifiers } from "../codeLevel/types.js";
+import { AstNodeType, AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 
-export abstract class IdentifierMemory {
-    private _identifiers: Identifiers = {};
+export abstract class AstIdentifierMemory {
+    private _identifiers: AstIdentifiers = {};
 
     constructor() {
         this._identifiers = {};
     }
 
-    public addIdentifiers = (identifiers: Identifiers) => {
+    public addIdentifiers = (identifiers: AstIdentifiers) => {
         this._identifiers = {...this._identifiers, ...identifiers}
     }
 
@@ -22,7 +22,7 @@ export abstract class IdentifierMemory {
         return Object.keys(this._identifiers).length;
     }
 
-    public identifierByAraLink = (araLink: AraLink<string>): IdentifiedNode|undefined => {
+    public identifierByAraLink = (araLink: AraLink<string>): AstNode|undefined => {
         if (!ReflectAraLink.isIdentifierLink(araLink)) {
             return undefined;
         }
@@ -32,41 +32,64 @@ export abstract class IdentifierMemory {
         }
         const identifier = araLink.resource as string;
         const node = this.identifierByName(identifier);
-        if (node === undefined) {
-            return undefined;
-        }
-
         return node;
     }
 
-    public identifierByName = (identifier: string): IdentifiedNode|undefined => {
-        for (let _identifier in this._identifiers) {
-            if (_identifier === identifier) {
-                return this._identifiers[_identifier];
-            }
+    public identifierByName = (identifier: string): AstNode|undefined => {
+        if (this._identifiers[identifier] === undefined) {
+            return undefined;
         }
-        
-        return undefined;
+            
+        // If this identifier is an alias, then as the AstNode return the referenced but with this name.
+        if (this._identifiers[identifier] instanceof AraLink) {
+            return this.identifierByAraLink(this._identifiers[identifier]);
+        }
+        return this._identifiers[identifier];
     }
 
-    public identifierByType = (identifier: string, astNode: AstNodeType): IdentifiedNode|undefined => {
-        const node = this.identifierByName(identifier);
+    public identifierByType = (identifier: string, astNode: AstNodeType): AstNode|undefined => {
+        let node = this.identifierByName(identifier);
         if (node === undefined) {
             return node;
         }
 
-        if (node.nodeType === astNode) {
+        if (node.nodeType !== undefined) {
             return node;
         }
         
         return undefined;
     }
 
-    public identifiersByType = (astNode: AstNodeType): IdentifiedNode[] => {
-        const identifiers: IdentifiedNode[] = []
+    public getIdentifiers = (filter?: (arg0: AstNode) => boolean): AstIdentifiers => {
+        const identifiers: AstIdentifiers = {};
+        const identifierKeys = Object.keys(this._identifiers);
 
-        for (let _identifier in this._identifiers) {
-            const node = this._identifiers[_identifier];
+        for (let _identifier of identifierKeys) {
+            const node = this.identifierByName(_identifier)
+            if (node === undefined) {
+                continue;
+            }
+
+            if (filter !== undefined && !filter(node)) {
+                continue;
+            }
+
+            identifiers[_identifier] = node;
+        }
+
+        return identifiers;
+    }
+
+    public identifiersByType = (astNode: AstNodeType): AstNode[] => {
+        const identifiers: AstNode[] = []
+        const identifierKeys = Object.keys(this._identifiers);
+
+        for (let _identifier of identifierKeys) {
+            let node = this.identifierByName(_identifier);
+            if (node === undefined) {
+                continue;
+            }
+
             if (node.nodeType === astNode) {
                 identifiers.push(node);
             }

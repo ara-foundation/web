@@ -13,6 +13,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./ara-link": {
+      "types": "./src/ara-link/types.ts",
+      "default": "./src/ara-link/types.js"
     }
   },
   "devDependencies": {

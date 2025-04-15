@@ -7,7 +7,7 @@
  */
 import { 
     CallExpression,
-    Identifier, ImportClause, JSDoc, Project, SourceFile as TsSourceFile, StringLiteral, ts, TypeReferenceNode, 
+    Identifier, ImportClause, JSDoc, Project, SourceFile as TsSourceFile, StringLiteral, TypeReferenceNode, 
     VariableDeclarationKind,
     SyntaxList,
     ImportDeclaration,
@@ -35,24 +35,15 @@ import {
 } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { callFuncInModule, fileContentByModulePath } from "./fileLevel.js";
-import { 
-    type ValueType, 
-    type AstIdentifiers, 
-    type AstIdentifiedNode, 
-    AstNodeType, 
-    type EnumMembers, 
-    type TypeDeclaration, 
-    type IdentifiedNodeDataType, 
-    ValueTypeString, 
-    isImportedNode
-} from "./code-level/types.js";
-import { identifyImportDeclarations } from "./code-level/import-declaration.js";
-import { defineVariableDeclaration } from "./code-level/variable.js";
-import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers, isTypeKeyword } from "./code-level/ast-node.js";
+import { callFuncInModule } from "../fileLevel.js";
+import { importDeclarationToAstIdentifiers } from "./import-declaration.js";
+import { defineVariableDeclaration } from "./variable.js";
+import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType } from "./ast-node.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "./araLink/ReflectAraLink.js";
-import { ModuleMemory } from "./memory/ModuleMemory.js";
+import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ModuleMemory } from "../memory/ModuleMemory.js";
+import type { ModuleType } from "../module.js";
+import type { Memory } from "../memory/Memory.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -77,24 +68,6 @@ export class Code {
         })
         
         this.ast = this.project.createSourceFile(`__temp.ts`, code);
-
-            Debug.log(`Todo: Identify memory in the code level from constructor`);
-            // Debug.push(`new Code()`)
-            // Debug.push(`this.identifyMemory()`)
-            // this.identifyMemory().then((memory) => {
-            //     if (memory.isFailure) {
-            //         throw new Error(`${memory.errorTitle}: ${memory.errorDescription}`)
-            //     }
-            //     // Debug.log(`\t\t\t\n\n\n\n\nThe Identifiers:\n\n`)
-            //     // Debug.log(identifiers.getValue())
-            //     this._memory = memory.getValue()
-            // }).catch(e => {
-            //     Debug.log(`error thrown by identifyMemory:`)
-            //     Debug.log(e);                
-            // }).finally(() => {
-            //     Debug.pop()
-            //     Debug.pop()
-            // });
     }
 
     /**
@@ -113,20 +86,23 @@ export class Code {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
-    private identifyImportDeclarations = (): Result<AstIdentifiers> => {
+    /**
+     * Parses the entire code for any import clauses. If any import clause,
+     * then, using `./import-declarations.ts` will turn them into the import identifiers.
+     * @returns AstIdentifiers
+     */
+    public getImportIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            for (let i = 0; i < child.getChildCount(); i++) {
-                const subChild = child.getChildAtIndex(i)
-                if (!(subChild instanceof ImportDeclaration)) {
-                    continue;
-                }
-                // Debug.push(`identifyImportDeclarations()`, {'astImport': subChild.getText()})
-                const importIdentifiers = identifyImportDeclarations(subChild);
+            const importDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isImportDeclaration])
+
+            for (let importDeclaration of importDeclarations) {
+                // Debug.push(`importDeclarationToAstIdentifiers()`, {'astImport': importDeclaration.tsNode.getText()})
+                const importIdentifiers = importDeclarationToAstIdentifiers(importDeclaration.tsNode as ImportDeclaration);
                 // Debug.pop();
                 if (importIdentifiers.isFailure) {
                     return Result.fail(
-                        `identifyImportDeclarations(astImport='${subChild.getText()}'): ${importIdentifiers.errorTitle}`,
+                        `importDeclarationToAstIdentifiers(astImport='${importDeclaration.tsNode.getText()}'): ${importIdentifiers.errorTitle}`,
                         importIdentifiers.errorDescription!
                     )
                 }
@@ -137,14 +113,81 @@ export class Code {
         return Result.ok(identifiers);
     }
 
-    private lintImportedIdentifiers = async (identifiers: AstIdentifiers): Promise<Result<AstIdentifiers>> => {
+    /**
+     * Lint dependencies of the given module identified by type and path.
+     * 
+     * Fetches the import identifiers, and passes them into the lintImportedIdentifiers().
+     * @param moduleType 
+     * @param modulePath 
+     * @param memories {Lint from memory}
+     * @returns 
+     */
+    public lintDependencies = async <T>(moduleType: ModuleType, modulePath: string, memories: Memory): Promise<Result<undefined>> => {
+        // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
+        const memory = memories.getModuleMemory<T>(moduleType, modulePath);
+        // Debug.pop();
+        if (memory === undefined) {
+            return Result.fail(
+                `Module not found`,
+                `The memory doesn't have the '${modulePath}' module of '${moduleType}' type`
+            )
+        }
+        const importIdentifiers  = memory.getIdentifiers(AstNode.isImportedNode)
+
+        const importIdentifiersCount = Object.keys(importIdentifiers).length;
+        if (importIdentifiersCount == 0) {
+            return Result.ok(undefined);
+        }
+            
+        Debug.push(`this.lintImportedIdentifiers<T>()`, {moduleType, modulePath, identifiers: `${importIdentifiersCount} imports`})
+        const lintedIdentifiers = await this.lintImportedIdentifiers<T>(memory, importIdentifiers, memories);
+        Debug.pop();
+        if (lintedIdentifiers.isFailure) {
+            const err = Debug.error(
+                `this.lintImportedIdentifiers<T>(): ${lintedIdentifiers.errorTitle}`,
+                lintedIdentifiers.errorDescription!,
+                importIdentifiers,
+            )
+            return Result.fail(err)
+        }
+
+        memory.addIdentifiers(lintedIdentifiers.getValue())
+
+        memories.putModuleMemory(moduleType, modulePath, memory);
+
+        return Result.ok(undefined);
+    }
+
+    /**
+     * Lint the identfiers of 'modulePath' in 'moduleType' category.
+     * The identifiers are fetched from the memory.
+     * @param moduleType 
+     * @param modulePath 
+     * @param identifiers 
+     * @param memories 
+     * @returns 
+     */
+    private lintImportedIdentifiers = async <T>(memory: ModuleMemory<T>, identifiers: AstIdentifiers, memories: Memory): Promise<Result<AstIdentifiers>> => {
         for (let identifier in identifiers) {
-            const node = identifiers[identifier];
+            let node = identifiers[identifier];
 
-            Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
-            const identifiedValue = await this.identifyImportedIdentifier(node)
-            Debug.pop();
+            if (node instanceof AraLink) {
+                const refNode = memory.identifierByAraLink(node)
+                if (refNode === undefined) {
+                    return Result.fail(
+                        `'${identifier}' is alias, but it's referenced data not found`
+                    )
+                }
+                node = refNode;
+            }
 
+            // Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
+            const identifiedValue = await this.identifyImportedIdentifier(node, memories)
+            // Debug.pop();
+            if (node.identifier === "Reflect") {
+                Debug.log(`The '${node.identifier}' identification result:`);
+                Debug.log(identifiedValue)
+            }
             if (identifiedValue.isFailure) {
                 return Result.fail(
                     `identifyImportedIdentifier(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
@@ -154,7 +197,7 @@ export class Code {
             if (identifiedValue.getValue().data === undefined) {
                 const err = Debug.error(
                     `The import identifier '${identifier}' of '${node.nodeType}' node type data couldn't be identified`,
-                    `Update the lintImportedIndetifiers() to supported it`,
+                    `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`,
                     {node, identifiedValue},
                 )
                 return Result.fail(err)
@@ -200,7 +243,7 @@ export class Code {
                     continue;
                 } 
 
-                let identifiedNode: AstIdentifiedNode = {
+                let identifiedNode: AstNode = {
                     nodeType: AstNodeType.Type,
                     constant: true,
                 }
@@ -358,7 +401,7 @@ export class Code {
         const typeIdentifiersCount = typeIdentifiers.length;
         for (let typeIdentifierIndex = 0; typeIdentifierIndex < typeIdentifiersCount; typeIdentifierIndex++) {
             const typeIdentifier = typeIdentifiers[typeIdentifierIndex];
-            if (this.isImportedNode(typeIdentifier)) {
+            if (isImportedNode(typeIdentifier)) {
                 continue;
             }
             const data = typeIdentifier.data as TypeDeclaration;
@@ -401,7 +444,7 @@ export class Code {
             // }
             Debug.log(`Linting the 'tokens: Token[]' variable`)
             Debug.log(varIdentifier)
-            if (this.isImportedNode(varIdentifier)) {
+            if (isImportedNode(varIdentifier)) {
                 continue;
             }
 
@@ -584,60 +627,12 @@ export class Code {
         return Result.ok()
     }
 
-    public identifyDependencies = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
-        Debug.log(`Firstly, identify the imported data`);
-        Debug.push('this.identifyImportDeclarations()')
-        const importIdentifiers = this.identifyImportDeclarations();
-        Debug.pop();
-        if (importIdentifiers.isFailure) {
-            return Result.fail(
-                `this.identifyImportDeclarations(): ${importIdentifiers.errorTitle}`,
-                importIdentifiers.errorDescription!
-            )
-        }
-
-        const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
-        Debug.log(`The import declarations, counted ${importIdentifiersCount} imports`)
-        if (importIdentifiersCount > 0) {
-            memory.addIdentifiers(importIdentifiers.getValue());
-        }
-        return Result.ok(memory);
-    }
-
-    public lintDependencies = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
-        const importIdentifiers  = memory.getIdentifiers(isImportedNode)
-
-        const importIdentifiersCount = Object.keys(importIdentifiers).length;
-        Debug.log(`The import declarations, counted ${importIdentifiersCount} imports`)
-        if (importIdentifiersCount == 0) {
-            return Result.ok(memory);
-        }
-            
-        Debug.push(`this.lintImportedIdentifiers()`, {identifiers: `${importIdentifiersCount} imports`})
-        const lintedIdentifiers = await this.lintImportedIdentifiers(importIdentifiers);
-        Debug.pop();
-        if (lintedIdentifiers.isFailure) {
-            const err = Debug.error(
-                `couldn't lint the identifiers: ${lintedIdentifiers.errorTitle}`,
-                lintedIdentifiers.errorDescription!,
-                importIdentifiers,
-            )
-            return Result.fail(err)
-        }
-
-        memory.addIdentifiers(lintedIdentifiers.getValue())
-        Debug.log(`The import declarations were defined, memory has '${memory.identifiersCount()}' identifiers`)
-
-        return Result.ok(memory);
-    }
-
-
     private identifyMemory = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
         // To make it variable assignment, make sure we track ExpressionStatements and BinaryExpressions
         // First we make sure that the import declarations are defined;
         Debug.log(`Firstly, identify the imported data`);
         Debug.push('this.identifyImportDeclarations()')
-        const importIdentifiers = this.identifyImportDeclarations();
+        const importIdentifiers = this.getImportIdentifiers();
         Debug.pop();
         if (importIdentifiers.isFailure) {
             return Result.fail(
@@ -858,7 +853,6 @@ export class Code {
         }
 
         Debug.push(`identifyVariableAssingments(identifier='${identifier}', updatedInFunction='${JSON.stringify(updatedInFunction.getValue())}')`)
-
         const updatedInAssignment = await this.identifyVariableAssignments(identifier, updatedInFunction.getValue(), typeof updatedInFunction.getValue() as ValueTypeString, memory);
         Debug.pop();
         Debug.log(`identify variable assignments for ${identifier} result = '${JSON.stringify(updatedInAssignment)}'`)
@@ -1005,49 +999,63 @@ export class Code {
 
     /**
      * If the node type is a Type, then it simply sets the {} empty object and leaves as it is.
+     * 
+     * Otherwise, for all others, it will get the glob data and put it on the import.
      * @param identifiedNode 
      * @requires identifiedNode.identifier
      * @requires idenfifiedNode.importPath
-     * @limitation If the type is imported by alias using the 'as' keyword, then it will treat it as new Type.
+     * @limitation Make sure identifiedNode passes the AstNode.isImportedNode() before calling this function.
      * @returns 
      */
-    private identifyImportedIdentifier = async(identifiedNode: AstIdentifiedNode): Promise<Result<AstIdentifiedNode>> => {
+    private identifyImportedIdentifier = async(identifiedNode: AstNode, memory: Memory): Promise<Result<AstNode>> => {
         if (identifiedNode.identifier === undefined) {
             return Result.fail(
                 `The identifier property is missing`,
                 `Set the identifier property before calling identifyImportedIdentifier()`,
             )
         }
-        if (identifiedNode.importPath === undefined) {
-            return Result.fail(
-                `The import path property is missing`,
-                `Set the importPath proeprty before calling identifyImportedIdentifier()`
-            )
-        }
+
         if (identifiedNode.nodeType === AstNodeType.Type) {
             identifiedNode.importPath = undefined;
             identifiedNode.data = {};
             return Result.ok(identifiedNode);
         }
 
-        const importPath = identifiedNode.importPath.resource as string;
-
-        Debug.push(`fileContentByModulePath()`, {modulePath: importPath})
-        const fileContentData = await fileContentByModulePath(importPath);
-        Debug.pop();
-        if (fileContentData.isFailure) {
+        const modulePath = identifiedNode.getImportModulePath();
+        if (modulePath === undefined) {
             return Result.fail(
-                `fileContentByModulePath(importPath='${importPath}'): ${fileContentData.errorTitle}`,
-                fileContentData.errorDescription!
+                `getImportModulePath(): '${identifiedNode.identifier}' module path is not found`,
+                `Make sure this node is import node, or fix AstNode.getImportModulePath()`
             )
         }
-        Debug.log(`Identified by module path '${importPath}': ${fileContentData.getValue() !== undefined}`)
 
-        let data = await (fileContentData.getValue().fileContent.glob as any)[identifiedNode.identifier]
-        Debug.log(`Identified by module path '${importPath}': data at '${identifiedNode.identifier}':`)
-        Debug.log(data);
-        identifiedNode.data = data;
-        identifiedNode.importPath = undefined;
+        // Debug.push(`memory.identifyModuleByPath()`, {modulePath})
+        const identifiedMemory = memory.identifyModuleByPath(modulePath);
+        // Debug.pop();
+        if (identifiedMemory.isFailure) {
+            return Result.fail(
+                `memory.identifyModuleByPath(modulePath: '${modulePath}'): ${identifiedMemory.errorTitle}`,
+                identifiedMemory.errorDescription!
+            )
+        }
+
+        const glob = identifiedMemory.getValue().moduleMemory.glob
+        // If the import is default import, then data is AraLink.
+        if (identifiedNode.data instanceof AraLink) {
+            identifiedNode.data = (glob as any).default;
+            identifiedNode.importPath = undefined;
+        } else {
+            let data = (glob as any)[identifiedNode.identifier]
+            identifiedNode.data = data;
+            identifiedNode.importPath = undefined;
+            identifiedNode.dataType = ((typeof data) as ValueTypeString);
+            if (identifiedNode.dataType === ValueTypeString.number || 
+                identifiedNode.dataType === ValueTypeString.boolean ||
+                identifiedNode.dataType === ValueTypeString.string
+            ) {
+                identifiedNode.nodeType = AstNodeType.Literal;
+            }
+        }
         if (typeof identifiedNode.data === "function") {
             identifiedNode.nodeType = AstNodeType.Function;
         }
@@ -1062,7 +1070,7 @@ export class Code {
      * Currently supports Variable identification and enum identification.
      * @param {string} identifier identififer within the code
      */
-    private identifyIdentifierRecursively = async <T extends ValueType, Y>(identifier: string, memory: ModuleMemory<Y>): Promise<Result<AstIdentifiedNode>> => {
+    private identifyIdentifierRecursively = async <T extends ValueType, Y>(identifier: string, memory: ModuleMemory<Y>): Promise<Result<AstNode>> => {
         Debug.log(`Check identifier '${identifier}' value as variable first`)
         Debug.push(`identifyVariable()`, {identifier: identifier, update: 'false'})
         const res = await this.identifyVariable(identifier, memory, false);
@@ -1122,7 +1130,7 @@ export class Code {
                 return Result.ok(identified.getValue())
             } else {
                 let data = await (fileContentData.getValue().fileContent.glob as any)[identifier]
-                const identified: AstIdentifiedNode = {
+                const identified: AstNode = {
                     nodeType: AstNodeType.Object,
                     data: data,
                     identifier: identifier,
@@ -1698,8 +1706,8 @@ export class Code {
         } else if (exp instanceof Identifier) {
             Debug.push(`exp as Identifier`)
             if (exp.getText() === "undefined") {
-                Debug.pop();
                 const emptyValue = this.emptyValueByType(identifier!, dataType);
+                Debug.pop();
                 return Result.ok(emptyValue);
             } else if (exp.getText() === identifier) {
                 Debug.log(`The '${identifier}' value is itself, so return it.`)

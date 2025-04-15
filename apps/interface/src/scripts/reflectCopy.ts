@@ -23,7 +23,6 @@ const importModules = (): CategorizedModuleGlobs => {
 
 const getNodeJsModuleGlobs = (): ModuleGlobs => {
     const moduleGlobs: ModuleGlobs = {};
-    // Font Awesome's Icons
     const glob1 = import.meta.glob(
         './../../node_modules/@fortawesome/free-solid-svg-icons/index.mjs', {eager: true}
     );
@@ -34,7 +33,6 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
         }
     }
 
-    // Font Awesome's Core
     const glob2 = import.meta.glob(
         './../../node_modules/@fortawesome/fontawesome-svg-core/index.mjs', {eager: true}
     );
@@ -45,7 +43,6 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
         }
     }
 
-    // AraWeb's enhancements
     const glob3 = import.meta.glob(
         './../../node_modules/@ara-web/ts-enhancement/dist/index.js', {eager: true}
     );
@@ -62,7 +59,7 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
 const getPageGlobs = (): ModuleGlobs => {
     const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
 
-    const certainI = -1;
+    const certainI = 1;
     let counter = 0;
 
     const moduleGlobs: ModuleGlobs = {};

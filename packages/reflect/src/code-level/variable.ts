@@ -4,20 +4,19 @@
 
 import { ArrayTypeNode, Identifier, SyntaxList, TypeReferenceNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, type IdentifiedNode, type Identifiers } from "./types.js";
-import type { Memory } from "../Reflect.js";
-import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers } from "./astNode.js";
+import { AstNodeType, AstNode, type AstIdentifiers } from "./ast-node.js";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import type { Memory } from "../memory/Memory.js";
 
-const identifyVariableDeclarationList = (varDeclarationList: VariableDeclarationList, identifierNode: IdentifiedNode, memory: Memory): Result<Identifiers> => {
-    let identifiers: Identifiers = {};
+const identifyVariableDeclarationList = (varDeclarationList: VariableDeclarationList, identifierNode: AstNode, memory: Memory): Result<AstIdentifiers> => {
+    let identifiers: AstIdentifiers = {};
     const childCount = varDeclarationList.getChildCount();
 
     for (let i = 0; i < varDeclarationList.getChildCount(); i++) {
         const varChild = varDeclarationList.getChildAtIndex(i);
-        if (isNonImportantNode(varChild) || isOneOfIdentifiers(varChild, ["let", "var"])) {
+        if (AstNode.isNonImportantNode(varChild) || AstNode.isKeyword(varChild, ["let", "var"])) {
             continue;
-        } else if (varChild.getText() === "const") {
+        } else if (AstNode.isConstKeyword(varChild)) {
             identifierNode.constant = true;
             continue;
         } else if (!(varChild instanceof SyntaxList)) {
@@ -71,9 +70,9 @@ const identifyVariableDeclarationList = (varDeclarationList: VariableDeclaration
         for (let j = 1; j < varDeclaration.getChildCount(); j++) {
             let child = varDeclaration.getChildAtIndex(j);
             // Define the variable type
-            if (isNonImportantNode(child)) {
+            if (AstNode.isNonImportantNode(child)) {
                 continue;
-            } else if (isOneOfIdentifiers(child, ":")) {
+            } else if (AstNode.isKeyword(child, ":")) {
                 j++;
                 child = varDeclaration.getChildAtIndex(j);
                 if (!(child instanceof TypeReferenceNode) &&
@@ -120,7 +119,7 @@ const identifyVariableDeclarationList = (varDeclarationList: VariableDeclaration
                     const typeRefAraLink = ReflectAraLink.linkToIdentifier(typeRefIdentifier.getText());
                     identifierNode.dataType = typeRefAraLink;
                 }
-            } else if (isOneOfIdentifiers(child, "=")) {
+            } else if (AstNode.isKeyword(child, "=")) {
                 j++;
                 child = varDeclaration.getChildAtIndex(j);
                 const expressionRefAraLink = ReflectAraLink.linkToExpression(identifier, child);
@@ -148,28 +147,24 @@ const identifyVariableDeclarationList = (varDeclarationList: VariableDeclaration
  * @param memory 
  * @returns 
  */
-export const defineVariableDeclaration = (varStatement: VariableStatement, memory: Memory): Result<Identifiers> => {
-    let identifier: IdentifiedNode = {
-        nodeType: AstNodeType.Variable,
-        constant: false,
-        public: false,
-        data: {},
-    }
+export const defineVariableDeclaration = (varStatement: VariableStatement, memory: Memory): Result<AstIdentifiers> => {
+    let astNode = AstNode.fromTsNode(varStatement);
+    astNode.nodeType = AstNodeType.Variable;
     
     const childCount = varStatement.getChildCount();
     for (let i = 0; i < childCount; i++) {
         const varChild = varStatement.getChildAtIndex(i);
-        if (isNonImportantNode(varChild)) {
+        if (AstNode.isNonImportantNode(varChild)) {
             continue;
-        } else if (isExportKeyword(varChild)) {
-            identifier.public = true;
+        } else if (AstNode.isExportKeyword(varChild)) {
+            astNode.public = true;
         } else if (varChild instanceof VariableDeclarationList) {
             // Debug.push(`identifyVariableDeclarationList()`, {'varDeclaration': varChild.getText(), 'identifierNode': JSON.stringify(identifier)})
-            const identified = identifyVariableDeclarationList(varChild, identifier, memory);
+            const identified = identifyVariableDeclarationList(varChild, astNode, memory);
             // Debug.pop();
             if (identified.isFailure) {
                 return Result.fail(
-                    `identifyVariableDeclarationList(varDeclaration='${varChild.getText()}', identifier='${JSON.stringify(identifier)}'): ${identified.errorTitle}`,
+                    `identifyVariableDeclarationList(varDeclaration='${varChild.getText()}', identifier='${JSON.stringify(astNode)}'): ${identified.errorTitle}`,
                     identified.errorDescription!
                 )
             }

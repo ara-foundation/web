@@ -3,9 +3,8 @@
  * The page model represents the page itself in the miniature way
  */
 import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
-import { slugsToLayoutPath } from "@scripts/page";
-import { ColumnSlug, RowSlug, type Page } from "@ara-web/ts-enhancement"
-import { rpcBySlug } from "../../../../../packages/rpc-engine/src";
+import { ColumnSlug, RowSlug, type Page, slugsToLayoutPath } from "@ara-web/ts-enhancement"
+import { rpcBySlug } from "@ara-web/rpc-engine";
 import { PageTraits } from "@ara-web/reflect";
 
 interface Props {

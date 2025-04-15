@@ -9,7 +9,7 @@
  * - Expressions
  */
 import type { EnumlikeKeyValue } from "@ara-web/ts-enhancement";
-import { AraLink } from "@ara-web/ara-link";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 
 const ReflectProtocol = "reflect"
 const IdentifierSlugs = ["reflect", "codeLevel", "identifier"]

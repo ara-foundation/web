@@ -1,12 +1,12 @@
 ---
-import { getPageByUrl } from '@scripts/page';
+import Reflect from '@scripts/reflect';
 interface Props {
     url?: string
 }
 
 const {url} = Astro.props;
 
-const page = await getPageByUrl(url);
+const page = await Reflect.getPageByUrl(url);
 const pageTitle: string = page === undefined ? "No Title" : page.title 
 ---
 

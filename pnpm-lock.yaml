@@ -355,6 +355,9 @@ importers:
 
   packages/rpc-engine:
     dependencies:
+      '@ara-web/ara-link':
+        specifier: workspace:*
+        version: link:../ara-link
       '@ara-web/ts-enhancement':
         specifier: workspace:*
         version: link:../ts-enhancement
