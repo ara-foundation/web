@@ -219,25 +219,28 @@ export class Reflect {
         }
 
         let count = 0;
-        Debug.push("Identified nodes (but print Reflect only):")
-        for (let moduleType in this._memory.memories) {
-            const modules = this._memory.memories[moduleType as ModuleType];
-            for (let modulePath in modules) {
-                let identifiers = modules[modulePath].getIdentifiers();
-                for (let identifier in identifiers) {
-                    count++;
-                    if (identifier === "Reflect") {
-                        Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' node identified`)
-                        Debug.log(identifiers[identifier])
-                    }
-                }
-            }
-        }
-        Debug.pop();
+        //---------------------------------------------------------------
+        //
+        // The identified Imports
+        //
+        //---------------------------------------------------------------
+        // Debug.push("Identified nodes (but print Reflect only):")
+        // for (let moduleType in this._memory.memories) {
+        //     const modules = this._memory.memories[moduleType as ModuleType];
+        //     for (let modulePath in modules) {
+        //         let identifiers = modules[modulePath].getIdentifiers();
+        //         for (let identifier in identifiers) {
+        //             count++;
+        //             Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' node identified`)
+        //             Debug.log(identifiers[identifier])
+        //         }
+        //     }
+        // }
+        // Debug.pop();
         
-        Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
+        // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
         const importsLinted = await this.lintImports<Page>(ModuleType.Page, pageTraits.getValue());
-        Debug.pop()
+        // Debug.pop()
         if (importsLinted.isFailure) {
             return Result.fail(
                 `this.importsLinted(): ${importsLinted.errorTitle}`,
@@ -246,29 +249,35 @@ export class Reflect {
         }
 
         Debug.log(`Page dependencies were linted:`);
-        Debug.log(`The identified data to return back`);
-        count = 0;
-        Debug.push("Linted nodes:")
-        for (let moduleType in this._memory.memories) {
-            const modules = this._memory.memories[moduleType as ModuleType];
-            for (let modulePath in modules) {
-                let identifiers = modules[modulePath].getIdentifiers();
-                for (let identifier in identifiers) {
-                    count++;
-                    Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' linted`)
-                    if (identifier === "Reflect") {
-                        Debug.log(identifiers[identifier])
-                    }
-                }
-            }
-        }
-        Debug.pop()
-        const pages = Object.keys(pageTraits.getValue()).map((modulePath) => (pageTraits.getValue()[modulePath].page))
-        return Result.ok(pages);
 
-        // // Identify the compoents.
-        // // TODO: make it part of previous code, by skipping
-        // // the dynamic data part.
+        //---------------------------------------------------------------
+        //
+        // The Linted nodes
+        //
+        //---------------------------------------------------------------
+        // Debug.push("Linted nodes:")
+        // count = 0;
+        // for (let moduleType in this._memory.memories) {
+        //     const modules = this._memory.memories[moduleType as ModuleType];
+        //     for (let modulePath in modules) {
+        //         let identifiers = modules[modulePath].getIdentifiers();
+        //         for (let identifier in identifiers) {
+        //             count++;
+        //             Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' linted:`)
+        //             Debug.log(identifiers[identifier])
+        //         }
+        //     }
+        // }
+        // Debug.pop()
+        
+        /**
+         * Identify the elements by converting them into the Components of the web page.
+         * But identified components may have the dynamic attributes, how do we make sure
+         * they are evaluated?
+         */
+        // Identify the components.
+        // TODO: make it part of previous code, by skipping
+        // the dynamic data part.
         // for (let modulePath in contents) {
         //     // It's from the cache.
         //     if (contents[modulePath].uiContent === undefined) {
@@ -286,6 +295,9 @@ export class Reflect {
         //         contents.push(identificationResult.getValue())
         //     }
         // }
+
+        const pages = Object.keys(pageTraits.getValue()).map((modulePath) => (pageTraits.getValue()[modulePath].page))
+        return Result.ok(pages);
 
         // // Lint the component's dynamic values
         // for (let modulePath in contents) {
@@ -389,7 +401,7 @@ export class Reflect {
             pageTraits[modulePath].code = new Code(pageTraits[modulePath].uiContent!.source!)
             
             // Debug.push(`code.getImportIdentifiers()`, {memory: modulePath})
-            const importIdentifiers = pageTraits[modulePath].code.getImportIdentifiers();
+            const importIdentifiers = pageTraits[modulePath].code.getImportedIdentifiers();
             // Debug.pop();
             if (importIdentifiers.isFailure) {
                 return Result.fail(
@@ -419,8 +431,18 @@ export class Reflect {
                 continue;
             }
 
+            // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
+            const memory = this._memory.getModuleMemory<T>(contentModuleType, modulePath);
+            // Debug.pop();
+            if (memory === undefined) {
+                return Result.fail(
+                    `this._memory.getModuleMemory(moduleType: '${contentModuleType}', modulePath: '${modulePath}'): Module not found`,
+                    `The memory doesn't have the '${modulePath}' module of '${contentModuleType}' type`
+                )
+            }
+
             // Debug.push(`code.lintDependencies()`, {memory: modulePath})
-            const depsIdentified = await contents[modulePath].code.lintDependencies<T>(contentModuleType, modulePath, this._memory)
+            const depsIdentified = await contents[modulePath].code.getLintedImportIdentifiers<T>(memory, this._memory)
             // Debug.pop();
             if (depsIdentified.isFailure) {
                 return Result.fail(
@@ -428,6 +450,34 @@ export class Reflect {
                     depsIdentified.errorDescription!
                 )
             }
+
+            const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
+            if (importIdentifiersCount > 0) {
+                memory.addIdentifiers(depsIdentified.getValue());
+            }
+        }
+
+        return Result.ok();
+    }
+
+    private identifyIdentifiers = async <T>(contentModuleType: ModuleType, contents: AllPageTraits): Promise<Result<undefined>> => {
+        for (let modulePath in contents) {
+            // It's from the cache.
+            if (contents[modulePath].uiContent === undefined) {
+                continue;
+            } else if (contents[modulePath].code === undefined) {
+                continue;
+            }
+
+            // // Debug.push(`code.lintDependencies()`, {memory: modulePath})
+            // const depsIdentified = await contents[modulePath].code<T>(contentModuleType, modulePath, this._memory)
+            // // Debug.pop();
+            // if (depsIdentified.isFailure) {
+            //     return Result.fail(
+            //         `code.lintDependencies(modulePath: '${modulePath}'): ${depsIdentified.errorTitle}`,
+            //         depsIdentified.errorDescription!
+            //     )
+            // }
         }
 
         return Result.ok();

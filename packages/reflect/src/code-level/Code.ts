@@ -89,9 +89,11 @@ export class Code {
     /**
      * Parses the entire code for any import clauses. If any import clause,
      * then, using `./import-declarations.ts` will turn them into the import identifiers.
+     * 
+     * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    public getImportIdentifiers = (): Result<AstIdentifiers> => {
+    public getImportedIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
             const importDeclarations = AstNode.fromTsNode(child).getChildren([AstNode.isImportDeclaration])
@@ -122,26 +124,17 @@ export class Code {
      * @param memories {Lint from memory}
      * @returns 
      */
-    public lintDependencies = async <T>(moduleType: ModuleType, modulePath: string, memories: Memory): Promise<Result<undefined>> => {
-        // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
-        const memory = memories.getModuleMemory<T>(moduleType, modulePath);
-        // Debug.pop();
-        if (memory === undefined) {
-            return Result.fail(
-                `Module not found`,
-                `The memory doesn't have the '${modulePath}' module of '${moduleType}' type`
-            )
-        }
+    public getLintedImportIdentifiers = async <T>(memory: ModuleMemory<T>, memories: Memory): Promise<Result<AstIdentifiers>> => {
         const importIdentifiers  = memory.getIdentifiers(AstNode.isImportedNode)
 
         const importIdentifiersCount = Object.keys(importIdentifiers).length;
         if (importIdentifiersCount == 0) {
-            return Result.ok(undefined);
+            return Result.ok(importIdentifiers);
         }
             
-        Debug.push(`this.lintImportedIdentifiers<T>()`, {moduleType, modulePath, identifiers: `${importIdentifiersCount} imports`})
+        // Debug.push(`this.lintImportedIdentifiers<T>()`, {moduleType, modulePath, identifiers: `${importIdentifiersCount} imports`})
         const lintedIdentifiers = await this.lintImportedIdentifiers<T>(memory, importIdentifiers, memories);
-        Debug.pop();
+        // Debug.pop();
         if (lintedIdentifiers.isFailure) {
             const err = Debug.error(
                 `this.lintImportedIdentifiers<T>(): ${lintedIdentifiers.errorTitle}`,
@@ -151,11 +144,7 @@ export class Code {
             return Result.fail(err)
         }
 
-        memory.addIdentifiers(lintedIdentifiers.getValue())
-
-        memories.putModuleMemory(moduleType, modulePath, memory);
-
-        return Result.ok(undefined);
+        return Result.ok(lintedIdentifiers.getValue());
     }
 
     /**
@@ -184,10 +173,6 @@ export class Code {
             // Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
             const identifiedValue = await this.identifyImportedIdentifier(node, memories)
             // Debug.pop();
-            if (node.identifier === "Reflect") {
-                Debug.log(`The '${node.identifier}' identification result:`);
-                Debug.log(identifiedValue)
-            }
             if (identifiedValue.isFailure) {
                 return Result.fail(
                     `identifyImportedIdentifier(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
@@ -628,19 +613,7 @@ export class Code {
     }
 
     private identifyMemory = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
-        // To make it variable assignment, make sure we track ExpressionStatements and BinaryExpressions
-        // First we make sure that the import declarations are defined;
-        Debug.log(`Firstly, identify the imported data`);
-        Debug.push('this.identifyImportDeclarations()')
-        const importIdentifiers = this.getImportIdentifiers();
-        Debug.pop();
-        if (importIdentifiers.isFailure) {
-            return Result.fail(
-                `this.identifyImportDeclarations(): ${importIdentifiers.errorTitle}`,
-                importIdentifiers.errorDescription!
-            )
-        }
-
+        this.getImportedIdentifiers();
         const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
         Debug.log(`The import declarations, counted ${importIdentifiersCount} imports`)
         if (importIdentifiersCount > 0) {

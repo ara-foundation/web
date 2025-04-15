@@ -73,7 +73,7 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
 const getPageGlobs = (): ModuleGlobs => {
     const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
 
-    const certainI = -1;
+    const certainI = 0;
     let counter = 0;
 
     const moduleGlobs: ModuleGlobs = {};
