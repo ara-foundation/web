@@ -29,7 +29,7 @@ const getNodeJsModuleGlobs = (): ModuleGlobs => {
     );
 
     for (let modulePath in glob1) {
-        moduleGlobs["@fortawesome/free-solig-svg-icons"] = {
+        moduleGlobs["@fortawesome/free-solid-svg-icons"] = {
             glob: glob1[modulePath],
         }
     }
