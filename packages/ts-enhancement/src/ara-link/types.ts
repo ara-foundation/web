@@ -35,6 +35,11 @@ export class AraLink<T> {
         return this;
     }
 
+    public copyWithProperties = (properties: EnumlikeKeyValue): AraLink<T> => {
+        const araLink = new AraLink(this._protocol, this._resource, this._slugs, properties);
+        return araLink;
+    }
+
     public isEmpty = (): boolean => {
         if (this._resource === undefined || this._resource === null) {
             return true;
