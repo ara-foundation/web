@@ -89,6 +89,15 @@ const identifyExpression = (identifier: string, expression: Expression): Result<
             )
         }
         return Result.ok(value.getValue());
+    } else if (expValue === "object") {
+        const value = emptyValueByType(identifier, ValueTypeString.object);
+        if (value.isFailure) {
+            return Result.fail(
+                `this.exactValueType<object>(identifier: '${identifier}', val: '${ValueTypeString.boolean}', t: false); ${value.errorTitle}`,
+                value.errorDescription!
+            )
+        }
+        return Result.ok(value.getValue());
     } else {
         const err = Debug.error(
             `The '${expValue}' expression is not supported by Ara Web`,
