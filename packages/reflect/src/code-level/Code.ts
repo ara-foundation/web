@@ -299,12 +299,14 @@ export class Code {
                 )
             }
 
-            // Debug.push(`typeDeclarationToAstIdentifier()`, {'astImport': typeDeclaration.tsNode.getText()})
+            // Debug.push(`TypeDeclaration()`, {'typeDeclaration': typeDeclaration.getText()})
+            // Debug.push(`getAstNode()`)
             const identifiedTypeDeclaration = typeDeclaration.getValue().getAstNode();
+            // Debug.pop();
             // Debug.pop();
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
-                    `typeDeclarationToAstIdentifier(astImport='${typeDeclaration.getValue().getText()}'): ${identifiedTypeDeclaration.errorTitle}`,
+                    `TypeDeclaration('${typeDeclaration.getValue().getText()}'): getAstNode(): ${identifiedTypeDeclaration.errorTitle}`,
                     identifiedTypeDeclaration.errorDescription!
                 )
             }

@@ -37,7 +37,9 @@ export class TypeValueTraits extends TsNode {
             )
         }
 
+        // Debug.push(`this.identifyTypeValue()`, {identifier: '_array_index', tsNode: tsNode.getText()});
         const arrayType = this.identifyTypeValue(`_array_index`, tsNode.getChild(0)!)
+        // Debug.pop()
         if (arrayType.isFailure) {
             return Result.fail(
                 `identifyTypeValue(identifier: '_array_index', exp: '${tsNode.getText()}'): ${arrayType.errorTitle}`,
@@ -54,7 +56,7 @@ export class TypeValueTraits extends TsNode {
     }
 
     private static identifyExpression = (identifier: string, tsNode: TsNode): Result<ValueType> => {
-        if (TsNode.isExpression(tsNode)) {
+        if (!TsNode.isExpression(tsNode)) {
             return Result.fail(
                 `identifyExpression requires Expression, but '${tsNode.getText()}' isn't`,
                 `Update the identifyExpression()`
@@ -150,7 +152,7 @@ export class TypeValueTraits extends TsNode {
             // Debug.pop()
             if (identifiedTypeLiteral.isFailure) {
                 return Result.fail(
-                    `this.typeLiteralAstNodeToTypeDeclaration(astNode: '${tsNode.getText()}'): ${identifiedTypeLiteral.errorTitle}`,
+                    `this.identifyTypeLiteral(tsNode: '${tsNode.getText()}'): ${identifiedTypeLiteral.errorTitle}`,
                     identifiedTypeLiteral.errorDescription!
                 )
             }
@@ -185,7 +187,9 @@ export class TypeValueTraits extends TsNode {
     // For now it only supports object clause where
     // Type is defined as property and its value.
     public static identifyTypeLiteral = (tsNode: TsNode): Result<TypeDeclaration> => {
-        if (this.isTypeLiteral(tsNode)) {
+        if (!this.isTypeLiteral(tsNode)) {
+            Debug.log(`The following type is not type literal`);
+            Debug.log(tsNode);
             return Result.fail(
                 `The node is not a type literal`,
                 `Please pass the correct data to typeLiteralAstNodeToTypeDeclaration(), or update Ara Web to support '${tsNode.getText()}'`
@@ -235,10 +239,10 @@ export class TypeValueTraits extends TsNode {
 
 
     private static propertySignatureToTypeDeclaration = (tsNode: TsNode): Result<TypeDeclaration> => {
-        if (TsNode.isPropertySignature(tsNode)) {
+        if (!TsNode.isPropertySignature(tsNode)) {
             return Result.fail(
-                `The node is not a type literal`,
-                `Please pass the correct data to typeLiteralAstNodeToTypeDeclaration(), or update Ara Web to support '${tsNode.getText()}'`
+                `The node is not a property signature`,
+                `Please pass the correct data to propertySignatureToTypeDeclaration(), or update Ara Web to support '${tsNode.getText()}'`
             )
         }
     

@@ -246,18 +246,17 @@ export class Reflect {
         //
         //---------------------------------------------------------------
         
-        // const identifiedTypes = await this.identifyTypes<Page>(ModuleType.Page, pageTraits.getValue(), pageModules);
-        // if (identifiedTypes.isFailure) {
-        //     return Result.fail(
-        //         `this.identifyTypes(): ${identifiedTypes.errorTitle}`,
-        //         identifiedTypes.errorDescription!
-        //     )
-        // } else {
-        //     this._memory.putModuleMemories(ModuleType.Page, pageModules);
-        // }
+        const identifiedTypes = await this.identifyTypes<Page>(ModuleType.Page, pageTraits.getValue(), pageModules);
+        if (identifiedTypes.isFailure) {
+            return Result.fail(
+                `this.identifyTypes(): ${identifiedTypes.errorTitle}`,
+                identifiedTypes.errorDescription!
+            )
+        } else {
+            this._memory.putModuleMemories(ModuleType.Page, pageModules);
+        }
 
-        // Debug.log(`All Pages types were declared.`);
-        
+        Debug.log(`Types in all pages declared.`);
 
         // Debug.push("All type declarations within the page:")
         // count = 0;

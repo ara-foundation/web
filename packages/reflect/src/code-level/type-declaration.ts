@@ -137,13 +137,12 @@ export class TypeDeclaration extends TsNode {
             }
     
             const syntaxList = openingClause.getNextSibling();
-            Debug.log(`Check is next of generic literal is syntax list? ${syntaxList?.getText()}`);
             if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
                 return false;
             }
-            
+  
             const closingClause = syntaxList.getNextSibling();
-            if (closingClause === undefined || TsNode.isKeyword(closingClause, ">")) {
+            if (closingClause === undefined || !TsNode.isKeyword(closingClause, ">")) {
                 return false;
             }
             
@@ -179,7 +178,7 @@ export class TypeDeclaration extends TsNode {
                     }
                     const identifiedData = this.identifyGenericDeclaration(typeAstNode);
                     if (identifiedData.isFailure) {
-                        return Result.fail(`identifyGenericDeclaration(genericNode: '${typeAstNode.getText()}'): ${identifiedData}`, identifiedData.errorDescription!)
+                        return Result.fail(`identifyGenericDeclaration(genericNode: '${typeAstNode.getText()}'): ${identifiedData.errorTitle}`, identifiedData.errorDescription!)
                     }
                     identifiedNode.putMemoryData(identifiedData.getValue());
                 }
@@ -189,18 +188,18 @@ export class TypeDeclaration extends TsNode {
             else if (!TypeValueTraits.isTypeLiteral(typeChild)) {
                 const err = Debug.error(
                     `Unsupported type declaration's node, expected TypeLiteralNode for '${typeChild.getText()}' expression`,
-                    `Update the typeDeclarationToAstIdentifiers() function`,
+                    `Update the getAstNode() function`,
                     typeChild
                 )
                 return Result.fail(err)
             }
 
-            // Debug.push(`typeLiteralAstNodeToTypeDeclaration()`, {typeLiteral: typeChild.tsNode.getText()})
+            // Debug.push(`identifyTypeLiteral()`, {typeLiteral: typeChild.tsNode.getText()})
             const identifiedTypeDeclaration = TypeValueTraits.identifyTypeLiteral(typeChild)
             // Debug.pop()
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
-                    `typeLiteralAstNodeToTypeDeclaration(typeLiteral: '${typeChild.getText()}'): ${identifiedTypeDeclaration.errorTitle}`,
+                    `identifyTypeLiteral(typeLiteral: '${typeChild.getText()}'): ${identifiedTypeDeclaration.errorTitle}`,
                     identifiedTypeDeclaration.errorDescription!
                 )
             }
