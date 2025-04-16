@@ -1,7 +1,8 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
+import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidater } from "../code-level/ast-node.js";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+
 
 export abstract class AstIdentifierMemory {
     private _identifiers: AstIdentifiers = {};
@@ -35,6 +36,13 @@ export abstract class AstIdentifierMemory {
         return node;
     }
 
+    /**Returns the AstNode from memory by given identifier.
+     * 
+     Adviced to call this method, rather than directly fetching data identifier using this._identifiers.
+
+     Because this method will fetch the referenced ara link.
+     Otherwise you have to check that this identifier is not an alias of another identifier.
+    */
     public identifierByName = (identifier: string): AstNode|undefined => {
         if (this._identifiers[identifier] === undefined) {
             return undefined;
@@ -60,21 +68,32 @@ export abstract class AstIdentifierMemory {
         return undefined;
     }
 
-    public getIdentifiers = (filter?: (arg0: AstNode) => boolean): AstIdentifiers => {
+    public getIdentifiers = (filters?: AstNodeValidater[]): AstIdentifiers => {
         const identifiers: AstIdentifiers = {};
         const identifierKeys = Object.keys(this._identifiers);
 
         for (let _identifier of identifierKeys) {
             const node = this.identifierByName(_identifier)
+            
             if (node === undefined) {
                 continue;
             }
 
-            if (filter !== undefined && !filter(node)) {
+            if (filters === undefined || filters.length === 0) {
+                continue;
+            }
+            let passedFilters = true;
+            for (let filterIteration = 0; filterIteration < filters.length; filterIteration++) {
+                passedFilters = (filters[filterIteration])(node)
+                if (!passedFilters) {
+                    break;
+                }
+            }
+            if (!passedFilters) {
                 continue;
             }
 
-            identifiers[_identifier] = node;
+            identifiers[_identifier] = node!;
         }
 
         return identifiers;

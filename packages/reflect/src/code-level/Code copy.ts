@@ -43,7 +43,7 @@ import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ModuleType } from "../module.js";
-import type { Memory } from "../memory/Memory.js";
+import type { ProjectMemory } from "../memory/ProjectMemory.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -94,7 +94,7 @@ export class Code {
     public getImportIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         for (let child of this.ast.getChildren()) {
-            const importDeclarations = AstNode.fromTsNode(child).getChildrenByTsNode([AstNode.isImportDeclaration])
+            const importDeclarations = AstNode.fromTsNode(child).getChildrenByTsNode([AstNode.tsNodeIsImportDeclaration])
 
             for (let importDeclaration of importDeclarations) {
                 // Debug.push(`importDeclarationToAstIdentifiers()`, {'astImport': subChild.getText()})
@@ -113,7 +113,7 @@ export class Code {
         return Result.ok(identifiers);
     }
 
-    private lintImportedIdentifiers = async (identifiers: AstIdentifiers, memory: Memory): Promise<Result<AstIdentifiers>> => {
+    private lintImportedIdentifiers = async (identifiers: AstIdentifiers, memory: ProjectMemory): Promise<Result<AstIdentifiers>> => {
         for (let identifier in identifiers) {
             const node = identifiers[identifier];
 
@@ -560,41 +560,6 @@ export class Code {
         return Result.ok()
     }
 
-    public lintDependencies = async <T>(moduleType: ModuleType, modulePath: string, memories: Memory): Promise<Result<undefined>> => {
-        const memory = memories.getModuleMemory<T>(moduleType, modulePath);
-        if (memory === undefined) {
-            return Result.fail(
-                `Module not found`,
-                `The memory doesn't have the '${modulePath}' module of '${moduleType}' type`
-            )
-        }
-        const importIdentifiers  = memory.getIdentifiers(isImportedNode)
-
-        const importIdentifiersCount = Object.keys(importIdentifiers).length;
-        Debug.log(`The import declarations, counted ${importIdentifiersCount} imports`)
-        if (importIdentifiersCount == 0) {
-            return Result.ok(undefined);
-        }
-            
-        Debug.push(`this.lintImportedIdentifiers()`, {identifiers: `${importIdentifiersCount} imports`})
-        const lintedIdentifiers = await this.lintImportedIdentifiers(importIdentifiers, memories);
-        Debug.pop();
-        if (lintedIdentifiers.isFailure) {
-            const err = Debug.error(
-                `couldn't lint the identifiers: ${lintedIdentifiers.errorTitle}`,
-                lintedIdentifiers.errorDescription!,
-                importIdentifiers,
-            )
-            return Result.fail(err)
-        }
-
-        memory.addIdentifiers(lintedIdentifiers.getValue())
-        Debug.log(`The import declarations were defined, memory has '${memory.identifiersCount()}' identifiers`)
-
-        memories.putModuleMemory(moduleType, modulePath, memory);
-
-        return Result.ok(undefined);
-    }
 
 
     private identifyMemory = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
@@ -976,7 +941,7 @@ export class Code {
      * @limitation If the type is imported by alias using the 'as' keyword, then it will treat it as new Type.
      * @returns 
      */
-    private identifyImportedIdentifier = async(identifiedNode: AstNode, memory: Memory): Promise<Result<AstNode>> => {
+    private identifyImportedIdentifier = async(identifiedNode: AstNode, memory: ProjectMemory): Promise<Result<AstNode>> => {
         if (identifiedNode.identifier === undefined) {
             return Result.fail(
                 `The identifier property is missing`,
@@ -1602,7 +1567,7 @@ export class Code {
      * @param {string|undefined} identifier that holds the expression
      * @param {ValueType|undefined} data default value that it must override
      * @param {Node} exp node
-     * @param {Memory} memory with the defined identifiers
+     * @param {ProjectMemory} memory with the defined identifiers
      * @param {ValueTypeString|any|undefined} dataType Data Type or a sample data
      * @returns 
      */

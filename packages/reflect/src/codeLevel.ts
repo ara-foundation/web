@@ -604,33 +604,6 @@ export class Code {
         return Result.ok(memory);
     }
 
-    public lintDependencies = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
-        const importIdentifiers  = memory.getIdentifiers(isImportedNode)
-
-        const importIdentifiersCount = Object.keys(importIdentifiers).length;
-        Debug.log(`The import declarations, counted ${importIdentifiersCount} imports`)
-        if (importIdentifiersCount == 0) {
-            return Result.ok(memory);
-        }
-            
-        Debug.push(`this.lintImportedIdentifiers()`, {identifiers: `${importIdentifiersCount} imports`})
-        const lintedIdentifiers = await this.lintImportedIdentifiers(importIdentifiers);
-        Debug.pop();
-        if (lintedIdentifiers.isFailure) {
-            const err = Debug.error(
-                `couldn't lint the identifiers: ${lintedIdentifiers.errorTitle}`,
-                lintedIdentifiers.errorDescription!,
-                importIdentifiers,
-            )
-            return Result.fail(err)
-        }
-
-        memory.addIdentifiers(lintedIdentifiers.getValue())
-        Debug.log(`The import declarations were defined, memory has '${memory.identifiersCount()}' identifiers`)
-
-        return Result.ok(memory);
-    }
-
 
     private identifyMemory = async <T>(memory: ModuleMemory<T>): Promise<Result<ModuleMemory<T>>> => {
         // To make it variable assignment, make sure we track ExpressionStatements and BinaryExpressions

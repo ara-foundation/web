@@ -17,7 +17,7 @@ export type IdentifiedModuleMemory<T> = {
 }
 
 //  Component -> Ceo.tsx -> memory of Ceo.tsx
-export class Memory {
+export class ProjectMemory {
     private _memories: ModuleMemories = {};
 
     public get memories(): ModuleMemories {
