@@ -166,7 +166,6 @@ export class ImportDeclaration extends TsNode {
         let identifiers: AstIdentifiers = {};
         // Maybe a component is actually defined outside, so its in the imports?
         const namedImports = this.getNamedImports();
-        Debug.log(`There are ${namedImports.length} named imports found`);
         if (namedImports.length === 0) {
             return Result.ok(identifiers)
         }
@@ -175,12 +174,10 @@ export class ImportDeclaration extends TsNode {
             let nodeType = AstNodeType.Object;
             const importClauseChildren = namedImport.getChildren([], [TsNode.isNonImportant])
             
-            Debug.log(`Get the named import '${namedImport.getText()}' identifiers from ${importClauseChildren.length} children`)
-            Debug.push(`NamedImport.getIdentifiers()`, {nodeType, moduleLink: this._moduleLink!.toString(), namedImports: importClauseChildren.length.toString() + " elements"});
+            // Debug.log(`Get the named import '${namedImport.getText()}' identifiers from ${importClauseChildren.length} children`)
+            // Debug.push(`NamedImport.getIdentifiers()`, {nodeType, moduleLink: this._moduleLink!.toString(), namedImports: importClauseChildren.length.toString() + " elements"});
             const namedIdentifiers = NamedImport.getIdentifiers(nodeType, this._moduleLink!, importClauseChildren);
-            Debug.pop();
-            Debug.log(`The named imports identified:`);
-            Debug.log(namedIdentifiers)
+            // Debug.pop();
             if (namedIdentifiers.isFailure) {
                 return Result.fail(
                     `NamedImport.getIdentifiers('').getIdentifiers(nodeType: '${nodeType}', moduleLink: '${this._moduleLink!.toString()}'): ${namedIdentifiers.errorTitle}`,
@@ -231,11 +228,9 @@ export class ImportDeclaration extends TsNode {
             identifiers[importIdentifier.getValue()!.identifier!] = importIdentifier.getValue()!;
         }
 
-        Debug.push(`this.identifyNamedImports()`)
+        // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();
-        Debug.pop();
-        Debug.log(`The named imports identified:`);
-        Debug.log(namedImportIdentifiers)
+        // Debug.pop();
         if (namedImportIdentifiers.isFailure) {
                 return Result.fail(
                     `this.identifyNamedImports(tsNode='${this.getText()}', importPath='${this._moduleLink.toString()}'): ${namedImportIdentifiers.errorTitle}`,

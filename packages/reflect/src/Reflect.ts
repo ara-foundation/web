@@ -470,8 +470,6 @@ export class Reflect {
 
             const importIdentifiersCount = Object.keys(importIdentifiers.getValue()).length;
             if (importIdentifiersCount > 0) {
-                Debug.log(`Import Identifiers in reflect ${modulePath} has ${importIdentifiersCount}:`)
-                Debug.log(importIdentifiers)
                 pageMemories[modulePath].addIdentifiers(importIdentifiers.getValue());
             } else {
                 Debug.log(`0 imports were identified :( for ${modulePath} page`);
