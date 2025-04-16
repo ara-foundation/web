@@ -227,18 +227,16 @@ export class Reflect {
         }
 
         // let count = 0;
-        // Debug.push("Identified nodes:")
-        // for (let moduleType in this._memory.memories) {
-        //     const modules = this._memory.memories[moduleType as ModuleType];
+        // Debug.push("Identified nodes")
+        //     const modules = this._memory.memories[ModuleType.Page];
         //     for (let modulePath in modules) {
         //         let identifiers = modules[modulePath].getIdentifiers();
         //         for (let identifier in identifiers) {
         //             count++;
-        //             Debug.log(`${count}): Module Type '${moduleType}', \n\t'${modulePath}' -> '${identifier}' node identified`)
+        //             Debug.log(`${count}): Module Type '${ModuleType.Page}', \n\t'${modulePath}' -> '${identifier}' node identified`)
         //             Debug.log(identifiers[identifier])
         //         }
         //     }
-        // }
         // Debug.pop();
         
         //---------------------------------------------------------------

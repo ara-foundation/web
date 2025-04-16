@@ -120,6 +120,7 @@ export class Code {
 
         for (let tsNode of tsNodes) {
             const importDeclaration = ImportDeclaration.fromTsNode(tsNode);
+            
             if (importDeclaration.isFailure) {
                 return Result.fail(
                     `ImportDeclaration.fromTsNode(tsNode: '${tsNode.getText()}'): ${importDeclaration.errorTitle}`,
@@ -127,11 +128,7 @@ export class Code {
                 )
             }
         
-            // Debug.push(`importDeclaration()`, {'tsNode': tsNode.getText()})
-            // Debug.push(`getIdentifiers()`)
             const importIdentifiers = importDeclaration.getValue().getIdentifiers();
-            // Debug.pop();
-            // Debug.pop();
             if (importIdentifiers.isFailure) {
                 return Result.fail(
                     `importDeclaration.getIdentifiers('${tsNode.getText()}'): ${importIdentifiers.errorTitle}`,

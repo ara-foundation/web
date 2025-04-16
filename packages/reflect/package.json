@@ -31,5 +31,8 @@
       "types": "./src/fileLevel.ts",
       "default": "./src/fileLevel.js"
     }
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

@@ -74,12 +74,12 @@ export abstract class AstIdentifierMemory {
 
         for (let _identifier of identifierKeys) {
             const node = this.identifierByName(_identifier)
-            
             if (node === undefined) {
                 continue;
             }
 
             if (filters === undefined || filters.length === 0) {
+                identifiers[_identifier] = node!;
                 continue;
             }
             let passedFilters = true;
