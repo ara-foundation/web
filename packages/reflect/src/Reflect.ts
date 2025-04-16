@@ -233,6 +233,7 @@ export class Reflect {
         //         let identifiers = modules[modulePath].getIdentifiers();
         //         for (let identifier in identifiers) {
         //             count++;
+        //             if (identifier !== "AraWebLayout") continue;
         //             Debug.log(`${count}): Module Type '${ModuleType.Page}', \n\t'${modulePath}' -> '${identifier}' node identified`)
         //             Debug.log(identifiers[identifier])
         //         }
@@ -284,15 +285,15 @@ export class Reflect {
         //
         //---------------------------------------------------------------
         
-        // // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
-        // const importsLinted = await this.lintImports<Page>(ModuleType.Page, pageTraits.getValue());
-        // // Debug.pop()
-        // if (importsLinted.isFailure) {
-        //     return Result.fail(
-        //         `this.importsLinted(): ${importsLinted.errorTitle}`,
-        //         importsLinted.errorDescription!
-        //     )
-        // }
+        // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
+        const importsLinted = await this.lintImports<Page>(ModuleType.Page, pageTraits.getValue());
+        // Debug.pop()
+        if (importsLinted.isFailure) {
+            return Result.fail(
+                `this.importsLinted(): ${importsLinted.errorTitle}`,
+                importsLinted.errorDescription!
+            )
+        }
 
         // Debug.push("Linted import identifiers:")
         // count = 0;

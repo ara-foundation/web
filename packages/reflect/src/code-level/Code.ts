@@ -848,11 +848,9 @@ export class Code {
      * @param {string} identifier identififer within the code
      */
     private identifyIdentifierRecursively = async <T extends ValueType, Y>(identifier: string, memory: ModuleMemory<Y>): Promise<Result<AstNode>> => {
-        Debug.log(`Check identifier '${identifier}' value as variable first`)
         Debug.push(`identifyVariable()`, {identifier: identifier, update: 'false'})
         const res = await this.identifyVariable(identifier, memory, false);
         Debug.pop();
-        Debug.log(`The '${identifier}' identified value '${JSON.stringify(res)}'`)
         if (res.isSuccess) {
             Debug.log(`The '${identifier}' is a variable successfully parsed, return '${JSON.stringify(res.getValue() as T)}' successfully`)
             const ok = Result.ok({nodeType: AstNodeType.Variable, data: res.getValue() as T})
@@ -1002,9 +1000,9 @@ export class Code {
         for (let i = 0; i < syntaxListElements.length; i++) {
             const element = syntaxListElements[i];
             
-            Debug.push(`identifyValueType()`, {exp: element.getText()})
+            // Debug.push(`identifyValueType()`, {exp: element.getText()})
             const childValueType = this.identifyValueType(element);
-            Debug.pop()
+            // Debug.pop()
             if (childValueType.isFailure) {
                 return Result.fail(
                     `syntaxList('${syntaxList.getText()}')/this.identifyValueType(child='${element.getText()}';i=${i}): ${childValueType.errorTitle}`,

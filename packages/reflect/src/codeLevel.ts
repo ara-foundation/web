@@ -141,9 +141,9 @@ export class Code {
         for (let identifier in identifiers) {
             const node = identifiers[identifier];
 
-            Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
+            // Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
             const identifiedValue = await this.identifyImportedIdentifier(node)
-            Debug.pop();
+            // Debug.pop();
 
             if (identifiedValue.isFailure) {
                 return Result.fail(
@@ -1005,20 +1005,17 @@ export class Code {
 
         const importPath = identifiedNode.importPath.resource as string;
 
-        Debug.push(`fileContentByModulePath()`, {modulePath: importPath})
+        // Debug.push(`fileContentByModulePath()`, {modulePath: importPath})
         const fileContentData = await fileContentByModulePath(importPath);
-        Debug.pop();
+        // Debug.pop();
         if (fileContentData.isFailure) {
             return Result.fail(
                 `fileContentByModulePath(importPath='${importPath}'): ${fileContentData.errorTitle}`,
                 fileContentData.errorDescription!
             )
         }
-        Debug.log(`Identified by module path '${importPath}': ${fileContentData.getValue() !== undefined}`)
 
         let data = await (fileContentData.getValue().fileContent.glob as any)[identifiedNode.identifier]
-        Debug.log(`Identified by module path '${importPath}': data at '${identifiedNode.identifier}':`)
-        Debug.log(data);
         identifiedNode.data = data;
         identifiedNode.importPath = undefined;
         if (typeof identifiedNode.data === "function") {

@@ -128,7 +128,8 @@ export class ImportDeclaration extends TsNode {
 
         let identifier: string|undefined = undefined;
 
-        for (let tsNode of children) {
+        for (let i = 0; i < children.length; i++) {
+            const tsNode = children[i];
             if (ImportDeclaration.isImportClause(tsNode)) {
                 const identifiers = tsNode.getChildren([TsNode.isIdentifier])
                 if (identifiers.length !== 0) {
@@ -138,9 +139,11 @@ export class ImportDeclaration extends TsNode {
                     if (typeKeywords.length > 0) {
                         nodeType = AstNodeType.Type;
                     }
+                    break;
                 }
             } else if (TsNode.isIdentifier(tsNode)) {
                 identifier = tsNode.getText();
+                break;
             } else if (TsNode.isTypeKeyword(tsNode)) {
                 nodeType = AstNodeType.Type;
             } else {
@@ -233,19 +236,8 @@ export class ImportDeclaration extends TsNode {
             }
         }
 
-        let importIdentifier = this.identifyImportDefaultIdentifier();
-        if (importIdentifier.isFailure) {
-            return Result.fail(
-                `this.identifyImportDefaultIdentifier('${this.getText()}'): ${importIdentifier.errorTitle}`,
-                importIdentifier.errorDescription!
-            )
-        } else if (importIdentifier.getValue() !== undefined) {
-            identifiers[importIdentifier.getValue()!.identifier!] = importIdentifier.getValue()!;
-        }
-
         // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();
-        
         // Debug.pop();
         if (namedImportIdentifiers.isFailure) {
                 return Result.fail(
@@ -255,6 +247,17 @@ export class ImportDeclaration extends TsNode {
         }
 
         identifiers = {...identifiers, ...namedImportIdentifiers.getValue()};
+
+        let importIdentifier = this.identifyImportDefaultIdentifier();
+        
+        if (importIdentifier.isFailure) {
+            return Result.fail(
+                `this.identifyImportDefaultIdentifier('${this.getText()}'): ${importIdentifier.errorTitle}`,
+                importIdentifier.errorDescription!
+            )
+        } else if (importIdentifier.getValue() !== undefined) {
+            identifiers[importIdentifier.getValue()!.identifier!] = importIdentifier.getValue()!;
+        }
         
         return Result.ok(identifiers);
     }
