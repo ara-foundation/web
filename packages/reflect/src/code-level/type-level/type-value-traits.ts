@@ -29,6 +29,8 @@ type PossibleTypeValue =
  * TODO: Move the parts of linting here too.
  */
 export class TypeValueTraits {
+    public static readonly ERR_INVALID_INTERSECTION = `TypeValueTraits.Invalid_intersection`
+
     /**
      * Checks whether the data is literal such as a number, string or a boolean.
      * @param data to check
@@ -247,7 +249,7 @@ export class TypeValueTraits {
             
             if (!this.isTypeDeclaration(identifiedValue.getValue()) && !(identifiedValue.getValue() instanceof AraLink)) {
                 return Result.fail(
-                    `Intersect type ${intersectedIndex}/${children.length-1}: invalid intersection`,
+                    `Intersect type ${intersectedIndex}/${children.length-1}: ${this.ERR_INVALID_INTERSECTION}`,
                     `Only objects such as literals or references could be as intersection, not '${identifiedValue.getValue()}'`
                 )
             }
