@@ -48,7 +48,7 @@ import {
     type EnumMembers 
 } from "./ast-node-data.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TypeDeclaration } from "./type-declaration.js";
@@ -212,25 +212,26 @@ export class Code {
         const localTypeFilters = [
             AstNode.isDefinedInLocal, 
             AstNode.isTypeDeclaration,
-            AstNode.isDataNotEmpty,
             EnabledNodejsModules.isNonBuiltInIdentifier,
         ]
         const identifiers  = memory.getIdentifiers(localTypeFilters)
 
         const importIdentifiersCount = Object.keys(identifiers).length;
         if (importIdentifiersCount == 0) {
-            return Result.ok(identifiers);
+            return Result.ok(memory.getIdentifiers());
         }
         
         const moduleTypeFilters = [
             AstNode.isDefinedInLocal,
             AstNode.isTypeDeclaration,
-            AstNode.isDataNotEmpty
         ]
-
 
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
+            if (!(node instanceof AraLink) && typeof (node as AstNode).data === "string") {
+                node.dataType = (node as AstNode).data as ValueTypeString;
+                continue;
+            }
             const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier])
             // Debug.push(`TypeDeclaration.lintType()`, {node: identifier})
             const lintedNode = TypeDeclaration.lintType(node, [], moduleIdentifiers, projectMemory);
