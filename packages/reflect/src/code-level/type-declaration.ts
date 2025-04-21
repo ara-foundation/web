@@ -28,7 +28,7 @@ import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { MemoryLevel } from "../memory/memory-level.js";
 import { TypeRef } from "./type-level/type-ref.js";
 
-type TypedData = Pick<AstNode, "data" | "dataType">
+export type TypedData = Pick<AstNode, "data" | "dataType">
 
 export class TypeDeclaration extends TsNode {
     protected _tsNode: TypeAliasDeclaration;

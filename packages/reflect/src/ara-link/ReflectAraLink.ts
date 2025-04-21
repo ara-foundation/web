@@ -21,8 +21,8 @@ export class ReflectAraLink {
         return araLink;
     }
 
-    public static linkToExpression = <T>(identifier: string, expression: T): AraLink<T> => {
-        const araLink = new AraLink<T>(ReflectProtocol, expression, ExpressionSlugs, {'identifier': identifier}) 
+    public static linkToExpression = <T>(expression: T): AraLink<T> => {
+        const araLink = new AraLink<T>(ReflectProtocol, expression, ExpressionSlugs) 
         return araLink;  
     }
 

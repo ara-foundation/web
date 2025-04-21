@@ -7,6 +7,7 @@ import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNodeType, AstNode, type AstIdentifiers } from "./ast-node.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
+import { TsNode } from "./ts-node.js";
 
 const identifyVariableDeclarationList = (varDeclarationList: VariableDeclarationList, identifierNode: AstNode, memory: ProjectMemory): Result<AstIdentifiers> => {
     let identifiers: AstIdentifiers = {};
@@ -119,10 +120,10 @@ const identifyVariableDeclarationList = (varDeclarationList: VariableDeclaration
                     const typeRefAraLink = ReflectAraLink.linkToIdentifier(typeRefIdentifier.getText());
                     identifierNode.dataType = typeRefAraLink;
                 }
-            } else if (AstNode.tsNodeIsKeyword(child, "=")) {
+            } else if (TsNode.isKeyword(child, "=")) {
                 j++;
                 child = varDeclaration.getChildAtIndex(j);
-                const expressionRefAraLink = ReflectAraLink.linkToExpression(identifier, child);
+                const expressionRefAraLink = ReflectAraLink.linkToExpression(child);
                 
                 identifierNode.data = expressionRefAraLink;
             } else {

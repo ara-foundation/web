@@ -9,6 +9,7 @@ export enum AstNodeType {
     Function = "function",
     Class = "class",
     Object = "object",
+    Property = "property",
     Type = "type",
     Array= "array",
     Literal = "literal",

@@ -49,5 +49,5 @@ export const identifyAttribute = async <T>(uiContent: UiContent, attr: Attribute
         )
     }
 
-    return Result.ok(ReflectAraLink.linkToExpression(`attr_${attr.value}`, attr.value));
+    return Result.ok(ReflectAraLink.linkToExpression(attr.value));
 }

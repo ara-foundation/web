@@ -34,7 +34,7 @@ export class VariableStatement extends TsNode {
         const astNodes = varStatement.identifyAstNodes();
         if (astNodes.isFailure) {
             return Result.fail(
-                `VariableStatement('${tsNode.getText()}').getAstNodes(): ${astNodes.errorTitle}`,
+                `varStatement.identifyAstNodes(): ${astNodes.errorTitle}`,
                 astNodes.errorDescription!
             )
         }
@@ -125,22 +125,16 @@ export class VariableStatement extends TsNode {
                     return Result.fail(err)
                 }
 
-                const astNode = varDeclaration.getValue().getAstNode();
+                const astNodes = varDeclaration.getValue().getAstIdentifiers();
 
-                if (astNode.isFailure) {
+                if (astNodes.isFailure) {
                     return Result.fail(
-                        `varDeclaration('${varDeclaration.getValue().getText()}').getAstNode(): ${astNode.errorTitle}`,
-                        astNode.errorDescription!
+                        `varDeclaration('${varDeclaration.getValue().getText()}').getAstIdentifiers(): ${astNodes.errorTitle}`,
+                        astNodes.errorDescription!
                     )
                 }
         
-                if (astNode.getValue().identifier === undefined) {
-                    return Result.fail(
-                        `varDeclaration('${varDeclaration.getValue().getText()}').getAstNode(): identifier is undefined`,
-                        `Update the VariableDeclaration.getAstNode() to detect the identifier correctly`
-                    )
-                }
-                identifiers[astNode.getValue().identifier!] = astNode.getValue();
+                identifiers = {...identifiers, ...astNodes.getValue()}
             }
         }
     

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Code } from "../code-level/Code.js";
 import { type Page } from "@ara-web/ts-enhancement";
-import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
+import { AstNode } from "../code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import { ModuleType } from "../module.js";

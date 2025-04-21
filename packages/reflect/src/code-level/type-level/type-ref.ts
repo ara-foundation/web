@@ -8,10 +8,10 @@
 import { TypeReferenceNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Result, Debug, type ObjectLikeKeyValue } from "@ara-web/ts-enhancement";
-import { type ValueType } from "../ast-node.js";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode } from "../ts-node.js";
 import { TypeValueTraits } from "./type-value-traits.js";
+import type { ValueType } from "../ast-node-data.js";
 
 export class TypeRef extends TsNode {
     public static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
