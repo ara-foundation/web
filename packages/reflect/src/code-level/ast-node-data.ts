@@ -1,5 +1,4 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Debug } from "@ara-web/ts-enhancement";
 
 export type LiteralType = string | number | boolean;
 
@@ -13,6 +12,7 @@ export enum ValueTypeString {
     object = "object",
     property = "property",
     boolean = "boolean",
+    undefined = "undefined"
 }
 
 export interface TypeObjectInterface {

@@ -138,10 +138,12 @@ export class TypeValueTraits {
             return Result.ok(ValueTypeString.boolean);
         } else if (expValue === "object") {
             return Result.ok(ValueTypeString.object);
+        } else if (expValue === "undefined") {
+            return Result.ok(ValueTypeString.undefined);
         } else {
             const err = Debug.error(
                 `The '${expValue}' expression is not supported by Ara Web`,
-                `update identifyExpression(memory)`,
+                `update TypeValueTraits.identifyExpression()`,
                 expression
             )
             return Result.fail(err)

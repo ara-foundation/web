@@ -138,7 +138,7 @@ export class TypeRef extends TsNode {
             const identifiedGenericValue = this.identifyGenericRefValue(typeRefAraLink);
             if (identifiedGenericValue.isFailure) {
                 return Result.fail(
-                    `this.identifyExpression(expression: '${this.getText()}'): ${identifiedGenericValue.errorTitle}`,
+                    `this.identifyGenericRefValue(): ${identifiedGenericValue.errorTitle}`,
                     identifiedGenericValue.errorDescription!
                 )
             } 
