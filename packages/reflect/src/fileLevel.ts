@@ -12,7 +12,7 @@ import PathModule from "node:path"
 import { identifyModuleType, ModuleType, trimPath } from "./module.js";
 import { getScriptByPath } from "./script.js";
 import { Result, Debug } from "@ara-web/ts-enhancement";
-import { getNodejsModuleByPath } from "./enabledNodejsModule.js";
+import { getNodejsModuleByPath } from "./enabled-nodejs-module.js";
 import type { ValueType } from "./code-level/ast-node.js";
 import type { AstroNode } from "@ara-web/component-engine";
 

@@ -39,13 +39,22 @@ import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
 import { callFuncInModule } from "../fileLevel.js";
 import { ImportDeclaration } from "./import-declaration.js";
 import { defineVariableDeclaration } from "./variable.js";
-import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers, AstNodeType, type TypeDeclaration as TypeDeclarationData, type EnumMembers } from "./ast-node.js";
+import { AstNode, type AstIdentifiers, AstNodeType } from "./ast-node.js";
+import { 
+    ValueTypeString, 
+    type ValueType, 
+    type IdentifiedNodeDataType, 
+    type TypeDeclaration as TypeDeclarationData, 
+    type EnumMembers 
+} from "./ast-node-data.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TypeDeclaration } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
+import { AstIdentifierMemory } from "../memory/AstIdentifierMemory.js";
+import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -79,7 +88,7 @@ export class Code {
      * @param filters
      * @returns 
      */
-    private getTsNodes = (filters?: TsNodeValidator[]): TsNode[] => {
+    public getTsNodes = (filters?: TsNodeValidator[]): TsNode[] => {
         const nodes: TsNode[] = [];
         for (let child of this._ast.getChildren()) {
             const children = new TsNode(child).getChildren(filters);
@@ -88,7 +97,6 @@ export class Code {
         }
 
         return nodes;
-    
     }
 
     /**
@@ -200,85 +208,41 @@ export class Code {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
-    public getLintedTypeIdentifiers = async <T>(memory: ModuleMemory<T>, memories: ProjectMemory): Promise<Result<AstIdentifiers>> => {
+    public getLintedTypeIdentifiers = async <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<AstIdentifiers>> => {
         const localTypeFilters = [
             AstNode.isDefinedInLocal, 
             AstNode.isTypeDeclaration,
-            AstNode.dataIsNonEmptyObject
+            AstNode.isDataNotEmpty,
+            EnabledNodejsModules.isNonBuiltInIdentifier,
         ]
         const identifiers  = memory.getIdentifiers(localTypeFilters)
+
         const importIdentifiersCount = Object.keys(identifiers).length;
         if (importIdentifiersCount == 0) {
             return Result.ok(identifiers);
         }
+        
+        const moduleTypeFilters = [
+            AstNode.isDefinedInLocal,
+            AstNode.isTypeDeclaration,
+            AstNode.isDataNotEmpty
+        ]
 
-        return Result.fail(`Not implemented`, 'Make sure lintedTypeIdentifiers() works in Code class by ucommenting body')
-        // for (let identifier in identifiers) {
-        //     let node = identifiers[identifier];
-            
-        //     if (node instanceof AraLink) {
-        //         // const refNode = memory.identifierByAraLink(node)
-        //         // if (refNode === undefined) {
-        //         //     return Result.fail(
-        //         //         `'${identifier}' is alias, but it's referenced data not found`
-        //         //     )
-        //         // }
-        //         // node = refNode;
-        //         return Result.fail(`Not implemented`, `getLintedTypeIdentifiers() to support referenced types`);
-        //     }
-        //     Debug.log(`TODO change identifyImportedIdentifier()`);
-        //     Debug.log(`The type identifier: '${identifier}' data:`);
-        //     if (node.memoryDataLength() > 0) {
-        //         Debug.log(`TODO The node has memory data, update them.`);
-        //         Debug.log(node)
-        //     }
-        //     const astNode = node as AstNode;
 
-        //     for (let typeProperty in astNode.data!) {
-        //         if (data[typeProperty] instanceof AraLink) {
-        //             if (!ReflectAraLink.isIdentifierLink(data[typeProperty] as AraLink<string>)) {
-        //                 return Result.fail(
-        //                     `isAraIdentifierLink(araLink='${JSON.stringify(data[typeProperty])}') is not a link to identifier`,
-        //                     `Only support the ara identifiers for now, update the lintTypeDeclarations()`
-        //                 )
-        //             }
-
-        //             const typeNode = memory.identifierByAraLink(data[typeProperty] as AraLink<string>);
-        //             if (typeNode === undefined) {
-        //                 return Result.fail(
-        //                     `identifierByAraLink(araLink='${JSON.stringify(data[typeProperty])}') is not in the AST memory`,
-        //                     `Only support the ara identifiers for now, update the lintTypeDeclarations()`
-        //                 ) 
-        //             }
-
-        //             data[typeProperty] = typeNode.data!;
-        //     }
-        //     }
-
-        //     /// OLD COde taken from the linting import declarations
-
-        //     // Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
-        //     const identifiedValue = await this.identifyImportedIdentifier(node, memories)
-        //     // Debug.pop();
-        //     if (identifiedValue.isFailure) {
-        //         return Result.fail(
-        //             `identifyImportedIdentifier(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
-        //             identifiedValue.errorDescription!
-        //         )
-        //     }
-        //     if (identifiedValue.getValue().data === undefined) {
-        //         const err = Debug.error(
-        //             `The import identifier '${identifier}' of '${node.nodeType}' node type data couldn't be identified`,
-        //             `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`,
-        //             {node, identifiedValue},
-        //         )
-        //         return Result.fail(err)
-        //     }
-            
-        //     identifiers[identifier] = identifiedValue.getValue();
-        // }
-
-        // return Result.ok(identifiers);
+        for (let identifier in identifiers) {
+            let node = identifiers[identifier];
+            const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier])
+            // Debug.push(`TypeDeclaration.lintType()`, {node: identifier})
+            const lintedNode = TypeDeclaration.lintType(node, [], moduleIdentifiers, projectMemory);
+            // Debug.pop()
+            if (lintedNode.isFailure) {
+                return Result.fail(
+                    `TypeDeclaration.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`,
+                    lintedNode.errorDescription!
+                )
+            }
+        }
+        return Result.ok(identifiers);
     }
 
     /**
@@ -299,11 +263,9 @@ export class Code {
                 )
             }
 
-            // Debug.push(`TypeDeclaration()`, {'typeDeclaration': typeDeclaration.getText()})
-            // Debug.push(`getAstNode()`)
+            Debug.push(`getAstNode()`)
             const identifiedTypeDeclaration = typeDeclaration.getValue().getAstNode();
-            // Debug.pop();
-            // Debug.pop();
+            Debug.pop();
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
                     `TypeDeclaration('${typeDeclaration.getValue().getText()}'): getAstNode(): ${identifiedTypeDeclaration.errorTitle}`,
@@ -312,6 +274,7 @@ export class Code {
             }
             identifiers[identifiedTypeDeclaration.getValue().identifier!] = identifiedTypeDeclaration.getValue();
         }
+            
         return Result.ok(identifiers);
     }
 

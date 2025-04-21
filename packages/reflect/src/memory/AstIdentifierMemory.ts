@@ -1,7 +1,8 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
-import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidater } from "../code-level/ast-node.js";
+import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
 import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { getBuiltInIdentifierNames } from "../enabled-nodejs-module.js";
 
 
 export abstract class AstIdentifierMemory {
@@ -68,7 +69,7 @@ export abstract class AstIdentifierMemory {
         return undefined;
     }
 
-    public getIdentifiers = (filters?: AstNodeValidater[]): AstIdentifiers => {
+    public getIdentifiers = (filters?: AstNodeValidator[], skippedIdentifiers?: string[]): AstIdentifiers => {
         const identifiers: AstIdentifiers = {};
         const identifierKeys = Object.keys(this._identifiers);
 
@@ -78,21 +79,28 @@ export abstract class AstIdentifierMemory {
                 continue;
             }
 
-            if (filters === undefined || filters.length === 0) {
+            if (skippedIdentifiers !== undefined && skippedIdentifiers.length > 0) {
+                if (skippedIdentifiers.includes(_identifier)) {
+                    continue;
+                }
+            }
+
+            if (filters !== undefined && filters.length > 0) {
+                let passedFilters = true;
+                for (let filterIteration = 0; filterIteration < filters.length; filterIteration++) {
+                    passedFilters = (filters[filterIteration])(node)
+                    if (!passedFilters) {
+                        break;
+                    }
+                }
+                if (!passedFilters) {
+                    continue;
+                }
                 identifiers[_identifier] = node!;
                 continue;
             }
-            let passedFilters = true;
-            for (let filterIteration = 0; filterIteration < filters.length; filterIteration++) {
-                passedFilters = (filters[filterIteration])(node)
-                if (!passedFilters) {
-                    break;
-                }
-            }
-            if (!passedFilters) {
-                continue;
-            }
 
+            
             identifiers[_identifier] = node!;
         }
 

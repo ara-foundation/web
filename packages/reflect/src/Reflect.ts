@@ -4,10 +4,12 @@ import { ModuleMemory } from "./memory/ModuleMemory.js";
 import { type UiContent } from "./ui-level/ui-content.js";
 import { fileContentToComponent } from "./component.js";
 import { globToUiContent } from "./ui-level/ui-content.js";
-import { identifyComponents, uiContentToPage } from "./ui-level/page-level.js";
+import { uiContentToPage } from "./ui-level/page-level.js";
 import { Code } from "./code-level/Code.js";
 import { ProjectMemory } from "./memory/ProjectMemory.js";
-import { AstNode, AstNodeType, type AstNodeValidater } from "./code-level/ast-node.js";
+import { EnabledNodejsModules } from "./enabled-nodejs-module.js";
+import { AstNode } from "./code-level/ast-node.js";
+import { IntersectedUnionType, UnionTypeDeclaration } from "./code-level/ast-node-data.js";
 
 type PageTraits = {
     page: Page,
@@ -111,6 +113,26 @@ export class Reflect {
     public putAutoGlobImporter = (importFunc?: (() => CategorizedModuleGlobs)) => {
         this._autoImportFunc = importFunc;
     }
+
+    private _pre = (): Result<undefined> => {
+        const globsIdentified = this.putGlobs();
+        if (globsIdentified.isFailure) {
+            return Result.fail(
+                `this.putGlobs(): ${globsIdentified.errorTitle}`,
+                globsIdentified.errorDescription!
+            )
+        }
+        
+        const builtInIdentified = this.postBuiltInIdentifiers();
+        if (builtInIdentified.isFailure) {
+            return Result.fail(
+                `this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`,
+                builtInIdentified.errorDescription!
+            )
+        }
+
+        return Result.ok();
+    }
     
     //****************************************************************
     // 
@@ -123,7 +145,13 @@ export class Reflect {
      * Components are not evaluated by internal structures.
      */
     public getComponents = async (): Promise<Result<Component[]>> => {
-        this.putGlobs();
+        const preparationResult = this._pre();
+        if (preparationResult.isFailure) {
+            return Result.fail(
+                `this._pre(): ${preparationResult.errorTitle}`,
+                preparationResult.errorDescription!
+            )
+        }
 
         const modules = this._memory.getModuleMemories<Component>(ModuleType.Component);
         if (modules === undefined) {
@@ -158,7 +186,14 @@ export class Reflect {
      * Returns the all the layout components
      */
     public getLayouts = async (): Promise<Result<Component[]>> => {
-        this.putGlobs();
+        const preparationResult = this._pre();
+        if (preparationResult.isFailure) {
+            return Result.fail(
+                `this._pre(): ${preparationResult.errorTitle}`,
+                preparationResult.errorDescription!
+            )
+        }
+
 
         const modules = this._memory.getModuleMemories<Component>(ModuleType.Layout);
         if (modules === undefined) {
@@ -194,13 +229,19 @@ export class Reflect {
      * @returns {Result<Page[]>}
      */
     public getPages = async (): Promise<Result<Page[]>> => {
-        this.putGlobs();
+        const preparationResult = this._pre();
+        if (preparationResult.isFailure) {
+            return Result.fail(
+                `this._pre(): ${preparationResult.errorTitle}`,
+                preparationResult.errorDescription!
+            )
+        }
 
         const pageModules = this._memory.getModuleMemories<Page>(ModuleType.Page);
         if (pageModules === undefined) {
             return Result.ok([])
         }
-
+        
         const pageTraits = await this.getPageTraits(pageModules)
         if (pageTraits.isFailure) {
             return Result.fail(
@@ -259,7 +300,7 @@ export class Reflect {
         Debug.log(`Types in all pages declared.`);
 
         // Debug.push("All type declarations within the page:")
-        // count = 0;
+        // let count = 0;
         // for (let moduleType in this._memory.memories) {
         //     if (moduleType !== ModuleType.Page) 
         //         continue;
@@ -315,15 +356,15 @@ export class Reflect {
         //
         //---------------------------------------------------------------
         
-        // // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
-        // const typesLinted = await this.lintTypes<Page>(ModuleType.Page, pageTraits.getValue());
-        // // Debug.pop()
-        // if (typesLinted.isFailure) {
-        //     return Result.fail(
-        //         `this.typesLinted(): ${typesLinted.errorTitle}`,
-        //         typesLinted.errorDescription!
-        //     )
-        // }
+        // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
+        const typesLinted = await this.lintTypes<Page>(ModuleType.Page, pageTraits.getValue());
+        // Debug.pop()
+        if (typesLinted.isFailure) {
+            return Result.fail(
+                `this.typesLinted(): ${typesLinted.errorTitle}`,
+                typesLinted.errorDescription!
+            )
+        }
         
         /**
          * Identify the elements by converting them into the Components of the web page.
@@ -444,6 +485,38 @@ export class Reflect {
     }
 
     //
+    // Adds the Array, Object and other classes, types that are available in the Environment
+    //
+    private postBuiltInIdentifiers = (): Result<undefined> => {
+        const identifiers = EnabledNodejsModules.getBuiltInIdentifiers();
+        if (identifiers.isFailure) {
+            return Result.fail(
+                `getBuiltInIdentifiers(): ${identifiers.errorTitle}`,
+                identifiers.errorDescription!
+            )
+        }
+
+        const importIdentifiersCount = Object.keys(identifiers.getValue()).length;
+        if (importIdentifiersCount === 0) {
+            return Result.ok(undefined);
+        }
+        
+        for (let moduleTypeStr in ModuleType) {
+            const moduleType = moduleTypeStr as keyof typeof ModuleType;
+            const moduleMemories = this._memory.getModuleMemories<unknown>(ModuleType[moduleType])
+            if (moduleMemories === undefined) {
+                continue;
+            }
+
+            for (let modulePath in moduleMemories) {
+                moduleMemories[modulePath].addIdentifiers(identifiers.getValue());
+            }
+        }
+
+        return Result.ok();
+    }
+
+    //
     // Import all data
     //
     private identifyImports = async (pageTraits: AllPageTraits, pageMemories: {[key: string]: ModuleMemory<Page>}): Promise<Result<undefined>> => {
@@ -501,14 +574,52 @@ export class Reflect {
             Debug.pop();
             if (depsIdentified.isFailure) {
                 return Result.fail(
-                    `code.getLintedImportIdentifiers(modulePath: '${modulePath}'): ${depsIdentified.errorTitle}`,
+                    `code.getLintedTypeIdentifiers(modulePath: '${modulePath}'): ${depsIdentified.errorTitle}`,
                     depsIdentified.errorDescription!
                 )
             }
-
+            
             const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
             if (importIdentifiersCount > 0) {
                 memory.addIdentifiers(depsIdentified.getValue());
+            }
+
+            Debug.log(`Linted data of '${modulePath}':`)
+            const memoryIdentifiers = memory.getIdentifiers([AstNode.isTypeDeclaration]);
+            for (let identifier in memoryIdentifiers) {
+                const data = (memoryIdentifiers[identifier] as AstNode).data
+                Debug.log(`The data of the '${identifier}' type:`);
+                Debug.log(data);
+                if (data instanceof IntersectedUnionType) {
+                    Debug.log(`'${identifier}' Intersected type:`);
+                    Debug.log(data)
+                    Debug.log(`'${identifier}' Union types memory`);
+                    Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
+                    Debug.log(`The union types:`);
+                    const unionData = data as IntersectedUnionType;
+                    for (let unionIndex = 0; unionIndex < unionData.unionLength; unionIndex++) {
+                        Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
+                        Debug.log(unionData.getUnion(unionIndex))
+                    }
+                    Debug.log(`Intersection's non union part:`);
+                    Debug.log(unionData.records)
+                } else if (data instanceof UnionTypeDeclaration) {
+                    Debug.log(`'${identifier}' Union type:`);
+                    Debug.log(data)
+                    Debug.log(`'${identifier}' Union types memory`);
+                    Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
+                    Debug.log(`The union types:`);
+                    const unionData = data as UnionTypeDeclaration;
+                    for (let unionIndex = 0; unionIndex < unionData.unionLength; unionIndex++) {
+                        Debug.log(`Union child: ${unionIndex}/${unionData.length - 1}:`);
+                        Debug.log(unionData.getUnion(unionIndex))
+                    }
+                } else {
+                    if (identifier === 'Generic') {
+                        Debug.log(`'${identifier}' Non union type data`);
+                        Debug.log(memoryIdentifiers[identifier])
+                    }
+                }
             }
         }
 
@@ -575,9 +686,9 @@ export class Reflect {
                 )
             }
 
-            // Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
-            const identifiers = contents[modulePath].code.getTypeIdentifiers(memory);
-            // Debug.pop();
+            Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
+            const identifiers = contents[modulePath].code.getTypeIdentifiers();
+            Debug.pop();
             if (identifiers.isFailure) {
                 return Result.fail(
                     `code.getTypeIdentifiers(): ${identifiers.errorTitle}`,

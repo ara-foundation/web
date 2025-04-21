@@ -11,10 +11,24 @@ import {
     TypeParameterDeclaration,
 } from "ts-morph";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { ValueTypeString, AstNode, AstNodeType } from "./ast-node.js";
+import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
+import { 
+    ValueTypeString, 
+    type ValueType, 
+    UnionTypeDeclaration, 
+    type IdentifiedNodeDataType, 
+    IntersectedUnionType,
+    TypeDeclaration as TypeDeclarationData
+} from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { TypeValueTraits } from "./type-level/type-value-traits.js";
+import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { MemoryLevel } from "../memory/memory-level.js";
+import { TypeRef } from "./type-level/type-ref.js";
 
+type TypedData = Pick<AstNode, "data" | "dataType">
 
 export class TypeDeclaration extends TsNode {
     protected _tsNode: TypeAliasDeclaration;
@@ -96,7 +110,7 @@ export class TypeDeclaration extends TsNode {
                 return Result.fail(`Failed to identify the parameter.`, `The param after 'extends' expected, but not given`)
             }
             const nextParamNode = nodes[paramCounter];
-            const nextParamValue = TypeValueTraits.identifyTypeValue(identifiedNode.identifier, nextParamNode);
+            const nextParamValue = TypeValueTraits.identifyTypeValue(nextParamNode);
             if (nextParamValue.isFailure) {
                 return Result.fail(
                     `identifyTypeValue(identifier: '${identifiedNode.identifier}', node: ${nextParamNode.getText()}): ${nextParamValue.errorTitle}`,
@@ -132,21 +146,21 @@ export class TypeDeclaration extends TsNode {
          * @returns 
      */
     public static isGenericOpeningClause = (openingClause: TsNode): boolean => {
-            if (openingClause.getText() !== "<") {
-                return false;
-            }
+        if (openingClause.getText() !== "<") {
+            return false;
+        }
     
-            const syntaxList = openingClause.getNextSibling();
-            if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
-                return false;
-            }
+        const syntaxList = openingClause.getNextSibling();
+        if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
+            return false;
+        }
   
-            const closingClause = syntaxList.getNextSibling();
-            if (closingClause === undefined || !TsNode.isKeyword(closingClause, ">")) {
+        const closingClause = syntaxList.getNextSibling();
+        if (closingClause === undefined || !TsNode.isKeyword(closingClause, ">")) {
                 return false;
-            }
+        }
             
-            return true;
+        return true;
     }
     
 
@@ -159,7 +173,7 @@ export class TypeDeclaration extends TsNode {
         let identifier: string = '';
 
         // Type declaration has 'type' keyword and '=' sign to skip.
-        const children = this.getChildren([], [TsNode.isTypeKeyword], ["="]);
+        const children = this.getChildren([], [TsNode.isTypeKeyword, TsNode.isNonImportant], ["="]);
         // Child = 0 is the keyword
         for (let i = 0; i < children.length; i++) {
             const typeChild = children[i];
@@ -184,26 +198,18 @@ export class TypeDeclaration extends TsNode {
                 }
                 i += AstNode.GenericNodeLength - 1;
                 continue;
-            }
-            else if (!TypeValueTraits.isTypeLiteral(typeChild)) {
-                const err = Debug.error(
-                    `Unsupported type declaration's node, expected TypeLiteralNode for '${typeChild.getText()}' expression`,
-                    `Update the getAstNode() function`,
-                    typeChild
-                )
-                return Result.fail(err)
-            }
-
-            // Debug.push(`identifyTypeLiteral()`, {typeLiteral: typeChild.tsNode.getText()})
-            const identifiedTypeDeclaration = TypeValueTraits.identifyTypeLiteral(typeChild)
-            // Debug.pop()
-            if (identifiedTypeDeclaration.isFailure) {
-                return Result.fail(
-                    `identifyTypeLiteral(typeLiteral: '${typeChild.getText()}'): ${identifiedTypeDeclaration.errorTitle}`,
-                    identifiedTypeDeclaration.errorDescription!
-                )
-            }
-            identifiedNode.data = identifiedTypeDeclaration.getValue();
+            } else {
+                const identified = TypeValueTraits.identifyTypeValue(typeChild);
+                if (identified.isFailure) {
+                    const err = Debug.error(
+                        `TypeValueTraits.identifyTypeValue(tsNode: '${typeChild.getText()}'): ${identified.errorTitle}`,
+                        identified.errorDescription!,
+                        typeChild
+                    )
+                    return Result.fail(err)
+                }
+                identifiedNode.data = identified.getValue();
+            }   
         }
 
         if (identifiedNode.identifier === undefined) {
@@ -213,5 +219,444 @@ export class TypeDeclaration extends TsNode {
         }
 
         return Result.ok(identifiedNode);
+    }
+
+    /**
+     * Data Type has: Memory, Page Memory, and Project Memory.
+     * We need to lint the data. The node has no scope memory yet.
+     * 
+     * First, we lint the memory itself if any.
+     * By passing: AstNode with empty Memory, Page Memory, and Project Memory
+     * 
+     * Then, we loop over the project data.
+     * For each project data, we need to get the scope by adding ast node memory to the local scope
+     * 
+     * @param node 
+     * @param pageIdentifiers 
+     * @param projectMemory 
+     * @returns 
+     */
+
+    public static lintAstNodeMemory = (
+        node: AstNode, 
+        localScope?: AstNode[],
+        pageIdentifiers?: AstIdentifiers, 
+        projectMemory?: ProjectMemory
+    ): Result<AstNode> => {
+        if (node.memoryDataLength() === 0) {
+            return Result.ok(node);
+        }
+
+        for (let i = 0; i < node.memoryDataLength(); i++) {
+            const memoryNode = node.getMemoryData(i);
+            if (memoryNode === undefined) {
+                node.postMemoryData(i);
+                continue;
+            }
+            
+            if (memoryNode?.identifier === undefined) {
+                return Result.fail(
+                    `The node '${node.identifier}' memory node has no identifier`,
+                    `Please update the identifyTypes() to fix it`
+                )
+            }
+                
+            let astNodeMemory = node.getAllMemoryData([memoryNode!.identifier!])
+            if (localScope !== undefined) {
+                astNodeMemory = [...astNodeMemory, ...localScope];
+            }
+
+            // Debug.push(`this.lintType()`, {node: memoryNode.identifier!});
+            const lintedMemoryNode = this.lintType(memoryNode, astNodeMemory, pageIdentifiers, projectMemory)
+            // Debug.pop();
+            if (lintedMemoryNode.isFailure) {
+                return Result.fail(
+                    `this.lintType(node: '${memoryNode.identifier}'): ${lintedMemoryNode.errorTitle}`,
+                    lintedMemoryNode.errorDescription!
+                )
+            }
+                
+            node.postMemoryData(i, lintedMemoryNode.getValue())
+        }
+
+        return Result.ok(node);
+    }
+
+    // If the AstNode.data is AraLink
+    private static lintAraLinkData = (
+        data: AraLink<string>, 
+        scopedMemory?: AstNode[], 
+        pageIdentifiers?: AstIdentifiers, 
+        projectMemory?: ProjectMemory
+    ): Result<TypedData> => {
+        if (!ReflectAraLink.isIdentifierLink(data as AraLink<string>)) {
+            return Result.fail(
+                `isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`,
+                `Only support the ara identifiers for now, update the lintTypeDeclarations()`
+            )
+        }
+    
+        const refIdentifier = data.resource as string;
+        const refNode = MemoryLevel.getIdentifier(data, scopedMemory, pageIdentifiers, projectMemory)
+        if (refNode === undefined) {
+            const err = Debug.error(
+                `The '${data.toString()} data reference to '${refIdentifier}' not found`,
+                `Referenced node not found in the memory level, please update the getIdentifier() or pass correct data`,
+                data
+            )
+
+            return Result.fail(err);
+        } else if (refNode.identifier === undefined) {
+            return Result.fail(
+                `The '${data.toString()}' data referenced '${refIdentifier}' missing any data`,
+                'Identifier of the referenced node is not set, please update memory.getIdentifier()'
+            )
+        }
+    
+        if (data.isPropertyExist(TypeRef.GENERIC_VALUES_LINK_PROPERTY)) {
+            if (!refNode.isGenericHandlerExist) {
+                return Result.fail(
+                    `refNode('${refNode.identifier}').isGenericHandlerExist: false`,
+                    `The ${data.toString()} has a generic value, but '${refNode.identifier}' doesn't have generic handler, please call putGenericHandler in refNode.`
+                )
+            }
+            
+            const genericValues = TypeRef.linkPropertyToGenericValues(data);
+            const handledRefNode = refNode.handleGeneric(genericValues)
+            if (handledRefNode.isFailure) {
+                return Result.fail(
+                    `refNode('${refNode.identifier}'): handleGeneric('[${genericValues.join(',')}]'): ${handledRefNode.errorTitle}`,
+                    handledRefNode.errorDescription!
+                )
+            }
+    
+            // Debug.push(`this.lintType()`)
+            const identifiedRefNode = this.lintType(handledRefNode.getValue(), scopedMemory, pageIdentifiers, projectMemory)
+            // Debug.pop();
+            if (identifiedRefNode.isFailure) {
+                return Result.fail(
+                    `refNode.handleGeneric(): this.lintType('${handledRefNode.getValue().identifier}'): ${identifiedRefNode.errorTitle}`,
+                    identifiedRefNode.errorDescription!
+                )
+            }
+
+            if (identifiedRefNode.getValue().data === undefined) {
+                return Result.fail(
+                    `refNode.handleGeneric(): this.lintType('${handledRefNode.getValue().identifier}'): data is empty after linting`,
+                    `Please update the TypeDeclaration() to retreive the data after linting a type`
+                )
+            }
+    
+            return Result.ok({data: identifiedRefNode.getValue().data!, dataType: identifiedRefNode.getValue().dataType})
+        }
+        
+        // Debug.push(`this.lintType()`, {node: refIdentifier})
+        const lintedAstNode = this.lintType(refNode, scopedMemory, pageIdentifiers, projectMemory);
+        // Debug.pop();
+        if (lintedAstNode.isFailure) {
+            return Result.fail(
+                `nonGenericLink: this.lintType('${refNode.identifier!}'): ${lintedAstNode.errorTitle}`,
+                lintedAstNode.errorDescription!
+            )
+        } else if (lintedAstNode.getValue().data === undefined) {
+            return Result.fail(
+                `The '${data.toString()}' data referenced '${refIdentifier}' data not found`, 
+                'Please update this.lintType()'
+            )
+        }
+        
+        return Result.ok({data: lintedAstNode.getValue().data!, dataType: lintedAstNode.getValue().dataType});
+    }
+
+    private static lintObjectData = (
+        objData: object, 
+        scopedMemory?: AstNode[], 
+        pageIdentifiers?: AstIdentifiers, 
+        projectMemory?: ProjectMemory
+    ): Result<TypedData> => {
+        if (Array.isArray(objData)) {
+            return Result.fail(
+                `The data is array`,
+                `Please call lintType instead lintObjectData()`
+            )
+        }
+        if (typeof objData !== "object") {
+            return Result.fail(
+                `Only object or literal types of value is supported by Ara Web`,
+                `Please update the lintType()`
+            )
+        }
+
+        for (let typeProperty in objData) {
+            const data = (objData as any)[typeProperty]
+
+            const identifiedData = this.lintTypeData(data, scopedMemory, pageIdentifiers, projectMemory);
+            if (identifiedData.isFailure) {
+                return Result.fail(
+                    `data['${typeProperty}']: this.lintTypeData('${data}'): ${identifiedData.errorTitle}`,
+                    identifiedData.errorDescription!
+                )
+            }
+            if (identifiedData.getValue().data === undefined) {
+                return Result.fail(
+                    `data['${typeProperty}']: this.lintTypeData('${data}'): data is undefined`,
+                    `The lintTypeData did not return data, please update TypeDeclaration()`
+                )
+            } 
+            (objData as any)[typeProperty] = identifiedData.getValue().data;
+        }
+
+        return Result.ok({data: objData, dataType: ValueTypeString.object});
+    }
+
+    private static lintTypeData = (
+        data: IdentifiedNodeDataType, 
+        scopedMemory?: AstNode[], 
+        pageIdentifiers?: AstIdentifiers, 
+        projectMemory?: ProjectMemory
+    ): Result<TypedData> => {
+        if (data instanceof AraLink) {
+            const identifiedData = this.lintAraLinkData(data as AraLink<string>, scopedMemory, pageIdentifiers, projectMemory);
+            if (identifiedData.isFailure) {
+                return Result.fail(
+                    `this.lintAraLinkData(data: '${data.toString()}'): ${identifiedData.errorTitle}`,
+                    identifiedData.errorDescription!
+                )
+            }
+    
+            return Result.ok(identifiedData.getValue())
+        } else if (["number", "boolean", "string"].includes(data as ValueTypeString)) {
+            return Result.ok({data: data as ValueTypeString, dataType: data as ValueTypeString})
+        } else if (["number", "boolean", "string"].includes(typeof data)) {
+            return Result.ok({data: data, dataType: (typeof data) as ValueTypeString})
+        } else if (Array.isArray(data)) {
+            const identifiedData: ValueType[] = [];
+            for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
+                const dataElement = data[dataIndex];
+                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                if (identifiedDataElement.isFailure) {
+                    return Result.fail(
+                        `Array.isArray(data): this.lintTypeData('${dataIndex}' element): ${identifiedDataElement.errorTitle}`,
+                        identifiedDataElement.errorDescription!
+                    )
+                } else if (identifiedDataElement.getValue().data === undefined) {
+                    return Result.fail(
+                        `Array.isArray(data): this.lintTypeData('${dataIndex}' element): data is empty`,
+                        `The element couldn't be identified`
+                    )
+                } else {
+                    identifiedData.push(identifiedDataElement.getValue().data!);
+                }
+            }
+
+            return Result.ok({data: identifiedData, dataType: ValueTypeString.array})
+        } else if (data instanceof IntersectedUnionType) {
+            const identifiedData = new IntersectedUnionType();
+
+            const araLinks = data.araLinks;
+            for (let araLinkIndex = 0; araLinkIndex < araLinks.length; araLinkIndex++) {
+                const dataElement = araLinks[araLinkIndex];
+
+                const identifiedLink = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                if (identifiedLink.isFailure) {
+                    return Result.fail(
+                        `intersect.araLinks: this.lintTypeData('${dataElement.toString()}'): ${identifiedLink.errorTitle}`,
+                        identifiedLink.errorDescription!
+                    )
+                } else if (identifiedLink.getValue().data === undefined) {
+                    return Result.fail(
+                        `intersect.araLinks: this.lintTypeData('${dataElement.toString()}'): data is empty`,
+                        `The element couldn't be identified`
+                    )
+                } else {
+                    if (identifiedLink.getValue().data instanceof UnionTypeDeclaration) {
+                        identifiedData.putUnions(identifiedLink.getValue().data as UnionTypeDeclaration);
+                    } else if (identifiedLink.getValue().data instanceof IntersectedUnionType) {
+                        identifiedData.putUnions((identifiedLink.getValue().data as IntersectedUnionType).unions)
+                        
+                        for (let key in (identifiedLink.getValue().data as IntersectedUnionType).records) {
+                            const record: Record<string, IdentifiedNodeDataType> = {
+                                [key]: (identifiedLink.getValue().data as IntersectedUnionType).records[key]
+                            }
+                            identifiedData.putOrPost(record)
+                        }
+                    } else if (identifiedLink.getValue().data instanceof TypeDeclarationData) {
+                        for (let key in (identifiedLink.getValue().data as TypeDeclarationData).records) {
+                            const record: Record<string, IdentifiedNodeDataType> = {
+                                [key]: (identifiedLink.getValue().data as TypeDeclarationData).records[key]
+                            }
+                            identifiedData.putOrPost(record)
+                        }
+                    }
+                }
+            }
+
+            // Intersect's keys
+            for (let key in data.records) {
+                const dataElement = data.records[key];
+                // Debug.push(`Intersected '${key}'`)
+                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                // Debug.pop();
+                if (identifiedDataElement.isFailure) {
+                    return Result.fail(
+                        `data as IntersectedUnionTypeDeclaration: this.lintTypeData('${key}' element): ${identifiedDataElement.errorTitle}`,
+                        identifiedDataElement.errorDescription!
+                    )
+                } else if (identifiedDataElement.getValue().data === undefined) {
+                    return Result.fail(
+                        `Array.isArray(data): this.lintTypeData('${key}' element): data is empty`,
+                        `The element couldn't be identified`
+                    )
+                } else {
+                    identifiedData.putOrPost({[key]: identifiedDataElement.getValue().data!});
+                }
+            }
+
+            // Intersect's unions
+            const identifiedUnions = this.lintTypeData(data.unions, scopedMemory, pageIdentifiers, projectMemory);
+            if (identifiedUnions.isFailure) {
+                return Result.fail(
+                    `data as UnionTypeDeclaration: this.lintTypeData(${identifiedUnions.errorTitle}`,
+                    identifiedUnions.errorDescription!
+                )
+            }
+
+            identifiedData.putUnions(identifiedUnions.getValue().data as UnionTypeDeclaration);
+
+            return Result.ok({data: identifiedData, dataType: ValueTypeString.object})
+        } else if (data instanceof UnionTypeDeclaration) {
+            const identifiedData = new UnionTypeDeclaration();
+
+            for (let unionIndex = 0; unionIndex < data.unionLength; unionIndex++) {
+                const dataElement = data.getUnion(unionIndex)!;
+                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                if (identifiedDataElement.isFailure) {
+                    return Result.fail(
+                        `data as UnionTypeDeclaration: this.lintTypeData('${unionIndex}' element): ${identifiedDataElement.errorTitle}`,
+                        identifiedDataElement.errorDescription!
+                    )
+                } else if (identifiedDataElement.getValue().data === undefined) {
+                    return Result.fail(
+                        `Array.isArray(data): this.lintTypeData('${unionIndex}' element): data is empty`,
+                        `The element couldn't be identified`
+                    )
+                } else {
+                    identifiedData.postUnion(identifiedDataElement.getValue().data!);
+                }
+            }
+
+            return Result.ok({data: identifiedData, dataType: ValueTypeString.object})
+        } else if (data instanceof TypeDeclarationData) {
+            const identifiedData = new TypeDeclarationData();
+
+            const records = data.records;
+
+            for (let key in records) {
+                const dataElement = records[key];
+                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                if (identifiedDataElement.isFailure) {
+                    return Result.fail(
+                        `data as UnionTypeDeclaration: this.lintTypeData('${key}' element): ${identifiedDataElement.errorTitle}`,
+                        identifiedDataElement.errorDescription!
+                    )
+                } else if (identifiedDataElement.getValue().data === undefined) {
+                    return Result.fail(
+                        `Array.isArray(data): this.lintTypeData('${key}' element): data is empty`,
+                        `The element couldn't be identified`
+                    )
+                } else {
+                    identifiedData.post({[key]: identifiedDataElement.getValue().data!});
+                }
+            }
+
+            return Result.ok({data: identifiedData, dataType: ValueTypeString.object})
+        } else if (typeof data !== "object") {
+            return Result.fail(
+                `Only object or literal types of value is supported by Ara Web`,
+                `Please update the lintType()`
+            )
+        }
+    
+        const identifiedData = this.lintObjectData(data, scopedMemory, pageIdentifiers, projectMemory);
+        if (identifiedData.isFailure) {
+            return Result.fail(
+                `this.lintObjectData('${data}'): ${identifiedData.errorTitle}`,
+                identifiedData.errorDescription!
+            )
+        }
+
+        if (identifiedData.getValue().data === undefined) {
+            return Result.fail(
+                `this.lintObjectData(): data is undefined`,
+                `The lintObjectData() did not return data, please update lintObjectData()`
+            )
+        }
+
+        return Result.ok(identifiedData.getValue())
+    }
+
+    public static lintType = (
+        node: AstNode|AraLink<string>, 
+        localDefined?: AstNode[], 
+        pageIdentifiers?: AstIdentifiers, 
+        projectMemory?: ProjectMemory
+    ): Result<AstNode> => {
+        if (node instanceof AraLink) {
+            // const refNode = memory.identifierByAraLink(node)
+                        // if (refNode === undefined) {
+                        //     return Result.fail(
+                        //         `'${identifier}' is alias, but it's referenced data not found`
+                        //     )
+                        // }
+                        // node = refNode;
+            return Result.fail(`Not implemented`, `lintType() to support referenced types when the Node is reference link`);
+        }
+        
+        let scopedMemory: AstNode[] = [];
+        if (localDefined !== undefined)  {
+            scopedMemory = [...localDefined];
+        }
+
+        if (node.memoryDataLength() > 0) {
+            // Debug.push(`this.lintAstNodeMemory()`, {node: node.identifier!})
+            const memoryLintResult = this.lintAstNodeMemory(node, localDefined, pageIdentifiers, projectMemory);
+            // Debug.pop();
+            if (memoryLintResult.isFailure) {
+                return Result.fail(
+                    `this.lintAstNodeMemory(node: '${node.identifier}'): ${memoryLintResult.errorTitle}`,
+                    memoryLintResult.errorDescription!
+                )
+            }
+            node = memoryLintResult.getValue();
+            scopedMemory = [...scopedMemory, ...node.getAllMemoryData()]
+        }
+        const astNode = node as AstNode;
+        if (astNode.data === undefined) {
+            return Result.fail(
+                `The AST Node '${astNode.tsNode.getText()}' data is empty`,
+                `Please, pass the AST Node with the initial data`
+            )
+        }
+        
+        const identifiedData = this.lintTypeData(astNode.data, scopedMemory, pageIdentifiers, projectMemory);
+        if (identifiedData.isFailure) {
+            return Result.fail(
+                `this.lintTypeData(): ${identifiedData.errorTitle}`,
+                identifiedData.errorDescription!
+            )
+        }
+
+        if (identifiedData.getValue().data === undefined) {
+            return Result.fail(
+                `this.lintObjectData(): data is undefined`,
+                `The lintObjectData() did not return data, please update lintObjectData()`
+            )
+        }
+
+        if (identifiedData.getValue().dataType !== undefined) {
+            astNode.dataType = identifiedData.getValue().dataType!
+        }
+        astNode.data = identifiedData.getValue().data!
+        return Result.ok(astNode);
     }
 }

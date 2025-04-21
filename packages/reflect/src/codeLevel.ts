@@ -455,7 +455,7 @@ export class Code {
 
             let sampleIdentifierValue: any = {};
             if (Object.values(ValueTypeString).includes(childValueType.getValue())) {
-            Debug.log(`The sample identifier by the enum type`)
+                Debug.log(`The sample identifier by the enum type`)
                 sampleIdentifierValue = this.emptyValueByType(identifier, childValueType.getValue())
             } else {
             Debug.log(`The sample identifier by the custom type`)

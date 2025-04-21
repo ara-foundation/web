@@ -1,6 +1,7 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Debug } from "@ara-web/ts-enhancement";
 import type { TsNode } from "./ts-node.js";
+import { Result } from "@ara-web/ts-enhancement";
+import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
 
 export enum AstNodeType {
     Variable = "variable",
@@ -13,32 +14,16 @@ export enum AstNodeType {
     Literal = "literal",
 }
 
-export enum ValueTypeString {
-    default = "default",    // The type that was passed
-    string = "string",
-    number = "number",
-    array = "array",
-    object = "object",
-    property = "property",
-    boolean = "boolean",
-}
-
-export type EnumMembers = {[key: string]: string|number};
-
-// Types as objects
-export type TypeDeclaration = {[key: string]: ValueType};
-
 /**
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
 export type AstIdentifiers = {[key: string]: AstNode|AraLink<string>};
 
-export type ValueType = string | number | Array<any> | Object | boolean | EnumMembers | AraLink<any> | TypeDeclaration;
+export type AstNodeValidator = (astNode: AstNode) => boolean;
 
-export type IdentifiedNodeDataType = ValueTypeString | AraLink<ValueType>;
-
-export type AstNodeValidater = (astNode: AstNode) => boolean;
+// If the AST Node has generic values in typescript it's between < and >.
+export type GenericHandler = (astNode: AstNode, values: ValueType[]) => Result<AstNode>;
 
 export class AstNode {
     public static readonly GenericNodeLength = 3;
@@ -50,6 +35,8 @@ export class AstNode {
     public data?: ValueType;
     public importPath?: AraLink<ValueType>;    // the import identifier
     public identifier?: string;              // If the ast node has an alias, then alias is the second parameter
+    // If the ast node has a Generic Handler, then use this function to overwrite
+    private _genericHandler?: GenericHandler;
     private _nodeMemory?: AstNode[];                  // Anything defined and available within the Ast Node, means ast data
     private _tsNode: TsNode;
 
@@ -57,7 +44,7 @@ export class AstNode {
         return this._tsNode;
     }
 
-    private constructor(tsNode: TsNode) {
+    protected constructor(tsNode: TsNode) {
         this._tsNode = tsNode;
     }
 
@@ -71,6 +58,34 @@ export class AstNode {
     // Traits
     //
     //----------------------------------------------------------
+    
+    public get isGenericHandlerExist(): boolean {
+        return this._genericHandler !== undefined;
+    }
+
+    public handleGeneric  = (genericValues: ValueType[]): Result<AstNode> => {
+        if (!this.isGenericHandlerExist) {
+            return Result.fail(
+                `this.isGenericHandlerExist: not found`,
+                `Please call this.putGenericHandler() before`
+            )
+        }
+
+        const result = this._genericHandler!(this, genericValues)
+        if (result.isFailure) {
+            return Result.fail(
+                `this.genericHandler(): ${result.errorTitle}`,
+                result.errorDescription!
+            )
+        }
+
+        return Result.ok(result.getValue())
+    }
+    
+    public putGenericHandler = (genericHandler: GenericHandler): void => {
+        this._genericHandler = genericHandler;
+    }
+    
     public putMemoryData(astNode: AstNode): void {
         if (this._nodeMemory === undefined) {
             this._nodeMemory = [astNode];
@@ -80,11 +95,50 @@ export class AstNode {
         this._nodeMemory.push(astNode);
     }
 
+    public postMemoryData(index: number, astNode?: AstNode): void {
+        if (this._nodeMemory === undefined) {
+            if (astNode !== undefined) {
+                this._nodeMemory = [astNode];
+            } else {
+                this._nodeMemory = [];
+            }
+        } else {
+            if (astNode !== undefined) {
+                this._nodeMemory[index] = astNode;
+            } else {
+                delete this._nodeMemory[index];
+            }
+        }
+    }
+
     public memoryDataLength(): number {
         if (this._nodeMemory === undefined) {
             return 0;
         }
         return this._nodeMemory.length;
+    }
+
+    public getAllMemoryData(skippedIdentifiers?: string[]): AstNode[] {
+        if (this._nodeMemory === undefined) {
+            return []
+        }
+
+        if (skippedIdentifiers === undefined) {
+            return this._nodeMemory;
+        }
+        const nodes: AstNode[] = [];
+
+        for (let node of this._nodeMemory) {
+            if (node.identifier === undefined) {
+                continue;
+            }
+            if (skippedIdentifiers.includes(node.identifier)) {
+                continue;
+            }
+            nodes.push(node);
+        }
+
+        return nodes;
     }
 
     public getMemoryData(index: number): AstNode|undefined {
@@ -115,24 +169,24 @@ export class AstNode {
     //
     //----------------------------------------------------------
 
-    public static isDefinedInOtherModule: AstNodeValidater = (child: AstNode): boolean => {
+    public static isDefinedInOtherModule: AstNodeValidator = (child: AstNode): boolean => {
         return (child.importPath !== undefined)
     }
 
-    public static isDefinedInLocal: AstNodeValidater = (child: AstNode): boolean => {
+    public static isDefinedInLocal: AstNodeValidator = (child: AstNode): boolean => {
         return (child.importPath === undefined)
     }
 
-    public static dataIsNonEmptyObject: AstNodeValidater = (child: AstNode): boolean => {
+    public static isDataNotEmpty: AstNodeValidator = (child: AstNode): boolean => {
         if (child.data === undefined) {
             return false;
         }
 
         if (child.data instanceof AraLink) {
-            return false;
+            return true;
         }
         if (Array.isArray(child.data)) {
-            return false;
+            return (child.data.length > 0);
         }
         if (typeof child.data !== "object") {
             return false;
@@ -141,7 +195,15 @@ export class AstNode {
         return Object.keys(child.data).length > 0
     }
 
-    public static isTypeDeclaration: AstNodeValidater = (child: AstNode): boolean => {
+    public static isDataLink: AstNodeValidator = (child: AstNode): boolean => {
+        if (child.data === undefined) {
+            return false;
+        }
+
+        return child.data instanceof AraLink;
+    }
+
+    public static isTypeDeclaration: AstNodeValidator = (child: AstNode): boolean => {
         return (child.nodeType === AstNodeType.Type);
     }
 }

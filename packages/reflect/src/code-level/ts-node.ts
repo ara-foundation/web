@@ -1,5 +1,4 @@
 import { 
-    ArrayTypeNode, 
     CommentTypeElement, 
     Expression, 
     Identifier, 
@@ -147,7 +146,11 @@ export class TsNode {
      * @returns 
      */
     public static isKeyword = (tsNode: TsNode, identifier: string[]|string): boolean => {
-        return identifier.indexOf(tsNode._tsNode.getText()) > -1;
+        if (typeof identifier === "string") {
+            return tsNode.getText() === identifier;
+        }
+
+        return identifier.includes(tsNode._tsNode.getText());
     }
 
     public static isExportKeyword = (tsNode: TsNode): boolean => {
@@ -176,10 +179,6 @@ export class TsNode {
 
     public static isExpression = (child: TsNode): boolean => {
         return child._tsNode instanceof Expression
-    }
-
-    public static isArrayTypeDeclaration = (child: TsNode): boolean => {
-        return child._tsNode instanceof ArrayTypeNode
     }
 
     public static isSyntaxList = (child: TsNode): boolean => {

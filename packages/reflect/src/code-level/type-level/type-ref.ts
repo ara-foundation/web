@@ -7,14 +7,14 @@
  */
 import { TypeReferenceNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result, Debug, type ObjectLikeKeyValue } from "@ara-web/ts-enhancement";
 import { type ValueType } from "../ast-node.js";
 import { ReflectAraLink } from "../../araLink/ReflectAraLink.js";
 import { TsNode } from "../ts-node.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 
-
 export class TypeRef extends TsNode {
+    public static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
     protected _tsNode: TypeReferenceNode;
     
     private constructor (tsNode: TsNode) {
@@ -26,6 +26,26 @@ export class TypeRef extends TsNode {
     public static isTypeRef = (child: TsNode): boolean => {
         const node = child.getNode<Node>();
         return node instanceof TypeReferenceNode;
+    }
+
+    public static genericValuesToLinkProperty = (values: ValueType[]): ObjectLikeKeyValue => {
+        return {[this.GENERIC_VALUES_LINK_PROPERTY]: values};
+    }
+
+    public static linkPropertyToGenericValues = (araLink: AraLink<string>): ValueType[] => {
+        if (!araLink.isPropertyExist(this.GENERIC_VALUES_LINK_PROPERTY)) {
+            return [];
+        }
+
+        const genericValues = araLink.property(this.GENERIC_VALUES_LINK_PROPERTY);
+        if (genericValues === undefined) {
+            return [];
+        }
+        if (!Array.isArray(genericValues)) {
+            return [];
+        }
+
+        return genericValues
     }
 
     public static fromTsNode(tsNode: TsNode): Result<TypeRef> {
@@ -68,26 +88,27 @@ export class TypeRef extends TsNode {
 
     /**
      * 
-     * @param typeNode 
+     * @param typeLink 
      * @param typeRefNode 
      * @returns 
      */
-    private identifyGenericRefValue = (typeNode: AraLink<string>): Result<AraLink<string>> => {
+    private identifyGenericRefValue = (typeLink: AraLink<string>): Result<AraLink<string>> => {
         const nodes = this.genericRefValueNodes();
         const nodeValues: ValueType[] = [];
         for (let nodeIndex in nodes) {
             const node = nodes[nodeIndex]
-            const nodeValue = TypeValueTraits.identifyTypeValue(`generic_${this.getText()}_${nodeIndex}`, node)
+            const nodeValue = TypeValueTraits.identifyTypeValue(node)
             if (nodeValue.isFailure) {
                 return Result.fail(
-                    `Generic key ${nodeIndex}) this.identifyTypeValue(expression: '${this.getText()}'): ${nodeValue.errorTitle}`,
+                    `Generic key ${nodeIndex}) TypeValueTraits.identifyTypeValue(expression: '${this.getText()}'): ${nodeValue.errorTitle}`,
                     nodeValue.errorDescription!
                 )
             }
             nodeValues.push(nodeValue.getValue())
         }
 
-        return Result.ok(typeNode.copyWithProperties({'generic_values': nodeValues}))
+        const genericValuesProperty = TypeRef.genericValuesToLinkProperty(nodeValues);
+        return Result.ok(typeLink.copyWithProperties(genericValuesProperty))
     }
 
     // TsNode is TypeReferenceNode>
