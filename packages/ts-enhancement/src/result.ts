@@ -49,6 +49,11 @@ export class Result<T> {
       }
       return new Result<U>(false, errorTitle.errorTitle, errorTitle.errorDescription);
     }
+
+    public static errorCode501<U>(slugs: string[], functionPath: string): Result<U> {
+      const errorDescription = `The server doesn't support '${slugs.join("/")}.${functionPath}' yet, ask Medet or maintainers of Ara Web to support it`;
+      return new Result<U>(false, "Error Code 501 (Not Implemented)", errorDescription);
+    }
   
     public static combine (results: Result<any>[]) : Result<any> {
       for (let result of results) {

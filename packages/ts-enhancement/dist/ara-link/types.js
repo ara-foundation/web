@@ -33,6 +33,10 @@ export class AraLink {
         }
         return this;
     }
+    copyWithProperties = (properties) => {
+        const araLink = new AraLink(this._protocol, this._resource, this._slugs, properties);
+        return araLink;
+    };
     isEmpty = () => {
         if (this._resource === undefined || this._resource === null) {
             return true;
@@ -55,6 +59,21 @@ export class AraLink {
     get properties() {
         return this._properties;
     }
+    isPropertyExist(property) {
+        if (this._properties === undefined) {
+            return false;
+        }
+        if (property in this._properties) {
+            return true;
+        }
+        return false;
+    }
+    property = (property) => {
+        if (!this.isPropertyExist(property)) {
+            return undefined;
+        }
+        return this._properties[property];
+    };
     toString = () => {
         let resourceUrl = "";
         if (typeof this.resource === "string") {

@@ -1,4 +1,4 @@
-import { type EnumlikeKeyValue } from "../keyValue.js";
+import { type ObjectLikeKeyValue, type ObjectValueLike } from "../keyValue.js";
 export declare const PurlProtocol = "purl";
 /**
  * Ara Web protocol and Ara Web's Modules
@@ -10,12 +10,15 @@ export declare class AraLink<T> {
     private _slugs;
     private _resource;
     private _properties;
-    constructor(protocol: string, resource: string | T, slugsOrProperties?: string[] | EnumlikeKeyValue, properties?: EnumlikeKeyValue);
+    constructor(protocol: string, resource: string | T, slugsOrProperties?: string[] | ObjectLikeKeyValue, properties?: ObjectLikeKeyValue);
+    copyWithProperties: (properties: ObjectLikeKeyValue) => AraLink<T>;
     isEmpty: () => boolean;
     get protocol(): string;
     get slugs(): string[];
     get resource(): (typeof this._resource);
-    get properties(): object;
+    get properties(): ObjectLikeKeyValue;
+    isPropertyExist(property: string): boolean;
+    property: (property: string) => ObjectValueLike | undefined;
     toString: () => string;
     lastSlug: () => string | undefined;
     /**

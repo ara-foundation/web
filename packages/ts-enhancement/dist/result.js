@@ -42,6 +42,10 @@ export class Result {
         }
         return new Result(false, errorTitle.errorTitle, errorTitle.errorDescription);
     }
+    static errorCode501(slugs, functionPath) {
+        const errorDescription = `The server doesn't support '${slugs.join("/")}.${functionPath}' yet, ask Medet or maintainers of Ara Web to support it`;
+        return new Result(false, "Error Code 501 (Not Implemented)", errorDescription);
+    }
     static combine(results) {
         for (let result of results) {
             if (result.isFailure)

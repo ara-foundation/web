@@ -15,5 +15,6 @@ export declare class Result<T> {
         errorTitle: string;
         errorDescription: string;
     }, errorDescription?: string): Result<U>;
+    static errorCode501<U>(slugs: string[], functionPath: string): Result<U>;
     static combine(results: Result<any>[]): Result<any>;
 }

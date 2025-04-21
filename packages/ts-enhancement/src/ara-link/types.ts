@@ -1,4 +1,4 @@
-import { type ObjectLikeKeyValue, type WithGetTextMethod } from "../keyValue.js"
+import { type ObjectLikeKeyValue, type ObjectValueLike, type WithGetTextMethod } from "../keyValue.js"
 import { isEqualArray } from "../array.js"
 export const PurlProtocol = "purl";
 
@@ -63,8 +63,26 @@ export class AraLink<T> {
         return this._resource;
     }
 
-    public get properties(): object {
+    public get properties(): ObjectLikeKeyValue {
         return this._properties;
+    }
+
+    public isPropertyExist(property: string): boolean {
+        if (this._properties === undefined) {
+            return false;
+        }
+        if (property in this._properties) {
+            return true;
+        }
+        return false;
+    }
+
+    public property = (property: string): ObjectValueLike|undefined => {
+        if (!this.isPropertyExist(property)) {
+            return undefined;
+        }
+
+        return this._properties[property]
     }
 
     public toString = () : string => {
