@@ -264,9 +264,9 @@ export class Code {
                 )
             }
 
-            Debug.push(`getAstNode()`)
+            // Debug.push(`getAstNode()`)
             const identifiedTypeDeclaration = typeDeclaration.getValue().getAstNode();
-            Debug.pop();
+            // Debug.pop();
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
                     `TypeDeclaration('${typeDeclaration.getValue().getText()}'): getAstNode(): ${identifiedTypeDeclaration.errorTitle}`,

@@ -228,15 +228,12 @@ export class TypeValueTraits {
             )
         }
         const children = syntaxLists[0].getChildren([], [TsNode.isNonImportant], ["&"])
-        Debug.log(`The intersection has ${children.length} nodes`);
         for (let intersectedIndex = 0; intersectedIndex < children.length; intersectedIndex++) {
             const intersectionChild = children[intersectedIndex];
-            Debug.log(`Intersected ${intersectedIndex}/${children.length-1}: '${intersectionChild.getText()}'`);
-            Debug.log(intersectionChild)
 
-            Debug.push(`this.identifyTypeValue(tsNode: '${intersectionChild.getText()}')`)
+            // Debug.push(`this.identifyTypeValue(tsNode: '${intersectionChild.getText()}')`)
             const identifiedValue = this.identifyTypeValue(intersectionChild);
-            Debug.pop();
+            // Debug.pop();
             if (identifiedValue.isFailure) {
                 const err = Debug.error(
                     `this.identifyLiteralValue(tsNode: '${intersectionChild.getText()}'): ${identifiedValue.errorTitle}`,
@@ -283,10 +280,6 @@ export class TypeValueTraits {
                 }
             }
         }
-
-        Debug.log(`The identified intersection:`);
-        Debug.log(object)
-        Debug.log(`The object is union type declaration: ${object instanceof UnionTypeDeclaration}`)
 
         // Make sure that none of the types are not primitive types. But only a Reference or Object Literal
         return Result.ok(object)
@@ -407,8 +400,6 @@ export class TypeValueTraits {
     // How come it returns type declaration? TypeDeclaration is from AstNode.
     private static identifyTypeLiteral = (tsNode: TsNode): Result<TypeDeclaration> => {
         if (!this.isTypeLiteral(tsNode)) {
-            Debug.log(`The following type is not type literal`);
-            Debug.log(tsNode);
             return Result.fail(
                 `The node is not a type literal`,
                 `Please pass the correct data to identifyTypeLiteral(), or update Ara Web to support '${tsNode.getText()}'`
@@ -485,8 +476,6 @@ export class TypeValueTraits {
         let typeDeclaration: UnionTypeDeclaration = new UnionTypeDeclaration();
         for (let unionIndex = 0; unionIndex < children.length; unionIndex++) {
             const unionChild = children[unionIndex];
-            Debug.log(`The union type syntax list child ${unionIndex}/${children.length - 1}) '${unionChild.getText()}'`);
-            Debug.log(unionChild)
         
             // Debug.push(`propertySignatureToTypeDeclaration`, {PropertySignature: typeLiteralNode.getText()})
             const identifiedTypeValue = this.identifyTypeValue(unionChild);

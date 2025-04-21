@@ -530,7 +530,6 @@ test('Support the type that has another type in the reference defined later than
   // Linting Result
   expectAstNodeResult(linted, [varName, simpleVarName])
   const lintedNode = linted.getValue()[varName] as AstNode;
-  Debug.log(lintedNode)
   expectValidTypeNode(lintedNode, varName, IntersectedUnionType, ValueTypeString.object)
 
   const lintedData = lintedNode.data as IntersectedUnionType;
