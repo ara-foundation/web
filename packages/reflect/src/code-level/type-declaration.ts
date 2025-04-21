@@ -289,7 +289,7 @@ export class TypeDeclaration extends TsNode {
         pageIdentifiers?: AstIdentifiers, 
         projectMemory?: ProjectMemory
     ): Result<TypedData> => {
-        if (!ReflectAraLink.isIdentifierLink(data as AraLink<string>)) {
+        if (!ReflectAraLink.isIdentifierLink(data)) {
             return Result.fail(
                 `isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`,
                 `Only support the ara identifiers for now, update the lintTypeDeclarations()`

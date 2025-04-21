@@ -2,7 +2,6 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
 import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { getBuiltInIdentifierNames } from "../enabled-nodejs-module.js";
 
 
 export abstract class AstIdentifierMemory {
@@ -32,8 +31,7 @@ export abstract class AstIdentifierMemory {
         if (araLink.isEmpty()) {
             return undefined;
         }
-        const identifier = araLink.resource as string;
-        const node = this.identifierByName(identifier);
+        const node = this.identifierByName(ReflectAraLink.getIdentifierResource(araLink)!);
         return node;
     }
 

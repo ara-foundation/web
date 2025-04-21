@@ -349,7 +349,7 @@ export class Code {
                 )
             }
 
-            if (!ReflectAraLink.isExpressionLink(varIdentifier.data as AraLink<Node>)) {
+            if (!ReflectAraLink.isExpressionLink(varIdentifier.data)) {
                 Debug.log(varIdentifier.data)
                     return Result.fail(
                     `The data is an Ara Link, but Ara Web supports Link to the Expressions only`,
@@ -448,7 +448,7 @@ export class Code {
             }
 
             // And the data can be only an expression
-            if (!ReflectAraLink.isExpressionLink(varIdentifier.data as AraLink<Node>)) {
+            if (!ReflectAraLink.isExpressionLink(varIdentifier.data)) {
                 Debug.log(varIdentifier.data)
                     return Result.fail(
                     `The data is an Ara Link, but Ara Web supports Link to the Expressions only`,
@@ -501,6 +501,25 @@ export class Code {
         return Result.ok()
     }
 
+    public identifyExpressionLink = async (data: ValueType | undefined): Promise<Result<ValueType>> => {
+        if (data === undefined) {
+            return Result.fail(`The argument is undefined`, 'Pass the AraLink to the expression')
+        }
+        if (!(data instanceof AraLink)) {
+            return Result.fail(`The argument is not AraLink`, `Pass the AraLink`)
+        }
+        if (!ReflectAraLink.isExpressionLink(data)) {
+            return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
+        }
+
+        const result = await this.identifyCodePiece<ValueType>(ReflectAraLink.getExpressionResource(data)!);
+        if (result.isFailure) {
+            return Result.fail(`this.identifyCodePiece(): ${result.errorTitle}`, result.errorDescription!);
+        }
+
+        return Result.ok(result.getValue());
+    }
+
     /**
      * Find the result of the expression, by setting it as a variable declaration.
      * @param {string} exp a JS doc that after evaluating gives the result
@@ -518,7 +537,7 @@ export class Code {
               initializer: exp,
             }],
         });
-        return Result.fail(`stopped`, 'testing the addition of memory')
+        return Result.errorCode501(['Code'], 'identifyCodePiece')
 
         // Debug.push(`identifyCodePiece`)
         // Debug.log(`Entry from other module into code level.`)

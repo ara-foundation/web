@@ -99,10 +99,10 @@ export class VariableDeclaration extends TsNode {
                 if (!(typedData.getValue().data instanceof AraLink)) {
                     return Result.fail(`When the variable declaration is an object binding pattern, it must have the assigned data`, `Please pass the variable assignment`)
                 }
-                if (!ReflectAraLink.isExpressionLink(typedData.getValue().data as AraLink<TsNode>)) {
+                if (!ReflectAraLink.isExpressionLink(typedData.getValue().data)) {
                     return Result.fail(`When the variable declaration is an object bidning, the the AraLink must be link to the expression`, `Please pass the variable assignment to the expression`)
                 }
-                const data = typedData.getValue().data as AraLink<TsNode>;
+                const data = typedData.getValue().data as AraLink<string>;
                 
                 const syntaxLists = identifier.getChildren([TsNode.isSyntaxList]);
                 if (syntaxLists.length !== 1) {
@@ -202,7 +202,7 @@ export class VariableDeclaration extends TsNode {
             } else if (TsNode.isKeyword(child, "=")) {
                 j++;
                 child = children[j];
-                const expressionRefAraLink = ReflectAraLink.linkToExpression(child);
+                const expressionRefAraLink = ReflectAraLink.linkToExpression(child.getText());
                 typedData.data = expressionRefAraLink;
             } else {
                 const err = Debug.error(
