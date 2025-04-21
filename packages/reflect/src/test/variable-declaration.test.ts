@@ -63,6 +63,7 @@ test('Supports the variable declaration derived from the object decoupling', asy
   expect(astNode.getMemoryData(0)?.identifier).toBe(varName)
   expect(ReflectAraLink.isExpressionLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
   expect(astNode.getMemoryData(0)?.nodeType).toBe(AstNodeType.Property)
+  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
 });
 
 // Decoupling with a new name.
@@ -88,4 +89,6 @@ test('Supports the variable declaration by alias derived from the object decoupl
   expect(astNode.getMemoryData(0)?.identifier).toBe(propertyName)
   expect(ReflectAraLink.isExpressionLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
   expect(astNode.getMemoryData(0)?.nodeType).toBe(AstNodeType.Property)
+  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
 });
+
