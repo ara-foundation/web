@@ -38,7 +38,6 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
 import { callFuncInModule } from "../fileLevel.js";
 import { ImportDeclaration } from "./import-declaration.js";
-import { defineVariableDeclaration } from "./variable.js";
 import { AstNode, type AstIdentifiers, AstNodeType } from "./ast-node.js";
 import { 
     ValueTypeString, 
@@ -81,11 +80,11 @@ export class Code {
     }
 
     /**
-     * Gets from AST all children.
-     * Node, that AST's children at the root level are list of code pieces.
+     * Gets from AST all child nodes.
+     * AST's children at the root level are list of code pieces.
      * Instead parsing at the AST level, we check in the sub child level.
      * @param filters
-     * @returns 
+     * @returns {TsNode[]}
      */
     public getTsNodes = (filters?: TsNodeValidator[]): TsNode[] => {
         const nodes: TsNode[] = [];
@@ -278,6 +277,12 @@ export class Code {
         return Result.ok(identifiers);
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Variable Declarations
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
     public getVariableIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         
@@ -298,32 +303,6 @@ export class Code {
     
         return Result.ok(identifiers);
     }
-
-    private defineVariableDeclarations = <T>(memory: ProjectMemory): Result<AstIdentifiers> => {
-        let identifiers: AstIdentifiers = {};
-        for (let child of this._ast.getChildren()) {
-            for (let i = 0; i < child.getChildCount(); i++) {
-                const subChild = child.getChildAtIndex(i)
-                // Get All Variable Statements from the code's AST
-                if (!(subChild instanceof TsVariableStatement)) {
-                    continue;
-                }
-                // Debug.push('defineVariableDeclaration()', {'varStatement': subChild.getText()})
-                const identified = defineVariableDeclaration(subChild, memory);
-                // Debug.pop();
-                if (identified.isFailure) {
-                    return Result.fail(
-                        `this.defineVariableDeclaration(varStatement='${subChild.getText()}'): ${identified.errorTitle}`,
-                        identified.errorDescription!
-                    )
-                }
-                identifiers = {...identifiers, ...identified.getValue()}
-            }
-        }
-
-        return Result.ok(identifiers);
-    }
-
 
     private lintVariables = async <T>(memory: ModuleMemory<T>): Promise<Result<undefined>> => {
         const varIdentifiers = memory.identifiersByType(AstNodeType.Variable)
