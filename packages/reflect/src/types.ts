@@ -1,4 +1,5 @@
-import type { ComponentNode } from "@ara-web/component-engine";
+import type { AstroNode } from "@ara-web/component-engine";
+import type { ModuleType } from "./module.js";
 
 export enum FileExtension {
     Astro = ".astro",
@@ -13,7 +14,7 @@ export enum FileExtension {
  * The content of any page will contain list of the nodes and code, usually a frontmatter.
  */
 export type FileContent = {
-    nodes?: ComponentNode[], 
+    nodes?: AstroNode[], 
     source?: string,
     type: FileExtension,
     filePath: string,

@@ -28,7 +28,7 @@ import {
     NumericLiteral,
     ShorthandPropertyAssignment,
     CommentStatement,
-    VariableStatement,
+    VariableStatement as TsVariableStatement,
     ParenthesizedExpression,
     ConditionalExpression,
     PrefixUnaryExpression,
@@ -44,7 +44,6 @@ import {
     ValueTypeString, 
     type ValueType, 
     type IdentifiedNodeDataType, 
-    type TypeDeclaration as TypeDeclarationData, 
     type EnumMembers 
 } from "./ast-node-data.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
@@ -53,7 +52,7 @@ import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TypeDeclaration } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { AstIdentifierMemory } from "../memory/AstIdentifierMemory.js";
+import { VariableStatement } from "./variable-level/variable-statement.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 
 export type Object = {[key: string]: ValueType};
@@ -279,43 +278,25 @@ export class Code {
         return Result.ok(identifiers);
     }
 
-    /**
-     * If the types refer to another types, then replace them with {}
-     * @limitation Only works with the first keys of the TypeDeclaration, the node's type must be TypeDeclaration.
-     * To make any nested objects, update the lintTypeDeclarations().
-     * @param memory 
-     * @returns 
-     */
-    private lintTypeDeclarations = async <T>(memory: ModuleMemory<T>): Promise<Result<undefined>> => {
-        const typeIdentifiers = memory.getIdentifiers([AstNode.isDefinedInLocal, AstNode.isTypeDeclaration])
-        const typeIdentifiersCount = Object.keys(typeIdentifiers).length;
-        for (let typeIdentifier in typeIdentifiers) {
-            const astNode = typeIdentifiers[typeIdentifier] as AstNode;
+    public getVariableIdentifiers = (): Result<AstIdentifiers> => {
+        let identifiers: AstIdentifiers = {};
+        
+        const varStatements = this.getTsNodes([VariableStatement.isVariableStatement])
 
-            return Result.fail(`Not implemented`, 'update lintTypeDeclarations()');
-            // for (let typeProperty in astNode.data) {
-            //     if (data[typeProperty] instanceof AraLink) {
-            //         if (!ReflectAraLink.isIdentifierLink(data[typeProperty] as AraLink<string>)) {
-            //             return Result.fail(
-            //                 `isAraIdentifierLink(araLink='${JSON.stringify(data[typeProperty])}') is not a link to identifier`,
-            //                 `Only support the ara identifiers for now, update the lintTypeDeclarations()`
-            //             )
-            //         }
-
-            //         const typeNode = memory.identifierByAraLink(data[typeProperty] as AraLink<string>);
-            //         if (typeNode === undefined) {
-            //             return Result.fail(
-            //                 `identifierByAraLink(araLink='${JSON.stringify(data[typeProperty])}') is not in the AST memory`,
-            //                 `Only support the ara identifiers for now, update the lintTypeDeclarations()`
-            //             ) 
-            //         }
-
-            //         data[typeProperty] = typeNode.data!;
-            // }
-            //}
+        for (let tsNode of varStatements) {
+            var varStatement = VariableStatement.fromTsNode(tsNode);
+            if (varStatement.isFailure) {
+                return Result.fail(
+                    `VariableStatement.fromTsNode(tsNode: '${tsNode.getText()}'): ${varStatement.errorTitle}`,
+                    varStatement.errorDescription!
+                )
+            }
+            
+            const varIdentifiers = varStatement.getValue().getAstIdentifiers();
+            identifiers = {...identifiers, ...varIdentifiers};
         }
-
-        return Result.ok(undefined);
+    
+        return Result.ok(identifiers);
     }
 
     private defineVariableDeclarations = <T>(memory: ProjectMemory): Result<AstIdentifiers> => {
@@ -324,7 +305,7 @@ export class Code {
             for (let i = 0; i < child.getChildCount(); i++) {
                 const subChild = child.getChildAtIndex(i)
                 // Get All Variable Statements from the code's AST
-                if (!(subChild instanceof VariableStatement)) {
+                if (!(subChild instanceof TsVariableStatement)) {
                     continue;
                 }
                 // Debug.push('defineVariableDeclaration()', {'varStatement': subChild.getText()})
@@ -650,7 +631,7 @@ export class Code {
                     continue;
                 } else if (subChild instanceof CommentStatement) {
                     continue;
-                } else if (subChild instanceof VariableStatement) {
+                } else if (subChild instanceof TsVariableStatement) {
                     continue;
                 } else {
                     Debug.log(`Unsupported expression statement ('${subChild.getText()}'):`)

@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { Code } from "../code-level/Code.js";
-import { Debug, Result, type Page } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
+import { type Page } from "@ara-web/ts-enhancement";
+import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import { ModuleType } from "../module.js";
 import { ProjectMemory } from "../memory/ProjectMemory.js";
@@ -10,35 +10,8 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
+import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
 
-const expectAstNodeResult = (result: Result<AstIdentifiers>, identifier: string|string[]): void => {
-  expect(result.isSuccess).toBe(true);
-  if (Array.isArray(identifier)) {
-    for (let i of identifier) {
-      expect(result.getValue()[i]).toBeInstanceOf(AstNode);
-    }
-  } else {
-    expect(result.getValue()[identifier]).toBeInstanceOf(AstNode);
-  }
-}
-
-const expectValidTypeNode = <DATA_TYPE>(astNode: AstNode, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType): void => {
-  expect(astNode.identifier).toEqual(identfier)
-  expect(astNode.nodeType).toEqual(AstNodeType.Type)
-  if (typeof data === "string") {
-    expect(astNode.data).toBe(data)
-  } else if (data === undefined) {
-    expect(astNode.data).toStrictEqual({})
-  } else {
-    expect(astNode.data).toBeInstanceOf(data)
-  }
-
-  if (dataType === undefined) {
-    expect(astNode.dataType).toBeUndefined();
-  } else {
-    expect(astNode.dataType).toEqual(dataType)
-  }
-}
 
 test('Supports the union types: type Primary = string | number | boolean', async () => {
   const varName = 'Primary'  
