@@ -7,7 +7,7 @@ import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 
 export class NamedImport extends TsNode {

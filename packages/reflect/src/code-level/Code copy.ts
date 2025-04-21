@@ -40,7 +40,7 @@ import { identifyImportDeclarations as importDeclarationToAstIdentifiers } from 
 import { defineVariableDeclaration } from "./variable.js";
 import { ValueTypeString, type ValueType, type IdentifiedNodeDataType, AstNode, type AstIdentifiers } from "./ast-node.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ModuleType } from "../module.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";

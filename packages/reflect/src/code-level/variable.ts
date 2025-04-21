@@ -5,7 +5,7 @@
 import { ArrayTypeNode, Identifier, SyntaxList, TypeReferenceNode, VariableDeclaration, VariableDeclarationList, VariableStatement } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNodeType, AstNode, type AstIdentifiers } from "./ast-node.js";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 
 const identifyVariableDeclarationList = (varDeclarationList: VariableDeclarationList, identifierNode: AstNode, memory: ProjectMemory): Result<AstIdentifiers> => {

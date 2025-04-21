@@ -2,7 +2,7 @@ import type { AttributeNode } from "@astrojs/compiler/types";
 import { Result } from "@ara-web/ts-enhancement";
 import { type AstroNode } from "@ara-web/component-engine";
 import type { UiContent } from "./ui-content.js";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
 
 /**

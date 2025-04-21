@@ -8,7 +8,7 @@ import { Result, Debug } from "@ara-web/ts-enhancement";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { AstNode, AstNodeType } from "../ast-node.js";
 import { TypeValueTraits } from "../type-level/type-value-traits.js";
-import { ReflectAraLink } from "../../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 
 export class VariableDeclaration extends TsNode {
     protected _tsNode: TsVariableDeclaration;

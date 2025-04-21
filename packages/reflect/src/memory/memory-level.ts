@@ -2,7 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
 import { Debug } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
 
 export class MemoryLevel {

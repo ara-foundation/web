@@ -51,7 +51,7 @@ import { identifyImportDeclarations } from "./code-level/import-declaration.js";
 import { defineVariableDeclaration } from "./code-level/variable.js";
 import { isExportKeyword, isNonImportantNode, isOneOfIdentifiers, isTypeKeyword } from "./code-level/ast-node.js";
 import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "./araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "./ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "./memory/ModuleMemory.js";
 
 export type Object = {[key: string]: ValueType};

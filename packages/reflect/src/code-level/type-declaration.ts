@@ -24,7 +24,7 @@ import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { TypeValueTraits } from "./type-level/type-value-traits.js";
 import { ProjectMemory } from "../memory/ProjectMemory.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../araLink/ReflectAraLink.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { MemoryLevel } from "../memory/memory-level.js";
 import { TypeRef } from "./type-level/type-ref.js";
 
