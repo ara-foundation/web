@@ -3,7 +3,7 @@
  */
 
 import { Debug, Result, StringTraits } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, ValueTypeString, type AstNodeValidator, type LiteralType, type ValueType } from "./ast-node.js";
+import { ValueTypeString, type LiteralType, type ValueType } from "./ast-node-data.js";
 import type { TsNode, TsNodeValidator } from "./ts-node.js";
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral } from "ts-morph";
 
