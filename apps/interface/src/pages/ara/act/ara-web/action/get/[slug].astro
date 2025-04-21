@@ -21,62 +21,6 @@ type DynamicParam = {
     },
 }
 
-// TODO: Don't remove the comments and code, but move to the folder into the "reflect/test/code-level/type-level"
-
-// type DynamicParam<T extends string, Key extends Array<string>, DynamicParam> = {
-//     optionalArray?: Record<T, Key>,
-//     dynamicParamLike?: DynamicParam,
-//     params: {
-//         slug: string,
-//     },
-// }
-
-// Assert: Support the joint types, for example: type PrimaryKey = string | number | boolean
-// type PrimaryKey = string | number | boolean;
-
-// Assert: Support the joint types with nested unions, for example: type Type 2= number | "keyword" | (number|keyword)[]
-// type Type2 = number | "keyword" | (number|"keyword")[]
-
-// Assert: Support the custom data as part of union such as false, number, float
-// type LiteralType = number | 30 | 1995.05 | boolean | false | true | string | "string literal text"
-
-// Assert: Support the union type with type literal in a syntax list:
-// type TypeUnionWithTypeLiteral = number | 30 | 1995.05 | { name: string }
-
-// Assert: Support the literla type with the union type property
-// type TypeLiteralWithTypeUnion = {name: string, sex: "male" | "female"}
-
-// Assert Support the Type as non literal nor union, expression
-// type ExpressionType = string
-
-// Assert: Support the generic equal type: 
-// type Generic<T> = T;
-
-// Assert: Support the generic union: 
-// type GenericUnion<T extends number> = T | string
-
-// Assert: Support the generic union in the nested union
-// type GenericToNestedUnion<RecordValue extends Array<number>> = number | Record<string, RecordValue>;
-
-// Assert: Conjunction with promitive type is not supported
-// type IntersectionWithPrimitive = string[] & number & {name: string} // Should fail
-
-// Assert: Support the Conjunction types
-// type Intersection = {numValue: number} & {name: string}
-
-// Assert: Support the conjunction that is never by throwing error:
-// type NeverAssert = number & string // will result in never
-
-// Assert: Support union and intersection together
-// type UnionIntersection = {name: string} & {girly: boolean} | {masculine: number}
-
-// Assert: parenthesized union
-// type ParenthesizedUnionIntersection = {name: string} & ({girly: boolean} | {masculine: number})
-
-// Assert the type that has another type in the reference defined later than this type
-// type ComplexType = Profile & {profession: string}
-// type Profile = {name: string, age: number}
-
 export async function getStaticPaths() {
     const actions = getActions();
 

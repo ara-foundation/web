@@ -20,7 +20,8 @@
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && astro build",
     "prepublishOnly": "pnpm test:lint && astro build",
-    "_chore": "pnpm i"
+    "_chore": "pnpm i",
+    "test": "vitest"
   },
   "exports": {
     ".": {
