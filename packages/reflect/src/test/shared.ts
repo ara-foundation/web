@@ -1,8 +1,12 @@
-import type { Result } from "@ara-web/ts-enhancement";
+import type { Page, Result } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { AstNodeContext } from "../memory/AstNodeContext.js";
+import { ModuleMemory } from "../memory/ModuleMemory.js";
+import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { ModuleType } from "../module.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 
@@ -56,4 +60,15 @@ export const expectValidVariableNode = (astNode: AstNode, identfier: string, pro
     } else {
       expect(astNode.dataType).toBeInstanceOf(dataType)
     }
+}
+
+export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => {
+  const projectMemory = new ProjectMemory()
+  if (identifers === undefined) {
+    identifers = {};
+  }
+
+  const context = new AstNodeContext([], identifers, projectMemory);
+
+  return context;
 }

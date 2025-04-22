@@ -164,6 +164,7 @@ export class ValueLevel {
         Debug.log(`Identify the value of '${tsNode.getText()}' expression`);
         Debug.log(tsNode)
 
+        // Expressions: "string literal", false, 12.2
         if (this.isLiteralType(tsNode)) {
             const identified = this.identifyLiteralValue(tsNode);
             if (identified.isFailure) {

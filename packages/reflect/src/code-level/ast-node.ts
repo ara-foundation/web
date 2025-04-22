@@ -68,6 +68,11 @@ export class AstNode {
             dataType: this.dataType
         }
     }
+
+    public set typedData(_typedData: TypedData) {
+        this.data = _typedData.data;
+        this.dataType = _typedData.dataType;
+    }
     
     public get isGenericHandlerExist(): boolean {
         return this._genericHandler !== undefined;

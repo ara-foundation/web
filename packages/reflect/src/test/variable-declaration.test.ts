@@ -10,7 +10,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
-import { expectAstNodeResult, expectValidVariableNode, type AstNodeProperties } from "./shared.js";
+import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, type AstNodeProperties } from "./shared.js";
 import { Debug } from "@ara-web/ts-enhancement";
 import type { TsNode } from "../code-level/ts-node.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
@@ -189,10 +189,14 @@ test('Supports the literal value assignment', async () => {
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
 
+  const context = getEmptyContext();
+  Debug.log(`The ast node:`);
   Debug.log(astNode)
-  const identifiedData = await code.identifyAstNodeData(astNode);
-  Debug.log(identifiedData);
-  expect(identifiedData?.isSuccess).toBe(true)
+  const identifiedData = await code.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  Debug.log(`The identified ast node:`);
+  Debug.log(astNode);
 });
 
 // function call as a result.
