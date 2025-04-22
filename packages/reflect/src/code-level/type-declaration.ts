@@ -11,7 +11,7 @@ import {
     TypeParameterDeclaration,
 } from "ts-morph";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
+import { AstNode, AstNodeType } from "./ast-node.js";
 import { 
     ValueTypeString, 
     type ValueType, 
@@ -22,11 +22,10 @@ import {
 } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { TypeValueTraits } from "./type-level/type-value-traits.js";
-import { ProjectMemory } from "../memory/ProjectMemory.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { MemoryLevel } from "../memory/memory-level.js";
 import { TypeRef } from "./type-level/type-ref.js";
+import type { AstNodeContext } from "../memory/AstNodeContext.js";
 
 export type TypedData = Pick<AstNode, "data" | "dataType">
 
@@ -238,10 +237,8 @@ export class TypeDeclaration extends TsNode {
      */
 
     public static lintAstNodeMemory = (
-        node: AstNode, 
-        localScope?: AstNode[],
-        pageIdentifiers?: AstIdentifiers, 
-        projectMemory?: ProjectMemory
+        node: AstNode,
+        nodeContext: AstNodeContext,
     ): Result<AstNode> => {
         if (node.memoryDataLength() === 0) {
             return Result.ok(node);
@@ -254,20 +251,17 @@ export class TypeDeclaration extends TsNode {
                 continue;
             }
             
-            if (memoryNode?.identifier === undefined) {
+            if (memoryNode.identifier === undefined) {
                 return Result.fail(
                     `The node '${node.identifier}' memory node has no identifier`,
                     `Please update the identifyTypes() to fix it`
                 )
             }
                 
-            let astNodeMemory = node.getAllMemoryData([memoryNode!.identifier!])
-            if (localScope !== undefined) {
-                astNodeMemory = [...astNodeMemory, ...localScope];
-            }
+            const memoryNodeContext = nodeContext.clone(node.getAllMemoryData([memoryNode!.identifier!]))
 
             // Debug.push(`this.lintType()`, {node: memoryNode.identifier!});
-            const lintedMemoryNode = this.lintType(memoryNode, astNodeMemory, pageIdentifiers, projectMemory)
+            const lintedMemoryNode = this.lintType(memoryNode, memoryNodeContext)
             // Debug.pop();
             if (lintedMemoryNode.isFailure) {
                 return Result.fail(
@@ -275,7 +269,7 @@ export class TypeDeclaration extends TsNode {
                     lintedMemoryNode.errorDescription!
                 )
             }
-                
+        
             node.postMemoryData(i, lintedMemoryNode.getValue())
         }
 
@@ -284,10 +278,8 @@ export class TypeDeclaration extends TsNode {
 
     // If the AstNode.data is AraLink
     private static lintAraLinkData = (
-        data: AraLink<string>, 
-        scopedMemory?: AstNode[], 
-        pageIdentifiers?: AstIdentifiers, 
-        projectMemory?: ProjectMemory
+        data: AraLink<string>,
+        nodeContext: AstNodeContext,
     ): Result<TypedData> => {
         if (!ReflectAraLink.isIdentifierLink(data)) {
             return Result.fail(
@@ -297,7 +289,7 @@ export class TypeDeclaration extends TsNode {
         }
     
         const refIdentifier = data.resource as string;
-        const refNode = MemoryLevel.getIdentifier(data, scopedMemory, pageIdentifiers, projectMemory)
+        const refNode = nodeContext.getIdentifier(data)
         if (refNode === undefined) {
             const err = Debug.error(
                 `The '${data.toString()} data reference to '${refIdentifier}' not found`,
@@ -331,7 +323,7 @@ export class TypeDeclaration extends TsNode {
             }
     
             // Debug.push(`this.lintType()`)
-            const identifiedRefNode = this.lintType(handledRefNode.getValue(), scopedMemory, pageIdentifiers, projectMemory)
+            const identifiedRefNode = this.lintType(handledRefNode.getValue(), nodeContext)
             // Debug.pop();
             if (identifiedRefNode.isFailure) {
                 return Result.fail(
@@ -351,7 +343,7 @@ export class TypeDeclaration extends TsNode {
         }
         
         // Debug.push(`this.lintType()`, {node: refIdentifier})
-        const lintedAstNode = this.lintType(refNode, scopedMemory, pageIdentifiers, projectMemory);
+        const lintedAstNode = this.lintType(refNode, nodeContext);
         // Debug.pop();
         if (lintedAstNode.isFailure) {
             return Result.fail(
@@ -370,9 +362,7 @@ export class TypeDeclaration extends TsNode {
 
     private static lintObjectData = (
         objData: object, 
-        scopedMemory?: AstNode[], 
-        pageIdentifiers?: AstIdentifiers, 
-        projectMemory?: ProjectMemory
+        nodeContext: AstNodeContext,
     ): Result<TypedData> => {
         if (Array.isArray(objData)) {
             return Result.fail(
@@ -390,7 +380,7 @@ export class TypeDeclaration extends TsNode {
         for (let typeProperty in objData) {
             const data = (objData as any)[typeProperty]
 
-            const identifiedData = this.lintTypeData(data, scopedMemory, pageIdentifiers, projectMemory);
+            const identifiedData = this.lintTypeData(data, nodeContext);
             if (identifiedData.isFailure) {
                 return Result.fail(
                     `data['${typeProperty}']: this.lintTypeData('${data}'): ${identifiedData.errorTitle}`,
@@ -410,13 +400,13 @@ export class TypeDeclaration extends TsNode {
     }
 
     private static lintTypeData = (
-        data: IdentifiedNodeDataType, 
-        scopedMemory?: AstNode[], 
-        pageIdentifiers?: AstIdentifiers, 
-        projectMemory?: ProjectMemory
+        data: IdentifiedNodeDataType,
+        nodeContext: AstNodeContext,
     ): Result<TypedData> => {
         if (data instanceof AraLink) {
-            const identifiedData = this.lintAraLinkData(data as AraLink<string>, scopedMemory, pageIdentifiers, projectMemory);
+            // Debug.push(`this.lintAraLinkData('${data.toString()}', ${nodeContext.localScopeLength} local scopes)`)
+            const identifiedData = this.lintAraLinkData(data, nodeContext);
+            // Debug.pop();
             if (identifiedData.isFailure) {
                 return Result.fail(
                     `this.lintAraLinkData(data: '${data.toString()}'): ${identifiedData.errorTitle}`,
@@ -433,7 +423,7 @@ export class TypeDeclaration extends TsNode {
             const identifiedData: ValueType[] = [];
             for (let dataIndex = 0; dataIndex < data.length; dataIndex++) {
                 const dataElement = data[dataIndex];
-                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                const identifiedDataElement = this.lintTypeData(dataElement, nodeContext);
                 if (identifiedDataElement.isFailure) {
                     return Result.fail(
                         `Array.isArray(data): this.lintTypeData('${dataIndex}' element): ${identifiedDataElement.errorTitle}`,
@@ -457,7 +447,7 @@ export class TypeDeclaration extends TsNode {
             for (let araLinkIndex = 0; araLinkIndex < araLinks.length; araLinkIndex++) {
                 const dataElement = araLinks[araLinkIndex];
 
-                const identifiedLink = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                const identifiedLink = this.lintTypeData(dataElement, nodeContext);
                 if (identifiedLink.isFailure) {
                     return Result.fail(
                         `intersect.araLinks: this.lintTypeData('${dataElement.toString()}'): ${identifiedLink.errorTitle}`,
@@ -495,7 +485,7 @@ export class TypeDeclaration extends TsNode {
             for (let key in data.records) {
                 const dataElement = data.records[key];
                 // Debug.push(`Intersected '${key}'`)
-                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                const identifiedDataElement = this.lintTypeData(dataElement, nodeContext);
                 // Debug.pop();
                 if (identifiedDataElement.isFailure) {
                     return Result.fail(
@@ -513,7 +503,7 @@ export class TypeDeclaration extends TsNode {
             }
 
             // Intersect's unions
-            const identifiedUnions = this.lintTypeData(data.unions, scopedMemory, pageIdentifiers, projectMemory);
+            const identifiedUnions = this.lintTypeData(data.unions, nodeContext);
             if (identifiedUnions.isFailure) {
                 return Result.fail(
                     `data as UnionTypeDeclaration: this.lintTypeData(${identifiedUnions.errorTitle}`,
@@ -529,7 +519,7 @@ export class TypeDeclaration extends TsNode {
 
             for (let unionIndex = 0; unionIndex < data.unionLength; unionIndex++) {
                 const dataElement = data.getUnion(unionIndex)!;
-                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                const identifiedDataElement = this.lintTypeData(dataElement, nodeContext);
                 if (identifiedDataElement.isFailure) {
                     return Result.fail(
                         `data as UnionTypeDeclaration: this.lintTypeData('${unionIndex}' element): ${identifiedDataElement.errorTitle}`,
@@ -553,7 +543,7 @@ export class TypeDeclaration extends TsNode {
 
             for (let key in records) {
                 const dataElement = records[key];
-                const identifiedDataElement = this.lintTypeData(dataElement, scopedMemory, pageIdentifiers, projectMemory);
+                const identifiedDataElement = this.lintTypeData(dataElement, nodeContext);
                 if (identifiedDataElement.isFailure) {
                     return Result.fail(
                         `data as UnionTypeDeclaration: this.lintTypeData('${key}' element): ${identifiedDataElement.errorTitle}`,
@@ -577,7 +567,7 @@ export class TypeDeclaration extends TsNode {
             )
         }
     
-        const identifiedData = this.lintObjectData(data, scopedMemory, pageIdentifiers, projectMemory);
+        const identifiedData = this.lintObjectData(data, nodeContext);
         if (identifiedData.isFailure) {
             return Result.fail(
                 `this.lintObjectData('${data}'): ${identifiedData.errorTitle}`,
@@ -596,10 +586,8 @@ export class TypeDeclaration extends TsNode {
     }
 
     public static lintType = (
-        node: AstNode|AraLink<string>, 
-        localDefined?: AstNode[], 
-        pageIdentifiers?: AstIdentifiers, 
-        projectMemory?: ProjectMemory
+        node: AstNode|AraLink<string>,
+        parentNodeContext: AstNodeContext,
     ): Result<AstNode> => {
         if (node instanceof AraLink) {
             // const refNode = memory.identifierByAraLink(node)
@@ -612,14 +600,10 @@ export class TypeDeclaration extends TsNode {
             return Result.fail(`Not implemented`, `lintType() to support referenced types when the Node is reference link`);
         }
         
-        let scopedMemory: AstNode[] = [];
-        if (localDefined !== undefined)  {
-            scopedMemory = [...localDefined];
-        }
-
+        let nodeContext = parentNodeContext.clone([]);
         if (node.memoryDataLength() > 0) {
             // Debug.push(`this.lintAstNodeMemory()`, {node: node.identifier!})
-            const memoryLintResult = this.lintAstNodeMemory(node, localDefined, pageIdentifiers, projectMemory);
+            const memoryLintResult = this.lintAstNodeMemory(node, nodeContext);
             // Debug.pop();
             if (memoryLintResult.isFailure) {
                 return Result.fail(
@@ -628,7 +612,7 @@ export class TypeDeclaration extends TsNode {
                 )
             }
             node = memoryLintResult.getValue();
-            scopedMemory = [...scopedMemory, ...node.getAllMemoryData()]
+            nodeContext.post(node.getAllMemoryData())
         }
         const astNode = node as AstNode;
         if (astNode.data === undefined) {
@@ -638,7 +622,9 @@ export class TypeDeclaration extends TsNode {
             )
         }
         
-        const identifiedData = this.lintTypeData(astNode.data, scopedMemory, pageIdentifiers, projectMemory);
+        // Debug.push(`this.lintTypeData('${astNode.identifier}', nodeContext: ${nodeContext.localScopeLength} local scopes)`)
+        const identifiedData = this.lintTypeData(astNode.data, nodeContext);
+        // Debug.pop();
         if (identifiedData.isFailure) {
             return Result.fail(
                 `this.lintTypeData(): ${identifiedData.errorTitle}`,

@@ -49,10 +49,12 @@ import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
-import { TypeDeclaration } from "./type-declaration.js";
+import { TypeDeclaration, type TypedData } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
+import { ValueLevel } from "./value-level.js";
+import { AstNodeContext } from "../memory/AstNodeContext.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -212,10 +214,10 @@ export class Code {
             AstNode.isTypeDeclaration,
             EnabledNodejsModules.isNonBuiltInIdentifier,
         ]
-        const identifiers  = memory.getIdentifiers(localTypeFilters)
+        const typesToLint  = memory.getIdentifiers(localTypeFilters)
 
-        const importIdentifiersCount = Object.keys(identifiers).length;
-        if (importIdentifiersCount == 0) {
+        const typesCount = Object.keys(typesToLint).length;
+        if (typesCount == 0) {
             return Result.ok(memory.getIdentifiers());
         }
         
@@ -224,15 +226,16 @@ export class Code {
             AstNode.isTypeDeclaration,
         ]
 
-        for (let identifier in identifiers) {
-            let node = identifiers[identifier];
+        for (let identifier in typesToLint) {
+            let node = typesToLint[identifier];
             if (!(node instanceof AraLink) && typeof (node as AstNode).data === "string") {
                 node.dataType = (node as AstNode).data as ValueTypeString;
                 continue;
             }
             const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier])
+            const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
             // Debug.push(`TypeDeclaration.lintType()`, {node: identifier})
-            const lintedNode = TypeDeclaration.lintType(node, [], moduleIdentifiers, projectMemory);
+            const lintedNode = TypeDeclaration.lintType(node, memoryContext);
             // Debug.pop()
             if (lintedNode.isFailure) {
                 return Result.fail(
@@ -241,7 +244,7 @@ export class Code {
                 )
             }
         }
-        return Result.ok(identifiers);
+        return Result.ok(typesToLint);
     }
 
     /**
@@ -501,23 +504,80 @@ export class Code {
         return Result.ok()
     }
 
-    public identifyExpressionLink = async (data: ValueType | undefined): Promise<Result<ValueType>> => {
-        if (data === undefined) {
-            return Result.fail(`The argument is undefined`, 'Pass the AraLink to the expression')
+    /**
+     * @param astNode Evaluate all the AST Node data property
+     * @limitation Only supports AST Nodes that are Links to the expressions.
+     * @returns 
+     */
+    public identifyAstNodeData = async (astNode: AstNode) => {
+        if (astNode.data === undefined) {
+            return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
         }
-        if (!(data instanceof AraLink)) {
-            return Result.fail(`The argument is not AraLink`, `Pass the AraLink`)
+
+        if (!(astNode.data instanceof AraLink)) {
+            return Result.errorCode501(['Code'], 'identifyTypedData');
         }
-        if (!ReflectAraLink.isExpressionLink(data)) {
+
+        const typedData = await this.identifyExpressionLinkData(astNode);
+        if (typedData.isFailure) {
+            return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
+        }
+    }
+
+    /**
+     * 
+     * @param astNode
+     * @returns 
+     */
+    private identifyExpressionLinkData = async (astNode: AstNode): Promise<Result<TypedData>> => {
+        if (!ReflectAraLink.isExpressionLink(astNode.data)) {
             return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
         }
 
-        const result = await this.identifyCodePiece<ValueType>(ReflectAraLink.getExpressionResource(data)!);
-        if (result.isFailure) {
-            return Result.fail(`this.identifyCodePiece(): ${result.errorTitle}`, result.errorDescription!);
-        }
+        const expTsNode = ReflectAraLink.getExpressionResource(astNode.data)!;
+        Debug.log(`Identify the value of the '${expTsNode?.getText()}' expression`)
 
-        return Result.ok(result.getValue());
+        if (astNode.dataType === undefined) {
+            Debug.log(`The data type is undefined, let's try to identify by '${expTsNode.getText()}'`);
+            Debug.push(`this.identifyValueType(expTsNode='${expTsNode?.getText()}')`)
+            const identfiedValueType = ValueLevel.getValueTypeString(expTsNode);
+            Debug.pop();
+            if (identfiedValueType.isFailure) {
+                return Result.fail(
+                    `lastChild='${expTsNode?.getText()}'/this.identifyValueType(lastChild='${expTsNode?.getText()}'): ${identfiedValueType.errorTitle}`,
+                    identfiedValueType.errorDescription!
+                )
+            }
+
+            astNode.dataType = identfiedValueType.getValue();
+        } else {
+            Debug.log(`The data type is defined`)
+        }
+        // const randomValue = this.emptyValueByType(identifier, identfiedValueType.getValue())
+        // if (randomValue.isFailure) {
+        //     return Result.fail(
+        //         `lastChild='${lastChild?.getText()}'/this.exactValueType(identifier='${identifier}'), idenfierValueType='${identfiedValueType.getValue()}': ${randomValue.errorTitle}`,
+        //         randomValue.errorDescription!
+        //     )
+        // }
+        // const value = randomValue.getValue();
+        // Debug.log(`The '${identifier}' identifier needs '${lastChild?.getText()}' expression, type: '${ValueTypeString[identfiedValueType.getValue()]}', current: '${JSON.stringify(value)}' value`)
+        // Debug.push(`this.identifyValue(indetifier='${identifier}',value='${JSON.stringify(value)}',lastChild='${lastChild?.getText()}')`)
+        // const identifiedValue = await this.identifyValue(identifier, value, identfiedValueType.getValue(), lastChild!, memory);
+        // Debug.pop();
+        // Debug.log(`The '${identifier}' identified value = '${JSON.stringify(identifiedValue)}'`)
+        // if (identifiedValue.isFailure) {
+        //     return Result.fail(
+        //         `identifyVariable(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
+        //         identifiedValue.errorDescription!
+        //     )
+        // }
+
+        return Result.errorCode501(['Code'], 'identifyExpressionLinkData')
+
+        // const identifiedValue = await this.identifyValue(identifier, value, identfiedValueType.getValue(), lastChild!, memory);
+
+        // return Result.ok(result.getValue());
     }
 
     /**
@@ -529,7 +589,7 @@ export class Code {
         this.tempCodeAmount++;
         const varName = `__temp_var_${this.tempCodeAmount}`;
         let cloned = this.clone();
-        cloned._ast.addVariableStatement({
+        const varStatement = cloned._ast.addVariableStatement({
             declarationKind: VariableDeclarationKind.Const, // defaults to "let"
             declarations: [{
               name: varName,
@@ -537,11 +597,20 @@ export class Code {
               initializer: exp,
             }],
         });
-        return Result.errorCode501(['Code'], 'identifyCodePiece')
 
-        // Debug.push(`identifyCodePiece`)
-        // Debug.log(`Entry from other module into code level.`)
-        // Debug.log(`Identify '${exp}' expression, then assign to '${varName}' temporary variable.`)
+                // If Attribute name is an identifier, get variable statements that define them:
+        // For example `const v: number = 1`
+        const varDeclaration = this.identifyVariableDeclaration(identifier);
+        if (varDeclaration.isFailure) {
+            return Result.fail(
+                `this.identifyVariableDeclaration(identifier='${identifier}'): ${varDeclaration.errorTitle}`,
+                varDeclaration.errorDescription!
+            );
+        }
+
+
+        
+        return Result.errorCode501(['Code'], 'identifyCodePiece')
 
         // Debug.push(`identifyVariable(varName='${varName}', update=false)`)
         // // It may be not only identifier so clone and put it in the ast
@@ -1107,51 +1176,6 @@ export class Code {
         )
     }
 
-    private identifyValueType = (exp: Node): Result<ValueTypeString> => {
-        if (exp === undefined) {
-            return Result.fail(
-                `Can not detect the expression's value type`,
-                `The 'undefined' is not supported by Ara Web`
-            )
-        }
-        if (exp instanceof ObjectLiteralExpression) {
-            return Result.ok(ValueTypeString.object)
-        } else if (exp instanceof SpreadAssignment) {
-            return Result.ok(ValueTypeString.object);
-        } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
-            return Result.ok(ValueTypeString.property)
-        } else if (exp instanceof Identifier) {
-            return Result.ok(ValueTypeString.default);
-        } else if (exp instanceof ArrayLiteralExpression) {
-            return Result.ok(ValueTypeString.array)
-        } else if (exp instanceof PropertyAccessExpression) {
-            return Result.ok(ValueTypeString.property)
-        } else if (exp instanceof CallExpression) {
-            return Result.ok(ValueTypeString.default);
-        } else if (exp instanceof StringLiteral) {
-            return Result.ok(ValueTypeString.string)
-        } else if (exp instanceof ShorthandPropertyAssignment) {
-            return Result.ok(ValueTypeString.property)
-        } else if (exp instanceof ConditionalExpression) {
-            return Result.ok(ValueTypeString.default);
-            Debug.log(`Conditional expression '${exp.getText()}' has '${exp.getChildCount()}' children:`);
-            const condition = exp.getChildAtIndex(0);
-            const trueExpression = exp.getChildAtIndex(2);
-            const falseExpression = exp.getChildAtIndex(4);
-            Debug.log(`Todo: check '${condition.getText()}' is true (binary expression)`);
-            Debug.log(`Todo check '${trueExpression.getText()}' binary expression value`);
-            Debug.log(`Todo check '${falseExpression.getText()}' string literal value`);
-        } else if (exp instanceof BinaryExpression) {
-        }
-
-        Debug.log(`Identifying the value of '${exp.getText()}' not yet supported. Fill data of exp:`)
-        Debug.log(exp);
-
-        return Result.fail(
-            `Can not detect the expression's value type`,
-            `The '${exp.getText()}' is not supported by Ara Web`
-        )
-    }
 
     private identifyConditionValue = (leftSide: any, condition: string, rightSide: any): boolean => {
         if (condition.indexOf("!") > -1) {
@@ -2034,49 +2058,6 @@ export class Code {
         }
 
         return exp;
-    }
-
-    private emptyValueByType = (identifier: string, val: ValueTypeString|ValueType): Result<ValueType> => {
-        if (!Object.values(ValueTypeString).includes(val as ValueTypeString)) {
-            if (Array.isArray(val)) {
-                return Result.ok([] as ValueType[]);
-            } else if (typeof val === "object") {
-                return Result.ok({} as Object);
-            } else {
-                return Result.fail(
-                    `Only custom Arrays and Objects are supported to generate sample data`,
-                    `The '${typeof val}' type is not supported for '${identifier}', update the exactValueType()`
-                )
-            }
-        }
-
-        if (val == ValueTypeString.default) {
-            return Result.ok({});
-        }
-
-        if (val == ValueTypeString.array) {
-            return Result.ok([] as ValueType[])
-        }
-        if (val === ValueTypeString.number) {
-            return Result.ok(0 as number)
-        } else if (val === ValueTypeString.string) {
-            return Result.ok("" as string);
-        } else if (val === ValueTypeString.object) {
-            return Result.ok({})
-        } else if (val === ValueTypeString.property) {
-            let obj = val as Object;
-            Debug.log(`Value type is property`);
-            if (!(identifier in obj)) {
-                Debug.log(`The '${identifier}' is not in the ${JSON.stringify(obj)}, so add it as Object type`)
-                obj[identifier] = {};
-            }
-            return Result.ok(obj[identifier] as ValueType)
-        }
-
-        return Result.fail(
-            `No matching data was found`,
-            `The ${val} not handled`
-        );
     }
 
     /**
