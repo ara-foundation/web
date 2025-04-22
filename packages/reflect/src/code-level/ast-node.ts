@@ -26,6 +26,8 @@ export type AstNodeValidator = (astNode: AstNode) => boolean;
 // If the AST Node has generic values in typescript it's between < and >.
 export type GenericHandler = (astNode: AstNode, values: ValueType[]) => Result<AstNode>;
 
+export type TypedData = Pick<AstNode, "data" | "dataType">
+
 export class AstNode {
     public static readonly GenericNodeLength = 3;
 
@@ -59,6 +61,13 @@ export class AstNode {
     // Traits
     //
     //----------------------------------------------------------
+
+    public get typedData(): TypedData {
+        return {
+            data: this.data,
+            dataType: this.dataType
+        }
+    }
     
     public get isGenericHandlerExist(): boolean {
         return this._genericHandler !== undefined;

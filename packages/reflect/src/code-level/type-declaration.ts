@@ -11,7 +11,7 @@ import {
     TypeParameterDeclaration,
 } from "ts-morph";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType } from "./ast-node.js";
+import { AstNode, AstNodeType, type TypedData } from "./ast-node.js";
 import { 
     ValueTypeString, 
     type ValueType, 
@@ -26,8 +26,6 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { TypeRef } from "./type-level/type-ref.js";
 import type { AstNodeContext } from "../memory/AstNodeContext.js";
-
-export type TypedData = Pick<AstNode, "data" | "dataType">
 
 export class TypeDeclaration extends TsNode {
     protected _tsNode: TypeAliasDeclaration;

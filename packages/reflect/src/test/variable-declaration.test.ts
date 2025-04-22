@@ -170,3 +170,41 @@ test('Supports the the variable declaration with the generic value', async () =>
   expect(genericProps).toHaveLength(1);
   expect(genericProps[0]).toEqual(ValueTypeString.string)
 });
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Variable Linting
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+test('Supports the literal value assignment', async () => {
+  const varName = 'parentUrl'
+  const varValue = "/ara/act/ara-web/action/get";
+  let src = `const ${varName} = "${varValue}"`;
+  let code = new Code(src);
+  let vars = code.getVariableIdentifiers();
+
+  // We don't check the result, as previous tests must ensure its passing
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+  Debug.log(astNode)
+  const identifiedData = await code.identifyAstNodeData(astNode);
+  Debug.log(identifiedData);
+  expect(identifiedData?.isSuccess).toBe(true)
+});
+
+// function call as a result.
+// if data type is linked, then define the data type.
+// define the result from another variable.
+// define the result from another module.
+// assert that data assignment data type matches astNode.dataType.
+//  assert the generic data type that returned data matches the generic data type.
+//  assert the assigned data type matches the union type.
+
+//
+// Check the variable updates
+//
+
+// Check the functions that update the variable?

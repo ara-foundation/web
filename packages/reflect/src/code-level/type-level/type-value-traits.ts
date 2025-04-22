@@ -178,7 +178,7 @@ export class TypeValueTraits {
             return Result.fail(err);
         }
         
-        return Result.ok(identifiedValue.getValue())
+        return Result.ok(identifiedValue.getValue().data! as LiteralType)
     }
 
     private static identifyParenthesizedType = (tsNode: TsNode): Result<PossibleTypeValue> => {
@@ -201,7 +201,7 @@ export class TypeValueTraits {
         const identifiedValue = this.identifyTypeValue(children[0]);
         if (identifiedValue.isFailure) {
             const err = Debug.error(
-                `this.identifyLiteralValue(tsNode: '${children[0].getText()}'): ${identifiedValue.errorTitle}`,
+                `this.identifyTypeValue(tsNode: '${children[0].getText()}'): ${identifiedValue.errorTitle}`,
                 identifiedValue.errorDescription!,
                 children[0]            
             )
@@ -238,7 +238,7 @@ export class TypeValueTraits {
             // Debug.pop();
             if (identifiedValue.isFailure) {
                 const err = Debug.error(
-                    `this.identifyLiteralValue(tsNode: '${intersectionChild.getText()}'): ${identifiedValue.errorTitle}`,
+                    `this.identifyTypeValue(tsNode: '${intersectionChild.getText()}'): ${identifiedValue.errorTitle}`,
                     identifiedValue.errorDescription!,
                     intersectionChild            
                 )

@@ -38,7 +38,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
 import { callFuncInModule } from "../fileLevel.js";
 import { ImportDeclaration } from "./import-declaration.js";
-import { AstNode, type AstIdentifiers, AstNodeType } from "./ast-node.js";
+import { AstNode, type AstIdentifiers, AstNodeType, type TypedData } from "./ast-node.js";
 import { 
     ValueTypeString, 
     type ValueType, 
@@ -49,7 +49,7 @@ import { deepCopy } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
-import { TypeDeclaration, type TypedData } from "./type-declaration.js";
+import { TypeDeclaration } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
@@ -509,7 +509,7 @@ export class Code {
      * @limitation Only supports AST Nodes that are Links to the expressions.
      * @returns 
      */
-    public identifyAstNodeData = async (astNode: AstNode) => {
+    public identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         if (astNode.data === undefined) {
             return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
         }
@@ -518,10 +518,12 @@ export class Code {
             return Result.errorCode501(['Code'], 'identifyTypedData');
         }
 
-        const typedData = await this.identifyExpressionLinkData(astNode);
+        const typedData = await this.identifyExpressionLinkData(astNode, astNodeContext);
         if (typedData.isFailure) {
             return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
         }
+
+        return Result.ok(typedData.getValue());
     }
 
     /**
@@ -529,7 +531,7 @@ export class Code {
      * @param astNode
      * @returns 
      */
-    private identifyExpressionLinkData = async (astNode: AstNode): Promise<Result<TypedData>> => {
+    private identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         if (!ReflectAraLink.isExpressionLink(astNode.data)) {
             return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
         }
@@ -544,7 +546,7 @@ export class Code {
             Debug.pop();
             if (identfiedValueType.isFailure) {
                 return Result.fail(
-                    `lastChild='${expTsNode?.getText()}'/this.identifyValueType(lastChild='${expTsNode?.getText()}'): ${identfiedValueType.errorTitle}`,
+                    `ValueLevel.getValueTypeString('${expTsNode?.getText()}'): ${identfiedValueType.errorTitle}`,
                     identfiedValueType.errorDescription!
                 )
             }
@@ -553,6 +555,8 @@ export class Code {
         } else {
             Debug.log(`The data type is defined`)
         }
+
+
         // const randomValue = this.emptyValueByType(identifier, identfiedValueType.getValue())
         // if (randomValue.isFailure) {
         //     return Result.fail(
@@ -562,22 +566,18 @@ export class Code {
         // }
         // const value = randomValue.getValue();
         // Debug.log(`The '${identifier}' identifier needs '${lastChild?.getText()}' expression, type: '${ValueTypeString[identfiedValueType.getValue()]}', current: '${JSON.stringify(value)}' value`)
-        // Debug.push(`this.identifyValue(indetifier='${identifier}',value='${JSON.stringify(value)}',lastChild='${lastChild?.getText()}')`)
-        // const identifiedValue = await this.identifyValue(identifier, value, identfiedValueType.getValue(), lastChild!, memory);
-        // Debug.pop();
+        Debug.push(`ValueLevel.identifyValue()`, {tsNode: expTsNode.getText()})
+        const identifiedValue = await ValueLevel.identifyValue(expTsNode, astNode.typedData, astNodeContext);
+        Debug.pop();
         // Debug.log(`The '${identifier}' identified value = '${JSON.stringify(identifiedValue)}'`)
-        // if (identifiedValue.isFailure) {
-        //     return Result.fail(
-        //         `identifyVariable(identifier='${identifier}'): ${identifiedValue.errorTitle}`,
-        //         identifiedValue.errorDescription!
-        //     )
-        // }
+        if (identifiedValue.isFailure) {
+            return Result.fail(
+                `ValueLevel.identifyValue(): ${identifiedValue.errorTitle}`,
+                identifiedValue.errorDescription!
+            )
+        }
 
-        return Result.errorCode501(['Code'], 'identifyExpressionLinkData')
-
-        // const identifiedValue = await this.identifyValue(identifier, value, identfiedValueType.getValue(), lastChild!, memory);
-
-        // return Result.ok(result.getValue());
+        return Result.ok(identifiedValue.getValue())
     }
 
     /**
