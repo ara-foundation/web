@@ -349,12 +349,11 @@ test('Supports the spread assignment through enums', async () => {
   const enumName = 'Sex'
   const profileName = 'profile'
   const varName = 'obj'
-  const varValue = 10;
 
   let src = 
   ` import { ${enumName} } from "${modulePath}";` +
   ` const ${profileName} = {name: "Medet", sex: ${enumName}.Male}; ` +
-   ` const obj = {...profile} `;
+   ` const ${varName} = {...profile} `;
 
   let code = new Code(src);
   let vars = await code.getVariableIdentifiers();
@@ -366,40 +365,30 @@ test('Supports the spread assignment through enums', async () => {
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
-  Debug.log(`The identified imported identifiers`);
-  Debug.log((identified.getValue() as AstIdentifiers)[enumName])
   // Profile check
   let profileAstNode = vars.getValue()[profileName] as AstNode;
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeUndefined()
   expect(ReflectAraLink.isExpressionLink(profileAstNode.data)).toBe(true)
-  
+
+  // Profile's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
-  Debug.log(`Profile result:`);  
-  Debug.log(identifiedProfile)
   expect(identifiedProfile.isSuccess).toBe(true);
-  Debug.log(`Profile:`);  
   profileAstNode.typedData = identifiedProfile.getValue();
-  Debug.log(profileAstNode)
-  // let objAstNode = vars.getValue()[objName] as AstNode;
-  // expect(objAstNode.data).toBeInstanceOf(AraLink)
-  // expect(objAstNode.dataType).toBeUndefined()
-  // expect(ReflectAraLink.isExpressionLink(objAstNode.data)).toBe(true)
-  // moduleMemory.addIdentifiers({[objAstNode.identifier!]: objAstNode})
+  context.post([profileAstNode])
+  // Spread Assignment
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(astNode.dataType).toBeUndefined()
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
 
-  // // We don't check the result, as previous tests must ensure its passing
-  // let astNode = vars.getValue()[varName] as AstNode;
-  // expect(astNode.data).toBeInstanceOf(AraLink)
-  // expect(astNode.dataType).toEqual(ValueTypeString.number)
-  // expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
-
-  // const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
-  // const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
-  // expect(identifiedData.isSuccess).toBe(true);
-  // astNode.typedData = identifiedData.getValue();
-  // expect(astNode.dataType).toEqual(ValueTypeString.number);
-  // expect(astNode.data).toEqual(varValue)
+  // Spread Assignment data lint
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  expect(astNode.dataType).toEqual(ValueTypeString.object);
+  expect(astNode.data).toStrictEqual({ name: 'Medet', sex: 0 })
 });
 
 // if data type is linked, then define the data type.

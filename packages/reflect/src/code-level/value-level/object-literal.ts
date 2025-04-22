@@ -1,4 +1,4 @@
-import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
+import { deepCopy, Result } from "@ara-web/ts-enhancement";
 import { ValueTypeString, type ValueType } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
@@ -6,7 +6,6 @@ import type { TypedData } from "../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 import { ValueLevel } from "../value-level.js";
-import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 
 /**
@@ -61,14 +60,8 @@ export class ObjectLiteral {
             }
         }
 
-        Debug.log(`Object literal's initial values:`);
-        Debug.log(((typedData.data as AraLink<TsNode>).resource as TsNode).getText());
-        Debug.log(`Object literal through ${syntaxListElements.length} elements`);
-
         for (let i = 0; i < syntaxListElements.length; i++) {
             const element = syntaxListElements[i];
-            Debug.log(`${i}/${syntaxListElements.length-1} element) '${element.getText()}'`);
-            Debug.log(typedData)
             const identifiedObjectElement = await ValueLevel.identifyValue(element, {dataType: ValueTypeString.default}, astNodeContext)
             if (identifiedObjectElement.isFailure) {
                 return Result.fail(

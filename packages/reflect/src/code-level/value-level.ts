@@ -17,6 +17,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ObjectLiteral } from "./value-level/object-literal.js";
 import { PropertyLiteral } from "./value-level/object-level/property-literal.js";
 import { PropertyAccess } from "./value-level/object-level/property-access.js";
+import { SpreadLiteral } from "./value-level/object-level/spread-literal.js";
 
 
 export class ValueLevel {
@@ -220,6 +221,7 @@ export class ValueLevel {
         ObjectLiteral,    // {prop: val...}
         PropertyLiteral,  // prop: val
         PropertyAccess,   // obj.property
+        SpreadLiteral, // {...obj}
     ]    
     
     for (let supported of supportedValueLevels) {
@@ -238,19 +240,7 @@ export class ValueLevel {
 
     Debug.log(tsNode)
     return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //     if (exp instanceof SpreadAssignment) {
-        //         const spreadSource = exp.getChildAtIndex(1);
-        //         Debug.push(`exp as SpreadAssignment(spreadSource='${spreadSource.getText()}')`)
-        //         const identified = await this.identifyValue(identifier, data, dataType, spreadSource, memory);
-        //         Debug.pop();
-        //         if (identified.isFailure) {
-        //             return Result.fail(
-        //                 `spreadAssignment('${exp.getText()}')/spreadSource('${spreadSource.getText()}')/this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', spreadSource='${spreadSource.getText()}'): ${identified.errorTitle}`,
-        //                 identified.errorDescription!
-        //             )
-        //         } else {
-        //             return Result.ok(identified.getValue())    
-        //         }
+      
         //     } else if (exp instanceof ArrayLiteralExpression) {
         //         const syntaxList = exp.getChildAtIndex(1) as SyntaxList;
         //         Debug.push(`exp as ArrayLiteral()`, {syntaxList: syntaxList.getText()})
