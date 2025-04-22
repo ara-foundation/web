@@ -4,7 +4,7 @@
  * @param {string} Title A specific action page
  * @param {string} Description A page with the details of the action
  */
-import { getActions, getActionBySlug } from "@scripts/action";
+import { getActions, getActionBySlug, type Action } from "@scripts/action";
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import { ColumnSlug, RowSlug, slugsToLayoutPath } from "@ara-web/ts-enhancement";
 import ActionTrigger from "@components/action/ActionTrigger.astro";
@@ -42,7 +42,9 @@ export async function getStaticPaths() {
 
 
 const { slug } = Astro.params;
-const action = getActionBySlug(slug);
+let action = getActionBySlug(slug);
+
+const data: Array<string> = func<string>();
 
 const parentUrl = "/ara/act/ara-web/action/get"
 
