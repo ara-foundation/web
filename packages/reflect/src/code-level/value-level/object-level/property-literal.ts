@@ -1,7 +1,7 @@
-import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
-import { ValueTypeString, type ValueType } from "../../ast-node-data.js";
+import { Debug, Result } from "@ara-web/ts-enhancement";
+import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
-import { Node, ObjectLiteralExpression, PropertyAssignment } from "ts-morph";
+import { Node, PropertyAssignment } from "ts-morph";
 import type { TypedData } from "../../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "../value-level-interface.js";
 import type { AstNodeContext } from "../../../memory/AstNodeContext.js";
@@ -9,12 +9,12 @@ import { ValueLevel } from "../../value-level.js";
 import { Identifier } from "../idenitifier.js";
 
 /**
- * Literal class identifies the object literals
+ * Property assignment such as {Object.Property: <expression>}
  */
 @staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
-export class Property {
+export class PropertyLiteral {
     public static get name(): string {
-        return "object-level/Property"
+        return "object-level/PropertyLiteral"
     }
 
     public static isA: TsNodeValidator = (child: TsNode): boolean => {
@@ -23,7 +23,6 @@ export class Property {
     }
 
     public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        Debug.log(`Property assignment '${tsNode.getText()}'`);
         if (!tsNode.isChildExist(0)) {
             return Result.fail(`Property assignment has no first value`, `Please pass the first element of property assignment`)
         }
@@ -37,12 +36,6 @@ export class Property {
             const err = Debug.error(`The property '${property.getText()}' is not identifier`, `Ara Web supports identifiers as the property for now, please update it.`, property)
             return Result.fail(err);
         }
-
-
-        Debug.log(`The property '${property.getText()}'`);
-        Debug.log(property)
-        Debug.log(`The value: '${value.getText()}'`)
-        Debug.log(value)
 
         // Assigned value to the (data: T).object's property
         const res = await ValueLevel.identifyValue(value, {dataType: ValueTypeString.default}, astNodeContext!);

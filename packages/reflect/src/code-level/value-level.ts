@@ -15,7 +15,7 @@ import { Identifier } from "./value-level/idenitifier.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ObjectLiteral } from "./value-level/object-literal.js";
-import { Property } from "./value-level/object-level/property.js";
+import { PropertyLiteral } from "./value-level/object-level/property-literal.js";
 
 
 export class ValueLevel {
@@ -217,7 +217,7 @@ export class ValueLevel {
         FunctionCall,
         Identifier,
         ObjectLiteral,
-        Property
+        PropertyLiteral
     ]    
     
         for (let supported of supportedValueLevels) {
@@ -235,23 +235,6 @@ export class ValueLevel {
         }
 
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        // if (exp instanceof ObjectLiteralExpression) {
-        //     const syntaxList = exp.getChildSyntaxList()!;
-        //     Debug.log(`'${identifier}' identifier is the object literal with syntax list(child_length=${syntaxList.getChildCount()}) = [${syntaxList.getText()}]`)
-    
-        //         Debug.push(`identifyObjectLiteral()`, {'identifier': identifier!, data: JSON.stringify(data), 'syntaxList': `[${syntaxList.getText()}]`})
-        //         const identified = await this.identifyObjectLiteral(identifier, data, dataType, syntaxList, memory);
-        //         Debug.pop()
-        //         Debug.log(`identifyObjectLiteral identification result for '${identifier}' identifier = '${JSON.stringify(identified)}'`)
-        //         if (identified.isFailure) {
-        //             Debug.log(`The object literal identification error: ${JSON.stringify(identified.errorTitle)}, description = ${identified.errorDescription}`);
-        //             return Result.fail(
-        //                 `this.identifyObjectLiteral<T>(identifier='${identifier}', data='${JSON.stringify(data)}', syntaxList='${syntaxList.getText()}'): ${identified.errorTitle}`,
-        //                 identified.errorDescription!
-        //             )
-        //         } else {
-        //             return Result.ok(deepCopy(identified.getValue() as object))
-        //         }
         //     } else if (exp instanceof SpreadAssignment) {
         //         const spreadSource = exp.getChildAtIndex(1);
         //         Debug.push(`exp as SpreadAssignment(spreadSource='${spreadSource.getText()}')`)
@@ -264,53 +247,6 @@ export class ValueLevel {
         //             )
         //         } else {
         //             return Result.ok(identified.getValue())    
-        //         }
-        //     } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
-        //         Debug.log(`Property assignment '${exp.getText()}' of ${identifier} identifier`);
-        //         const property = exp.getChildAtIndex(0);
-        //         const value = exp.getChildAtIndex(2);
-        //         Debug.push(`exp as PropertyAssignment()`, {exp: exp.getText()})
-        //         const propertyValue = ((data as Object)[property.getText()]);
-                
-        //         const propertyIdentifier = `${identifier}.${property.getText()}`
-    
-        //         // Assigned value to the (data: T).object's property
-        //         Debug.push(`identifyValue<${typeof propertyValue}>()`, {identifier: propertyIdentifier, data: JSON.stringify(propertyValue), exp: value.getText()})
-        //         const res = await this.identifyValue(propertyIdentifier, propertyValue, dataType, value, memory);
-        //         Debug.pop();
-        //         Debug.pop();
-        //         if (res.isFailure) {
-        //             return Result.fail(
-        //                 `propertyAssignment('${exp.getText()}')/this.identifyValue(property='${property.getText()}', data='${JSON.stringify(propertyValue)}', value='${value.getText()}'): ${res.errorTitle}`,
-        //                 res.errorDescription!
-        //             )
-        //         }
-        //         (data as any)[property.getText()] = res.getValue();
-        //         return Result.ok(data);
-        //     } else if (exp instanceof Identifier) {
-        //         Debug.push(`exp as Identifier`)
-        //         if (exp.getText() === "undefined") {
-        //             const emptyValue = this.emptyValueByType(identifier!, dataType);
-        //             Debug.pop();
-        //             return Result.ok(emptyValue);
-        //         } else if (exp.getText() === identifier) {
-        //             Debug.log(`The '${identifier}' value is itself, so return it.`)
-        //             Debug.pop();
-        //             return Result.ok(data);
-        //         } else {
-        //             Debug.pop();
-        //             return Result.ok(ReflectAraLink.linkToIdentifier(exp.getText(), this.dataTypeToLinkProperties(dataType)))
-        //             // const identified = await this.identifyVariable<T>(exp.getText(), memory)
-        //             // Debug.pop();
-    
-        //             // Debug.pop();
-        //             // if (identified.isFailure) {
-        //             //     return Result.fail(
-        //             //         `identifier('${exp.getText()}')/this.identifyVariable(exp='${exp.getText()}': ${identified.errorTitle}`,
-        //             //         identified.errorDescription!
-        //             //     );
-        //             // }
-        //             // return Result.ok(identified.getValue())
         //         }
         //     } else if (exp instanceof ArrayLiteralExpression) {
         //         const syntaxList = exp.getChildAtIndex(1) as SyntaxList;

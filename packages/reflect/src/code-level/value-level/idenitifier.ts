@@ -1,4 +1,4 @@
-import { Debug, Result, StringTraits } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 import { ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Identifier as TsIdentifier, Node } from "ts-morph";
@@ -40,22 +40,10 @@ export class Identifier {
             return Result.ok({data: identifier.data, dataType: identifier.dataType})
         }
 
-        Debug.log(`Identify value of '${tsNode.getText()}'`);
-        Debug.log(identifier)
         const exp = ReflectAraLink.getExpressionResource(identifier.data);
-        Debug.log(`The identifier data link`);
-        Debug.log(identifier.data)
-        Debug.log(`The identifier exp ${exp?.getText()}:`)
-        Debug.log(exp)
         
         const astNodeContext = parentNodeContext?.clone(identifier.getAllMemoryData(), [identifier.identifier!])
-        Debug.log(`The ast nodes:`);
-        Debug.log(astNodeContext)
-        Debug.log(`The expression:`);
-        Debug.log(exp?.getText())
         const identifiedExp = await ValueLevel.identifyValue(exp!, {dataType: ValueTypeString.default}, astNodeContext!)
-        Debug.log(`The identified expression of the identifier:`);
-        Debug.log(identifiedExp)
         if (identifiedExp.isFailure) {
             return Result.fail(
                 `ValueLevel.identifyValue(): ${identifiedExp.errorTitle}`,

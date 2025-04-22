@@ -1,6 +1,6 @@
 import { Debug, Result } from "@ara-web/ts-enhancement";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
-import { Node, CallExpression, PropertyAccessExpression, SyntaxList } from "ts-morph";
+import { Node, CallExpression } from "ts-morph";
 import type { TypedData } from "../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
@@ -61,8 +61,6 @@ export class FunctionCall {
                 identifier
             )
             return Result.fail(err);
-        } else {
-            Debug.log(`Call the function '${identifier.getText()}'`);
         }
 
         const funcName = identifier.getText();
@@ -129,9 +127,7 @@ export class FunctionCall {
             return Result.fail(`Method name expected to be identifier`, `Please update FunctionCall.identifyMethodCall() to support '${funcName.getText()}'`);
         }
 
-        Debug.push(`this.identifyValue()`, {identifier: methodOwner?.getText(), data: '{}', exp: methodOwner?.getText()})
         const methodObj = await ValueLevel.identifyValue(methodOwner, {dataType: ValueTypeString.default}, astNodeContext);
-        Debug.pop();
         if (methodObj.isFailure) {
             return Result.fail(
                 `ValueLevel.identifyValue('${methodOwner.getText()}'): ${methodObj.errorTitle}`,
