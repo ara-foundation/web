@@ -3,7 +3,6 @@ import {
     Expression, 
     JSDoc, 
     Node, 
-    PropertyAccessExpression, 
     PropertySignature, 
     StringLiteral, 
     SyntaxList, 
@@ -183,9 +182,5 @@ export class TsNode {
 
     public static isPropertySignature = (child: TsNode): boolean => {
         return child._tsNode instanceof PropertySignature;
-    }
-
-    public static isPropertyAccess: TsNodeValidator = (child: TsNode): boolean => {
-        return child._tsNode instanceof PropertyAccessExpression
     }
 }

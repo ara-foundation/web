@@ -16,6 +16,7 @@ import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ObjectLiteral } from "./value-level/object-literal.js";
 import { PropertyLiteral } from "./value-level/object-level/property-literal.js";
+import { PropertyAccess } from "./value-level/object-level/property-access.js";
 
 
 export class ValueLevel {
@@ -213,29 +214,31 @@ export class ValueLevel {
      */
     public static identifyValue = async (tsNode: TsNode, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
     const supportedValueLevels: ValueLevelInterface[] = [
-        Literal,
-        FunctionCall,
-        Identifier,
-        ObjectLiteral,
-        PropertyLiteral
+        Literal,          // "literal" | 12.2 | false
+        FunctionCall,     // fooBar()
+        Identifier,       // var1
+        ObjectLiteral,    // {prop: val...}
+        PropertyLiteral,  // prop: val
+        PropertyAccess,   // obj.property
     ]    
     
-        for (let supported of supportedValueLevels) {
-            if (supported.isA(tsNode)) {
-                Debug.push(supported.name, {tsNode: tsNode.getText()})
-                const supportedIdentifier = new supported();
-                const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
-                Debug.pop();
-                if (identified.isFailure) {
-                    return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription!);
-                }
-    
-                return Result.ok(identified.getValue());    
+    for (let supported of supportedValueLevels) {
+        if (supported.isA(tsNode)) {
+            Debug.push(supported.name, {tsNode: tsNode.getText()})
+            const supportedIdentifier = new supported();
+            const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
+            Debug.pop();
+            if (identified.isFailure) {
+                return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription!);
             }
+    
+            return Result.ok(identified.getValue());    
         }
+    }
 
-        return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //     } else if (exp instanceof SpreadAssignment) {
+    Debug.log(tsNode)
+    return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
+        //     if (exp instanceof SpreadAssignment) {
         //         const spreadSource = exp.getChildAtIndex(1);
         //         Debug.push(`exp as SpreadAssignment(spreadSource='${spreadSource.getText()}')`)
         //         const identified = await this.identifyValue(identifier, data, dataType, spreadSource, memory);
@@ -267,62 +270,7 @@ export class ValueLevel {
         //         }
     
         //         return Result.ok(data);
-        //     } else if (exp instanceof PropertyAccessExpression) {
-        //         const varIdentifier = exp.getChildAtIndex(0);
-        //         const propertyIdentifier = exp.getChildAtIndex(2);
-        //         Debug.push(`exp as PropertyAccess()`, {var: varIdentifier.getText(), property: propertyIdentifier.getText()})
-        //         Debug.push(`this.identifyIdentifierRecursively()`, {identifier: varIdentifier.getText()})
-        //         // Attempt to find the variable's value within this script            
-        //         const identified = await this.identifyIdentifierRecursively(varIdentifier.getText(), memory);
-        //         Debug.pop();
-        //         if (identified.isFailure) {
-        //             Debug.pop();
-        //             return Result.fail(
-        //                 `propertyAccessExpression('${exp.getText()}')/this.identifyIdentifierRecursively(varIdentifier='${varIdentifier.getText()}'): ${identified.errorTitle}`,
-        //                 identified.errorDescription!
-        //             )
-        //         }
-               
-        //         if (identified.getValue().nodeType === AstNodeType.Enum) {
-        //             let identifiedData = identified.getValue().data as EnumMembers;
-        //             Debug.pop();
-        //             if (propertyIdentifier.getText() in identifiedData) {
-        //                 return Result.ok(identifiedData[propertyIdentifier.getText()] as ValueType)
-        //             } else {
-        //                 return Result.fail(
-        //                     `Invalid enum`,
-        //                     `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-        //                 )
-        //             }
-        //         } else if (identified.getValue().nodeType === AstNodeType.Object) {
-        //             let identifiedData = identified.getValue().data as Object;
-        //             Debug.pop();
-        //             if (propertyIdentifier.getText() in identifiedData) {
-        //                 return Result.ok(identifiedData[propertyIdentifier.getText()] as ValueType)
-        //             } else {
-        //                 return Result.fail(
-        //                     `Invalid enum`,
-        //                     `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-        //                 )
-        //             }
-        //         } else {
-        //             Debug.log(`The identified data is not an enum nor a variable with object, then how to use it:`);
-        //             Debug.log(identified)
-        //             Debug.pop();
-        //         }
-        //     } else if (exp instanceof CallExpression) {
-        //         Debug.push(`exp as Function Call`)
-        //         Debug.push(`this.identifyFunctionCall()`, {'exp': exp.getText()})
-        //         const exprResult = await this.identifyFunctionCall(exp as CallExpression, memory);
-        //         Debug.pop();
-        //         Debug.pop();
-        //         if (exprResult.isFailure) {
-        //             return Result.fail(
-        //                 `this.identifyFunctionCall(exp: '${exp.getText()}'): ${exprResult.errorTitle}`,
-        //                 exprResult.errorDescription!,
-        //             )
-        //         }
-        //         return exprResult;
+        //     
         //     } else if (exp instanceof ShorthandPropertyAssignment) {
         //         const propertyIdentifier = exp.getChildAtIndex(0);
         //         Debug.push(`exp as ShortHandPropertyAssignment`)

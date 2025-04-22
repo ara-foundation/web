@@ -1,17 +1,10 @@
 import { expect, test } from "vitest";
 import { Code } from "../code-level/Code.js";
-import { Result, type Page } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
-import { ModuleType } from "../module.js";
-import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { AstNode, AstNodeType } from "../code-level/ast-node.js";
+import { UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
-import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
-import { Debug } from "@ara-web/ts-enhancement";
 import type { TsNode } from "../code-level/ts-node.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
@@ -230,8 +223,6 @@ test('Supports the function call as variable value', async () => {
 
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
-  Debug.log(`Identified data:`);
-  Debug.log(identifiedData);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
   expect(astNode.dataType).toEqual(ValueTypeString.number);
@@ -346,7 +337,6 @@ test('Supports the method call', async () => {
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
-  Debug.log(identifiedData)
   expect(astNode.dataType).toEqual(ValueTypeString.number);
   expect(astNode.data).toEqual(varValue)
 });
@@ -357,6 +347,7 @@ test('Supports the method call', async () => {
 //  assert the generic data type that returned data matches the generic data type.
 //  assert the assigned data type matches the union type.
 // Make sure the all in ValueLevel.identifyValue() matches
+// Support Enum assignments and enum value access
 
 //
 // Check the variable updates
