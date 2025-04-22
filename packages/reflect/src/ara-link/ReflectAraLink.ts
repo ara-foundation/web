@@ -11,6 +11,7 @@
 import type { EnumlikeKeyValue } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { ValueType } from "../code-level/ast-node-data.js";
+import { TsNode } from "../code-level/ts-node.js";
 
 const ReflectProtocol = "reflect"
 const IdentifierSlugs = ["reflect", "codeLevel", "identifier"]
@@ -22,8 +23,8 @@ export class ReflectAraLink {
         return araLink;
     }
 
-    public static linkToExpression = (expression: string): AraLink<string> => {
-        const araLink = new AraLink<string>(ReflectProtocol, expression, ExpressionSlugs) 
+    public static linkToExpression = (expression: TsNode): AraLink<TsNode> => {
+        const araLink = new AraLink<TsNode>(ReflectProtocol, expression, ExpressionSlugs) 
         return araLink;  
     }
 
@@ -53,7 +54,7 @@ export class ReflectAraLink {
         if (!araLink.isCorrectPath(ReflectProtocol, ExpressionSlugs)) {
             return false;
         }
-        return typeof araLink.resource === "string"
+        return (araLink.resource instanceof TsNode)
     }
 
     public static getIdentifierResource = (araLink: ValueType | undefined): string|undefined => {
@@ -67,7 +68,12 @@ export class ReflectAraLink {
         return araLink.resource as string;
     }
 
-    public static getExpressionResource = (araLink: ValueType | undefined): string|undefined => {
+    /**
+     * Returns the TsNode from the AraLink.
+     * @param araLink 
+     * @returns {TsNode|undefined}
+     */
+    public static getExpressionResource = (araLink: ValueType | undefined): TsNode|undefined => {
         if (araLink === undefined) {
             return undefined;
         }
@@ -75,6 +81,6 @@ export class ReflectAraLink {
             return undefined;
         }
 
-        return araLink.resource as string;
+        return araLink.resource as TsNode;
     }
 }

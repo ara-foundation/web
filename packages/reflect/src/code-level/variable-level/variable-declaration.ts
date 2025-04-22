@@ -202,7 +202,7 @@ export class VariableDeclaration extends TsNode {
             } else if (TsNode.isKeyword(child, "=")) {
                 j++;
                 child = children[j];
-                const expressionRefAraLink = ReflectAraLink.linkToExpression(child.getText());
+                const expressionRefAraLink = ReflectAraLink.linkToExpression(child);
                 typedData.data = expressionRefAraLink;
             } else {
                 const err = Debug.error(
