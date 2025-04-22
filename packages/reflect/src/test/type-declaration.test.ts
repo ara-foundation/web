@@ -17,7 +17,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
   const varName = 'Primary'  
   const src = `type ${varName} = string | number | boolean`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
     // Result
     expectAstNodeResult(types, varName)
@@ -54,7 +54,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
   const varName = `Type2`
   const src = `type ${varName} = number | "keyword" | (number|"keyword")[]`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -100,7 +100,7 @@ test('Support the custom data as part of union such as false, number, float', as
   const varName = `LiteralType`
   const src = `type ${varName} = number | 30 | 1995.05 | boolean | false | true | string | "string literal text"`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -147,7 +147,7 @@ test('Support the literals in the union types', async () => {
   const varName = `TypeUnionWithTypeLiteral`
   const src = `type ${varName} = number | 30 | 1995.05 | {name: string}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -192,7 +192,7 @@ test('Support the literals with union types', async () => {
   const varName = `TypeLiteralWithTypeUnion`
   const src = `type ${varName} = {name: string, sex: "male" | "female"}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -237,7 +237,7 @@ test('Support the expression as a type alias', async () => {
   const varName = `ExpressionType`
   const src = `type ${varName} = string`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -261,7 +261,7 @@ test('Support the generic types', async () => {
   const genericName = 'T'
   const src = `type ${varName}<${genericName}> = ${genericName}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -294,7 +294,7 @@ test('Support the generic union types', async () => {
   const genericName = 'T'
   const src = `type ${varName}<${genericName}> = ${genericName} | string`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -338,7 +338,7 @@ test('Support the generic types with the nested generic types and union types', 
   const arrayName = `Array`
   const src = `type ${varName}<${genericName} extends Array<number>> = number | Record<string, ${genericName}>`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -360,7 +360,7 @@ test('Support the generic types with the nested generic types and union types', 
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
-  moduleMemory.addIdentifiers(EnabledNodejsModules.getBuiltInIdentifiers().getValue())
+  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -381,7 +381,7 @@ test('Support the generic types with the nested generic types and union types', 
   const varName = `IntersectionWithPrimitive`
   const src = `type ${varName} = string[] & number & {name: string}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expect(types.isFailure).toBe(true);
@@ -394,7 +394,7 @@ test('Support the intersect types', async () => {
   const varName = `Intersection`
   const src = `type ${varName} = {numValue: number} & {name: string}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -412,7 +412,7 @@ test('Support the intersect types with union type', async () => {
   const varName = `UnionIntersection`
   const src = `type ${varName} = {name: string} & {girly: boolean} | {masculine: number}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -438,7 +438,7 @@ test('Support the intersect types with union type', async () => {
   const varName = `ParenthesizedUnionIntersection`
   const src = `type ${varName} = {name: string} & ({girly: boolean} | {masculine: number})`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, varName)
@@ -468,7 +468,7 @@ test('Support the type that has another type in the reference defined later than
     `type ${varName} = ${simpleVarName} & {profession: string}; ` + 
     `type ${simpleVarName} = {name: string, age: number}`;
   const code = new Code(src);
-  const types = code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
 
   // Result
   expectAstNodeResult(types, [varName, simpleVarName])

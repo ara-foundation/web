@@ -10,17 +10,19 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
-import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, type AstNodeProperties } from "./shared.js";
+import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
 import { Debug } from "@ara-web/ts-enhancement";
 import type { TsNode } from "../code-level/ts-node.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
+import { AstNodeContext } from "../memory/AstNodeContext.js";
+import { ValueLevel } from "../code-level/value-level.js";
 
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
   let src = `const ${varName} = "${varValue}"`;
   let code = new Code(src);
-  let vars = code.getVariableIdentifiers();
+  let vars = await code.getVariableIdentifiers();
 
   // Result
   expectAstNodeResult(vars, varName)
@@ -34,7 +36,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   // Not a constant format
   src = `let ${varName} = "${varValue}"`;
   code = new Code(src);
-  vars = code.getVariableIdentifiers();
+  vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
   expectedProps.constant = false;
@@ -43,7 +45,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   // Export and constant
   src = `export const ${varName} = "${varValue}"`;
   code = new Code(src);
-  vars = code.getVariableIdentifiers();
+  vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
   expectedProps.constant = true;
@@ -53,7 +55,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   // Data undefined
   src = `export let ${varName};`;
   code = new Code(src);
-  vars = code.getVariableIdentifiers();
+  vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
   expectedProps.constant = false;
@@ -67,7 +69,7 @@ test('Supports the variable declaration derived from the object decoupling', asy
   const varValue = "Astro.params";
   const src = `const { ${varName} } = "${varValue}"`;
   const code = new Code(src);
-  const vars = code.getVariableIdentifiers();
+  const vars = await code.getVariableIdentifiers();
   // Result
   expectAstNodeResult(vars, varName)
   const astNode = vars.getValue()[varName] as AstNode;
@@ -97,7 +99,7 @@ test('Supports the variable declaration by alias derived from the object decoupl
   const varValue = "Astro.params";
   const src = `const { ${propertyName}: ${varName} } = "${varValue}"`;
   const code = new Code(src);
-  const vars = code.getVariableIdentifiers();
+  const vars = await code.getVariableIdentifiers();
   // Result
   expectAstNodeResult(vars, varName)
   const astNode = vars.getValue()[varName] as AstNode;
@@ -125,7 +127,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   const varValue = "getActionBySlug(slug)";
   let src = `const ${varName}: Action | undefined = ${varValue}`;
   let code = new Code(src);
-  let vars = code.getVariableIdentifiers();
+  let vars = await code.getVariableIdentifiers();
 
   // Result
   expectAstNodeResult(vars, varName)
@@ -151,7 +153,7 @@ test('Supports the the variable declaration with the generic value', async () =>
   const varValue = "func<string>()";
   let src = `const ${varName}: Array<string> = ${varValue}`;
   let code = new Code(src);
-  let vars = code.getVariableIdentifiers();
+  let vars = await code.getVariableIdentifiers();
 
   // Result
   expectAstNodeResult(vars, varName)
@@ -182,7 +184,7 @@ test('Supports the literal value assignment', async () => {
   const varValue = "/ara/act/ara-web/action/get";
   let src = `const ${varName} = "${varValue}"`;
   let code = new Code(src);
-  let vars = code.getVariableIdentifiers();
+  let vars = await code.getVariableIdentifiers();
 
   // We don't check the result, as previous tests must ensure its passing
   let astNode = vars.getValue()[varName] as AstNode;
@@ -190,22 +192,171 @@ test('Supports the literal value assignment', async () => {
   expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
 
   const context = getEmptyContext();
-  Debug.log(`The ast node:`);
-  Debug.log(astNode)
-  const identifiedData = await code.identifyAstNodeData(astNode, context);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
-  Debug.log(`The identified ast node:`);
-  Debug.log(astNode);
+  expect(astNode.dataType).toEqual(ValueTypeString.string);
+  expect(astNode.data).toEqual(varValue)
 });
 
+
+// To work with function result, we need to create a function declaration.
 // function call as a result.
+test('Supports the function call as variable value', async () => {
+  const projectMemory = await getProjectMemory();
+  const moduleMemory = getEmptyModule();
+
+  const funcName = 'fooBar'
+  const varName = 'nameLength'
+
+  const varValue = `${funcName}('medet', 'ahmetson')`;
+  let src = `import { ${funcName} } from "${modulePath}";` +
+  ` const ${varName} = ${varValue}`;
+
+  let code = new Code(src);
+  let vars = await code.getVariableIdentifiers();
+
+  let imports = code.getImportedIdentifiers();
+  expect(imports.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(imports.getValue())
+  let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  // We don't check the result, as previous tests must ensure its passing
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(astNode.dataType).toBeUndefined();
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  Debug.log(`Identified data:`);
+  Debug.log(identifiedData);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  expect(astNode.dataType).toEqual(ValueTypeString.number);
+  expect(('medet' + 'ahmetson')).toHaveLength(astNode.data as number)
+});
+
+// function call, but variable has defined type such as string
+// but function returns another type.
+test('Supports the function call as variable value but mismatch the types', async () => {
+  const projectMemory = await getProjectMemory();
+  const moduleMemory = getEmptyModule();
+
+  const funcName = 'fooBar'
+  const varName = 'nameLength'
+
+  const varValue = `${funcName}('medet', 'ahmetson')`;
+  let src = `import { ${funcName} } from "${modulePath}";` +
+  ` const ${varName}: string = ${varValue}`;
+
+  let code = new Code(src);
+  let vars = await code.getVariableIdentifiers();
+
+  let imports = code.getImportedIdentifiers();
+  expect(imports.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(imports.getValue())
+  let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  // We don't check the result, as previous tests must ensure its passing
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(astNode.dataType).toEqual(ValueTypeString.string)
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(false);
+});
+
+// function call without any argument
+test('Supports the function call without any argument', async () => {
+  const projectMemory = await getProjectMemory();
+  const moduleMemory = getEmptyModule();
+
+  const funcName = 'helloAndWelcome'
+  const varName = 'greeting'
+  const varValue = `Hello and Welcome`;
+
+  let src = `import { ${funcName} } from "${modulePath}";` +
+  ` const ${varName}: string = ${funcName}( );`;
+
+  let code = new Code(src);
+  let vars = await code.getVariableIdentifiers();
+
+  let imports = code.getImportedIdentifiers();
+  expect(imports.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(imports.getValue())
+  let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  // We don't check the result, as previous tests must ensure its passing
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(astNode.dataType).toEqual(ValueTypeString.string)
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  expect(astNode.dataType).toEqual(ValueTypeString.string);
+  expect(astNode.data).toEqual(varValue)
+});
+
+// method call as a result
+test('Supports the method call', async () => {
+  const projectMemory = await getProjectMemory();
+  const moduleMemory = getEmptyModule();
+
+  const funcName = 'fooBar'
+  const objName = 'CustomObj'
+  const varName = 'greeting'
+  const varValue = 10;
+
+  let src = 
+  `import { ${funcName} } from "${modulePath}";` +
+  ` const ${objName} = {customMethod: ${funcName} }` +
+  ` const ${varName}: number = CustomObj.customMethod('12345', '67890');`;
+
+  let code = new Code(src);
+  let vars = await code.getVariableIdentifiers();
+
+  let imports = code.getImportedIdentifiers();
+  expect(imports.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(imports.getValue())
+  let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  let objAstNode = vars.getValue()[objName] as AstNode;
+  expect(objAstNode.data).toBeInstanceOf(AraLink)
+  expect(objAstNode.dataType).toBeUndefined()
+  expect(ReflectAraLink.isExpressionLink(objAstNode.data)).toBe(true)
+  moduleMemory.addIdentifiers({[objAstNode.identifier!]: objAstNode})
+
+  // We don't check the result, as previous tests must ensure its passing
+  let astNode = vars.getValue()[varName] as AstNode;
+  expect(astNode.data).toBeInstanceOf(AraLink)
+  expect(astNode.dataType).toEqual(ValueTypeString.number)
+  expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  Debug.log(identifiedData)
+  expect(astNode.dataType).toEqual(ValueTypeString.number);
+  expect(astNode.data).toEqual(varValue)
+});
+
 // if data type is linked, then define the data type.
-// define the result from another variable.
-// define the result from another module.
+// define the result from another variable that is already linted.
 // assert that data assignment data type matches astNode.dataType.
 //  assert the generic data type that returned data matches the generic data type.
 //  assert the assigned data type matches the union type.
+// Make sure the all in ValueLevel.identifyValue() matches
 
 //
 // Check the variable updates

@@ -137,39 +137,6 @@ export const identifierInModule = async (modulePath: string, identifier: string)
     Debug.log(module['icon'])
 }
 
-/**
- * Calls and returns the result of call as T
- * @param {string} modulePath 
- * @param {string} funcName 
- * @param {any[]} funcArgs 
- * @returns {data?: T, error?: string}
- */
-export const callFuncInModule = async (modulePath: string, funcName: string, funcArgs: any[]): 
-    Promise<Result<ValueType>> => {
-    
-    Debug.push(`fileContentByModulePath()`, {modulePath})
-    const identified = await fileContentByModulePath(modulePath);
-    Debug.pop();
-    if (identified.isFailure) {
-        return Result.fail(
-            `fileContentByModulePath(modulePath: '${modulePath}'): ${identified.errorTitle}`,
-            identified.errorDescription!
-        )
-    }
-
-    if (identified.getValue().moduleType === ModuleType.Script) {
-        let data = await (identified.getValue().fileContent.glob as any)[funcName](...funcArgs)
-        return Result.ok(data as ValueType);
-    } else if (identified.getValue().moduleType === ModuleType.NodeJsModule) {
-        let data = await (identified.getValue().fileContent.glob as any)[funcName](...funcArgs)
-        return Result.ok(data as ValueType);
-    }
-
-    return Result.fail(
-        `Unsupported module type`,
-        `The ${identified.getValue().moduleType} kind of modules are not yet supported by Ara Web, update callFuncInModule()`
-    )
-}
 
 
 /**

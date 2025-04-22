@@ -11,7 +11,8 @@ import { Result, Debug } from "@ara-web/ts-enhancement";
 import { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, type IdentifiedNodeDataType, type ValueType, type LiteralType, IntersectedUnionType } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { TypeRef } from "./type-ref.js";
-import { ValueLevel } from "../value-level.js";
+import { Literal } from "../value-level/literal.js";
+import { Identifier } from "../value-level/idenitifier.js";
 
 type PossibleTypeValue = 
     ValueTypeString | 
@@ -85,7 +86,7 @@ export class TypeValueTraits {
      * @param tsNode 
      * @returns {[IdentifiedNodeDataType] } either a link to 
      */
-    public static identifyArrayType = (tsNode: TsNode): Result<Array<IdentifiedNodeDataType>> => {
+    public static identifyArrayType = async (tsNode: TsNode): Promise<Result<Array<IdentifiedNodeDataType>>> => {
         if (!TypeValueTraits.isArrayTypeDeclaration(tsNode)) {
             return Result.fail(
                 `The variable '${tsNode.getText()}' type is expected to be Array Type Declaration.`,
@@ -101,7 +102,7 @@ export class TypeValueTraits {
         }
 
         // Debug.push(`this.identifyTypeValue()`, {identifier: '_array_index', tsNode: tsNode.getText()});
-        const arrayType = this.identifyTypeValue(tsNode.getChild(0)!)
+        const arrayType = await this.identifyTypeValue(tsNode.getChild(0)!)
         // Debug.pop()
         if (arrayType.isFailure) {
             return Result.fail(
@@ -150,7 +151,7 @@ export class TypeValueTraits {
         }
     }
 
-    private static identifyLiteralType = (tsNode: TsNode): Result<LiteralType> => {
+    private static identifyLiteralType = async (tsNode: TsNode): Promise<Result<LiteralType>> => {
         if (!this.isLiteralType(tsNode)) {
             return Result.fail(
                 `this.isLiteralType('${tsNode.getText()}'): false`,
@@ -167,7 +168,7 @@ export class TypeValueTraits {
             )
         }
 
-        const identifiedValue = ValueLevel.identifyLiteralValue(children[0]);
+        const identifiedValue = await (new Literal()).identifyValue(children[0]);
         if (identifiedValue.isFailure) {
             const err = Debug.error(
                 `ValueLevel.identifyLiteralValue(tsNode: '${children[0].getText()}'): ${identifiedValue.errorTitle}`,
@@ -181,7 +182,7 @@ export class TypeValueTraits {
         return Result.ok(identifiedValue.getValue().data! as LiteralType)
     }
 
-    private static identifyParenthesizedType = (tsNode: TsNode): Result<PossibleTypeValue> => {
+    private static identifyParenthesizedType = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
         if (!this.isParenthesizedType(tsNode)) {
             return Result.fail(
                 `this.isParenthesizedType('${tsNode.getText()}'): false`,
@@ -198,7 +199,7 @@ export class TypeValueTraits {
             )
         }
 
-        const identifiedValue = this.identifyTypeValue(children[0]);
+        const identifiedValue = await this.identifyTypeValue(children[0]);
         if (identifiedValue.isFailure) {
             const err = Debug.error(
                 `this.identifyTypeValue(tsNode: '${children[0].getText()}'): ${identifiedValue.errorTitle}`,
@@ -212,7 +213,7 @@ export class TypeValueTraits {
         return Result.ok(identifiedValue.getValue())
     }
 
-    private static identifyIntersectionType = (tsNode: TsNode): Result<PossibleTypeValue> => {
+    private static identifyIntersectionType = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
         if (!this.isIntersectionType(tsNode)) {
             return Result.fail(
                 `this.isIntersectionType('${tsNode.getText()}'): false`,
@@ -234,7 +235,7 @@ export class TypeValueTraits {
             const intersectionChild = children[intersectedIndex];
 
             // Debug.push(`this.identifyTypeValue(tsNode: '${intersectionChild.getText()}')`)
-            const identifiedValue = this.identifyTypeValue(intersectionChild);
+            const identifiedValue = await this.identifyTypeValue(intersectionChild);
             // Debug.pop();
             if (identifiedValue.isFailure) {
                 const err = Debug.error(
@@ -287,7 +288,7 @@ export class TypeValueTraits {
         return Result.ok(object)
     }
 
-    public static identifyTypeValue = (tsNode: TsNode): Result<PossibleTypeValue> => {
+    public static identifyTypeValue = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
         // Expressions such as type keywords 'string', 'number', etc
         // Hold only one key
         // returns ValueTypeString
@@ -309,7 +310,7 @@ export class TypeValueTraits {
                     typeRef.errorDescription!
                 )
             }
-            const identifiedTypeRefLink = typeRef.getValue().getAraLink();
+            const identifiedTypeRefLink = await typeRef.getValue().getAraLink();
             if (identifiedTypeRefLink.isFailure) {
                 return Result.fail(
                     `this.referencedTypeLink(astNode: '${tsNode.getText()}'): ${identifiedTypeRefLink.errorTitle}`,
@@ -320,7 +321,7 @@ export class TypeValueTraits {
         // returns AstNode/TypeDeclaration
         } else if (this.isTypeLiteral(tsNode)) {
             // Debug.push(`typeLiteralAstNodeToTypeDeclaration()`, {typeLiteral: node.getText()})
-            const identifiedTypeLiteral = this.identifyTypeLiteral(tsNode)
+            const identifiedTypeLiteral = await this.identifyTypeLiteral(tsNode)
             // Debug.pop()
             if (identifiedTypeLiteral.isFailure) {
                 return Result.fail(
@@ -332,7 +333,7 @@ export class TypeValueTraits {
         // returns array with one IdentifiedNodeDataType element
         } else if (TypeValueTraits.isUnionType(tsNode)) {
             // Debug.push(`identifyTypeLiteral()`, {typeLiteral: tsNode.getText()})
-            const identifiedTypeDeclaration = this.identifyUnionType(tsNode)
+            const identifiedTypeDeclaration = await this.identifyUnionType(tsNode)
             // Debug.pop()
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
@@ -343,7 +344,7 @@ export class TypeValueTraits {
             return Result.ok(identifiedTypeDeclaration.getValue());
         } else if (this.isArrayTypeDeclaration(tsNode)) {
             // Debug.push(`identifyArrayType()`, {typeLiteral: node.getText()})
-            const identifiedArrayValue = TypeValueTraits.identifyArrayType(tsNode);
+            const identifiedArrayValue = await this.identifyArrayType(tsNode);
             // Debug.pop()
             if (identifiedArrayValue.isFailure) {
                 return Result.fail(
@@ -353,7 +354,7 @@ export class TypeValueTraits {
             }
             return Result.ok(identifiedArrayValue.getValue());
         } else if (this.isLiteralType(tsNode)) {
-            const identifiedLiteralType = this.identifyLiteralType(tsNode);
+            const identifiedLiteralType = await this.identifyLiteralType(tsNode);
             if (identifiedLiteralType.isFailure) {
                 return Result.fail(
                     `this.identifyLiteralType(): ${identifiedLiteralType.errorTitle}`,
@@ -363,7 +364,7 @@ export class TypeValueTraits {
 
             return Result.ok(identifiedLiteralType.getValue())
         } else if (this.isParenthesizedType(tsNode)) {
-            const identified = this.identifyParenthesizedType(tsNode);
+            const identified = await this.identifyParenthesizedType(tsNode);
             if (identified.isFailure) {
                 return Result.fail(
                     `this.identifyParenthesizedType(): ${identified.errorTitle}`,
@@ -373,7 +374,7 @@ export class TypeValueTraits {
 
             return Result.ok(identified.getValue())
         } else if (this.isIntersectionType(tsNode)) {
-            const identified = this.identifyIntersectionType(tsNode);
+            const identified = await this.identifyIntersectionType(tsNode);
             if (identified.isFailure) {
                 return Result.fail(
                     `this.identifyIntersectionType(): ${identified.errorTitle}`,
@@ -400,7 +401,7 @@ export class TypeValueTraits {
 
     // Type is defined as property and its value.
     // How come it returns type declaration? TypeDeclaration is from AstNode.
-    private static identifyTypeLiteral = (tsNode: TsNode): Result<TypeDeclaration> => {
+    private static identifyTypeLiteral = async (tsNode: TsNode): Promise<Result<TypeDeclaration>> => {
         if (!this.isTypeLiteral(tsNode)) {
             return Result.fail(
                 `The node is not a type literal`,
@@ -435,7 +436,7 @@ export class TypeValueTraits {
                 }
     
                 // Debug.push(`propertySignatureToTypeDeclaration`, {PropertySignature: typeLiteralNode.getText()})
-                const identifiedTypeProperty = this.propertySignatureToTypeDeclaration(typeLiteralNode);
+                const identifiedTypeProperty = await this.propertySignatureToTypeDeclaration(typeLiteralNode);
                 // Debug.pop();
                 if (identifiedTypeProperty.isFailure) {
                     return Result.fail(
@@ -454,7 +455,7 @@ export class TypeValueTraits {
             return Result.ok(typeDeclaration);
     }
 
-    private static identifyUnionType = (tsNode: TsNode): Result<UnionTypeDeclaration> => {
+    private static identifyUnionType = async (tsNode: TsNode): Promise<Result<UnionTypeDeclaration>> => {
         if (!this.isUnionType(tsNode)) {
             const err = Debug.error(
                 `this.isUnionType(tsNode: '${tsNode.getText()}'): Not valid`,
@@ -480,7 +481,7 @@ export class TypeValueTraits {
             const unionChild = children[unionIndex];
         
             // Debug.push(`propertySignatureToTypeDeclaration`, {PropertySignature: typeLiteralNode.getText()})
-            const identifiedTypeValue = this.identifyTypeValue(unionChild);
+            const identifiedTypeValue = await this.identifyTypeValue(unionChild);
             // Debug.pop();
             if (identifiedTypeValue.isFailure) {
                 return Result.fail(
@@ -496,7 +497,7 @@ export class TypeValueTraits {
     }
 
 
-    private static propertySignatureToTypeDeclaration = (tsNode: TsNode): Result<TypeDeclaration> => {
+    private static propertySignatureToTypeDeclaration = async (tsNode: TsNode): Promise<Result<TypeDeclaration>> => {
         if (!TsNode.isPropertySignature(tsNode)) {
             return Result.fail(
                 `The node is not a property signature`,
@@ -511,7 +512,7 @@ export class TypeValueTraits {
         const typeDeclaration: TypeDeclaration = new TypeDeclaration();
         const propertySignatureIdentifier = tsNode.getChild(0)!
                 
-        if (!TsNode.isIdentifier(propertySignatureIdentifier)) {
+        if (!Identifier.isA(propertySignatureIdentifier)) {
             const err = Debug.error(
                 `The '${tsNode.getText()}' first child expected to be an Identifier`,
                 `Ara Web doesn't support the '${propertySignatureIdentifier.getText()}', update the propertySignatureToTypeDeclaration()`,
@@ -524,7 +525,7 @@ export class TypeValueTraits {
     
         const propertySignatureChildren = tsNode.getChildren(
             [], 
-            [TsNode.isNonImportant, TsNode.isIdentifier], 
+            [TsNode.isNonImportant, Identifier.isA], 
             [":", ",", "?"] // ? at the end of the property indicates it's optional.
         )
         const propertySignatureCount = propertySignatureChildren.length;
@@ -533,7 +534,7 @@ export class TypeValueTraits {
             const propertySignatureChild = propertySignatureChildren[propertySignatureIndex];
     
             // Debug.push(`identifyTypeValue()`, {identifier: propertyIdentifier, node: propertySignatureChild.getText()})
-            const identifiedValue = this.identifyTypeValue(propertySignatureChild);
+            const identifiedValue = await this.identifyTypeValue(propertySignatureChild);
             // Debug.pop();
             
             if (identifiedValue.isFailure) {

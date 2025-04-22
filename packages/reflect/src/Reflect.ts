@@ -114,7 +114,7 @@ export class Reflect {
         this._autoImportFunc = importFunc;
     }
 
-    private _pre = (): Result<undefined> => {
+    private _pre = async (): Promise<Result<undefined>> => {
         const globsIdentified = this.putGlobs();
         if (globsIdentified.isFailure) {
             return Result.fail(
@@ -123,7 +123,7 @@ export class Reflect {
             )
         }
         
-        const builtInIdentified = this.postBuiltInIdentifiers();
+        const builtInIdentified = await this.postBuiltInIdentifiers();
         if (builtInIdentified.isFailure) {
             return Result.fail(
                 `this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`,
@@ -145,7 +145,7 @@ export class Reflect {
      * Components are not evaluated by internal structures.
      */
     public getComponents = async (): Promise<Result<Component[]>> => {
-        const preparationResult = this._pre();
+        const preparationResult =await  this._pre();
         if (preparationResult.isFailure) {
             return Result.fail(
                 `this._pre(): ${preparationResult.errorTitle}`,
@@ -186,7 +186,7 @@ export class Reflect {
      * Returns the all the layout components
      */
     public getLayouts = async (): Promise<Result<Component[]>> => {
-        const preparationResult = this._pre();
+        const preparationResult = await this._pre();
         if (preparationResult.isFailure) {
             return Result.fail(
                 `this._pre(): ${preparationResult.errorTitle}`,
@@ -229,7 +229,7 @@ export class Reflect {
      * @returns {Result<Page[]>}
      */
     public getPages = async (): Promise<Result<Page[]>> => {
-        const preparationResult = this._pre();
+        const preparationResult = await this._pre();
         if (preparationResult.isFailure) {
             return Result.fail(
                 `this._pre(): ${preparationResult.errorTitle}`,
@@ -487,8 +487,8 @@ export class Reflect {
     //
     // Adds the Array, Object and other classes, types that are available in the Environment
     //
-    private postBuiltInIdentifiers = (): Result<undefined> => {
-        const identifiers = EnabledNodejsModules.getBuiltInIdentifiers();
+    private postBuiltInIdentifiers = async (): Promise<Result<undefined>> => {
+        const identifiers = await EnabledNodejsModules.getBuiltInIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(
                 `getBuiltInIdentifiers(): ${identifiers.errorTitle}`,
@@ -611,7 +611,7 @@ export class Reflect {
                     Debug.log(`The union types:`);
                     const unionData = data as UnionTypeDeclaration;
                     for (let unionIndex = 0; unionIndex < unionData.unionLength; unionIndex++) {
-                        Debug.log(`Union child: ${unionIndex}/${unionData.length - 1}:`);
+                        Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
                         Debug.log(unionData.getUnion(unionIndex))
                     }
                 } else {
@@ -687,7 +687,7 @@ export class Reflect {
             }
 
             Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
-            const identifiers = contents[modulePath].code.getTypeIdentifiers();
+            const identifiers = await contents[modulePath].code.getTypeIdentifiers();
             Debug.pop();
             if (identifiers.isFailure) {
                 return Result.fail(

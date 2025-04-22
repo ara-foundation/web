@@ -1,12 +1,12 @@
-import type { Page, Result } from "@ara-web/ts-enhancement";
+import type { Result } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
 import { ProjectMemory } from "../memory/ProjectMemory.js";
 import { ModuleType } from "../module.js";
+import { ModuleMemory } from "../memory/ModuleMemory.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 
@@ -71,4 +71,22 @@ export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => 
   const context = new AstNodeContext([], identifers, projectMemory);
 
   return context;
+}
+
+export const modulePath = `./funcs.js`;
+
+export const getProjectMemory = async (): Promise<ProjectMemory> => {
+  const moduleType = ModuleType.Script;
+  let glob = await import(modulePath)
+  const moduleMemory = new ModuleMemory<unknown>(moduleType, modulePath, glob);
+
+  const projectMemory = new ProjectMemory();
+  projectMemory.putModuleMemory(moduleType, modulePath, moduleMemory);
+  
+  return projectMemory;
+}
+
+
+export const getEmptyModule = (): ModuleMemory<unknown> => {
+  return new ModuleMemory<unknown>(ModuleType.Untracked, '', undefined);
 }

@@ -26,6 +26,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { TypeRef } from "./type-level/type-ref.js";
 import type { AstNodeContext } from "../memory/AstNodeContext.js";
+import { Identifier } from "./value-level/idenitifier.js";
 
 export class TypeDeclaration extends TsNode {
     protected _tsNode: TypeAliasDeclaration;
@@ -64,7 +65,7 @@ export class TypeDeclaration extends TsNode {
         return node instanceof TypeParameterDeclaration;
     }
 
-    private identifyGenericDeclaration = (genericNode: TsNode): Result<AstNode> => {
+    private identifyGenericDeclaration = async (genericNode: TsNode): Promise<Result<AstNode>> => {
         const nodes = genericNode.getChildren([], [TsNode.isNonImportant], []);
         const paramCount = nodes.length;
         if (paramCount === 0) {
@@ -74,7 +75,7 @@ export class TypeDeclaration extends TsNode {
             )
         }
 
-        if (!TsNode.isIdentifier(nodes[0])) {
+        if (!Identifier.isA(nodes[0])) {
             const err = Debug.error(
                 `The first node '${nodes[0].getText()}' is not identifier`,
                 `Please update the Ara Web to support this feature or perhaps you made a mistake in your syntax? ;)`,
@@ -107,7 +108,7 @@ export class TypeDeclaration extends TsNode {
                 return Result.fail(`Failed to identify the parameter.`, `The param after 'extends' expected, but not given`)
             }
             const nextParamNode = nodes[paramCounter];
-            const nextParamValue = TypeValueTraits.identifyTypeValue(nextParamNode);
+            const nextParamValue = await TypeValueTraits.identifyTypeValue(nextParamNode);
             if (nextParamValue.isFailure) {
                 return Result.fail(
                     `identifyTypeValue(identifier: '${identifiedNode.identifier}', node: ${nextParamNode.getText()}): ${nextParamValue.errorTitle}`,
@@ -161,7 +162,7 @@ export class TypeDeclaration extends TsNode {
     }
     
 
-    public getAstNode = (): Result<AstNode> => {
+    public getAstNode = async (): Promise<Result<AstNode>> => {
         let identifiedNode = AstNode.fromTsNode(this);
         identifiedNode.constant = true;
         identifiedNode.nodeType = AstNodeType.Type;
@@ -177,7 +178,7 @@ export class TypeDeclaration extends TsNode {
             if (TsNode.isExportKeyword(typeChild)) {
                 identifiedNode.public = true;
                 continue;
-            } else if (TsNode.isIdentifier(typeChild)) {
+            } else if (Identifier.isA(typeChild)) {
                 identifier = StringTraits.unquote(typeChild.getText());
                 identifiedNode.identifier = identifier;
                 continue;
@@ -187,7 +188,7 @@ export class TypeDeclaration extends TsNode {
                     if (!(TypeDeclaration.isTypeParameterDeclaration(typeAstNode))) {
                         return Result.fail(`Type Parameter Declaration expected for generic types`, 'Please correct the syntax code')
                     }
-                    const identifiedData = this.identifyGenericDeclaration(typeAstNode);
+                    const identifiedData = await this.identifyGenericDeclaration(typeAstNode);
                     if (identifiedData.isFailure) {
                         return Result.fail(`identifyGenericDeclaration(genericNode: '${typeAstNode.getText()}'): ${identifiedData.errorTitle}`, identifiedData.errorDescription!)
                     }
@@ -196,7 +197,7 @@ export class TypeDeclaration extends TsNode {
                 i += AstNode.GenericNodeLength - 1;
                 continue;
             } else {
-                const identified = TypeValueTraits.identifyTypeValue(typeChild);
+                const identified = await TypeValueTraits.identifyTypeValue(typeChild);
                 if (identified.isFailure) {
                     const err = Debug.error(
                         `TypeValueTraits.identifyTypeValue(tsNode: '${typeChild.getText()}'): ${identified.errorTitle}`,

@@ -5,6 +5,9 @@
 Reflect package turns the web pages into the files into the
 ontological data and vice versa.
 
+Testing from the reflect root:
+> pnpm test -r ./
+
 ## Getting started
 Since, Reflect is a separated package, but aims to reflect another package,
 We need to let know reflect which package modules are available and which are not.

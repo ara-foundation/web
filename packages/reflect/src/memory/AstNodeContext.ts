@@ -2,6 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { Debug, Result } from "@ara-web/ts-enhancement";
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -21,9 +22,24 @@ export class AstNodeContext {
         this._projectMemory = projectMemory;
     }
 
-    public clone(localDefined: AstNode[]): AstNodeContext {
-        const context = new AstNodeContext(this._localDefined, this._pageIdentifiers, this._projectMemory);
-        context._localDefined = [...context._localDefined, ...localDefined]
+    public clone(additionalLocals: AstNode[], skipIdentifiers?: string[]): AstNodeContext {
+        const context = new AstNodeContext(additionalLocals, {}, this._projectMemory);
+        if (skipIdentifiers === undefined) {
+            context._pageIdentifiers = this._pageIdentifiers;
+            context._localDefined = [...context._localDefined, ...this._localDefined];
+        } else {
+            for (let local of this._localDefined) {
+                if (!skipIdentifiers.includes(local.identifier!)) {
+                    context._localDefined.push(local);
+                }
+            }
+
+            for (let identifier in this._pageIdentifiers) {
+                if (!skipIdentifiers.includes(identifier)) {
+                    context._pageIdentifiers[identifier] = this._pageIdentifiers[identifier];
+                }
+            }
+        }
         return context;
     }
 
@@ -72,20 +88,51 @@ export class AstNodeContext {
         return undefined;
     }
 
-    public getIdentifier = (identifier: AraLink<string>): AstNode|undefined => {
-        if (!ReflectAraLink.isIdentifierLink(identifier)) {
-            return undefined;
+    public getIdentifier = (data: AraLink<string>|string): AstNode|undefined => {
+        let identifier: string;
+        if (typeof data !== "string") {
+            if (!ReflectAraLink.isIdentifierLink(data)) {
+                return undefined;
+            }
+            identifier = data.resource;
+        } else {
+            identifier = data;
         }
 
         let astNode: AstNode|undefined = undefined;
 
-        if (this.isLocal(identifier.resource)) {
-            astNode = this.getLocal(identifier.resource);
+        if (this.isLocal(identifier)) {
+            astNode = this.getLocal(identifier);
             if (astNode !== undefined) {
                 return astNode;
             }
         }
 
-        return this.getPageIdentifier(identifier.resource);
+        return this.getPageIdentifier(identifier);
+    }
+
+    /**
+     * Identify the Import Path of the given identifier
+     * @param {string} identifier
+     * @param {ImportDeclaration} astImport 
+     * @returns {string} the module path
+     */
+    public identifyImportPath = (identifier: string): Result<string> => {
+        const astNode = this.getIdentifier(identifier);
+        if (astNode === undefined) {
+            return Result.fail(
+                `this.getIdentifier('${identifier}'): not found`,
+                `Ast Node for the identifier not found`
+            )
+        }
+
+        if (astNode.importPath === undefined) {
+            return Result.fail(
+                `No import path found for the identifier`,
+                `The identifier is not imported`
+            )
+        }
+
+        return Result.ok(astNode.importPath.resource as string)
     }
 }

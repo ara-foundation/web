@@ -36,7 +36,6 @@ import {
 } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
-import { callFuncInModule } from "../fileLevel.js";
 import { ImportDeclaration } from "./import-declaration.js";
 import { AstNode, type AstIdentifiers, AstNodeType, type TypedData } from "./ast-node.js";
 import { 
@@ -252,7 +251,7 @@ export class Code {
      * @param memory 
      * @returns 
      */
-    public getTypeIdentifiers = (): Result<AstIdentifiers> => {
+    public getTypeIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
         let identifiers: AstIdentifiers = {};
         
         const tsNodes = this.getTsNodes([TypeDeclaration.isTypeDeclaration]);
@@ -266,7 +265,7 @@ export class Code {
             }
 
             // Debug.push(`getAstNode()`)
-            const identifiedTypeDeclaration = typeDeclaration.getValue().getAstNode();
+            const identifiedTypeDeclaration = await typeDeclaration.getValue().getAstNode();
             // Debug.pop();
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(
@@ -280,19 +279,20 @@ export class Code {
         return Result.ok(identifiers);
     }
 
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Variable Declarations
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
-    public getVariableIdentifiers = (): Result<AstIdentifiers> => {
+    public getVariableIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
         let identifiers: AstIdentifiers = {};
         
         const varStatements = this.getTsNodes([VariableStatement.isVariableStatement])
 
         for (let tsNode of varStatements) {
-            var varStatement = VariableStatement.fromTsNode(tsNode);
+            var varStatement = await VariableStatement.fromTsNode(tsNode);
             if (varStatement.isFailure) {
                 return Result.fail(
                     `VariableStatement.fromTsNode(tsNode: '${tsNode.getText()}'): ${varStatement.errorTitle}`,
@@ -502,82 +502,6 @@ export class Code {
             varIdentifiers[varIdentifierIndex].dataType = childValueType.getValue();
         }
         return Result.ok()
-    }
-
-    /**
-     * @param astNode Evaluate all the AST Node data property
-     * @limitation Only supports AST Nodes that are Links to the expressions.
-     * @returns 
-     */
-    public identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        if (astNode.data === undefined) {
-            return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
-        }
-
-        if (!(astNode.data instanceof AraLink)) {
-            return Result.errorCode501(['Code'], 'identifyTypedData');
-        }
-
-        const typedData = await this.identifyExpressionLinkData(astNode, astNodeContext);
-        if (typedData.isFailure) {
-            return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
-        }
-
-        return Result.ok(typedData.getValue());
-    }
-
-    /**
-     * 
-     * @param astNode
-     * @returns 
-     */
-    private identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!ReflectAraLink.isExpressionLink(astNode.data)) {
-            return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
-        }
-
-        const expTsNode = ReflectAraLink.getExpressionResource(astNode.data)!;
-        Debug.log(`Identify the value of the '${expTsNode?.getText()}' expression`)
-
-        if (astNode.dataType === undefined) {
-            Debug.log(`The data type is undefined, let's try to identify by '${expTsNode.getText()}'`);
-            Debug.push(`this.identifyValueType(expTsNode='${expTsNode?.getText()}')`)
-            const identfiedValueType = ValueLevel.getValueTypeString(expTsNode);
-            Debug.pop();
-            if (identfiedValueType.isFailure) {
-                return Result.fail(
-                    `ValueLevel.getValueTypeString('${expTsNode?.getText()}'): ${identfiedValueType.errorTitle}`,
-                    identfiedValueType.errorDescription!
-                )
-            }
-
-            astNode.dataType = identfiedValueType.getValue();
-        } else {
-            Debug.log(`The data type is defined`)
-        }
-
-
-        // const randomValue = this.emptyValueByType(identifier, identfiedValueType.getValue())
-        // if (randomValue.isFailure) {
-        //     return Result.fail(
-        //         `lastChild='${lastChild?.getText()}'/this.exactValueType(identifier='${identifier}'), idenfierValueType='${identfiedValueType.getValue()}': ${randomValue.errorTitle}`,
-        //         randomValue.errorDescription!
-        //     )
-        // }
-        // const value = randomValue.getValue();
-        // Debug.log(`The '${identifier}' identifier needs '${lastChild?.getText()}' expression, type: '${ValueTypeString[identfiedValueType.getValue()]}', current: '${JSON.stringify(value)}' value`)
-        Debug.push(`ValueLevel.identifyValue()`, {tsNode: expTsNode.getText()})
-        const identifiedValue = await ValueLevel.identifyValue(expTsNode, astNode.typedData, astNodeContext);
-        Debug.pop();
-        // Debug.log(`The '${identifier}' identified value = '${JSON.stringify(identifiedValue)}'`)
-        if (identifiedValue.isFailure) {
-            return Result.fail(
-                `ValueLevel.identifyValue(): ${identifiedValue.errorTitle}`,
-                identifiedValue.errorDescription!
-            )
-        }
-
-        return Result.ok(identifiedValue.getValue())
     }
 
     /**
@@ -991,119 +915,6 @@ export class Code {
         }
 
         return Result.ok(enumMembers)
-    }
-
-    /**
-     * ObjectLiteralExpression has three children:
-     * @child {Node} '{'
-     * @child {SyntaxList} anything
-     * @child Node '}'
-     * @param identifier 
-     * @param data 
-     * @param syntaxList 
-     */
-    private identifyObjectLiteral = async<T>(identifier: string|undefined, data: ValueType|undefined, dataType: ValueTypeString|any, syntaxList: SyntaxList, memory: ModuleMemory<T>): Promise<Result<ValueType>> => {
-        const syntaxListElements = this.syntaxListElements(syntaxList);
-        if (data === undefined) {
-            data = this.exactValueByType(identifier!, dataType, data);
-        }
-
-        const dataElements: ValueType[] = [];
-        const dataElementTypes: ValueTypeString|ValueType[] = [];
-        const proeprtyIdentifiers: string[] = [];
-        for (let i = 0; i < syntaxListElements.length; i++) {
-            const element = syntaxListElements[i];
-            
-            // Debug.push(`identifyValueType()`, {exp: element.getText()})
-            const childValueType = this.identifyValueType(element);
-            // Debug.pop()
-            if (childValueType.isFailure) {
-                return Result.fail(
-                    `syntaxList('${syntaxList.getText()}')/this.identifyValueType(child='${element.getText()}';i=${i}): ${childValueType.errorTitle}`,
-                    childValueType.errorDescription!
-                )
-            }
-
-            const exactIdentifier = this.exactIdentifier(element, identifier!);
-            const exactExp = this.exactValueNode(element);
-            if (childValueType.getValue() === ValueTypeString.property) {
-                if (!(exactIdentifier in (data as any))) {
-                    const err = Debug.error(
-                        `The '${exactIdentifier}' property is not found in the object data`,
-                        `Make sure that data and data type has the property from the element expression`,
-                        {object: data, elementExpression: element.getText()},
-                    )
-                    return Result.fail(err)
-                }
-                const propertyValue = deepCopy((data as any)[exactIdentifier])
-                const propertyValueType = this.identifyDataValueType(propertyValue)
-                if (propertyValueType.isFailure) {
-                    const err = Debug.error(
-                        `this.identifyDataValueType(): ${propertyValueType.errorTitle}`,
-                        propertyValueType.errorDescription!,
-                        {
-                            data,
-                            propertyIdentifier: exactIdentifier,
-                            propertyValue: propertyValue,
-                            propertyType: typeof ((data as any)[exactIdentifier])
-                        }
-                    )
-                    return Result.fail(err);
-                }
-                dataElements.push(propertyValue)
-                dataElementTypes.push(propertyValueType.getValue())
-                proeprtyIdentifiers.push(exactIdentifier)
-                syntaxListElements[i] = exactExp;
-                Debug.log(`The '${exactIdentifier}' property's value is ${(data as any)[exactIdentifier]}: type = '${typeof ((data as any)[exactIdentifier])}' type`)
-                continue;
-            } else if (childValueType.getValue() !== ValueTypeString.object) {
-                const err = Debug.error(
-                    `The element in object literal is neither property assignment nor object spread`,
-                    `update identifyObjectLiteral() to support it`,
-                    {object: data, element: element.getText(), elementExpress: element},
-                )
-
-                return Result.fail(err)
-            }
-            dataElements.push({})
-            dataElementTypes.push(dataType)
-            proeprtyIdentifiers.push('')
-            syntaxListElements[i] = exactExp;
-        }
-
-        Debug.log(`Idenfied object list`);
-        Debug.log(dataElements)
-        Debug.log(dataElementTypes)
-        Debug.log(proeprtyIdentifiers)
-
-        Debug.push(`this.identifySyntaxList()`, {syntaxListElements: `${syntaxListElements.length} elements`})
-        const identified = await this.identifySyntaxList(syntaxListElements, dataElements, dataElementTypes, memory);
-        Debug.pop();
-        
-        if (identified.isFailure) {
-            const err = Debug.error(
-                `this.identifySyntaxList(): ${identified.errorTitle}`,
-                identified.errorDescription!,
-                {
-                    syntaxListElements, dataElements, dataElementTypes
-                }
-            )
-            return Result.fail(err)
-        }
-
-        for (let i = 0; i < identified.getValue().length; i++) {
-            const child = identified.getValue()[i];
-            if (proeprtyIdentifiers[i].length > 0) {
-                (data as any)[proeprtyIdentifiers[i]] = child;
-            } else {
-                (data as any) = {...deepCopy(data as object), ...deepCopy(child as any)}
-            }
-        }
-
-        Debug.log(`Identified object literal:`)
-        Debug.log(data)
-
-        return Result.ok(data)
     }
 
     /**
@@ -1746,33 +1557,6 @@ export class Code {
 
 
     /**
-     * Call the function and return it's result
-     * @param {string} funcName function literal
-     * @param {any[]} funcArgs function argument
-     * @returns {error?: string, data?: T}
-     */
-    private callFunc = async (funcName: string, funcArgs: any[]): Promise<Result<ValueType>> => {
-        // Find the function
-        const res = this.identifyImportPath(funcName);
-        if (res.isFailure) {
-            return Result.fail(
-                `this.identifyImportPath(funcName='${funcName}'): ${res.errorTitle}`,
-                res.errorDescription!
-            )
-        }
-
-        const moduleRes = await callFuncInModule(res.getValue(), funcName, funcArgs);
-        if (moduleRes.isFailure) {
-            return Result.fail(
-                `callFuncInModule(modulePath='${res.getValue()}', funcName='${funcName}', funcArgs='${JSON.stringify(funcArgs)}')`,
-                moduleRes.errorDescription!
-            )
-        }
-
-        return Result.ok(moduleRes.getValue());
-    }
-
-    /**
      * Does the given ImportDeclaration holds the definition of the literal?
      * @param {string} literal a variable, constant, function to look for 
      * @param astImport the import module declaration
@@ -1823,132 +1607,6 @@ export class Code {
         return undefined;
     }
 
-    /**
-     * Identify the Import Path of the given identifier
-     * @param {string} identifier
-     * @param {ImportDeclaration} astImport 
-     * @returns {string} the module path
-     */
-    public identifyImportPath = (identifier: string, astImport?: TsImportDeclaration): Result<string> => {
-        Debug.log(`identifyImportPath todo: Identify import path must get the data from the Memory`);
-        if (astImport === undefined) {
-            astImport = this.identifyImportDeclaration(identifier)
-            if (astImport === undefined) {
-                return Result.fail(
-                    `this.identifyImportDeclaration(identifier='${identifier}')`,
-                    `The given identifier not found in the import declaration`
-                )
-            }
-        }
-
-        // Since identify import declaration was correct for sure it will occur
-        let result: Result<string> = Result.ok("");
-
-        for (let child of astImport.getChildren()) {
-            if (child instanceof StringLiteral) {
-                result = Result.ok(StringTraits.unquote(child.getText()))
-            }
-        }
-
-        return result;
-    }
-
-    private identifyMethodCall = async<T>(method: PropertyAccessExpression, methodArgs: SyntaxList, memory: ModuleMemory<T>): Promise<Result<ValueType>> => {
-        const methodOwner = method.getFirstChild();
-        const funcName = method.getLastChild();
-        Debug.log(`identifyMethod Call the object = '${methodOwner?.getText()}', method = '${funcName?.getText()}'`);
-        Debug.push(`this.identifyValue(identifier='${methodOwner?.getText()}',data={}, exp='${methodOwner?.getText()}')`)
-        const methodObj = await this.identifyValue(methodOwner?.getText(), {}, {}, methodOwner!, memory);
-        Debug.pop();
-        Debug.log(`The object value:`)
-        Debug.log(methodObj)
-
-        // const propertyValue = (data as any)[funcName.getText()]
-
-        return Result.fail(`undefined`, 'method not supported')
-    }
-
-    /**
-     * Calls the function and returns its result
-     * The value clause is the function call? `foo()` will be turned into four nodes:
-     *  1: Identifier(foo), 
-     *  2: Node(\(), 
-     *  3: SyntaxList(""), 
-     *  4: Node(\))
-     * @param {CallExpression} exp the node with the function call
-     * @returns {error?: string, data?: T}
-     */
-    private identifyFunctionCall = async<T>(exp: CallExpression, memory: ModuleMemory<T>): Promise<Result<ValueType>> => {
-        const firstChild = exp.getChildAtIndex(0) as PropertyAccessExpression;
-        const syntaxList = exp.getChildAtIndex(2) as SyntaxList;
-        if (firstChild instanceof PropertyAccessExpression) {
-            Debug.push(`this.identifyMethodCall<T>()`, {'method': firstChild.getText(), 'methodArgs': syntaxList.getText()})
-            const res = await this.identifyMethodCall(firstChild, syntaxList, memory)
-            Debug.pop();
-            if (res.isFailure) {
-                return Result.fail(
-                    `this.identifyMethodCall<T>(firstChild='${firstChild.getText()}', syntaxList='[${syntaxList.getText()}]'): ${res.errorTitle}`,
-                    res.errorDescription!
-                )
-            }
-            return Result.ok(res.getValue())
-        } else {
-            Debug.log(`The function call is not a method call, so continue.`)
-        }
-
-        const identifier = exp.getChildAtIndex(0) as Identifier;
-        const funcName = identifier.getText();
-        const funcArgs: any[] = [];
-        let openParenthesis: boolean = false;
-        for (let i = 1; i < exp.getChildCount(); i++) {
-            const subChild = exp.getChildAtIndex(i);
-            if (subChild.getText() === "(") {
-                openParenthesis = true;
-            } else if (subChild.getText() === ")") {
-                continue;
-            } else if (!(subChild instanceof SyntaxList) || subChild.getText() !== "" ) {
-                if (openParenthesis === false) {
-                    continue;
-                }
-                if (subChild instanceof SyntaxList) {
-                    for (let funcArg of subChild.getChildren()) {
-                        if (funcArg.getText() === ",") {
-                            continue;
-                        }
-                        let result = await this.identifyValue(`${funcName}_call_by_${identifier.getText()}`, {}, {}, funcArg, memory);
-                        if (result.isFailure) {
-                            return Result.fail(
-                                `func arg is multiple arguments, SyntaxList('${subChild.getText()}'): this.identifyValue(funcArg='${funcArg.getText()}', {}, funcArg='${funcArg.getText()}'): ${result.errorTitle}`,
-                                result.errorDescription!
-                            )
-                        } else {
-                            funcArgs.push(result.getValue())
-                        }
-                    }
-                } else {
-                    let result = await this.identifyValue(subChild.getText(), {}, {}, subChild, memory);
-                    if (result.isFailure) {
-                        return Result.fail(
-                            `func arg is a single argument: this.identifyValue(subChild='${subChild.getText()}', {}, subChild='${subChild.getText()}'): ${result.errorTitle}`,
-                            result.errorDescription!
-                        )
-                    } else {
-                        funcArgs.push(result.getValue())
-                    }
-                }
-            }
-        }
-
-        const callResult = await this.callFunc(funcName, funcArgs);
-        if (callResult.isFailure) {
-            return Result.fail(
-                `this.callFunc(funcName='${funcName}', funcArgs='${JSON.stringify(funcArgs)}'): ${callResult.errorTitle}`,
-                callResult.errorDescription!
-            )
-        }
-
-        return Result.ok(callResult.getValue());
-    }
 
     /**
      * Get the variable declaration AST tree for the variable
@@ -2037,84 +1695,7 @@ export class Code {
         return Result.ok(updated.getValue());
     }
 
-    private exactIdentifier = (exp: any, identifier: string): string => {
-        if (exp instanceof PropertyAssignment) {
-            return exp.getFirstChild()!.getText();
-        } else if (exp instanceof SpreadAssignment) {
-            return exp.getLastChild()!.getText();
-        } else if (exp instanceof ShorthandPropertyAssignment) {
-            return exp.getText();
-        }
-        return identifier;
-    }
+    
 
-    private exactValueNode = (exp: Node): Node => {
-        if (exp instanceof PropertyAssignment) {
-            return exp.getLastChild!()!;
-        } else if (exp instanceof SpreadAssignment) {
-            return exp.getLastChild!()!;
-        } else if (exp instanceof ShorthandPropertyAssignment) {
-            return exp;
-        }
-
-        return exp;
-    }
-
-    /**
-     * Exact Value of the node by node type.
-     * If node type is the not a value type string,
-     * then it's considered as the Custom type.
-     * The custom types converted into data.
-     * 
-     * If the type is a value type string,
-     * then, 
-     * @param identifier 
-     * @param val 
-     * @param data 
-     * @returns 
-     */
-    private exactValueByType = (identifier: string, val: ValueTypeString|ValueType, data?: ValueType): Result<ValueType> => {
-        if (!Object.values(ValueTypeString).includes(val as ValueTypeString)) {
-            if (Array.isArray(val) || typeof val === "object") {
-                return Result.ok(deepCopy(val))
-            } else {
-                return Result.fail(
-                    `Only custom Arrays and Objects are supported to generate sample data`,
-                    `The '${typeof val}' type is not supported for '${identifier}', update the exactValueType()`
-                )
-            }
-        }
-
-        if (val == ValueTypeString.default) {
-            if (data !== undefined) {
-                return Result.ok(data)
-            } else {
-                return Result.ok({});
-            }
-        }
-
-        if (val == ValueTypeString.array) {
-            return Result.ok([] as ValueType[])
-        }
-        if (val === ValueTypeString.number) {
-            return Result.ok(0 as number)
-        } else if (val === ValueTypeString.string) {
-            return Result.ok("" as string);
-        } else if (val === ValueTypeString.object) {
-            return Result.ok(typeof data === "object" ? deepCopy(data) : {})
-        } else if (val === ValueTypeString.property) {
-            let obj = data as Object;
-            Debug.log(`Value type is property`);
-            if (!(identifier in obj)) {
-                Debug.log(`The '${identifier}' is not in the ${JSON.stringify(obj)}, so add it as Object type`)
-                obj[identifier] = {};
-            }
-            return Result.ok(obj[identifier] as ValueType)
-        }
-
-        return Result.fail(
-            `No matching data was found`,
-            `The ${val} not handled`
-        );
-    }
+    
 }

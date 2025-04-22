@@ -6,11 +6,11 @@
 import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
-import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
+import { AstNode, AstNodeType, type AstIdentifiers, type TypedData } from "../ast-node.js";
 import { TypeValueTraits } from "../type-level/type-value-traits.js";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
-import type { TypedData } from "../type-declaration.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { Identifier } from "../value-level/idenitifier.js";
 
 export class VariableDeclaration extends TsNode {
     protected _tsNode: TsVariableDeclaration;
@@ -55,7 +55,7 @@ export class VariableDeclaration extends TsNode {
             Debug.log(`The raw child of var statement '${rawChild.getText()}':`);
             Debug.log(rawChild)
         }
-        const children = this.getChildren([TsNode.isIdentifier])
+        const children = this.getChildren([Identifier.isA])
         if (children.length === 0) {
             return Result.fail(
                 `The variable statement has no identifier`,
@@ -71,7 +71,7 @@ export class VariableDeclaration extends TsNode {
      * Parses this variable declaration into the list of AST Nodes.
      * @returns {AstIdentifiers}
      */
-    public getAstIdentifiers = (): Result<AstIdentifiers> => {
+    public getAstIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
         const identifiers: AstIdentifiers = {};
         const identifierNode = AstNode.fromTsNode(this._tsNode as unknown as TsNode);
         identifierNode.nodeType = AstNodeType.Variable;
@@ -85,7 +85,7 @@ export class VariableDeclaration extends TsNode {
             )
         }
 
-        const typedData = this.getTypedData();
+        const typedData = await this.getTypedData();
         if (typedData.isFailure) {
             return Result.fail(
                 `this.getTypedData(): ${typedData.errorDescription}`,
@@ -94,7 +94,7 @@ export class VariableDeclaration extends TsNode {
         }
 
         const identifier = this.getChild(0)!;
-        if (!TsNode.isIdentifier(identifier)) {
+        if (!Identifier.isA(identifier)) {
             if (VariableDeclaration.isObjectBindingPattern(identifier)) {
                 if (!(typedData.getValue().data instanceof AraLink)) {
                     return Result.fail(`When the variable declaration is an object binding pattern, it must have the assigned data`, `Please pass the variable assignment`)
@@ -111,7 +111,7 @@ export class VariableDeclaration extends TsNode {
 
                 const objectBindings = syntaxLists[0].getChildren([], [], [","]);
                 for (let i = 0; i < objectBindings.length; i++) {
-                    const binding = objectBindings[i].getChildren([TsNode.isIdentifier]);
+                    const binding = objectBindings[i].getChildren([Identifier.isA]);
                     if (binding.length < 1) {
                         const err = Debug.error(
                             `The first child of object binding pattern is not identifier`,
@@ -176,7 +176,7 @@ export class VariableDeclaration extends TsNode {
         return Result.ok(identifiers);
     }
 
-    private getTypedData = (): Result<TypedData> => {
+    private getTypedData = async (): Promise<Result<TypedData>> => {
         const children = this.getChildren([], [TsNode.isNonImportant])
         children.shift(); // The first element is the identifier that we identified already
     
@@ -189,7 +189,7 @@ export class VariableDeclaration extends TsNode {
                 j++;
                 child = children[j];
                 
-                const dataType = TypeValueTraits.identifyTypeValue(child);
+                const dataType = await TypeValueTraits.identifyTypeValue(child);
                 if (dataType.isFailure) {
                     const err = Debug.error(
                         `TypeValueTraits.identifyTypeValue('${child.getText()}'): ${dataType.errorTitle}`,

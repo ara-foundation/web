@@ -1,9 +1,9 @@
 import { 
     CommentTypeElement, 
     Expression, 
-    Identifier, 
     JSDoc, 
     Node, 
+    PropertyAccessExpression, 
     PropertySignature, 
     StringLiteral, 
     SyntaxList, 
@@ -169,10 +169,6 @@ export class TsNode {
         return TsNode.isKeyword(tsNode, "as");
     }
 
-    public static isIdentifier = (tsNode: TsNode): boolean => {
-        return tsNode._tsNode instanceof Identifier;
-    }
-
     public static isString = (tsNode: TsNode): boolean => {
         return tsNode._tsNode instanceof StringLiteral;
     }
@@ -187,5 +183,9 @@ export class TsNode {
 
     public static isPropertySignature = (child: TsNode): boolean => {
         return child._tsNode instanceof PropertySignature;
+    }
+
+    public static isPropertyAccess: TsNodeValidator = (child: TsNode): boolean => {
+        return child._tsNode instanceof PropertyAccessExpression
     }
 }

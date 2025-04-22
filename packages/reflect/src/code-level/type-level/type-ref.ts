@@ -12,6 +12,7 @@ import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode } from "../ts-node.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 import type { ValueType } from "../ast-node-data.js";
+import { Identifier } from "../value-level/idenitifier.js";
 
 export class TypeRef extends TsNode {
     public static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
@@ -92,12 +93,12 @@ export class TypeRef extends TsNode {
      * @param typeRefNode 
      * @returns 
      */
-    private identifyGenericRefValue = (typeLink: AraLink<string>): Result<AraLink<string>> => {
+    private identifyGenericRefValue = async (typeLink: AraLink<string>): Promise<Result<AraLink<string>>> => {
         const nodes = this.genericRefValueNodes();
         const nodeValues: ValueType[] = [];
         for (let nodeIndex in nodes) {
             const node = nodes[nodeIndex]
-            const nodeValue = TypeValueTraits.identifyTypeValue(node)
+            const nodeValue = await TypeValueTraits.identifyTypeValue(node)
             if (nodeValue.isFailure) {
                 return Result.fail(
                     `Generic key ${nodeIndex}) TypeValueTraits.identifyTypeValue(expression: '${this.getText()}'): ${nodeValue.errorTitle}`,
@@ -112,7 +113,7 @@ export class TypeRef extends TsNode {
     }
 
     // TsNode is TypeReferenceNode>
-    public getAraLink = (): Result<AraLink<string>> => {
+    public getAraLink = async (): Promise<Result<AraLink<string>>> => {
         if (!this.isChildExist(0)) {
             return Result.fail(
                 `The Node expected to have child`,
@@ -122,7 +123,7 @@ export class TypeRef extends TsNode {
 
         const identifierNode = this.getChild(0)!;
 
-        if (!TsNode.isIdentifier(identifierNode)) {
+        if (!Identifier.isA(identifierNode)) {
             const err = Debug.error(
                 `The property value type is a type reference, but the '${this.getText()}' doesn't support it`,
                 `Ara Web supports Identifiers as type ref nodes, update getAraLink() to support it`,
@@ -135,7 +136,7 @@ export class TypeRef extends TsNode {
         const typeRefAraLink = ReflectAraLink.linkToIdentifier(identifierNode.getText());
 
         if (this.isGenericRefType()) {
-            const identifiedGenericValue = this.identifyGenericRefValue(typeRefAraLink);
+            const identifiedGenericValue = await this.identifyGenericRefValue(typeRefAraLink);
             if (identifiedGenericValue.isFailure) {
                 return Result.fail(
                     `this.identifyGenericRefValue(): ${identifiedGenericValue.errorTitle}`,

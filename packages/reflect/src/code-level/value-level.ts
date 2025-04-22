@@ -2,60 +2,23 @@
  * Handles the AST Node's values
  */
 
-import { Debug, Result, StringTraits } from "@ara-web/ts-enhancement";
-import { ValueTypeString, type LiteralType, type ValueType } from "./ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
+import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
+import { ValueTypeString, type ValueType } from "./ast-node-data.js";
+import { TsNode } from "./ts-node.js";
+import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
 import type { AstNode, TypedData } from "./ast-node.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import type { AstNodeContext } from "../memory/AstNodeContext.js";
+import { Literal } from "./value-level/literal.js";
+import type { ValueLevelInterface } from "./value-level/value-level-interface.js";
+import { FunctionCall } from "./value-level/function-call.js";
+import { Identifier } from "./value-level/idenitifier.js";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { ObjectLiteral } from "./value-level/object-literal.js";
+import { Property } from "./value-level/object-level/property.js";
+
 
 export class ValueLevel {
-    public static isStringLiteral: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof StringLiteral;
-    }
-
-    public static isNumericLiteral: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof NumericLiteral;
-    }
-
-    public static isBooleanLiteral: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        if (node instanceof TrueLiteral) {
-            return true;
-        }
-        if (node instanceof FalseLiteral) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static isLiteralType: TsNodeValidator = (child: TsNode): boolean => {
-        return this.isStringLiteral(child) || this.isNumericLiteral(child) || this.isBooleanLiteral(child);
-    }
-
-    public static identifyLiteralValue = (tsNode: TsNode): Result<TypedData> => {
-        if (this.isStringLiteral(tsNode)) {
-            return Result.ok({data: StringTraits.unquote(tsNode.getText()) as string, dataType: ValueTypeString.string})
-        } else if (this.isNumericLiteral(tsNode)) {
-            return Result.ok({data: JSON.parse(tsNode.getText()) as number, dataType: ValueTypeString.number})
-        } else if (this.isBooleanLiteral(tsNode)) {
-            return Result.ok({data: JSON.parse(tsNode.getText()) as boolean, dataType: ValueTypeString.boolean});
-        }
-        
-        const err = Debug.error(
-            `The '${tsNode.getText()}' as a literal value not supported by Ara Web`,
-            `Please pass the correct TS Node, or update identifyLiteralValue()`,
-            tsNode
-        )
-
-        return Result.fail(err);
-    }
-    
     public static emptyValueByType = (identifier: string, val: ValueTypeString|ValueType|undefined): Result<ValueType> => {
         if (val === undefined) {
             return Result.ok({});
@@ -104,6 +67,64 @@ export class ValueLevel {
     }
 
     /**
+     * Exact Value of the node by node type.
+     * If node type is the not a value type string,
+     * then it's considered as the Custom type.
+     * The custom types converted into data.
+     * 
+     * If the type is a value type string,
+     * then, 
+     * @param identifier 
+     * @param val 
+     * @param data 
+     * @returns 
+     */
+    public static exactValueByType = (typedData: TypedData): Result<ValueType> => {
+        if (!Object.values(ValueTypeString).includes(typedData.dataType as ValueTypeString)) {
+            if (Array.isArray(typedData.dataType) || typeof typedData.dataType === "object") {
+                return Result.ok(deepCopy(typedData.dataType))
+            } else {
+                return Result.fail(
+                    `Only custom Arrays and Objects are supported to generate sample data`,
+                    `The '${typeof typedData.dataType}' type is not supported, update the exactValueType()`
+                )
+            }
+        }
+
+        if (typedData.dataType == ValueTypeString.default) {
+            if (typedData.data !== undefined) {
+                return Result.ok(typedData.data)
+            } else {
+                return Result.ok({});
+            }
+        }
+
+        if (typedData.dataType == ValueTypeString.array) {
+            return Result.ok([] as ValueType[])
+        }
+        if (typedData.dataType === ValueTypeString.number) {
+            return Result.ok(0 as number)
+        } else if (typedData.dataType === ValueTypeString.string) {
+            return Result.ok("" as string);
+        } else if (typedData.dataType === ValueTypeString.object) {
+            return Result.ok(typeof typedData.data === "object" ? deepCopy(typedData.data) : {})
+        } else if (typedData.dataType === ValueTypeString.property) {
+            // let obj = data as Object;
+            // Debug.log(`Value type is property`);
+            // if (!(identifier in obj)) {
+                // Debug.log(`The '${identifier}' is not in the ${JSON.stringify(obj)}, so add it as Object type`)
+                // obj[identifier] = {};
+            // }
+            // return Result.ok(obj[identifier] as ValueType)
+        }
+
+        return Result.fail(
+            `No matching data was found`,
+            `The ${typedData.dataType} not handled`
+        );
+    }
+
+    /**
      * Get the possible value type of the expression
      * @param tsNode 
      * @returns 
@@ -119,7 +140,7 @@ export class ValueLevel {
                 return Result.ok(ValueTypeString.object);
             } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
                 return Result.ok(ValueTypeString.property)
-            } else if (TsNode.isIdentifier(tsNode)) {
+            } else if (Identifier.isA(tsNode)) {
                 return Result.ok(ValueTypeString.default);
             } else if (exp instanceof ArrayLiteralExpression) {
                 return Result.ok(ValueTypeString.array)
@@ -127,11 +148,11 @@ export class ValueLevel {
                 return Result.ok(ValueTypeString.property)
             } else if (exp instanceof CallExpression) {
                 return Result.ok(ValueTypeString.default);
-            } else if (this.isStringLiteral(tsNode)) {
+            } else if (Literal.isStringLiteral(tsNode)) {
                 return Result.ok(ValueTypeString.string)
-            } else if (this.isBooleanLiteral(tsNode)) {
+            } else if (Literal.isBooleanLiteral(tsNode)) {
                 return Result.ok(ValueTypeString.boolean)
-            } else if (this.isNumericLiteral(tsNode)) {
+            } else if (Literal.isNumericLiteral(tsNode)) {
                 return Result.ok(ValueTypeString.number)
             } else if (exp instanceof ShorthandPropertyAssignment) {
                 return Result.ok(ValueTypeString.property)
@@ -157,23 +178,63 @@ export class ValueLevel {
     }
 
     /**
+     * Get the ValueTypeString by the given data
+     * @param data 
+     * @returns 
+     */
+    public static getValueTypeStringByData = (data?: ValueType): Result<ValueTypeString> => {
+        if (data === undefined) {
+            return Result.ok(ValueTypeString.undefined);
+        }
+        if (Array.isArray(data)) {
+            return Result.ok(ValueTypeString.array)
+        } else if (typeof data === "number") {
+            return Result.ok(ValueTypeString.number);
+        } else if (typeof data === "boolean") { // {obj.property: val}
+            return Result.ok(ValueTypeString.boolean)
+        } else if (typeof data === "string") {
+            return Result.ok(ValueTypeString.string);
+        } else if (typeof data === "object") {
+            return Result.ok(ValueTypeString.object)
+        }
+    
+        const err = Debug.error(
+            `Can not detect the data's value type`,
+            `The passed data is not supported by Ara Web`,
+            data
+        )
+
+        return Result.fail(err)
+    }
+
+    /**
      * Identify the value of the {tsNode}, and update the ast node.
      * @returns 
      */
     public static identifyValue = async (tsNode: TsNode, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        Debug.log(`Identify the value of '${tsNode.getText()}' expression`);
-        Debug.log(tsNode)
-
-        // Expressions: "string literal", false, 12.2
-        if (this.isLiteralType(tsNode)) {
-            const identified = this.identifyLiteralValue(tsNode);
-            if (identified.isFailure) {
-                return Result.fail(`this.identifyLiteralValue('${tsNode.getText()}'): ${identified.errorTitle}`, identified.errorDescription!);
+    const supportedValueLevels: ValueLevelInterface[] = [
+        Literal,
+        FunctionCall,
+        Identifier,
+        ObjectLiteral,
+        Property
+    ]    
+    
+        for (let supported of supportedValueLevels) {
+            if (supported.isA(tsNode)) {
+                Debug.push(supported.name, {tsNode: tsNode.getText()})
+                const supportedIdentifier = new supported();
+                const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
+                Debug.pop();
+                if (identified.isFailure) {
+                    return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription!);
+                }
+    
+                return Result.ok(identified.getValue());    
             }
-
-            return Result.ok(identified.getValue());
         }
-        return Result.errorCode501(['ValueLevel'], 'identifyValue');
+
+        return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
         // if (exp instanceof ObjectLiteralExpression) {
         //     const syntaxList = exp.getChildSyntaxList()!;
         //     Debug.log(`'${identifier}' identifier is the object literal with syntax list(child_length=${syntaxList.getChildCount()}) = [${syntaxList.getText()}]`)
@@ -326,10 +387,6 @@ export class ValueLevel {
         //             )
         //         }
         //         return exprResult;
-        //     } else if (exp instanceof StringLiteral) {
-        //         return Result.ok(
-        //             StringTraits.unquote(exp.getText()) as string,
-        //         )
         //     } else if (exp instanceof ShorthandPropertyAssignment) {
         //         const propertyIdentifier = exp.getChildAtIndex(0);
         //         Debug.push(`exp as ShortHandPropertyAssignment`)
@@ -510,5 +567,66 @@ export class ValueLevel {
         //     Debug.log(exp);
         //     Debug.log(`\n\n`)
         //     return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
-    } 
+    }
+
+    /**
+     * @param astNode Evaluate all the AST Node data property
+     * @limitation Only supports AST Nodes that are Links to the expressions.
+     * @returns 
+     */
+    public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+        if (astNode.data === undefined) {
+            return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
+        }
+    
+        if (!(astNode.data instanceof AraLink)) {
+            return Result.errorCode501(['Code'], 'identifyTypedData');
+        }
+    
+        const typedData = await this.identifyExpressionLinkData(astNode, astNodeContext);
+        if (typedData.isFailure) {
+            return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
+        }
+    
+        return Result.ok(typedData.getValue());
+    }
+    
+    /**
+     * Identify the data of the Ast Node if it's a link to the Expression
+     * @param astNode
+     * @returns 
+     */
+    private static identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!ReflectAraLink.isExpressionLink(astNode.data)) {
+            return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
+        }
+    
+        const expTsNode = ReflectAraLink.getExpressionResource(astNode.data)!;
+    
+        if (astNode.dataType === undefined) {
+            // Debug.push(`this.getValueTypeString(expTsNode='${expTsNode?.getText()}')`)
+            const identifiedDataType = ValueLevel.getValueTypeString(expTsNode);
+            // Debug.pop();
+            if (identifiedDataType.isFailure) {
+                return Result.fail(
+                    `this.getValueTypeString('${expTsNode?.getText()}'): ${identifiedDataType.errorTitle}`,
+                    identifiedDataType.errorDescription!
+                )
+            }
+    
+            astNode.dataType = identifiedDataType.getValue();
+        }
+    
+        Debug.push(`this.identifyValue()`, {tsNode: expTsNode.getText()})
+        const identifiedValue = await ValueLevel.identifyValue(expTsNode, astNode.typedData, astNodeContext);
+        Debug.pop();
+        if (identifiedValue.isFailure) {
+            return Result.fail(
+                `this.identifyValue(): ${identifiedValue.errorTitle}`,
+                identifiedValue.errorDescription!
+            )
+        }
+    
+        return Result.ok(identifiedValue.getValue())
+    }
 }

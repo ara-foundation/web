@@ -22,7 +22,7 @@ export class VariableStatement extends TsNode {
         this._tsNode = tsNode.getNode<TsVariableStatement>()!;
     }
 
-    public static fromTsNode(tsNode: TsNode): Result<VariableStatement> {
+    public static async fromTsNode(tsNode: TsNode): Promise<Result<VariableStatement>> {
         if (!this.isVariableStatement(tsNode)) {
             return Result.fail(
                 `The given node is not a variable statement`,
@@ -31,7 +31,7 @@ export class VariableStatement extends TsNode {
         }
         const varStatement = new VariableStatement(tsNode);
 
-        const astNodes = varStatement.identifyAstNodes();
+        const astNodes = await varStatement.identifyAstNodes();
         if (astNodes.isFailure) {
             return Result.fail(
                 `varStatement.identifyAstNodes(): ${astNodes.errorTitle}`,
@@ -71,7 +71,7 @@ export class VariableStatement extends TsNode {
      * @param publicFlag Indicates whether the ast nodes are public or not 
      * @returns 
      */
-    private identifyVariableDeclarationList = (tsNode: TsNode, publicFlag: boolean): Result<AstIdentifiers> => {
+    private identifyVariableDeclarationList = async (tsNode: TsNode, publicFlag: boolean): Promise<Result<AstIdentifiers>> => {
         let identifiers: AstIdentifiers = {};
         const children = tsNode.getChildren([], [TsNode.isNonImportant, VariableStatement.isNonImportantKeyword])
         const childCount = children.length;
@@ -125,7 +125,7 @@ export class VariableStatement extends TsNode {
                     return Result.fail(err)
                 }
 
-                const astNodes = varDeclaration.getValue().getAstIdentifiers();
+                const astNodes = await varDeclaration.getValue().getAstIdentifiers();
 
                 if (astNodes.isFailure) {
                     return Result.fail(
@@ -147,7 +147,7 @@ export class VariableStatement extends TsNode {
      * @param memory 
      * @returns 
      */
-    private identifyAstNodes = (): Result<AstIdentifiers> => {
+    private identifyAstNodes = async (): Promise<Result<AstIdentifiers>> => {
         let publicFlag = false;
         
         const children = this.getChildren([], [TsNode.isNonImportant]);
@@ -158,7 +158,7 @@ export class VariableStatement extends TsNode {
                 publicFlag = true;
             } else if (VariableStatement.isVariableDeclarationList(varChild)) {
                 // Debug.push(`identifyVariableDeclarationList()`, {'varDeclaration': varChild.getText(), 'identifierNode': JSON.stringify(identifier)})
-                const identified = this.identifyVariableDeclarationList(varChild, publicFlag);
+                const identified = await this.identifyVariableDeclarationList(varChild, publicFlag);
                 // Debug.pop();
                 if (identified.isFailure) {
                     return Result.fail(

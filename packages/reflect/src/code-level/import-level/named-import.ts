@@ -9,6 +9,7 @@ import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
+import { Identifier } from "../value-level/idenitifier.js";
 
 export class NamedImport extends TsNode {
     protected _tsNode: NamedImports;
@@ -106,7 +107,7 @@ export class NamedImport extends TsNode {
                         )
                     }
                     identifiers = {...identifiers, ...(namedIdentifiers.getValue())}
-                } else if (TsNode.isIdentifier(namedChildren[i])) {
+                } else if (Identifier.isA(namedChildren[i])) {
                     const identifier = namedChildren[i].getText();
                     identifiedNode.identifier = identifier;
                     identifiers[identifier] = identifiedNode;
@@ -126,7 +127,7 @@ export class NamedImport extends TsNode {
                             `Please pass the correct AST Tree, to have a node before 'as' keyword`
                         )
                     }
-                    if (!TsNode.isIdentifier(alias)) {
+                    if (!Identifier.isA(alias)) {
                         return Result.fail(
                             `The alias '${alias.getText()}' of the type must be identifier`,
                             `Ara Web doesn't support the node`

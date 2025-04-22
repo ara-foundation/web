@@ -65,9 +65,9 @@ export class EnabledNodejsModules {
         return !this.isBuiltInIdentifier(child);
     }
 
-    private static getVariableAstNode = (identifier: string, tsNodes: TsNode[]): Result<AstNode> => {
+    private static getVariableAstNode = async (identifier: string, tsNodes: TsNode[]): Promise<Result<AstNode>> => {
         for (let tsNode of tsNodes) {
-            var varStatement = VariableStatement.fromTsNode(tsNode);
+            var varStatement = await VariableStatement.fromTsNode(tsNode);
             if (varStatement.isFailure) {
                 return Result.fail(
                     `VariableStatement.fromTsNode(tsNode: '${tsNode.getText()}'): ${varStatement.errorTitle}`,
@@ -91,13 +91,13 @@ export class EnabledNodejsModules {
         )
     }
 
-    public static getBuiltInIdentifiers = (): Result<AstIdentifiers> => {
+    public static getBuiltInIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
         let identifiers: AstIdentifiers = {};
         const code = new Code(this.builtInSrc);
     
         const varStatements = code.getTsNodes([VariableStatement.isVariableStatement])
         
-        const arrayAstNode = this.identifyArrayAstNode(varStatements)
+        const arrayAstNode = await this.identifyArrayAstNode(varStatements)
         if (arrayAstNode.isFailure) {
             return Result.fail(
                 `identifyArrayAstNode(varStatements: '${varStatements.length} statements'): ${arrayAstNode.errorTitle}`,
@@ -107,7 +107,7 @@ export class EnabledNodejsModules {
             identifiers[this.identifiers[0]] = arrayAstNode.getValue();
         }
     
-        const recordAstNode = this.identifyRecordAstNode(varStatements)
+        const recordAstNode = await this.identifyRecordAstNode(varStatements)
         if (recordAstNode.isFailure) {
             return Result.fail(
                 `identifyRecordAstNode(varStatements: '${varStatements.length} statements'): ${recordAstNode.errorTitle}`,
@@ -128,8 +128,8 @@ export class EnabledNodejsModules {
     //------------------------------------------------------------------
 
 
-    private static identifyArrayAstNode = (varStatements: TsNode[]): Result<AstNode> => {
-        const astNode = this.getVariableAstNode(this.prefix + this.identifiers[0], varStatements)
+    private static identifyArrayAstNode = async (varStatements: TsNode[]): Promise<Result<AstNode>> => {
+        const astNode = await this.getVariableAstNode(this.prefix + this.identifiers[0], varStatements)
         if (astNode.isFailure) {
             return Result.fail(
                 `getVariableAstNode(identifier: '${this.prefix + this.identifiers[0]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`,
@@ -148,8 +148,8 @@ export class EnabledNodejsModules {
         return Result.ok(astNode.getValue());
     }
 
-    private static identifyRecordAstNode = (varStatements: TsNode[]): Result<AstNode> => {
-        const astNode = this.getVariableAstNode(this.prefix + this.identifiers[1], varStatements)
+    private static identifyRecordAstNode = async (varStatements: TsNode[]): Promise<Result<AstNode>> => {
+        const astNode = await this.getVariableAstNode(this.prefix + this.identifiers[1], varStatements)
         if (astNode.isFailure) {
             return Result.fail(
                 `getVariableAstNode(identifier: '${this.prefix + this.identifiers[1]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`,

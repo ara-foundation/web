@@ -9,6 +9,7 @@ import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
 import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { NamedImport } from "./import-level/named-import.js";
+import { Identifier } from "./value-level/idenitifier.js";
 
 export class ImportDeclaration extends TsNode {
     private _moduleLink?: AraLink<string>;
@@ -55,7 +56,7 @@ export class ImportDeclaration extends TsNode {
                 continue;
             } else if (TsNode.isKeyword(tsNode, ["from", "import"])) {
                 continue;
-            } else if (TsNode.isIdentifier(tsNode)) {
+            } else if (Identifier.isA(tsNode)) {
                 continue;
             }
             tsNodes.push(tsNode)
@@ -71,7 +72,7 @@ export class ImportDeclaration extends TsNode {
     private getModuleLink = (): Result<AraLink<string>> => {
         const children = this.getChildren( 
             [],
-            [TsNode.isIdentifier, TsNode.isNonImportant],
+            [Identifier.isA, TsNode.isNonImportant],
             ["import", "from"]
         )
         if (children.length === 0) {
@@ -131,7 +132,7 @@ export class ImportDeclaration extends TsNode {
         for (let i = 0; i < children.length; i++) {
             const tsNode = children[i];
             if (ImportDeclaration.isImportClause(tsNode)) {
-                const identifiers = tsNode.getChildren([TsNode.isIdentifier])
+                const identifiers = tsNode.getChildren([Identifier.isA])
                 if (identifiers.length !== 0) {
                     identifier = identifiers[0].getText()
                     
@@ -141,7 +142,7 @@ export class ImportDeclaration extends TsNode {
                     }
                     break;
                 }
-            } else if (TsNode.isIdentifier(tsNode)) {
+            } else if (Identifier.isA(tsNode)) {
                 identifier = tsNode.getText();
                 break;
             } else if (TsNode.isTypeKeyword(tsNode)) {
