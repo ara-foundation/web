@@ -6,7 +6,7 @@ import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
 import { ValueTypeString, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
-import type { AstNode, TypedData } from "./ast-node.js";
+import { AstNodeType, type AstNode, type TypedData } from "./ast-node.js";
 import type { AstNodeContext } from "../memory/AstNodeContext.js";
 import { Literal } from "./value-level/literal.js";
 import type { ValueLevelInterface } from "./value-level/value-level-interface.js";
@@ -449,6 +449,22 @@ export class ValueLevel {
      * @returns 
      */
     public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+        if (ReflectAraLink.isIdentifierLink(astNode.dataType)) {
+            const dataType = astNodeContext.getIdentifier(astNode.dataType as AraLink<string>);
+            if (dataType === undefined) {
+                return Result.fail(
+                    `${astNode.identifier} references to '${astNode.dataType?.toString()}' not found`,
+                    `Add the type into AstNodeContext`
+                )
+            } else if (dataType.nodeType !== AstNodeType.Type) {
+                return Result.fail(
+                    `${astNode.identifier} data type is not a type`,
+                    `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`
+                )
+            }
+            astNode.dataType = dataType.data;
+        }
+        
         if (astNode.data === undefined) {
             return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
         }

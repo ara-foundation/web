@@ -10,3 +10,7 @@ export enum Sex {
     Male,
     Female
 }
+
+export type CustomType = {
+    name: string; sex: number;
+}

@@ -70,7 +70,10 @@ export class ObjectLiteral {
                 )
             }
 
-            if (typedData.dataType !== ValueTypeString.default && typedData.dataType !== ValueTypeString.object) {
+            if (typedData.dataType !== ValueTypeString.default && 
+                typedData.dataType !== ValueTypeString.object &&
+                typeof typedData.dataType !== "object"
+            ) {
                 return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);
             }
 

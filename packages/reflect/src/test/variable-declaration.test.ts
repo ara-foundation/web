@@ -342,17 +342,66 @@ import { Debug } from "@ara-web/ts-enhancement";
 //   expect(astNode.data).toEqual(varValue)
 // });
 
-test('Supports the spread assignment through enums', async () => {
+// test('Supports the spread assignment through enums', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
+
+//   const enumName = 'Sex'
+//   const profileName = 'profile'
+//   const varName = 'obj'
+
+//   let src = 
+//   ` import { ${enumName} } from "${modulePath}";` +
+//   ` const ${profileName} = {name: "Medet", sex: ${enumName}.Male}; ` +
+//    ` const ${varName} = {...profile} `;
+
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Add imports and lint them.
+//   let imports = code.getImportedIdentifiers();
+//   expect(imports.isSuccess).toBe(true);
+//   moduleMemory.addIdentifiers(imports.getValue())
+//   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
+//   expect(identified.isSuccess).toBe(true);
+
+//   // Profile check
+//   let profileAstNode = vars.getValue()[profileName] as AstNode;
+//   expect(profileAstNode.data).toBeInstanceOf(AraLink)
+//   expect(profileAstNode.dataType).toBeUndefined()
+//   expect(ReflectAraLink.isExpressionLink(profileAstNode.data)).toBe(true)
+
+//   // Profile's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   profileAstNode.typedData = identifiedProfile.getValue();
+//   context.post([profileAstNode])
+//   // Spread Assignment
+//   let astNode = vars.getValue()[varName] as AstNode;
+//   expect(astNode.data).toBeInstanceOf(AraLink)
+//   expect(astNode.dataType).toBeUndefined()
+//   expect(ReflectAraLink.isExpressionLink(astNode.data)).toBe(true)
+
+//   // Spread Assignment data lint
+//   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+//   expect(identifiedData.isSuccess).toBe(true);
+//   astNode.typedData = identifiedData.getValue();
+//   expect(astNode.dataType).toEqual(ValueTypeString.object);
+//   expect(astNode.data).toStrictEqual({ name: 'Medet', sex: 0 })
+// });
+
+test('Supports the type from the imports', async () => {
   const projectMemory = await getProjectMemory();
   const moduleMemory = getEmptyModule();
 
-  const enumName = 'Sex'
+  const typeName = 'CustomType'
   const profileName = 'profile'
   const varName = 'obj'
 
   let src = 
-  ` import { ${enumName} } from "${modulePath}";` +
-  ` const ${profileName} = {name: "Medet", sex: ${enumName}.Male}; ` +
+  ` import { type ${typeName} } from "${modulePath}";` +
+  ` const ${profileName}: ${typeName} = {name: "Medet", sex: 0}; ` +
    ` const ${varName} = {...profile} `;
 
   let code = new Code(src);
@@ -368,7 +417,7 @@ test('Supports the spread assignment through enums', async () => {
   // Profile check
   let profileAstNode = vars.getValue()[profileName] as AstNode;
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
-  expect(profileAstNode.dataType).toBeUndefined()
+  expect(profileAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectAraLink.isExpressionLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
@@ -391,8 +440,16 @@ test('Supports the spread assignment through enums', async () => {
   expect(astNode.data).toStrictEqual({ name: 'Medet', sex: 0 })
 });
 
+/*
+AS Keyword
+`import { type CustomType } from "${modulePath}";` +
+  ` const profile = {name: "Medet", sex: ${enumName}.Male}; ` +
+   ` const ${varName} = {...profile} `;
+*/
+
+// Support with the UnionType
+// Support with the Intersected
 // if data type is linked, then define the data type.
-// define the result from another variable that is already linted.
 // assert that data assignment data type matches astNode.dataType.
 //  assert the generic data type that returned data matches the generic data type.
 //  assert the assigned data type matches the union type.
