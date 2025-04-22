@@ -50,11 +50,28 @@ export class Result<T> {
       return new Result<U>(false, errorTitle.errorTitle, errorTitle.errorDescription);
     }
 
+    /**
+     * HTTP Code 501: Not Implemented, the method is not fully implemented
+     * @param slugs 
+     * @param functionPath 
+     * @returns 
+     */
     public static errorCode501<U>(slugs: string[], functionPath: string): Result<U> {
       const errorDescription = `The server doesn't support '${slugs.join("/")}.${functionPath}' yet, ask Medet or maintainers of Ara Web to support it`;
       return new Result<U>(false, "Error Code 501 (Not Implemented)", errorDescription);
     }
-  
+
+    /**
+     * HTTP Code 404: Not found, but maybe in the future
+     * @param slugs 
+     * @param functionPath
+     * @returns 
+     */
+    public static errorCode404<U>(slugs: string[], functionPath: string, data: string): Result<U> {
+      const errorDescription = `'${slugs.join("/")}.${functionPath}' doesn't support '${data}'`;
+      return new Result<U>(false, "Error Code 404 (Not found)", errorDescription);
+    }
+
     public static combine (results: Result<any>[]) : Result<any> {
       for (let result of results) {
         if (result.isFailure) return result;

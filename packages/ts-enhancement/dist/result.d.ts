@@ -15,6 +15,19 @@ export declare class Result<T> {
         errorTitle: string;
         errorDescription: string;
     }, errorDescription?: string): Result<U>;
+    /**
+     * HTTP Code 501: Not Implemented, the method is not fully implemented
+     * @param slugs
+     * @param functionPath
+     * @returns
+     */
     static errorCode501<U>(slugs: string[], functionPath: string): Result<U>;
+    /**
+     * HTTP Code 404: Not found, but maybe in the future
+     * @param slugs
+     * @param functionPath
+     * @returns
+     */
+    static errorCode404<U>(slugs: string[], functionPath: string, data: string): Result<U>;
     static combine(results: Result<any>[]): Result<any>;
 }
