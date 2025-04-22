@@ -44,8 +44,6 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 let action = getActionBySlug(slug);
 
-const data: Array<string> = func<string>();
-
 const parentUrl = "/ara/act/ara-web/action/get"
 
 if (action === undefined) {
