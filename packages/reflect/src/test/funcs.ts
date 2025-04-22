@@ -5,3 +5,8 @@ export function fooBar(name: string, surname: string): number {
 export const helloAndWelcome = (): string => {
     return "Hello and Welcome";
 }
+
+export enum Sex {
+    Male,
+    Female
+}

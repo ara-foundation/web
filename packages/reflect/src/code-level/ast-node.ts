@@ -63,10 +63,10 @@ export class AstNode {
     //----------------------------------------------------------
 
     public get typedData(): TypedData {
-        return {
+        return {...{
             data: this.data,
             dataType: this.dataType
-        }
+        }}
     }
 
     public set typedData(_typedData: TypedData) {
