@@ -22,6 +22,7 @@ import { TypeLevel } from "./type-level.js";
 import { PrefixUnary } from "./value-level/prefix-unary.js";
 import { TypeRef } from "./type-level/type-ref.js";
 import { ArrayLiteral } from "./value-level/array-level/array-literal.js";
+import { ShorthandAccess } from "./value-level/object-level/shorthand-access.js";
 
 
 export class ValueLevel {
@@ -208,6 +209,7 @@ export class ValueLevel {
             SpreadLiteral, // {...obj}
             PrefixUnary, // -number, !condition
             ArrayLiteral, // [element_1, element_2]
+            ShorthandAccess, // {prop}
         ]
         
         for (let supported of supportedValueLevels) {
@@ -364,10 +366,6 @@ export class ValueLevel {
         //         )
         //     }
     
-        //     Debug.log(`The '${exp.getText()}' not yet supported by Ara Web`)
-        //     Debug.log(exp);
-        //     Debug.log(`\n\n`)
-        //     return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
     }
 
     private static identifyDataType = (

@@ -697,6 +697,52 @@ import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 //   context.post([varAstNode])
 // });
 
+// Support array with the primitive types
+test('Supports the shorthand project assign with primitive types', async () => {
+  const projectMemory = await getProjectMemory();
+  const moduleMemory = getEmptyModule();
+
+  const typeName = 'CustomType'
+  const propertyName = 'name'
+  const varName = 'names'
+
+  let src = ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
+    ` const ${propertyName} = 'Medet'; ` +
+    ` const ${varName}: ${typeName} = {${propertyName}, sex: 1}`;
+
+  let code = new Code(src);
+  let vars = await code.getVariableIdentifiers();
+
+  // Add types and lint them.
+  let types = await code.getTypeIdentifiers();
+  expect(types.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(types.getValue())
+  let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  // Type checks
+  let typeNode = types.getValue()[typeName] as AstNode;
+  expect(typeNode.data).toBeInstanceOf(TypeDeclaration)
+  expect(typeNode.dataType).toBe(ValueTypeString.object)
+
+  // Add built in types and lint them
+  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
+
+  // Variable check
+  let varAstNode = vars.getValue()[varName] as AstNode;
+  expect(varAstNode.data).toBeInstanceOf(AraLink)
+  expect(varAstNode.dataType).toBeInstanceOf(AraLink)
+  expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+  // Variable's data lint
+  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+  expect(identifiedProfile.isSuccess).toBe(true);
+  varAstNode.typedData = identifiedProfile.getValue();
+  context.post([varAstNode])
+});
+
 // Make sure the all in ValueLevel.identifyValue() matches
 // Support Enum assignments and enum value access
 
