@@ -343,7 +343,7 @@ export class TypeValueTraits {
             }
             return Result.ok(identifiedTypeDeclaration.getValue());
         } else if (this.isArrayTypeDeclaration(tsNode)) {
-            // Debug.push(`identifyArrayType()`, {typeLiteral: node.getText()})
+            // Debug.push(`identifyArrayType()`, {typeLiteral: tsNode.getText()})
             const identifiedArrayValue = await this.identifyArrayType(tsNode);
             // Debug.pop()
             if (identifiedArrayValue.isFailure) {

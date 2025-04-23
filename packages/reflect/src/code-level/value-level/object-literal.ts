@@ -1,4 +1,4 @@
-import { deepCopy, Result, Debug } from "@ara-web/ts-enhancement";
+import { deepCopy, Result } from "@ara-web/ts-enhancement";
 import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
@@ -92,27 +92,4 @@ export class ObjectLiteral {
         }
         return Result.ok({...typedData})
     }
-
-    // private exactIdentifier = (exp: any, identifier: string): string => {
-    //     if (exp instanceof PropertyAssignment) {
-    //         return exp.getFirstChild()!.getText();
-    //     } else if (exp instanceof SpreadAssignment) {
-    //         return exp.getLastChild()!.getText();
-    //     } else if (exp instanceof ShorthandPropertyAssignment) {
-    //         return exp.getText();
-    //     }
-    //     return identifier;
-    // }
-
-    // private exactValueNode = (exp: Node): Node => {
-    //     if (exp instanceof PropertyAssignment) {
-    //         return exp.getLastChild!()!;
-    //     } else if (exp instanceof SpreadAssignment) {
-    //         return exp.getLastChild!()!;
-    //     } else if (exp instanceof ShorthandPropertyAssignment) {
-    //         return exp;
-    //     }
-
-    //     return exp;
-    // }
 }

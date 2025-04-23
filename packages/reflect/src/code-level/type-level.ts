@@ -7,7 +7,7 @@ export class TypeLevel {
      * Validates the data type of the data
      * @param typedData 
      */
-    public static identifyDataType = (typedData: TypedData): Result<TypedData> => {
+    public static matchDataToType = (typedData: TypedData): Result<TypedData> => {
         if (typedData.dataType === undefined) {
             if (typedData.data !== undefined) {
                 return Result.fail(`The data type is undefined, expects the data to be undefined too`, `Correct the values`);
@@ -75,7 +75,7 @@ export class TypeLevel {
             const elementType = typedData.dataType[0];
             for (let elementIndex = 0; elementIndex < typedData.data.length; elementIndex++) {
                 const element = typedData.data[elementIndex];
-                const identifiedElement = this.identifyDataType({data: element, dataType: elementType});
+                const identifiedElement = this.matchDataToType({data: element, dataType: elementType});
                 if (identifiedElement.isFailure) {
                     return Result.fail(`${elementIndex} element) ${identifiedElement.errorTitle}`, identifiedElement.errorDescription!);
                 }

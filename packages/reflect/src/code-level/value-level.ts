@@ -3,7 +3,7 @@
  */
 
 import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
-import { TypeDeclaration, ValueTypeString, type ValueType } from "./ast-node-data.js";
+import { TypeDeclaration, ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
 import { AstNodeType, type AstNode, type TypedData } from "./ast-node.js";
@@ -57,10 +57,7 @@ export class ValueLevel {
             return Result.ok({})
         } else if (val === ValueTypeString.property) {
             let obj = val as Object;
-            Debug.log(`Value type is property`);
             if (!(identifier in obj)) {
-                Debug.log(`The '${identifier}' is not in the, so added an object type`);
-                Debug.log(val);
                 (obj as any)[identifier] = {};
             }
             return Result.ok((obj as any)[identifier] as ValueType)
@@ -87,8 +84,10 @@ export class ValueLevel {
      */
     public static exactValueByType = (typedData: TypedData): Result<ValueType> => {
         if (!Object.values(ValueTypeString).includes(typedData.dataType as ValueTypeString)) {
-            if (Array.isArray(typedData.dataType) || typeof typedData.dataType === "object") {
-                return Result.ok(deepCopy(typedData.dataType))
+            if (Array.isArray(typedData.dataType)) {
+                return Result.ok([])
+            } else if (typeof typedData.dataType === "object") {
+                return Result.ok({})
             } else {
                 return Result.fail(
                     `Only custom Arrays and Objects are supported to generate sample data`,
@@ -114,14 +113,6 @@ export class ValueLevel {
             return Result.ok("" as string);
         } else if (typedData.dataType === ValueTypeString.object) {
             return Result.ok(typeof typedData.data === "object" ? deepCopy(typedData.data) : {})
-        } else if (typedData.dataType === ValueTypeString.property) {
-            // let obj = data as Object;
-            // Debug.log(`Value type is property`);
-            // if (!(identifier in obj)) {
-                // Debug.log(`The '${identifier}' is not in the ${JSON.stringify(obj)}, so add it as Object type`)
-                // obj[identifier] = {};
-            // }
-            // return Result.ok(obj[identifier] as ValueType)
         }
 
         return Result.fail(
@@ -164,18 +155,7 @@ export class ValueLevel {
                 return Result.ok(ValueTypeString.property)
             } else if (exp instanceof ConditionalExpression) {
                 return Result.ok(ValueTypeString.default);
-                // Debug.log(`Conditional expression '${exp.getText()}' has '${exp.getChildCount()}' children:`);
-                // const condition = exp.getChildAtIndex(0);
-                // const trueExpression = exp.getChildAtIndex(2);
-                // const falseExpression = exp.getChildAtIndex(4);
-                // Debug.log(`Todo: check '${condition.getText()}' is true (binary expression)`);
-                // Debug.log(`Todo check '${trueExpression.getText()}' binary expression value`);
-                // Debug.log(`Todo check '${falseExpression.getText()}' string literal value`);
-            // } else if (exp instanceof BinaryExpression) {
         }
-    
-        Debug.log(`Identifying the value of '${exp.getText()}' not yet supported. Fill data of exp:`)
-        Debug.log(exp);
     
         return Result.fail(
             `Can not detect the expression's value type`,
@@ -390,24 +370,39 @@ export class ValueLevel {
         //     return Result.fail(`Unsupported expression`, `The '${exp.getText()}' not yet supported by Ara Web`)
     }
 
-    /**
-     * @param astNode Evaluate all the AST Node data property
-     * @limitation Only supports AST Nodes that are Links to the expressions.
-     * @returns 
-     */
-    public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        if (ReflectAraLink.isIdentifierLink(astNode.dataType)) {
-            const dataTypeLink = astNode.dataType as AraLink<string>;
+    private static identifyDataType = (
+        astDataType: IdentifiedNodeDataType | undefined,
+        astNodeContext: AstNodeContext
+    ): Result<IdentifiedNodeDataType | undefined> => {
+        if (astDataType === undefined) {
+            return Result.ok(astDataType);
+        }
+        if (Array.isArray(astDataType)) {
+            if (astDataType.length < 1) {
+                return Result.fail(`The data type is array, but no element`, `At least one element of the array must exist`);
+            }
+            const identifiedElement = this.identifyDataType(astDataType[0], astNodeContext);
+            if (identifiedElement.isFailure) {
+                return Result.fail(
+                    `this.identifyDataType(firstElement): ${identifiedElement.errorTitle}`,
+                    identifiedElement.errorDescription!
+                )
+            }
+
+            return Result.ok([identifiedElement.getValue()]);
+        }
+        if (ReflectAraLink.isIdentifierLink(astDataType)) {
+            const dataTypeLink = astDataType as AraLink<string>;
             const dataType = astNodeContext.getIdentifier(dataTypeLink);
 
             if (dataType === undefined) {
                 return Result.fail(
-                    `${astNode.identifier} references to '${astNode.dataType?.toString()}' not found`,
+                    `Data type '${dataTypeLink.toString()}' not found`,
                     `Add the type into AstNodeContext`
                 )
             } else if (dataType.nodeType !== AstNodeType.Type) {
                 return Result.fail(
-                    `${astNode.identifier} data type is not a type`,
+                    `Data type is not a type`,
                     `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`
                 )
             }
@@ -441,11 +436,29 @@ export class ValueLevel {
                     )
                 }
 
-                astNode.dataType = handledRefNode.getValue().data;
+                return Result.ok(handledRefNode.getValue().data);
             } else {
-                astNode.dataType = dataType.data;
+                return Result.ok(dataType.data);
             }
         }
+
+        return Result.ok(astDataType);
+    }
+
+    /**
+     * @param astNode Evaluate all the AST Node data property
+     * @limitation Only supports AST Nodes that are Links to the expressions.
+     * @returns 
+     */
+    public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+        const identifiedData = this.identifyDataType(astNode.dataType, astNodeContext);
+        if (identifiedData.isFailure) {
+            return Result.fail(
+                `${astNode.identifier} referenced '${astNode.dataType?.toString()}' not found`,
+                `Add the type into AstNodeContext`
+            )
+        }
+        astNode.dataType = identifiedData.getValue();
 
         if (astNode.data === undefined) {
             return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
@@ -460,9 +473,9 @@ export class ValueLevel {
             return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
         }
 
-        Debug.push(`TypeLevel.identifyDataType()`)
-        const identifiedDataType = TypeLevel.identifyDataType(typedData.getValue());
-        Debug.pop();
+        // Debug.push(`TypeLevel.identifyDataType()`)
+        const identifiedDataType = TypeLevel.matchDataToType(typedData.getValue());
+        // Debug.pop();
         if (identifiedDataType.isFailure) {
             return Result.fail(`TypeLevel.identifyDataType(): ${identifiedDataType.errorTitle}`, identifiedDataType.errorDescription!)
         }

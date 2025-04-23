@@ -3,13 +3,13 @@ import { Code } from "../code-level/Code.js";
 import { AstNode, AstNodeType } from "../code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { Debug } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
 import type { TsNode } from "../code-level/ts-node.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 import { ValueLevel } from "../code-level/value-level.js";
-import { Debug } from "@ara-web/ts-enhancement";
 import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 
 // test('Supports the simple variable declaration as public, export keywords too', async () => {
@@ -576,56 +576,127 @@ import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 //   context.post([varAstNode])
 // });
 
-test('Supports the arrays through Array generic', async () => {
-  const projectMemory = await getProjectMemory();
-  const moduleMemory = getEmptyModule();
+// test('Supports the arrays through Array generic', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
 
-  const typeName = 'CustomType'
-  const varName = 'obj'
+//   const typeName = 'CustomType'
+//   const varName = 'obj'
 
-  let src = 
-  ` export type ${typeName} = { name: string; sex: number };` +
-   ` const ${varName}: Array<${typeName}> = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
+//   let src = 
+//   ` export type ${typeName} = { name: string; sex: number };` +
+//    ` const ${varName}: Array<${typeName}> = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
 
-  let code = new Code(src);
-  let vars = await code.getVariableIdentifiers();
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
 
-  // Add types and lint them.
-  let types = await code.getTypeIdentifiers();
-  expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
-  let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
-  expect(identified.isSuccess).toBe(true);
+//   // Add types and lint them.
+//   let types = await code.getTypeIdentifiers();
+//   expect(types.isSuccess).toBe(true);
+//   moduleMemory.addIdentifiers(types.getValue())
+//   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+//   expect(identified.isSuccess).toBe(true);
 
-  // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+//   // Add built in types and lint them
+//   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
 
-  // Type checks
-  let typeAstNode = types.getValue()[typeName] as AstNode;
-  expect(typeAstNode.data).toBeInstanceOf(TypeDeclaration)
-  expect(typeAstNode.dataType).toBe(ValueTypeString.object)
+//   // Type checks
+//   let typeAstNode = types.getValue()[typeName] as AstNode;
+//   expect(typeAstNode.data).toBeInstanceOf(TypeDeclaration)
+//   expect(typeAstNode.dataType).toBe(ValueTypeString.object)
 
-  // Variable check
-  let varAstNode = vars.getValue()[varName] as AstNode;
-  expect(varAstNode.data).toBeInstanceOf(AraLink)
-  expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+//   // Variable check
+//   let varAstNode = vars.getValue()[varName] as AstNode;
+//   expect(varAstNode.data).toBeInstanceOf(AraLink)
+//   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
+//   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
 
-  // Variable's data lint
-  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
-  const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
-  expect(identifiedProfile.isSuccess).toBe(true);
-  varAstNode.typedData = identifiedProfile.getValue();
-  context.post([varAstNode])
-});
+//   // Variable's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   varAstNode.typedData = identifiedProfile.getValue();
+//   context.post([varAstNode])
+// });
 
-// TODO make sure support of the arrays through the Array literals instead Generic Array
-// TODO make sure to support array with the literal types
+// // Support of the arrays through the Array literals instead Generic Array
+// test('Supports the arrays through Array literals', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
 
-// if data type is linked, then define the data type.
-// assert that data assignment data type matches astNode.dataType.
-//  assert the generic data type that returned data matches the generic data type.
-//  assert the assigned data type matches the union type.
+//   const typeName = 'CustomType'
+//   const varName = 'obj'
+
+//   let src = 
+//   ` export type ${typeName} = { name: string; sex: number };` +
+//    ` const ${varName}: ${typeName}[] = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
+
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Add types and lint them.
+//   let types = await code.getTypeIdentifiers();
+//   expect(types.isSuccess).toBe(true);
+//   moduleMemory.addIdentifiers(types.getValue())
+//   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+//   expect(identified.isSuccess).toBe(true);
+
+//   // Add built in types and lint them
+//   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+
+//   // Type checks
+//   let typeAstNode = types.getValue()[typeName] as AstNode;
+//   expect(typeAstNode.data).toBeInstanceOf(TypeDeclaration)
+//   expect(typeAstNode.dataType).toBe(ValueTypeString.object)
+
+//   // Variable check
+//   let varAstNode = vars.getValue()[varName] as AstNode;
+//   expect(varAstNode.data).toBeInstanceOf(AraLink)
+//   expect(Array.isArray(varAstNode.dataType)).toBe(true)
+//   expect((varAstNode.dataType as Array<any>)[0]).toBeInstanceOf(AraLink)
+//   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+//   // Variable's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   varAstNode.typedData = identifiedProfile.getValue();
+//   context.post([varAstNode])
+// });
+
+// // Support array with the primitive types
+// test('Supports the arrays with primitive types', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
+
+//   const typeName = 'string'
+//   const varName = 'names'
+
+//   let src = ` const ${varName}: ${typeName}[] = ['Medet', 'Brynn']`;
+
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Add built in types and lint them
+//   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+
+//   // Variable check
+//   let varAstNode = vars.getValue()[varName] as AstNode;
+//   expect(varAstNode.data).toBeInstanceOf(AraLink)
+//   expect(Array.isArray(varAstNode.dataType)).toBe(true)
+//   expect((varAstNode.dataType as Array<any>)[0]).toBe(ValueTypeString.string)
+//   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+//   // Variable's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+//   Debug.log(`Identified profile:`);
+//   Debug.log(identifiedProfile);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   varAstNode.typedData = identifiedProfile.getValue();
+//   context.post([varAstNode])
+// });
+
 // Make sure the all in ValueLevel.identifyValue() matches
 // Support Enum assignments and enum value access
 

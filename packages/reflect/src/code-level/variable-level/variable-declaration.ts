@@ -51,10 +51,6 @@ export class VariableDeclaration extends TsNode {
      */
     public getIdentifier = (): Result<string> => {
         const rawChildren = this.getChildren([], [TsNode.isNonImportant, TsNode.isConstKeyword]);
-        for (let rawChild of rawChildren) {
-            Debug.log(`The raw child of var statement '${rawChild.getText()}':`);
-            Debug.log(rawChild)
-        }
         const children = this.getChildren([Identifier.isA])
         if (children.length === 0) {
             return Result.fail(

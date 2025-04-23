@@ -60,7 +60,7 @@ export class ArrayLiteral {
         if (typedData.dataType.length !== 1) {
             return Result.fail(`ArrayLiteral supports the same data type for the data, please update it`, `Array's data type doesn't contain a single element`)
         }
-
+        
         const data: ValueType[] = [];
         const elementType = (typedData.dataType as any)[0];
 
