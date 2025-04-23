@@ -24,6 +24,8 @@ import { TypeRef } from "./type-level/type-ref.js";
 import { ArrayLiteral } from "./value-level/array-level/array-literal.js";
 import { ShorthandAccess } from "./value-level/object-level/shorthand-access.js";
 import { Parenthesis } from "./value-level/parenthesis.js";
+import { Conditional } from "./value-level/conditional.js";
+import { BinarialOperation } from "./value-level/binarial-operation.js";
 
 
 export class ValueLevel {
@@ -212,6 +214,8 @@ export class ValueLevel {
             ArrayLiteral, // [element_1, element_2]
             ShorthandAccess, // {prop}
             Parenthesis, // (exp)
+            Conditional, // cond ? true_exp : false_exp
+            BinarialOperation, // left_op + right_op
         ]
         
         for (let supported of supportedValueLevels) {
@@ -230,41 +234,7 @@ export class ValueLevel {
 
         Debug.log(tsNode)
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //    if (exp instanceof ConditionalExpression) {
-        //         const condition = exp.getChildAtIndex(0);
-        //         const trueExpression = exp.getChildAtIndex(2);
-        //         const falseExpression = exp.getChildAtIndex(4);
-        //         Debug.push(`this.identifyValue<boolean>(identifier='${identifier}_condition', data=false, exp='${condition.getText()}')`)
-        //         const conditionResult = await this.identifyValue(`${identifier}_condition`, false, ValueTypeString.boolean, condition, memory);
-        //         Debug.pop();
-        //         if (conditionResult.isFailure) {
-        //             return Result.fail(
-        //                 `this.identifyValue<boolean>('${identifier}_condition', data=false, condition='${condition.getText()}'): ${conditionResult.errorTitle}`,
-        //                 conditionResult.errorDescription!
-        //             )
-        //         }
-        //         let res: Result<ValueType>;
-        //         let errTitle: string;
-        //         const conditionValue = conditionResult.getValue() as boolean;
-        //         if (conditionValue) {
-        //             res = await this.identifyValue(`${identifier}_left_side`, {}, ValueTypeString.object, trueExpression, memory);
-        //             if (res.isFailure) {
-        //                 errTitle = `this.identifyValue<ValueType>('${identifier}_left_side', data={}, exp='${trueExpression.getText()}'): ${res.errorTitle}`
-        //             }
-        //         } else {
-        //             res = await this.identifyValue(`${identifier}_right_side`, {}, ValueTypeString.object, falseExpression, memory);
-        //             if (res.isFailure) {
-        //                 errTitle = `this.identifyValue<ValueType>('${identifier}_right_side', data={}, exp='${falseExpression.getText()}'): ${res.errorTitle}`
-        //             }
-        //         }
-        //         if (res.isFailure) {
-        //             return Result.fail(
-        //                 errTitle!,
-        //                 res.errorDescription!
-        //             )
-        //         }
-        //         return Result.ok(res.getValue());
-        //     } else if (exp instanceof BinaryExpression) {
+        //     } else if (exp instanceof BinaryExpression) { // data + data
         //         const op = exp.getChildAtIndex(1).getText();
         //         if (typeof data === "boolean" || this.isBooleanNode(op)) {
         //             const left = exp.getChildAtIndex(0);

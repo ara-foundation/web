@@ -690,8 +690,6 @@ import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 //   // Variable's data lint
 //   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
 //   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
-//   Debug.log(`Identified profile:`);
-//   Debug.log(identifiedProfile);
 //   expect(identifiedProfile.isSuccess).toBe(true);
 //   varAstNode.typedData = identifiedProfile.getValue();
 //   context.post([varAstNode])
@@ -743,19 +741,66 @@ import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 //   context.post([varAstNode])
 // });
 
-// Support array with the primitive types
-test('Supports the parenthesis', async () => {
+// // Support array with the primitive types
+// test('Supports the parenthesis', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
+
+//   const typeName = 'CustomType'
+//   const propertyName = 'name'
+//   const varName = 'names'
+
+//   let src = 
+//     ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
+//     ` const ${varName}: ${typeName} = ({${propertyName}: 'Medet', sex: +1})`;
+
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Add types and lint them.
+//   let types = await code.getTypeIdentifiers();
+//   expect(types.isSuccess).toBe(true);
+//   moduleMemory.addIdentifiers(types.getValue())
+//   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+//   expect(identified.isSuccess).toBe(true);
+
+//   // Type checks
+//   let typeNode = types.getValue()[typeName] as AstNode;
+//   expect(typeNode.data).toBeInstanceOf(TypeDeclaration)
+//   expect(typeNode.dataType).toBe(ValueTypeString.object)
+
+//   // Add built in types and lint them
+//   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+//   moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
+
+//   // Variable check
+//   let varAstNode = vars.getValue()[varName] as AstNode;
+//   expect(varAstNode.data).toBeInstanceOf(AraLink)
+//   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
+//   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+//   // Variable's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   varAstNode.typedData = identifiedProfile.getValue();
+//   context.post([varAstNode])
+// });
+
+test('Supports the conditional expression', async () => {
   const projectMemory = await getProjectMemory();
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
   const propertyName = 'name'
   const varName = 'names'
+  const trueCondition = '1';
+  const falseCondition = '-2';
 
   let src = 
     ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
-    ` const ${varName}: ${typeName} = ({${propertyName}: 'Medet', sex: +1})`;
-
+    ` const data = ${trueCondition}; ` +
+    ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
   let code = new Code(src);
   let vars = await code.getVariableIdentifiers();
 
@@ -773,20 +818,64 @@ test('Supports the parenthesis', async () => {
 
   // Add built in types and lint them
   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
-  moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
+  moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
 
   // Variable check
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
-  expect(varAstNode.dataType).toBeInstanceOf(AraLink)
+  expect(varAstNode.dataType).toBeUndefined()
   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
-  const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+  let context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  let identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
+  expect(varAstNode.data).toStrictEqual({ name: 'Medet', sex: 1 })
+  expect(varAstNode.dataType).toEqual(ValueTypeString.object)
   context.post([varAstNode])
+
+  //
+  // False check
+  //
+  src = 
+  ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
+  ` const data = ${falseCondition}; ` +
+  ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
+  code = new Code(src);
+  vars = await code.getVariableIdentifiers();
+
+  // Add types and lint them.
+  types = await code.getTypeIdentifiers();
+  expect(types.isSuccess).toBe(true);
+  moduleMemory.addIdentifiers(types.getValue())
+  identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+  expect(identified.isSuccess).toBe(true);
+
+  // Type checks
+  typeNode = types.getValue()[typeName] as AstNode;
+  expect(typeNode.data).toBeInstanceOf(TypeDeclaration)
+  expect(typeNode.dataType).toBe(ValueTypeString.object)
+
+  // Add built in types and lint them
+  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
+
+  // Variable check
+  varAstNode = vars.getValue()[varName] as AstNode;
+  expect(varAstNode.data).toBeInstanceOf(AraLink)
+  expect(varAstNode.dataType).toBeUndefined()
+  expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+  // Variable's data lint
+  context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+  identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+  expect(identifiedProfile.isSuccess).toBe(true);
+  varAstNode.typedData = identifiedProfile.getValue();
+  expect(varAstNode.data).toStrictEqual('Not found')
+  expect(varAstNode.dataType).toEqual(ValueTypeString.string)
+  context.post([varAstNode])
+
 });
 
 
