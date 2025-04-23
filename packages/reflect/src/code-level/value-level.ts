@@ -19,6 +19,7 @@ import { PropertyLiteral } from "./value-level/object-level/property-literal.js"
 import { PropertyAccess } from "./value-level/object-level/property-access.js";
 import { SpreadLiteral } from "./value-level/object-level/spread-literal.js";
 import { TypeLevel } from "./type-level.js";
+import { PrefixUnary } from "./value-level/prefix-unary.js";
 
 
 export class ValueLevel {
@@ -223,6 +224,7 @@ export class ValueLevel {
             PropertyLiteral,  // prop: val
             PropertyAccess,   // obj.property
             SpreadLiteral, // {...obj}
+            PrefixUnary, // -number, !condition
         ]
         
         for (let supported of supportedValueLevels) {
@@ -389,45 +391,7 @@ export class ValueLevel {
         //                 `Only boolean binary expressions supported, given '${exp.getText()}' is not yet supported, update identifyValue()`
         //             )
         //         }
-        //     } else if (exp instanceof PrefixUnaryExpression) {
-        //         Debug.push(`exp as PrefixUnaryExpression`);
-        //         const prefix = exp.getFirstChild();
-        //         if (prefix?.getText() !== "!") {
-        //             Debug.pop();
-        //             return Result.fail(
-        //                 `exp as PrefixUnaryExpression: only '!' prefix is supported`,
-        //                 `The '${prefix?.getText()}' is not supported by Ara Web. Update the identifyValue() method in codeLevel`
-        //             )
-        //         }
-        //         const trueExp = exp.getLastChild();
-        //         const expIdentifier = `prefix_unary_${trueExp?.getText()}`;
-        //         Debug.push(`this.identifyValue<T>(identifier: '${expIdentifier}', data: '${JSON.stringify(data)}', exp: ${trueExp?.getText()})`)
-        //         const trueValueResult = await this.identifyValue(expIdentifier, data, dataType, trueExp!, memory);
-        //         Debug.pop();
-        //         Debug.pop();
-        //         if (trueValueResult.isFailure) {
-        //             return Result.fail(
-        //                 `exp as PrefixUnaryExpression: this.identifyValue<T>(identifier: '${trueExp?.getText()}', data: '${JSON.stringify(data)}', exp: ${trueExp?.getText()}): ${trueValueResult.errorTitle}`,
-        //                 trueValueResult.errorDescription!
-        //             )
-        //         }
-        //         // TODO #1
-        //         // cancelSlug when identifying !cancelSlug is not working.
-        //         // As its the infinite recursive loop (!cancelSlug -> cancelSlug -> !canSlug by updateFunction)
-        //         // Therefore, identify the variables in the module.
-        //         // identify their assignment.
-    
-        //         // First identify the variables then update the variables by the given identifier.
-        //         // And the update variable is accesses the memory.
-    
-        //         // TODO #2
-        //         // Identify the imports in the memory.
-        //         // Identify the imports as newName,
-        //         // identify the type imports,
-        //         // identify the type { name, name },
-        //         // identify the default, and in the skobes,
-        //         // Then, change recursiveValue by the value.
-        //         return Result.ok(!trueValueResult.getValue())
+        //         
         //     } else {
         //         Debug.log(`The '${exp.getText()}' expression is not supported by identifyValue yet:`);
         //         Debug.log(exp);
