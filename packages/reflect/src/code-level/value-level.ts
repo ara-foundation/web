@@ -234,68 +234,6 @@ export class ValueLevel {
 
         Debug.log(tsNode)
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //     } else if (exp instanceof BinaryExpression) { // data + data
-        //         const op = exp.getChildAtIndex(1).getText();
-        //         if (typeof data === "boolean" || this.isBooleanNode(op)) {
-        //             const left = exp.getChildAtIndex(0);
-        //             const right = exp.getChildAtIndex(2);
-        //             const leftValue = await this.identifyValue('left_side', {}, ValueTypeString.object, left, memory);
-        //             if (leftValue.isFailure) {
-        //                 return Result.fail(
-        //                     `this.identifyValue<object>('left_side', data={}, left='${left.getText()}'): ${leftValue.errorTitle}`,
-        //                     leftValue.errorDescription!
-        //                 )
-        //             }
-    
-        //             const rightValue = await this.identifyValue('right_side', {}, ValueTypeString.object, right, memory);
-        //             if (rightValue.isFailure) {
-        //                 return Result.fail(
-        //                     `this.identifyValue<object>('right_side', data={}, right='${left.getText()}'): ${rightValue.errorTitle}`,
-        //                     rightValue.errorDescription!
-        //                 )
-        //             }
-    
-        //             const conditionValue = this.identifyConditionValue(leftValue.getValue(), op, rightValue);
-        //             return Result.ok(conditionValue);
-        //         } else if (this.isArithmeticNode(op)) {
-        //             const left = exp.getChildAtIndex(0);
-        //             const right = exp.getChildAtIndex(2);
-        //             const leftValue = await this.identifyValue('left_side', {}, ValueTypeString.object, left, memory);
-        //             if (leftValue.isFailure) {
-        //                 return Result.fail(
-        //                     `this.identifyValue<object>('left_side', data={}, left='${left.getText()}'): ${leftValue.errorTitle}`,
-        //                     leftValue.errorDescription!
-        //                 )
-        //             }
-    
-        //             const rightValue = await this.identifyValue('right_side', {}, ValueTypeString.object, right, memory);
-        //             if (rightValue.isFailure) {
-        //                 return Result.fail(
-        //                     `this.identifyValue<object>('right_side', data={}, right='${right.getText()}'): ${rightValue.errorTitle}`,
-        //                     rightValue.errorDescription!
-        //                 )
-        //             }
-    
-        //             const arithResult = this.identifyArithmeticValue(leftValue.getValue(), op, rightValue.getValue());
-        //             return Result.ok(arithResult);
-        //         } else {
-        //             Debug.log(`The unsupported boolean expression, its neither boolean nor arithmetic: '${exp.getChildAtIndex(1).getText()}'`)
-        //             Debug.log(exp.getChildAtIndex(1))
-        //             return Result.fail(
-        //                 `Unsupported binary expression`,
-        //                 `Only boolean binary expressions supported, given '${exp.getText()}' is not yet supported, update identifyValue()`
-        //             )
-        //         }
-        //         
-        //     } else {
-        //         Debug.log(`The '${exp.getText()}' expression is not supported by identifyValue yet:`);
-        //         Debug.log(exp);
-        //         return Result.fail(
-        //             `Failed variable's node: '${exp.getText()}'`,
-        //             `The '${exp.getText}' variable value's node is not handled by Ara Web yet. Change identifyValue() to fix it`
-        //         )
-        //     }
-    
     }
 
     private static identifyDataType = (
