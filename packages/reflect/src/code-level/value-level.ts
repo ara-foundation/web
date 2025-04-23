@@ -23,6 +23,7 @@ import { PrefixUnary } from "./value-level/prefix-unary.js";
 import { TypeRef } from "./type-level/type-ref.js";
 import { ArrayLiteral } from "./value-level/array-level/array-literal.js";
 import { ShorthandAccess } from "./value-level/object-level/shorthand-access.js";
+import { Parenthesis } from "./value-level/parenthesis.js";
 
 
 export class ValueLevel {
@@ -210,6 +211,7 @@ export class ValueLevel {
             PrefixUnary, // -number, !condition
             ArrayLiteral, // [element_1, element_2]
             ShorthandAccess, // {prop}
+            Parenthesis, // (exp)
         ]
         
         for (let supported of supportedValueLevels) {
@@ -228,49 +230,7 @@ export class ValueLevel {
 
         Debug.log(tsNode)
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //     if (exp instanceof ShorthandPropertyAssignment) {
-        //         const propertyIdentifier = exp.getChildAtIndex(0);
-        //         Debug.push(`exp as ShortHandPropertyAssignment`)
-        //         // Attempt to find the variable's value within this script            
-        //         const propertyValue = (data as Object)[propertyIdentifier.getText()]
-        //         Debug.log(`The '${propertyIdentifier.getText()}' is the property name of ${identifier} identifier, whose value = '${JSON.stringify(data)}', and a variable in the script`)
-        //         Debug.push(`this.identifyIdentifierRecursively<typeof ${typeof propertyValue}>(propertyIdentifier='${propertyIdentifier.getText()}')`)
-        //         const identified = await this.identifyIdentifierRecursively<typeof propertyValue, T>(propertyIdentifier.getText(), memory);
-        //         Debug.pop();
-        //         Debug.log(`Property that was identified: '${propertyIdentifier.getText()}', identified result = ${JSON.stringify(identified.getValue())}, current property value = ${JSON.stringify(propertyValue)}`)
-        //         Debug.log(`Property that was identified: '${propertyIdentifier.getText()}', data = ${JSON.stringify(data)}`)
-        //         if (identified.isFailure) {
-        //             Debug.pop();
-        //             return Result.fail(
-        //                 `shorthandPropertyAssignment('${exp.getText()}')/this.identifyIdentifierRecursively(propertyIdentifier='${propertyIdentifier.getText()}'): ${identified.errorTitle}`,
-        //                 identified.errorDescription!
-        //             )
-        //         }
-    
-        //         (data as Object)[propertyIdentifier.getText()] = identified.getValue().data!
-        //         Debug.log(`The updated object:`)
-        //         Debug.log(JSON.stringify(data))
-        //         Debug.pop();
-    
-        //         return Result.ok(data);
-        //     } else if (exp instanceof ParenthesizedExpression) {
-        //         const childAmount = exp.getChildCount();
-        //         if (childAmount !== 3) {
-        //             return Result.fail(
-        //                 `ParenthesizedExpression('${exp.getText()}')`,
-        //                 `Parenthesized expression must have 3 children, with '${childAmount}' children Ara Web is not supporting, contact to change identifyValue()`,
-        //             )    
-        //         }
-    
-        //         const result = await this.identifyValue(identifier, data, dataType, exp.getChildAtIndex(1), memory);
-        //         if (result.isFailure) {
-        //             return Result.fail(
-        //                 `ParenthesizedExpression('${exp.getText()}'): this.identifyValue(identifier='${identifier}', data='${JSON.stringify(data)}', secondChild='${exp.getChildAtIndex(1).getText()}'): ${result.errorTitle}`,
-        //                 result.errorDescription!
-        //             )
-        //         }
-        //         return Result.ok(result.getValue());
-        //     } else if (exp instanceof ConditionalExpression) {
+        //    if (exp instanceof ConditionalExpression) {
         //         const condition = exp.getChildAtIndex(0);
         //         const trueExpression = exp.getChildAtIndex(2);
         //         const falseExpression = exp.getChildAtIndex(4);
