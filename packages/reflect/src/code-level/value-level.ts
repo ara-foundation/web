@@ -3,7 +3,7 @@
  */
 
 import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
-import { ValueTypeString, type ValueType } from "./ast-node-data.js";
+import { TypeDeclaration, ValueTypeString, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
 import { AstNodeType, type AstNode, type TypedData } from "./ast-node.js";
@@ -18,6 +18,7 @@ import { ObjectLiteral } from "./value-level/object-literal.js";
 import { PropertyLiteral } from "./value-level/object-level/property-literal.js";
 import { PropertyAccess } from "./value-level/object-level/property-access.js";
 import { SpreadLiteral } from "./value-level/object-level/spread-literal.js";
+import { TypeLevel } from "./type-level.js";
 
 
 export class ValueLevel {
@@ -214,33 +215,31 @@ export class ValueLevel {
      * @returns 
      */
     public static identifyValue = async (tsNode: TsNode, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-    const supportedValueLevels: ValueLevelInterface[] = [
-        Literal,          // "literal" | 12.2 | false
-        FunctionCall,     // fooBar()
-        Identifier,       // var1
-        ObjectLiteral,    // {prop: val...}
-        PropertyLiteral,  // prop: val
-        PropertyAccess,   // obj.property
-        SpreadLiteral, // {...obj}
-    ]    
-    
-    for (let supported of supportedValueLevels) {
-        if (supported.isA(tsNode)) {
-            Debug.push(supported.name, {tsNode: tsNode.getText()})
-            const supportedIdentifier = new supported();
-            const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
-            Debug.pop();
-            if (identified.isFailure) {
-                return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription!);
+        const supportedValueLevels: ValueLevelInterface[] = [
+            Literal,          // "literal" | 12.2 | false
+            FunctionCall,     // fooBar()
+            Identifier,       // var1
+            ObjectLiteral,    // {prop: val...}
+            PropertyLiteral,  // prop: val
+            PropertyAccess,   // obj.property
+            SpreadLiteral, // {...obj}
+        ]
+        
+        for (let supported of supportedValueLevels) {
+            if (supported.isA(tsNode)) {
+                Debug.push(supported.name, {tsNode: tsNode.getText()})
+                const supportedIdentifier = new supported();
+                const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
+                Debug.pop();
+                if (identified.isFailure) {
+                    return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription!);
+                }
+        
+                return Result.ok(identified.getValue());    
             }
-    
-            return Result.ok(identified.getValue());    
         }
-    }
 
-    Debug.log(tsNode)
-    return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-      
+        return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
         //     } else if (exp instanceof ArrayLiteralExpression) {
         //         const syntaxList = exp.getChildAtIndex(1) as SyntaxList;
         //         Debug.push(`exp as ArrayLiteral()`, {syntaxList: syntaxList.getText()})
@@ -477,8 +476,13 @@ export class ValueLevel {
         if (typedData.isFailure) {
             return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
         }
-    
-        return Result.ok(typedData.getValue());
+
+        const identifiedDataType = TypeLevel.identifyDataType(typedData.getValue());
+        if (identifiedDataType.isFailure) {
+            return Result.fail(`TypeLevel.identifyDataType(): ${identifiedDataType.errorTitle}`, identifiedDataType.errorDescription!)
+        }
+
+        return Result.ok(identifiedDataType.getValue());
     }
     
     /**

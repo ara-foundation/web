@@ -1,5 +1,5 @@
-import { deepCopy, Result } from "@ara-web/ts-enhancement";
-import { ValueTypeString, type ValueType } from "../ast-node-data.js";
+import { deepCopy, Result, Debug } from "@ara-web/ts-enhancement";
+import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
 import type { TypedData } from "../ast-node.js";
@@ -27,7 +27,7 @@ export class ObjectLiteral {
         if (syntaxLists.length !== 1) {
             return Result.fail(`tsNode.getChildren([TsNode.isSyntaxList]): expected 1 syntax list`, `There must be one syntax list, while node has ${syntaxLists.length}`)
         }
-        
+
         const identified = await this.identifyObjectLiteral(typedData!, syntaxLists[0], astNodeContext!);
         if (identified.isFailure) {
             return Result.fail(
@@ -72,6 +72,9 @@ export class ObjectLiteral {
 
             if (typedData.dataType !== ValueTypeString.default && 
                 typedData.dataType !== ValueTypeString.object &&
+                !(typedData.dataType instanceof UnionTypeDeclaration) &&
+                !(typedData.dataType instanceof TypeDeclaration) &&
+                !(typedData.dataType instanceof IntersectedUnionType) &&
                 typeof typedData.dataType !== "object"
             ) {
                 return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);

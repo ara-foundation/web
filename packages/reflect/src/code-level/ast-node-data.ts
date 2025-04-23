@@ -1,4 +1,7 @@
+import { Result } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { TypeLevel } from "./type-level.js";
+import type { TypedData } from "./ast-node.js";
 
 export type LiteralType = string | number | boolean;
 
@@ -108,6 +111,42 @@ export class TypeDeclaration implements TypeObjectInterface {
 
         return true;
     }
+
+    public identifyData = (data: any): Result<object> => {
+        if (data === undefined) {
+            return Result.fail(`The data is undefined`, `Please pass the data`)
+        }
+        for (let identifier in this._records) {
+            if (data[identifier] === undefined) {
+                return Result.fail(`The data missing '${identifier}' property as TypeDeclaration requires`, `Pass the correct values`)
+            }
+
+            const identified = TypeLevel.identifyDataType({data: data[identifier], dataType: this._records[identifier]});
+            if (identified.isFailure) {
+                return Result.fail(`${identifier} property: TypeLevel.identifyDataType(): ${identified.errorTitle}`, identified.errorDescription!)
+            }
+        }
+
+        return Result.ok(data as object);
+    }
+
+    public postDataType = (dataType: IdentifiedNodeDataType | undefined): Result<TypeDeclaration> => {
+        if (!(dataType instanceof TypeDeclaration) &&
+            dataType !== ValueTypeString.object && 
+            typeof dataType !== ValueTypeString.object) {
+            return Result.fail(`The data type '${dataType}' not supported`, `Please pass only objects posting into type declaration`);
+        }
+
+        const keys = Object.keys(dataType!);
+        for (let key of keys) {
+            const record: Record<string, IdentifiedNodeDataType> = {
+                [key]: (dataType as any)[key]
+            }
+            this.post(record)
+        }
+
+        return Result.ok(this);
+    }
 };
 
 export type ValueType = LiteralType |
@@ -163,6 +202,20 @@ export class UnionTypeDeclaration implements UnionTypeInterface {
         }
 
         this._values[index] = dataType;
+    }
+
+    public identifyData = (data: any): Result<TypedData> => {
+        if (data === undefined) {
+            return Result.fail(`The data is undefined`, `Please pass the data`)
+        }
+        for (let dataType of this._values) {
+            const identified = TypeLevel.identifyDataType({data: data, dataType});
+            if (identified.isSuccess) {
+                return Result.ok(identified.getValue())
+            }
+        }
+
+        return Result.fail(`The data is not any of the types from unions`)
     }
 }
 
@@ -226,5 +279,37 @@ export class IntersectedUnionType extends TypeDeclaration implements Intersected
 
     public putUnion(index: number, dataType: IdentifiedNodeDataType): void {
         this._unions.putUnion(index, dataType);
+    }
+
+    public identifyData = (data: any): Result<TypedData> => {
+        if (data === undefined) {
+            return Result.fail(`The data is undefined`, `Please pass the data`)
+        } else if (this._araLinks.length > 0) {
+            return Result.fail(`The Intersected Union type has an ara link`, `Lint the type before identifying data`)
+        }
+
+        // First, identify the type declaration part
+        const dataType = (this as TypeDeclaration);
+        const identified = dataType.identifyData(data);
+        if (identified.isFailure) {
+            return Result.fail(`TypeDeclaration.identifyData(): ${identified.errorTitle}`, identified.errorDescription!)
+        }
+
+        // Now identify the union types
+        if (this._unions.unionLength > 0) {
+            const identifiedUnion = this._unions.identifyData(data);
+            if (identifiedUnion.isFailure) {
+                return Result.fail(`TypeDeclarationUnion.identifyData(): ${identifiedUnion.errorTitle}`, identifiedUnion.errorDescription!)
+            }
+
+            const intersectedDataType = dataType.postDataType(identifiedUnion.getValue().dataType);
+            if (intersectedDataType.isFailure) {
+                return Result.fail(`TypeDeclaration.postDataType(): ${intersectedDataType.errorTitle}`, intersectedDataType.errorDescription!);
+            }
+
+            return Result.ok({data, dataType: intersectedDataType.getValue()})
+        }
+
+        return Result.ok({data, dataType})
     }
 }
