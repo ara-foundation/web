@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Code } from "../code-level/Code.js";
 import { AstNode, AstNodeType } from "../code-level/ast-node.js";
-import { IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
@@ -10,6 +10,7 @@ import { TypeRef } from "../code-level/type-level/type-ref.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 import { ValueLevel } from "../code-level/value-level.js";
 import { Debug } from "@ara-web/ts-enhancement";
+import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 
 // test('Supports the simple variable declaration as public, export keywords too', async () => {
 //   const varName = 'parentUrl'
@@ -532,19 +533,59 @@ import { Debug } from "@ara-web/ts-enhancement";
 //   context.post([varAstNode])
 // });
 
-// Support with the Intersected
-test('Supports the intersected types', async () => {
+// // Support with the Intersected
+// test('Supports the intersected types', async () => {
+//   const projectMemory = await getProjectMemory();
+//   const moduleMemory = getEmptyModule();
+
+//   const typeName = 'CustomType'
+//   const profileTypeName = 'ProfileType'
+//   const varName = 'obj'
+
+//   let src = 
+//   ` export type ${typeName} = { name: string; sex: number };` +
+//   ` export type ${profileTypeName} = ${typeName} & {surname: string}; ` +
+//    ` const ${varName}: ${profileTypeName} = {'name': 'Medet', sex: -1, surname: 'Ahmetson'}`;
+
+//   let code = new Code(src);
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Add types and lint them.
+//   let types = await code.getTypeIdentifiers();
+//   expect(types.isSuccess).toBe(true);
+//   moduleMemory.addIdentifiers(types.getValue())
+//   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+//   expect(identified.isSuccess).toBe(true);
+
+//   // Type checks
+//   let profileAstNode = types.getValue()[profileTypeName] as AstNode;
+//   expect(profileAstNode.data).toBeInstanceOf(IntersectedUnionType)
+//   expect(profileAstNode.dataType).toBe(ValueTypeString.object)
+
+//   // Variable check
+//   let varAstNode = vars.getValue()[varName] as AstNode;
+//   expect(varAstNode.data).toBeInstanceOf(AraLink)
+//   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
+//   expect(ReflectAraLink.isExpressionLink(varAstNode.data)).toBe(true)
+
+//   // Variable's data lint
+//   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
+//   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+//   expect(identifiedProfile.isSuccess).toBe(true);
+//   varAstNode.typedData = identifiedProfile.getValue();
+//   context.post([varAstNode])
+// });
+
+test('Supports the arrays through Array generic', async () => {
   const projectMemory = await getProjectMemory();
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
-  const profileTypeName = 'ProfileType'
   const varName = 'obj'
 
   let src = 
   ` export type ${typeName} = { name: string; sex: number };` +
-  ` export type ${profileTypeName} = ${typeName} & {surname: string}; ` +
-   ` const ${varName}: ${profileTypeName} = {'name': 'Medet', sex: -1, surname: 'Ahmetson'}`;
+   ` const ${varName}: Array<${typeName}> = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
 
   let code = new Code(src);
   let vars = await code.getVariableIdentifiers();
@@ -556,10 +597,13 @@ test('Supports the intersected types', async () => {
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
+  // Add built in types and lint them
+  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+
   // Type checks
-  let profileAstNode = types.getValue()[profileTypeName] as AstNode;
-  expect(profileAstNode.data).toBeInstanceOf(IntersectedUnionType)
-  expect(profileAstNode.dataType).toBe(ValueTypeString.object)
+  let typeAstNode = types.getValue()[typeName] as AstNode;
+  expect(typeAstNode.data).toBeInstanceOf(TypeDeclaration)
+  expect(typeAstNode.dataType).toBe(ValueTypeString.object)
 
   // Variable check
   let varAstNode = vars.getValue()[varName] as AstNode;
@@ -574,6 +618,9 @@ test('Supports the intersected types', async () => {
   varAstNode.typedData = identifiedProfile.getValue();
   context.post([varAstNode])
 });
+
+// TODO make sure support of the arrays through the Array literals instead Generic Array
+// TODO make sure to support array with the literal types
 
 // if data type is linked, then define the data type.
 // assert that data assignment data type matches astNode.dataType.

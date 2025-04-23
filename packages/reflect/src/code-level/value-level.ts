@@ -20,6 +20,8 @@ import { PropertyAccess } from "./value-level/object-level/property-access.js";
 import { SpreadLiteral } from "./value-level/object-level/spread-literal.js";
 import { TypeLevel } from "./type-level.js";
 import { PrefixUnary } from "./value-level/prefix-unary.js";
+import { TypeRef } from "./type-level/type-ref.js";
+import { ArrayLiteral } from "./value-level/array-level/array-literal.js";
 
 
 export class ValueLevel {
@@ -225,6 +227,7 @@ export class ValueLevel {
             PropertyAccess,   // obj.property
             SpreadLiteral, // {...obj}
             PrefixUnary, // -number, !condition
+            ArrayLiteral, // [element_1, element_2]
         ]
         
         for (let supported of supportedValueLevels) {
@@ -243,27 +246,7 @@ export class ValueLevel {
 
         Debug.log(tsNode)
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
-        //     } else if (exp instanceof ArrayLiteralExpression) {
-        //         const syntaxList = exp.getChildAtIndex(1) as SyntaxList;
-        //         Debug.push(`exp as ArrayLiteral()`, {syntaxList: syntaxList.getText()})
-        //         const identified = await this.identifyArrayExpression(syntaxList, data, dataType, memory)
-        //         Debug.pop();
-    
-        //         if (identified.isFailure) {
-        //             const err = Debug.error(
-        //                 `this.identifyArrayExpression: ${identified.isFailure}`,
-        //                 identified.errorDescription!,
-        //                 {
-        //                     syntaxList, data, dataType
-        //                 }
-        //             )
-    
-        //             return Result.fail(err)
-        //         }
-    
-        //         return Result.ok(data);
-        //     
-        //     } else if (exp instanceof ShorthandPropertyAssignment) {
+        //     if (exp instanceof ShorthandPropertyAssignment) {
         //         const propertyIdentifier = exp.getChildAtIndex(0);
         //         Debug.push(`exp as ShortHandPropertyAssignment`)
         //         // Attempt to find the variable's value within this script            
@@ -414,7 +397,9 @@ export class ValueLevel {
      */
     public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         if (ReflectAraLink.isIdentifierLink(astNode.dataType)) {
-            const dataType = astNodeContext.getIdentifier(astNode.dataType as AraLink<string>);
+            const dataTypeLink = astNode.dataType as AraLink<string>;
+            const dataType = astNodeContext.getIdentifier(dataTypeLink);
+
             if (dataType === undefined) {
                 return Result.fail(
                     `${astNode.identifier} references to '${astNode.dataType?.toString()}' not found`,
@@ -426,9 +411,42 @@ export class ValueLevel {
                     `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`
                 )
             }
-            astNode.dataType = dataType.data;
+
+            if (dataTypeLink.isPropertyExist(TypeRef.GENERIC_VALUES_LINK_PROPERTY)) {
+                if (!dataType.isGenericHandlerExist) {
+                    return Result.fail(
+                        `refNode('${dataType.identifier}').isGenericHandlerExist: false`,
+                        `The ${dataTypeLink.toString()} has a generic value, but '${dataType.identifier}' doesn't have generic handler, please call putGenericHandler in refNode.`
+                    )
+                }
+                        
+                const genericValues = TypeRef.linkPropertyToGenericValues(dataTypeLink);
+                for (let genericIndex = 0; genericIndex < genericValues.length; genericIndex++) {
+                    if (ReflectAraLink.isIdentifierLink(genericValues[genericIndex])) {
+                        const identifiedGeneric = astNodeContext.getIdentifier(genericValues[genericIndex] as AraLink<string>);
+                        if (identifiedGeneric === undefined) {
+                            return Result.fail(`The generic type '${dataType.identifier}' links to the data type that is not found in the Ast Node Context`, `Please fix the error`)
+                        }
+                        genericValues[genericIndex] = identifiedGeneric.data!
+                    } else if (ReflectAraLink.isExpressionLink(genericValues[genericIndex])) {
+                        return Result.fail(`The generic type '${dataType.identifier}' ${genericIndex} value is an expression`, `Ara Web doesn't support it yet, update ValueLevel.identifyAstNodeData()`)
+                    }
+                }
+
+                const handledRefNode = dataType.handleGeneric(genericValues)
+                if (handledRefNode.isFailure) {
+                    return Result.fail(
+                        `refNode('${dataType.identifier}'): handleGeneric('[${genericValues.join(',')}]'): ${handledRefNode.errorTitle}`,
+                        handledRefNode.errorDescription!
+                    )
+                }
+
+                astNode.dataType = handledRefNode.getValue().data;
+            } else {
+                astNode.dataType = dataType.data;
+            }
         }
-        
+
         if (astNode.data === undefined) {
             return Result.ok({dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType)})
         }
@@ -442,7 +460,9 @@ export class ValueLevel {
             return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription!);
         }
 
+        Debug.push(`TypeLevel.identifyDataType()`)
         const identifiedDataType = TypeLevel.identifyDataType(typedData.getValue());
+        Debug.pop();
         if (identifiedDataType.isFailure) {
             return Result.fail(`TypeLevel.identifyDataType(): ${identifiedDataType.errorTitle}`, identifiedDataType.errorDescription!)
         }

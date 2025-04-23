@@ -440,19 +440,6 @@ export class Code {
                 )   
             }
 
-            Debug.push(`identifyDataType()`, {'dataType': varIdentifier.dataType!.toString(), data: varIdentifier.data.toString()})
-            const childValueType = this.identifyDataType(varIdentifier.dataType!, varIdentifier.data, memory);
-            Debug.pop()
-            Debug.log(`Data type identified`)
-            Debug.log(childValueType)
-
-            if (childValueType.isFailure) {
-                return Result.fail(
-                    `this.identifyDataType(dataType: '${varIdentifier.dataType!.toString()}', data: '${varIdentifier.data.toString()}'): ${childValueType.errorTitle}`,
-                    childValueType.errorDescription!
-                )
-            }
-
             let sampleIdentifierValue: any = {};
             if (Object.values(ValueTypeString).includes(childValueType.getValue())) {
                 Debug.log(`The sample identifier by the enum type`)
@@ -539,19 +526,6 @@ export class Code {
                 )   
             }
 
-
-            Debug.push(`identifyDataType()`, {'dataType': varIdentifier.dataType!.toString(), data: varIdentifier.data.toString()})
-            const childValueType = this.identifyDataType(varIdentifier.dataType!, varIdentifier.data, memory);
-            Debug.pop()
-            Debug.log(`Data type identified`)
-            Debug.log(childValueType)
-
-            if (childValueType.isFailure) {
-                return Result.fail(
-                    `this.identifyDataType(dataType: '${varIdentifier.dataType!.toString()}', data: '${varIdentifier.data.toString()}'): ${childValueType.errorTitle}`,
-                    childValueType.errorDescription!
-                )
-            }
 
             const exp = varIdentifier.data.resource as Node;
             Debug.log(`The sample identifier by the type`)
@@ -1279,58 +1253,6 @@ export class Code {
         return Result.ok(data)
     }
 
-    /**
-     * If the DataType is 
-     * @param dataType 
-     * @param data 
-     * @param memory 
-     * @returns 
-     */
-    private identifyDataType = <T>(dataType: IdentifiedNodeDataType, data: ValueType, memory: ModuleMemory<T>): Result<ValueTypeString|any> => {
-        if (Object.values(ValueTypeString).includes(dataType as ValueTypeString)) {
-            return Result.ok(dataType)
-        }
-        if (!(dataType instanceof AraLink)) {
-            return Result.fail(
-                `Data Type is not an AraLink`,
-                `Update identifyDataType() to support the '${dataType.toString()}' data type`
-            )
-        }
-
-        const dataTypeLink = dataType as AraLink<string>;
-
-        if (!ReflectAraLink.isIdentifierLink(dataTypeLink)) {
-            return Result.fail(
-                `Data Type must be only a link to the identifier`,
-                `Update identifyDataType() to support the '${dataTypeLink.toString()}' types of ara links`
-            )
-        }
-
-        const typeNode = memory.identifierByType(dataTypeLink.resource as string, AstNodeType.Type);
-        if (typeNode === undefined) {
-            return Result.fail(
-                `memory.identifierByType(identifier: '${dataTypeLink.resource as string}', astNode: '${AstNodeType.Type}')`,
-                `Memory doesn't have the node by it's identifier`
-            )
-        }
-        Debug.log(`The identified type node is`)
-        Debug.log(typeNode)
-
-        Debug.log(`Identifying the '${data.toString()}' data's actual data by '${dataType.toString()}' unsupported`)
-        Debug.log(dataType);
-        Debug.log(`The typeof typeNode`);
-        if ((dataTypeLink.properties as any)["type"] !== undefined) {
-            Debug.log(`The typedef is an array`);
-            const dataTypeProperty = (dataTypeLink.properties as any)["type"] as string;
-            if (dataTypeProperty) {
-                const dataType = [typeNode.data!] as Array<typeof typeNode.data>;
-                Debug.log(`The data type:`)
-                Debug.log(dataType);
-                return Result.ok(dataType)
-            }
-        }
-        return Result.ok(typeNode.data! as typeof typeNode.data)
-    }
 
     private identifyDataValueType = (data: ValueType): Result<ValueTypeString> => {
         if (typeof data === "boolean") {
