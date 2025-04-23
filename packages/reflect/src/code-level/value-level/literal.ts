@@ -41,13 +41,55 @@ export class Literal {
         return this.isStringLiteral(child) || this.isNumericLiteral(child) || this.isBooleanLiteral(child);
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public static identifyStringLiteral = (tsNode: TsNode): Result<TypedData> => {
         if (Literal.isStringLiteral(tsNode)) {
             return Result.ok({data: StringTraits.unquote(tsNode.getText()) as string, dataType: ValueTypeString.string})
-        } else if (Literal.isNumericLiteral(tsNode)) {
+        }
+        
+        const err = Debug.error(
+            `The '${tsNode.getText()}' as a literal value not supported by Ara Web`,
+            `Please pass the correct TS Node, or update identifyLiteralValue()`,
+            tsNode
+        )
+
+        return Result.fail(err);
+    }
+
+    public static identifyNumericLiteral = (tsNode: TsNode): Result<TypedData> => {
+        if (Literal.isNumericLiteral(tsNode)) {
             return Result.ok({data: JSON.parse(tsNode.getText()) as number, dataType: ValueTypeString.number})
-        } else if (Literal.isBooleanLiteral(tsNode)) {
+        }
+        
+        const err = Debug.error(
+            `The '${tsNode.getText()}' as a literal value not supported by Ara Web`,
+            `Please pass the correct TS Node, or update identifyLiteralValue()`,
+            tsNode
+        )
+
+        return Result.fail(err);
+    }
+     
+    public static identifyBooleanLiteral = (tsNode: TsNode): Result<TypedData> => {
+        if (Literal.isBooleanLiteral(tsNode)) {
             return Result.ok({data: JSON.parse(tsNode.getText()) as boolean, dataType: ValueTypeString.boolean});
+        }
+        
+        const err = Debug.error(
+            `The '${tsNode.getText()}' as a literal value not supported by Ara Web`,
+            `Please pass the correct TS Node, or update identifyLiteralValue()`,
+            tsNode
+        )
+
+        return Result.fail(err);
+    }
+
+    public identifyValue = async (tsNode: TsNode, _?: TypedData, __?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (Literal.isStringLiteral(tsNode)) {
+            return Literal.identifyStringLiteral(tsNode)
+        } else if (Literal.isNumericLiteral(tsNode)) {
+            return Literal.identifyNumericLiteral(tsNode)
+        } else if (Literal.isBooleanLiteral(tsNode)) {
+            return Literal.identifyBooleanLiteral(tsNode)
         }
         
         const err = Debug.error(

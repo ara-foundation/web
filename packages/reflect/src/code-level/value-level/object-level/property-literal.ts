@@ -7,6 +7,7 @@ import { staticImplements, type ValueLevelInterface } from "../value-level-inter
 import type { AstNodeContext } from "../../../memory/AstNodeContext.js";
 import { ValueLevel } from "../../value-level.js";
 import { Identifier } from "../idenitifier.js";
+import { Literal } from "../literal.js";
 
 /**
  * Property assignment such as Property: <expression> in the context of the object literals
@@ -22,7 +23,7 @@ export class PropertyLiteral {
         return node instanceof PropertyAssignment;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
         if (!tsNode.isChildExist(0)) {
             return Result.fail(`Property assignment has no first value`, `Please pass the first element of property assignment`)
         }
@@ -32,9 +33,15 @@ export class PropertyLiteral {
         const property = tsNode.getChild(0)!;
         const value = tsNode.getChild(2)!;
 
-        if (!Identifier.isA(property)) {
-            const err = Debug.error(`The property '${property.getText()}' is not identifier`, `Ara Web supports identifiers as the property for now, please update it.`, property)
+        if (!Identifier.isA(property) && !Literal.isStringLiteral(property)) {
+            const err = Debug.error(`The property '${property.getText()}' is not identifier nor a string literal`, `Ara Web supports identifiers as the property for now, please update it.`, property)
             return Result.fail(err);
+        }
+
+        let propertyIdentifier = property.getText();
+        if (Literal.isStringLiteral(property)) {
+            const identifiedIdentifier = Literal.identifyStringLiteral(property);
+            propertyIdentifier = identifiedIdentifier.getValue().data as string
         }
 
         // Assigned value to the (data: T).object's property
@@ -45,7 +52,7 @@ export class PropertyLiteral {
                 res.errorDescription!
             )
         }
-        const data = {[property.getText()]: res.getValue().data};
+        const data = {[propertyIdentifier]: res.getValue().data};
         return Result.ok({data: data, dataType: ValueTypeString.property})
     }
 

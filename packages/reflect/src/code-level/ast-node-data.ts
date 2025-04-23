@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { TypeLevel } from "./type-level.js";
 import type { TypedData } from "./ast-node.js";
@@ -65,22 +65,12 @@ export class TypeDeclaration implements TypeObjectInterface {
         return this._records;
     }
 
-    protected getRecordKey(record: Record<string, IdentifiedNodeDataType>): string|undefined {
-        const keys = Object.keys(record);
-        if (keys.length !== 1) {
-            return undefined;
-        }
-        return keys[0];
-    }
-
     // Add a new key
     public post(record: Record<string, IdentifiedNodeDataType>): boolean {
-        const key = this.getRecordKey(record);
-        if (key === undefined) {
-            return false;
-        }
-        if (this.isChild(key)) {
-            return false;
+        for (let key in record) {
+            if (this.isChild(key)) {
+                return false;
+            }
         }
         this._records = {... this._records, ...record};
         return true;
@@ -98,16 +88,16 @@ export class TypeDeclaration implements TypeObjectInterface {
         return this._records[key];
     }
 
+    // Replace the key
     public put(record: Record<string, IdentifiedNodeDataType>): boolean {
-        const key = this.getRecordKey(record);
-        if (key === undefined) {
-            return false;
+        for (let key in record) {
+            if (!this.isChild(key)) {
+                return false;
+            }
         }
-        if (!this.isChild(key)) {
-            return false;
+        for (let key in record) {
+            this._records[key] = record[key];
         }
-
-        this._records[key] = record[key];
 
         return true;
     }
@@ -281,6 +271,18 @@ export class IntersectedUnionType extends TypeDeclaration implements Intersected
         this._unions.putUnion(index, dataType);
     }
 
+    private get typeDeclaration(): TypeDeclaration {
+        const typeDeclaration = new TypeDeclaration();
+        Debug.log(`Add to a new type declaration:`);
+        Debug.log(this._records)
+        Debug.log(`Type declaration has`)
+        Debug.log(typeDeclaration)
+        if (!typeDeclaration.post(this._records)) {
+            Debug.log(`The type declaration posting records failed`);
+        }
+        return typeDeclaration;
+    }
+
     public identifyData = (data: any): Result<TypedData> => {
         if (data === undefined) {
             return Result.fail(`The data is undefined`, `Please pass the data`)
@@ -289,7 +291,13 @@ export class IntersectedUnionType extends TypeDeclaration implements Intersected
         }
 
         // First, identify the type declaration part
-        const dataType = (this as TypeDeclaration);
+        const dataType = this.typeDeclaration;
+        Debug.log(`Intersect:`);
+        Debug.log(this);
+        Debug.log(`Intersected union type:`);
+        Debug.log(dataType)
+        Debug.log(`Identify as type declaration:`)
+        Debug.log(data)
         const identified = dataType.identifyData(data);
         if (identified.isFailure) {
             return Result.fail(`TypeDeclaration.identifyData(): ${identified.errorTitle}`, identified.errorDescription!)

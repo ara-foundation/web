@@ -239,6 +239,7 @@ export class ValueLevel {
             }
         }
 
+        Debug.log(tsNode)
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
         //     } else if (exp instanceof ArrayLiteralExpression) {
         //         const syntaxList = exp.getChildAtIndex(1) as SyntaxList;
