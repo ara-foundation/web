@@ -3,9 +3,7 @@
  */
 import { parse as commentParse} from "comment-parser";
 
-import { Debug, Result } from "@ara-web/ts-enhancement";
-import type { Page } from "@ara-web/ts-enhancement";
-import { componentName, identifyComponent } from "./element-level.js"
+import { Result, type Page } from "@ara-web/ts-enhancement";
 
 // The pages traits adds to the Page the following:
 // -- RPCs and refer to RPC types
@@ -152,61 +150,62 @@ const identifyPageByComment = (source: string): Result<PageFromComments> => {
  * @returns {Result<Page>}
  */
 export const identifyComponents = async (page: Page, uiContent: UiContent, code: Code): Promise<Result<Page>> => {
-    for (let componentNode of uiContent.elements!) {
-        const identificationResult = await identifyComponent(page, uiContent, componentNode)
-        if (identificationResult.isFailure) {
-            const err = Debug.error(
-                `this.identifyComponent(componentNode: ${componentName(componentNode)}): ${identificationResult.errorTitle}`, 
-                 identificationResult.errorDescription!,
-                componentNode,
-            )    
+    return Result.errorCode501(["UI Level", "Page Level"], "identifyComponents")
+    // for (let componentNode of uiContent.elements!) {
+    //     const identificationResult = await identifyComponent(page, uiContent, componentNode)
+    //     if (identificationResult.isFailure) {
+    //         const err = Debug.error(
+    //             `this.identifyComponent(componentNode: ${componentName(componentNode)}): ${identificationResult.errorTitle}`, 
+    //              identificationResult.errorDescription!,
+    //             componentNode,
+    //         )    
             
-            return Result.fail(err)
-        }
+    //         return Result.fail(err)
+    //     }
         
-        const identifiedComponent = identificationResult.getValue();
+    //     const identifiedComponent = identificationResult.getValue();
             
-            // Let's detect the ComponentType
-            if (identifiedComponent.id === ComponentIdentity.Undeclared) {
-                return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')
-            } else if (identifiedComponent.id === ComponentIdentity.Component || 
-                identifiedComponent.id === ComponentIdentity.Expression) {
-                pageTraits.page.metaComponents?.push(identifiedComponent);
-                continue;
-            } else if (identifiedComponent.id === ComponentIdentity.Rpc) {
-                if (pageTraits.page.rpcs === undefined) {
-                    pageTraits.page.rpcs = {};
-                }
-                const componentData = identifiedComponent as RpcCallType;
-                if (componentData.rpcType === RpcType.Extension) {
-                    if (pageTraits.page.rpcs.extension === undefined) {
-                        pageTraits.page.rpcs.extension = [];
-                    }
-                    pageTraits.page.rpcs.extension.push(componentData)
-                } else if (componentData.rpcType === RpcType.Independent) {
-                    if (pageTraits.page.rpcs.independent === undefined) {
-                        pageTraits.page.rpcs.independent = [];
-                    }
-                    pageTraits.page.rpcs.independent.push(componentData)
-                } else if (componentData.rpcType === RpcType.Proxy) {
-                    if (pageTraits.page.rpcs.proxy === undefined) {
-                        pageTraits.page.rpcs.proxy = [];
-                    }
-                    pageTraits.page.rpcs.proxy.push(componentData)
-                }
-                continue;
-            } else if (identifiedComponent.id === ComponentIdentity.Layout) {
-                const identificationResult = await identifyLayoutComponents(pageTraits, componentNode);
-                if (identificationResult.isFailure) {
-                    return Result.fail(
-                        `this.identifyLayoutComponents(componentNode='${componentName(componentNode)}'): ${identificationResult.errorTitle}`,
-                        identificationResult.errorDescription!
-                    )
-                }
-                continue;
-            } else {
-                console.log(`Component ${componentName(componentNode)} was not identified. It's neither Layout, nor Component nor RPC Call`);
-            }
-        }
-        return Result.ok(pageTraits.page)
+    //         // Let's detect the ComponentType
+    //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
+    //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')
+    //         } else if (identifiedComponent.id === ComponentIdentity.Component || 
+    //             identifiedComponent.id === ComponentIdentity.Expression) {
+    //             pageTraits.page.metaComponents?.push(identifiedComponent);
+    //             continue;
+    //         } else if (identifiedComponent.id === ComponentIdentity.Rpc) {
+    //             if (pageTraits.page.rpcs === undefined) {
+    //                 pageTraits.page.rpcs = {};
+    //             }
+    //             const componentData = identifiedComponent as RpcCallType;
+    //             if (componentData.rpcType === RpcType.Extension) {
+    //                 if (pageTraits.page.rpcs.extension === undefined) {
+    //                     pageTraits.page.rpcs.extension = [];
+    //                 }
+    //                 pageTraits.page.rpcs.extension.push(componentData)
+    //             } else if (componentData.rpcType === RpcType.Independent) {
+    //                 if (pageTraits.page.rpcs.independent === undefined) {
+    //                     pageTraits.page.rpcs.independent = [];
+    //                 }
+    //                 pageTraits.page.rpcs.independent.push(componentData)
+    //             } else if (componentData.rpcType === RpcType.Proxy) {
+    //                 if (pageTraits.page.rpcs.proxy === undefined) {
+    //                     pageTraits.page.rpcs.proxy = [];
+    //                 }
+    //                 pageTraits.page.rpcs.proxy.push(componentData)
+    //             }
+    //             continue;
+    //         } else if (identifiedComponent.id === ComponentIdentity.Layout) {
+    //             const identificationResult = await identifyLayoutComponents(pageTraits, componentNode);
+    //             if (identificationResult.isFailure) {
+    //                 return Result.fail(
+    //                     `this.identifyLayoutComponents(componentNode='${componentName(componentNode)}'): ${identificationResult.errorTitle}`,
+    //                     identificationResult.errorDescription!
+    //                 )
+    //             }
+    //             continue;
+    //         } else {
+    //             console.log(`Component ${componentName(componentNode)} was not identified. It's neither Layout, nor Component nor RPC Call`);
+    //         }
+    // }
+    // return Result.ok(pageTraits.page)
 }

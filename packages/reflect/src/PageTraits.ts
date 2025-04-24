@@ -1,22 +1,18 @@
 /**
  * Ara Web Level Reflection that deals with the Astro Components and Astro Component Attributes
  */
-import type { AttributeNode, ExpressionNode, Node as AstroComponentNode } from "@astrojs/compiler/types";
 import { parse as commentParse} from "comment-parser";
 
-import { ColumnSlug, RowSlug, ComponentIdentity, Result } from "@ara-web/ts-enhancement";
-import type { LayoutSlugs, Expression, Page, IdentifiedComponent, Component } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
+import type { Page } from "@ara-web/ts-enhancement";
 
 // The pages traits adds to the Page the following:
 // -- RPCs and refer to RPC types
 // -- File Content
 // -- AST
 // -- Components
-import { RpcType, type RpcCallType, isRpcComponentModulePath as isRpcCallComponent, rpcBySlug } from "@ara-web/rpc-engine";
 import { FileExtension, type UiContent } from "./ui-level/ui-content.js";
 import { Code } from "./code-level/Code.js";
-// Make sure that we move the component
-import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
 
 //////////////////////////////////////////////////////////////////
 //

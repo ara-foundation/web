@@ -1,7 +1,7 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-      "jsx": "react",
+      "jsx": "react-jsx",
       "outDir": "dist",
       "rootDir": "src",
       "lib": [
@@ -9,8 +9,7 @@
         "es2016",
         "es2017",
         "es2018.promise"
-      ],
-      "types": ["vite/client"]
+      ]
     },
     "include": ["src"],
     "exclude": ["node_modules", "dist"]

@@ -18,15 +18,15 @@
   },
   "scripts": {
     "dev": "tsc --watch",
-    "build": "pnpm _chore && rm -rf dist && astro build",
-    "prepublishOnly": "pnpm test:lint && astro build",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && tsc",
     "_chore": "pnpm i",
     "test": "vitest"
   },
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./file-level": {
       "types": "./src/fileLevel.ts",
@@ -34,6 +34,8 @@
     }
   },
   "devDependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "vitest": "^3.1.1"
   }
 }

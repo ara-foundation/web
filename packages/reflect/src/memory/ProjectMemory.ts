@@ -5,7 +5,7 @@
 import { Debug, Result, type Component, type Page } from "@ara-web/ts-enhancement";
 import { ModuleType, trimPath, urlToFileNames } from "../module.js";
 import { ModuleMemory } from "./ModuleMemory.js";
-import { getScriptByPath } from "../script.js";
+import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
 
 type SupportedModuleMemories = ModuleMemory<Component|Page|unknown>;
 export type ModuleMemories = {[key in ModuleType]?: {[key: string]: SupportedModuleMemories}};
@@ -128,21 +128,21 @@ export class ProjectMemory {
                 `The module path not found in the memory`
             )
         }
-        if (identifiedModule.moduleType === ModuleType.Untracked) {
+        if (identifiedModule.getValue().moduleType === ModuleType.Untracked) {
             return Result.fail(
                 `identifyModuleType(modulePath='${modulePath}')`,
                 `The module path is not tracked by Ara Web`
             )
-        } else if (identifiedModule.moduleType === ModuleType.Script) {
-            const script = await getScriptByPath(modulePath);
+        } else if (identifiedModule.getValue().moduleType === ModuleType.Script) {
+            const script = await this.getScriptByPath(modulePath);
             if (script === undefined) {
                 return Result.fail(
                     `moduleType=ModuleType.Script: getScriptByPath(modulePath='${modulePath}')`,
                     `The script is not defined in the scripts path, are you sure that file exists or has the valid file extension?`
                 )
             }
-            return Result.ok({modulePath, moduleType, fileContent: script})
-        } else if (identifiedModule.moduleType === ModuleType.Layout) {
+            return Result.ok({modulePath, moduleType: identifiedModule.getValue().moduleType, fileContent: script})
+        } else if (identifiedModule.getValue().moduleType === ModuleType.Layout) {
             Debug.log(`Module '${modulePath}' is layout, get the layout: Unsupported yet`)
             // const fileContent = await componentFileContent(modulePath, moduleType);
             // if (fileContent.isFailure) {
@@ -153,22 +153,40 @@ export class ProjectMemory {
             // }
 
             // return Result.ok({modulePath, moduleType, fileContent: fileContent.getValue()})
-        } else if (identifiedModule.moduleType === ModuleType.NodeJsModule) {
-            const module = await getNodejsModuleByPath(trimPath(modulePath));
+        } else if (identifiedModule.getValue().moduleType === ModuleType.NodeJsModule) {
+            const module = await EnabledNodejsModules.getNodejsModuleByPath(trimPath(modulePath));
             if (module === undefined) {
                 return Result.fail(
                     `moduleType=ModuleType.NodeJsModule: getNodejsModuleByPath(modulePath: '${modulePath}')`,
                     `The module is not enabled, are you sure that file exists and has valid extension?`
                 )
             } else {
-                return Result.ok({modulePath, moduleType, fileContent: module})
+                return Result.ok({modulePath, moduleType: identifiedModule.getValue().moduleType, fileContent: module})
             }
         }
         
         return Result.fail(
             'Unsupported module type',
-            `Only Script modules are supported, not '${moduleType}' modules`
+            `Only Script modules are supported, not '${identifiedModule.getValue().moduleType}' modules`
         )
+    }
+
+    /**
+     * Try to get the script by the path name
+     * @param {string} path to import the script
+     * @returns {UiContent|Undefined}
+     */
+    private getScriptByPath = async (path: string): Promise<unknown> => {
+        path = trimPath(path);
+        const scripts = this._memories[ModuleType.Script];
+        for (let scriptPath in scripts) {
+            const script = scripts[scriptPath];
+            if (scriptPath.indexOf(path + ".ts") > -1 || scriptPath.indexOf(path + "/index.ts") > -1) {
+                return script.glob;
+            }
+        }
+
+        return undefined;
     }
 
     /**

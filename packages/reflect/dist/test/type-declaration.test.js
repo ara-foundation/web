@@ -1,0 +1,435 @@
+import { expect, test } from "vitest";
+import { Code } from "../code-level/Code.js";
+import {} from "@ara-web/ts-enhancement";
+import { AstNode } from "../code-level/ast-node.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
+import { ModuleMemory } from "../memory/ModuleMemory.js";
+import { ModuleType } from "../module.js";
+import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
+import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
+import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
+test('Supports the union types: type Primary = string | number | boolean', async () => {
+    const varName = 'Primary';
+    const src = `type ${varName} = string | number | boolean`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // Node Data
+    const data = astNode.data;
+    expect(data.unionLength).toEqual(3);
+    expect(data.getUnion(0)).toEqual(ValueTypeString.string);
+    expect(data.getUnion(1)).toEqual(ValueTypeString.number);
+    expect(data.getUnion(2)).toEqual(ValueTypeString.boolean);
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, 'object');
+    // Linted Node Data
+    const lintedData = astNode.data;
+    expect(lintedData.unionLength).toEqual(3);
+    expect(lintedData.getUnion(0)).toEqual(ValueTypeString.string);
+    expect(lintedData.getUnion(1)).toEqual(ValueTypeString.number);
+    expect(lintedData.getUnion(2)).toEqual(ValueTypeString.boolean);
+});
+test('Supports the union types with nested union: type Type2 = string | "keyword" | (number|keyword)()', async () => {
+    const varName = `Type2`;
+    const src = `type ${varName} = number | "keyword" | (number|"keyword")[]`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // Node Data
+    const data = astNode.data;
+    expect(data.unionLength).toEqual(3);
+    expect(data.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(data.getUnion(1)).toEqual("keyword");
+    expect(data.getUnion(2)).toBeInstanceOf((Array));
+    const arrayElement = data.getUnion(2)[0];
+    expect(arrayElement.unionLength).toEqual(2);
+    expect(arrayElement.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(arrayElement.getUnion(1)).toEqual("keyword");
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, 'object');
+    // Linted Node Data
+    const lintedData = lintedNode.data;
+    expect(lintedData.unionLength).toEqual(3);
+    expect(lintedData.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(lintedData.getUnion(1)).toEqual("keyword");
+    expect(lintedData.getUnion(2)).toBeInstanceOf((Array));
+    const lintedElement = lintedData.getUnion(2)[0];
+    expect(lintedElement.unionLength).toEqual(2);
+    expect(lintedElement.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(lintedElement.getUnion(1)).toEqual("keyword");
+});
+test('Support the custom data as part of union such as false, number, float', async () => {
+    const varName = `LiteralType`;
+    const src = `type ${varName} = number | 30 | 1995.05 | boolean | false | true | string | "string literal text"`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // Node Data
+    const data = astNode.data;
+    expect(data.unionLength).toEqual(8);
+    expect(data.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(data.getUnion(1)).toEqual(30);
+    expect(data.getUnion(2)).toEqual(1995.05);
+    expect(data.getUnion(3)).toEqual(ValueTypeString.boolean);
+    expect(data.getUnion(4)).toEqual(false);
+    expect(data.getUnion(5)).toEqual(true);
+    expect(data.getUnion(6)).toEqual(ValueTypeString.string);
+    expect(data.getUnion(7)).toEqual("string literal text");
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, 'object');
+    // Linted Node Data
+    const lintedData = lintedNode.data;
+    expect(lintedData.unionLength).toEqual(8);
+    expect(lintedData.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(lintedData.getUnion(1)).toEqual(30);
+    expect(lintedData.getUnion(2)).toEqual(1995.05);
+    expect(lintedData.getUnion(3)).toEqual(ValueTypeString.boolean);
+    expect(lintedData.getUnion(4)).toEqual(false);
+    expect(lintedData.getUnion(5)).toEqual(true);
+    expect(lintedData.getUnion(6)).toEqual(ValueTypeString.string);
+    expect(lintedData.getUnion(7)).toEqual("string literal text");
+});
+test('Support the literals in the union types', async () => {
+    const varName = `TypeUnionWithTypeLiteral`;
+    const src = `type ${varName} = number | 30 | 1995.05 | {name: string}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // Node Data
+    const data = astNode.data;
+    expect(data.unionLength).toEqual(4);
+    expect(data.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(data.getUnion(1)).toEqual(30);
+    expect(data.getUnion(2)).toEqual(1995.05);
+    expect(data.getUnion(3)).instanceOf(TypeDeclaration);
+    const records = data.getUnion(3);
+    expect(records.length).toEqual(1);
+    expect(records.get("name")).toEqual(ValueTypeString.string);
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, 'object');
+    // Linted Node Data
+    const lintedData = lintedNode.data;
+    expect(lintedData.unionLength).toEqual(4);
+    expect(lintedData.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(lintedData.getUnion(1)).toEqual(30);
+    expect(lintedData.getUnion(2)).toEqual(1995.05);
+    expect(lintedData.getUnion(3)).instanceOf(TypeDeclaration);
+    const lintedRecords = lintedData.getUnion(3);
+    expect(lintedRecords.length).toEqual(1);
+    expect(lintedRecords.get("name")).toEqual(ValueTypeString.string);
+});
+test('Support the literals with union types', async () => {
+    const varName = `TypeLiteralWithTypeUnion`;
+    const src = `type ${varName} = {name: string, sex: "male" | "female"}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, TypeDeclaration);
+    // Node Data
+    const data = astNode.data;
+    expect(data.length).toEqual(2);
+    expect(data.get('name')).toEqual(ValueTypeString.string);
+    expect(data.get('sex')).toBeInstanceOf(UnionTypeDeclaration);
+    const records = data.get('sex');
+    expect(records.unionLength).toEqual(2);
+    expect(records.getUnion(0)).toEqual("male");
+    expect(records.getUnion(1)).toEqual("female");
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, TypeDeclaration, 'object');
+    // Linted Node Data
+    const lintedData = lintedNode.data;
+    expect(lintedData.length).toEqual(2);
+    expect(lintedData.get('name')).toEqual(ValueTypeString.string);
+    expect(lintedData.get('sex')).toBeInstanceOf(UnionTypeDeclaration);
+    const lintedRecords = lintedData.get('sex');
+    expect(lintedRecords.unionLength).toEqual(2);
+    expect(lintedRecords.getUnion(0)).toEqual("male");
+    expect(lintedRecords.getUnion(1)).toEqual("female");
+});
+// Assert Support the Type as non literal nor union, expression
+// type ExpressionType = string
+test('Support the expression as a type alias', async () => {
+    const varName = `ExpressionType`;
+    const src = `type ${varName} = string`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, ValueTypeString.string);
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, ValueTypeString.string, 'string');
+});
+test('Support the generic types', async () => {
+    const varName = `Generic`;
+    const genericName = 'T';
+    const src = `type ${varName}<${genericName}> = ${genericName}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, AraLink);
+    // The Data
+    expect(ReflectAraLink.isIdentifierLink(astNode.data)).toBe(true);
+    expect(astNode.data.resource).toEqual(genericName);
+    // The generic data
+    expect(astNode.memoryDataLength()).toEqual(1);
+    expectValidTypeNode(astNode.getMemoryData(0), genericName, undefined, ValueTypeString.object);
+    // // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, undefined, ValueTypeString.object);
+});
+// type GenericUnion<T extends number> = T | string
+test('Support the generic union types', async () => {
+    const varName = `GenericUnion`;
+    const genericName = 'T';
+    const src = `type ${varName}<${genericName}> = ${genericName} | string`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // The Data
+    const unionType = astNode.data;
+    expect(unionType.unionLength).toBe(2);
+    expect(unionType.getUnion(0)).toBeInstanceOf(AraLink);
+    expect(unionType.getUnion(0).resource).toEqual(genericName);
+    expect(unionType.getUnion(1)).toEqual(ValueTypeString.string);
+    // The generic data
+    expect(astNode.memoryDataLength()).toEqual(1);
+    expectValidTypeNode(astNode.getMemoryData(0), genericName, undefined, ValueTypeString.object);
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, ValueTypeString.object);
+    const lintedUnionType = lintedNode.data;
+    expect(lintedUnionType.unionLength).toBe(2);
+    expect(lintedUnionType.getUnion(0)).toStrictEqual({});
+    expect(lintedUnionType.getUnion(1)).toEqual(ValueTypeString.string);
+});
+// Assert: Support the generic union in the nested union
+// type GenericToNestedUnion<RecordValue extends Array<number>> = number | Record<string, RecordValue>;
+test('Support the generic types with the nested generic types and union types', async () => {
+    const varName = `GenericToNestedUnion`;
+    const genericName = `RecordValue`;
+    const recordName = `Record`;
+    const arrayName = `Array`;
+    const src = `type ${varName}<${genericName} extends Array<number>> = number | Record<string, ${genericName}>`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    // The Data
+    const unionType = astNode.data;
+    expect(unionType.unionLength).toBe(2);
+    expect(unionType.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(unionType.getUnion(1)).toBeInstanceOf(AraLink);
+    expect(unionType.getUnion(1).resource).toEqual(recordName);
+    // The generic data
+    expect(astNode.memoryDataLength()).toEqual(1);
+    expectValidTypeNode(astNode.getMemoryData(0), genericName, AraLink, ValueTypeString.object);
+    expect(astNode.getMemoryData(0).data.resource).toEqual(arrayName);
+    // Linting
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue());
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, varName);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, ValueTypeString.object);
+    const lintedUnionType = lintedNode.data;
+    expect(lintedUnionType.unionLength).toBe(2);
+    expect(lintedUnionType.getUnion(0)).toEqual(ValueTypeString.number);
+    expect(lintedUnionType.getUnion(1)).toStrictEqual({ key: 'string', value: ['number'] }); // Record with Number[] as a value
+});
+// Assert: Conjunction with promitive type is not supported
+// type IntersectionWithPrimitive = string[] & number & {name: string} // Should fail
+test('Support the generic types with the nested generic types and union types', async () => {
+    const varName = `IntersectionWithPrimitive`;
+    const src = `type ${varName} = string[] & number & {name: string}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expect(types.isFailure).toBe(true);
+    expect(types.errorTitle?.indexOf(TypeValueTraits.ERR_INVALID_INTERSECTION)).toBeGreaterThan(-1);
+});
+// Assert: Support the Conjunction types
+// type Intersection = {numValue: number} & {name: string}
+test('Support the intersect types', async () => {
+    const varName = `Intersection`;
+    const src = `type ${varName} = {numValue: number} & {name: string}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, IntersectedUnionType);
+    const intersected = astNode.data;
+    expect(intersected.length).toEqual(2);
+    expect(intersected.get("name")).toEqual(ValueTypeString.string);
+    expect(intersected.get("numValue")).toEqual(ValueTypeString.number);
+});
+// Assert: Support union and intersection together
+test('Support the intersect types with union type', async () => {
+    const varName = `UnionIntersection`;
+    const src = `type ${varName} = {name: string} & {girly: boolean} | {masculine: number}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+    const union = astNode.data;
+    expect(union.unionLength).toEqual(2);
+    expect(union.getUnion(0)).toBeInstanceOf(IntersectedUnionType);
+    expect(union.getUnion(1)).toBeInstanceOf(TypeDeclaration);
+    const intersected = union.getUnion(0);
+    expect(intersected.length).toEqual(2);
+    expect(intersected.get("name")).toEqual(ValueTypeString.string);
+    expect(intersected.get("girly")).toEqual(ValueTypeString.boolean);
+    const typeDeclaration = union.getUnion(1);
+    expect(typeDeclaration.length).toEqual(1);
+    expect(typeDeclaration.get("masculine")).toEqual(ValueTypeString.number);
+});
+// Assert: parenthesized union
+// type ParenthesizedUnionIntersection = {name: string} & ({girly: boolean} | {masculine: number})
+test('Support the intersect types with union type', async () => {
+    const varName = `ParenthesizedUnionIntersection`;
+    const src = `type ${varName} = {name: string} & ({girly: boolean} | {masculine: number})`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, varName);
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, IntersectedUnionType);
+    // Intersection
+    const intersected = astNode.data;
+    expect(intersected.length).toEqual(1);
+    expect(intersected.get("name")).toEqual(ValueTypeString.string);
+    // Intersection -> Union
+    expect(intersected.unionLength).toEqual(2);
+    expect(intersected.getUnion(0)).toBeInstanceOf(TypeDeclaration);
+    expect(intersected.getUnion(1)).toBeInstanceOf(TypeDeclaration);
+    expect(intersected.getUnion(0).get("girly")).toEqual(ValueTypeString.boolean);
+    expect(intersected.getUnion(1).get("masculine")).toEqual(ValueTypeString.number);
+});
+// Assert the type that has another type in the reference defined later than this type
+// type ComplexType = Profile & {profession: string}
+// type Profile = {name: string, age: number}
+test('Support the type that has another type in the reference defined later than this type', async () => {
+    const varName = `ComplexType`;
+    const simpleVarName = 'Profile';
+    const src = `type ${varName} = ${simpleVarName} & {profession: string}; ` +
+        `type ${simpleVarName} = {name: string, age: number}`;
+    const code = new Code(src);
+    const types = await code.getTypeIdentifiers();
+    // Result
+    expectAstNodeResult(types, [varName, simpleVarName]);
+    // First, make sure that $simpleVarName exist
+    const simpleAstNode = types.getValue()[simpleVarName];
+    expectValidTypeNode(simpleAstNode, simpleVarName, TypeDeclaration);
+    const simpleData = simpleAstNode.data;
+    expect(simpleData.length).toEqual(2);
+    expect(simpleData.get("name")).toEqual(ValueTypeString.string);
+    expect(simpleData.get("age")).toEqual(ValueTypeString.number);
+    // Second, the complex type must have a reference to the simple type
+    const astNode = types.getValue()[varName];
+    expectValidTypeNode(astNode, varName, IntersectedUnionType);
+    // Intersection
+    const intersected = astNode.data;
+    expect(intersected.length).toEqual(1);
+    expect(intersected.get("profession")).toEqual(ValueTypeString.string);
+    expect(intersected.araLinks).toHaveLength(1);
+    expect(ReflectAraLink.isIdentifierLink(intersected.araLinks[0])).toBe(true);
+    expect((intersected.araLinks[0]).resource).toEqual(simpleVarName);
+    // Lint
+    const projectMemory = new ProjectMemory();
+    const moduleMemory = new ModuleMemory(ModuleType.Page, "type-declaration.test.ts", {});
+    moduleMemory.addIdentifiers(types.getValue());
+    const linted = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory);
+    // Linting Result
+    expectAstNodeResult(linted, [varName, simpleVarName]);
+    const lintedNode = linted.getValue()[varName];
+    expectValidTypeNode(lintedNode, varName, IntersectedUnionType, ValueTypeString.object);
+    const lintedData = lintedNode.data;
+    expect(lintedData.length).toBe(3);
+    expect(lintedData.get("profession")).toEqual(ValueTypeString.string);
+    expect(lintedData.get("name")).toEqual(ValueTypeString.string);
+    expect(lintedData.get("age")).toEqual(ValueTypeString.number);
+});

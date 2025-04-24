@@ -1,0 +1,14 @@
+import type { Result } from "@ara-web/ts-enhancement";
+import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
+import { type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
+import { AstNodeContext } from "../memory/AstNodeContext.js";
+import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { ModuleMemory } from "../memory/ModuleMemory.js";
+export type AstNodeProperties = Pick<AstNode, "constant" | "public">;
+export declare const expectAstNodeResult: (result: Result<AstIdentifiers>, identifier: string | string[]) => void;
+export declare const expectValidTypeNode: <DATA_TYPE>(astNode: AstNode, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType) => void;
+export declare const expectValidVariableNode: (astNode: AstNode, identfier: string, properties: AstNodeProperties, dataType?: IdentifiedNodeDataType) => void;
+export declare const getEmptyContext: (identifers?: AstIdentifiers) => AstNodeContext;
+export declare const modulePath = "./funcs.js";
+export declare const getProjectMemory: () => Promise<ProjectMemory>;
+export declare const getEmptyModule: () => ModuleMemory<unknown>;

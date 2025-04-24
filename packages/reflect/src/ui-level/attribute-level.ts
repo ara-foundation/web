@@ -4,6 +4,7 @@ import { type AstroNode } from "@ara-web/component-engine";
 import type { UiContent } from "./ui-content.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import type { TsNode } from "../code-level/ts-node.js";
 
 /**
  * Look up and retreive the attribute by its name
@@ -27,7 +28,7 @@ export const attributeByName = (node: AstroNode, name?: string): AttributeNode|u
  * Expected to be called by identifyComponent()
  * @param {AttributeNode} attr expression in the attribute
 */
-export const identifyAttribute = async <T>(uiContent: UiContent, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<string>>> => {
+export const identifyAttribute = async <T>(uiContent: UiContent, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<TsNode>>> => {
     const ret: {error?: string, data?: T} = {
         error: undefined,
         data: undefined,
@@ -49,5 +50,6 @@ export const identifyAttribute = async <T>(uiContent: UiContent, attr: Attribute
         )
     }
 
-    return Result.ok(ReflectAraLink.linkToExpression(attr.value));
+    return Result.errorCode501(["UI Level", "Attribute Level"], "identifyAttribute")
+    // return Result.ok(ReflectAraLink.linkToExpression(attr.value));
 }

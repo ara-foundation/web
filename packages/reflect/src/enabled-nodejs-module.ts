@@ -1,5 +1,5 @@
 import { Debug, Result } from "@ara-web/ts-enhancement";
-import { type UiContent } from "./fileLevel.js";
+import { type UiContent } from "./ui-level/ui-content.js";
 import { 
     AstNode, 
     AstNodeType, 
@@ -53,6 +53,7 @@ export class EnabledNodejsModules {
         export const ${this.prefix}${this.identifiers[1]} = {key: '', value: {}};
     `;
 
+    private static _identifiers: AstIdentifiers|undefined = undefined;
 
     public static isBuiltInIdentifier: AstNodeValidator = (child: AstNode): boolean => {
         if (child.identifier === undefined) {
@@ -92,6 +93,9 @@ export class EnabledNodejsModules {
     }
 
     public static getBuiltInIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
+        if (this._identifiers !== undefined) {
+            return Result.ok(this._identifiers);
+        }
         let identifiers: AstIdentifiers = {};
         const code = new Code(this.builtInSrc);
     
@@ -117,6 +121,7 @@ export class EnabledNodejsModules {
             identifiers[this.identifiers[1]] = recordAstNode.getValue();
         }
     
+        this._identifiers = identifiers;
         return Result.ok(identifiers);
     }
     
@@ -174,28 +179,12 @@ export class EnabledNodejsModules {
     //
     //------------------------------------------------------------------
 
-    public static getNodeJsModules = async (): Promise<UiContent[]> => {
-        // const globs = import.meta.glob([
-        //     // @fortawesome/free-solig-svg-icons
-        //     '../../../node_modules/@fortawesome/free-solid-svg-icons/index.mjs',
-        //     // @fortawesome/fontawesome-svg-core
-        //     '../../../node_modules/@fortawesome/fontawesome-svg-core/index.mjs',
-        //     ],
-        //     {eager: true}
-        // );
-        // const fileContents = await globsToFileContents(globs);
-
-        // return fileContents;
-        return [];
-    }
-
-    public static getNodejsModuleByPath = async (path: string): Promise<UiContent|undefined> => {
-        const nodeJsModules = await this.getNodeJsModules();
-        Debug.log(`There are ${nodeJsModules.length} modules`);
-        for (let nodeJsModule of nodeJsModules) {
-            const exist = nodeJsModule.filePath.indexOf(path) > -1;
+    public static getNodejsModuleByPath = async (path: string): Promise<AstNode|undefined> => {
+        const nodeJsModules = await this.getBuiltInIdentifiers();
+        for (let nodeJsModule in nodeJsModules.getValue()) {
+            const exist = nodeJsModule.indexOf(path) > -1;
             if (exist) {
-                return nodeJsModule;
+                return nodeJsModules.getValue()[nodeJsModule] as AstNode;
             }
         }
 

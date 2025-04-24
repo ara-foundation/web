@@ -13,7 +13,7 @@
  */
 import type { ExpressionNode, Node as AstroComponentNode } from "@astrojs/compiler/types";
 
-import { ColumnSlug, RowSlug, ComponentIdentity, Result, Debug } from "@ara-web/ts-enhancement";
+import { ColumnSlug, RowSlug, ComponentIdentity, Result } from "@ara-web/ts-enhancement";
 import type { LayoutSlugs, Expression, Page, IdentifiedComponent, Component } from "@ara-web/ts-enhancement";
 
 // The pages traits adds to the Page the following:
@@ -26,7 +26,7 @@ import { type UiContent } from "./ui-content.js";
 // Make sure that we move the component
 import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
 import { attributeByName, identifyAttribute } from "./attribute-level.js";
-import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { ModuleMemory } from "../memory/ModuleMemory.js";
 
 
@@ -156,7 +156,8 @@ const identifyRpcCallComponent = async (page: Page, uiContent: UiContent, compon
         )
     }
 
-    return Result.ok(data.getValue());
+    return Result.errorCode501(["UI Level", "Element Level"], "identifyRpcCallComponent")
+    // return Result.ok(data.getValue());
 }
 
 
@@ -168,7 +169,7 @@ const identifyRpcCallComponent = async (page: Page, uiContent: UiContent, compon
 export const identifyComponent = async <T>(page: Page, uiContent: UiContent, memory: ModuleMemory<T>, element: AstroNode): Promise<Result<IdentifiedComponent>> => {
     if (element.type === "element") {
         const component = ComponentEngine.astroElementNodeToComponent(element);
-        return Result.ok({...component, id: ComponentIdentity.Component})
+        return Result.ok({data: component, id: ComponentIdentity.Component})
     } else if (element.type === "expression") {
             const identificationResult = await identifyExpression(page, uiContent, memory, element as ExpressionNode)
             if (identificationResult.isFailure) {
@@ -219,13 +220,13 @@ export const identifyComponent = async <T>(page: Page, uiContent: UiContent, mem
                 data: identificationResult.getValue()
             })
         }
-    } else if (ComponentEngine.isLayoutModulePath(pathResult.importPath)) {
+    } else if (ComponentEngine.isLayoutModulePath(pathResult.importPath.resource as string)) {
         return Result.ok({
             id: ComponentIdentity.Layout,
-            ...ComponentEngine.astroLayoutNodeToComponent(element, pathResult)
+            data: ComponentEngine.astroLayoutNodeToComponent(element, pathResult.importPath.toString())
         })
     } else if (element.type === "component") {          
-        const componentData = ComponentEngine.astroNodeToComponent(element, pathResult); 
+        const componentData = ComponentEngine.astroNodeToComponent(element, pathResult.importPath.toString()); 
         if (componentData.isFailure) {
             return Result.fail(
                 `nodeToComponent(componentNode='${element.name}', pathResult='${pathResult}'): ${componentData.errorTitle}`,
@@ -317,10 +318,15 @@ const detectComponentLayoutSlug = async (page: Page, uiContent: UiContent, node:
             )
         }
         const slotData = slotAttr.getValue();
-        if (slotData === undefined || slotData.length === 0) {
+        if (slotData === undefined || (typeof slotData === "string" && slotData.length === 0)) {
             data.row = RowSlug.Content;
             data.column = ColumnSlug.Center;
             return Result.ok(data)
+        } else if (slotData instanceof AraLink) {
+            return Result.fail(
+                `Slot Data is not a string`,
+                `Ara Web supports string slot data for now only`
+            )
         }
     
         let slugs: string[] = slotData.split("-");
