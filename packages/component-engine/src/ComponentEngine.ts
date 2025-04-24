@@ -1,16 +1,13 @@
 import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
 import type { Props } from "astro";
 
-import TsxComponent from "./TsxEmptyComponent"; // react typescript
-import JsxComponent from "./JsxEmptyComponent"; // react javascript
-
 import { type Component, type ComponentCategory, StringTraits, Result } from "@ara-web/ts-enhancement";
 import { AraWebModuleSlugs, PurlProtocol, type AraLink } from "@ara-web/ts-enhancement/ara-link";
 
 // Which types of Components supported?
 export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
 // WARNING: Every time whenever a new extension added, add support here.
-export type AstroNodeType = ((_props: Props) => any) | typeof TsxComponent | typeof JsxComponent;
+export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) => React.JSX.Element) | (() => React.JSX.Element);
 
 const elementCategory: ComponentCategory = {
     name: "WWW",
@@ -74,7 +71,7 @@ export class ComponentEngine {
         return ComponentEngine.isLayoutModulePath(araLink.resource);
     }
     
-    private static isLayoutModulePath = (filePath: string): boolean => {
+    public static isLayoutModulePath = (filePath: string): boolean => {
         return (filePath.indexOf(AraWebLayoutPath) > -1);
     }
     /**
