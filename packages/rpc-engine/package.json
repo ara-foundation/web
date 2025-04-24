@@ -1,5 +1,9 @@
 {
   "name": "@ara-web/rpc-engine",
+  "description": "Ara Web's RPC Engine allowing to call some local or remote functions",
+  "repository": {
+
+  },
   "version": "0.0.1",
   "type": "module",
   "scripts": {
@@ -11,8 +15,10 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    }
+      "default": "./src/index.js"
+    },
+    "./AstroComponentCall": "./src/components/call.astro",
+    "./AstroComponentRpcCard": "./src/components/rcpCard.astro"
   },
   "dependencies": {
     "@ara-web/ts-enhancement": "workspace:*"

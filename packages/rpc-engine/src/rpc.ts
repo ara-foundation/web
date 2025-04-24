@@ -2,20 +2,20 @@
  * RPCs are stored in the scripts to avoid
  * collision with the Astro Framework's Actions.
  */
+import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
 import {
     RpcType,
     type RpcCallType,
     type RPC
-} from "./types"
+} from "./types.js"
 import { 
     RPCData as redirectData,
     newRpcCall as redirectCall,
- } from "./extensions/redirect"
+ } from "./extensions/redirect.js"
 import { 
     RPCData as alertData,
     newRpcCall as alertCall,
-} from "./extensions/alert"
-import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
+} from "./extensions/alert.js"
 
 const CallComponentPath = "components/rpc/call.astro";
 

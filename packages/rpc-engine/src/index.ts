@@ -5,7 +5,3 @@ export * from "./rpc.js"
 export * from "./types.js"
 export * as ExtensionsRedirect from "./extensions/redirect.js"
 export * as ExtensionsAlert from "./extensions/alert.js"
-import ComponentCall from "./components/call.astro"
-import ComponentRpcCard from "./components/rpcCard.astro"
-export const AstroComponentCall = ComponentCall;
-export const AstroComponentRpcCard = ComponentRpcCard;

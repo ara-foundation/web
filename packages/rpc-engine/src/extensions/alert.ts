@@ -5,7 +5,7 @@ import {
     type RpcCallType as GenericRpcCallType,
     RpcType,
     type RPC
-} from "../types";
+} from "../types.js";
 
 // The url to redirect to
 export type ExtensionType = Omit<GeneralExtensionType, 'inputs'> & { inputs: [string] };
