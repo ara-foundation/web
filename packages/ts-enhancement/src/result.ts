@@ -79,3 +79,42 @@ export class Result<T> {
       return Result.ok<any>();
     }
 }
+
+export class OkResult {
+  public isSuccess: boolean;
+  public isFailure: boolean
+  public errorTitle?: string; 
+  public errorDescription?: string;
+
+  private constructor (isSuccess: boolean, errorTitle?: string, errorDescription?: string) {
+    if ((isSuccess && errorTitle) || (isSuccess && errorDescription)) {
+      throw new Error(`InvalidOperation: A result cannot be 
+        successful and contain an error`);
+    }
+    if ((!isSuccess && !errorTitle) || (!isSuccess && !errorDescription)) {
+      throw new Error(`InvalidOperation: A failing result 
+        needs to contain an error message`);
+    }
+
+    this.isSuccess = isSuccess;
+    this.isFailure = !isSuccess;
+    this.errorTitle = errorTitle;
+    this.errorDescription = errorDescription;
+    
+    Object.freeze(this);
+  }
+
+  public static ok () : OkResult {
+    return new OkResult(true, undefined, undefined);
+  }
+
+  public static fail (errorTitle: string|{errorTitle: string, errorDescription: string}, errorDescription?: string): OkResult {
+    if (typeof errorTitle === "string") {
+      if (errorDescription === undefined) {
+        throw `Error Description is undefined, pass it please as the second argument of Result.fail`
+      }
+      return new OkResult(false, errorTitle, errorDescription);
+    }
+    return new OkResult(false, errorTitle.errorTitle, errorTitle.errorDescription);
+  }
+}
