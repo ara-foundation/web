@@ -1,6 +1,6 @@
 import { type ObjectLikeKeyValue, type ObjectValueLike, type WithGetTextMethod } from "../keyValue.js"
 import { isEqualArray } from "../array.js"
-export const PurlProtocol = "purl";
+export const NpmProtocol = "npm";
 
 /**
  * Ara Web protocol and Ara Web's Modules
@@ -142,3 +142,4 @@ export class AraLink<T> {
         return true;
     }
 }
+
