@@ -1,14 +1,14 @@
 import  {type Result } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
+import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
-import { ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
+import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ProjectMemory } from "../memory/ProjectMemory.js";
-import { ModuleCategory } from "../module.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
-import { ModuleLink } from "../ara-link/ReflectAraLink.js";
-import { type PossibleModuleLinksBuilder } from "../extension-interface.js";
+import { AstNodeContext } from "../src/memory/AstNodeContext.js";
+import { ProjectMemory } from "../src/memory/ProjectMemory.js";
+import { ModuleCategory } from "../src/module.js";
+import { ModuleMemory } from "../src/memory/ModuleMemory.js";
+import { ModuleLink } from "../src/ara-link/ReflectAraLink.js";
+import { type PossibleModuleLinksBuilder } from "../src/extension-interface.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 

@@ -1,14 +1,14 @@
 import { expect, test } from "vitest";
-import { Code } from "../code-level/Code.js";
+import { Code } from "../src/code-level/Code.js";
 import { type Page, Debug } from "@ara-web/ts-enhancement";
-import { AstNode } from "../code-level/ast-node.js";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
-import { ProjectMemory } from "../memory/ProjectMemory.js";
+import { AstNode } from "../src/code-level/ast-node.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
+import { ModuleMemory } from "../src/memory/ModuleMemory.js";
+import { ProjectMemory } from "../src/memory/ProjectMemory.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { EnabledNodejsModules } from "../reflect-nodejs-ext/enabled-nodejs-module.js";
-import { TypeValueTraits } from "../code-level/type-level/type-value-traits.js";
+import { ReflectAraLink } from "../src/ara-link/ReflectAraLink.js";
+import { EnabledNodejsModules } from "../src/reflect-nodejs-ext/enabled-nodejs-module.js";
+import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidTypeNode, moduleLinkBuilder } from "./shared.js";
 
 const modulePath = "type-declaration.test.ts";

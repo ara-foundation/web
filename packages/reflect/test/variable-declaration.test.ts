@@ -1,16 +1,16 @@
 import { expect, test } from "vitest";
-import { Code } from "../code-level/Code.js";
-import { AstNode, AstNodeType } from "../code-level/ast-node.js";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
+import { Code } from "../src/code-level/Code.js";
+import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { ReflectAraLink } from "../src/ara-link/ReflectAraLink.js";
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
-import type { TsNode } from "../code-level/ts-node.js";
-import { TypeRef } from "../code-level/type-level/type-ref.js";
-import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ValueLevel } from "../code-level/value-level.js";
-import { EnabledNodejsModules } from "../reflect-nodejs-ext/enabled-nodejs-module.js";
+import type { TsNode } from "../src/code-level/ts-node.js";
+import { TypeRef } from "../src/code-level/type-level/type-ref.js";
+import { AstNodeContext } from "../src/memory/AstNodeContext.js";
+import { ValueLevel } from "../src/code-level/value-level.js";
+import { EnabledNodejsModules } from "../src/reflect-nodejs-ext/enabled-nodejs-module.js";
 
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
