@@ -11,9 +11,7 @@
     "@ara-web/component-engine": "workspace:*",
     "@ara-web/rpc-engine": "workspace:*",
     "@ara-web/ts-enhancement": "workspace:*",
-    "@astrojs/compiler": "^2.11.0",
-    "astro": "^5.6.1",
-    "comment-parser": "^1.4.1",
+    "packageurl-js": "^2.0.1",
     "ts-morph": "^25.0.1"
   },
   "scripts": {
@@ -28,9 +26,33 @@
       "types": "./src/index.ts",
       "default": "./dist/index.js"
     },
-    "./file-level": {
-      "types": "./src/fileLevel.ts",
-      "default": "./src/fileLevel.js"
+    "./nodejs-ext": {
+      "types": "./src/reflect-nodejs-ext/index.ts",
+      "default": "./dist/reflect-nodejs-ext/index.js"
+    },
+    "./memory": {
+      "types": "./src/memory/index.ts",
+      "default": "./dist/memory/index.js"
+    },
+    "./code-level": {
+      "types": "./src/code-level/Code.ts",
+      "default": "./dist/code-level/Code.js"
+    },
+    "./code-level/ts-node": {
+      "types": "./src/code-level/ts-node.ts",
+      "default": "./dist/code-level/ts-node.js"
+    },
+    "./code-level/ast-node": {
+      "types": "./src/code-level/ast-node.ts",
+      "default": "./dist/code-level/ast-node.js"
+    },
+    "./code-level/ast-node@types": {
+      "types": "./src/code-level/ast-node-data.ts",
+      "default": "./dist/code-level/ast-node-data.js"
+    },
+    "./code-level/variable-level/variable-statement": {
+      "types": "./src/code-level/variable-level/variable-statement.ts",
+      "default": "./dist/code-level/variable-level/variable-statement.js"
     }
   },
   "devDependencies": {

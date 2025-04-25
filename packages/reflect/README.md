@@ -1,9 +1,7 @@
 # Reflect
+Reflect package turns the website into the ontological JSON and vice versa in the real time to enable built-in Admin dashboards for websites.
 
 > In computer science, reflective programming or reflection is the ability of a process to examine, introspect, and modify its own structure and behavior. [Wikipedia Article](https://en.wikipedia.org/wiki/Reflective_programming)
-
-Reflect package turns the web pages into the files into the
-ontological data and vice versa.
 
 Testing from the reflect root:
 > pnpm test -r ./
@@ -15,23 +13,23 @@ We need to let know reflect which package modules are available and which are no
 In the project that you want to reflect:
 
 ```typescript
-import { Memory, ModuleType } from "@ara-web/reflect";
+import { Reflect, ModuleType } from "@ara-web/reflect";
 
 const pageGlobs = import.meta.glob("../pages/**/*.{js|astro|jsx}");
 const componentGlobs = import.meta.glob("../components/**/*.{js|astro|jsx}")
 const layutGlobs = import.meta.glob("../layouts/**/*.{js|astro|jsx}")
 const nodeJsGlobs = import.meta.glob(["node_modules/package/index.cjs"])
 
-Memory.cacheGlobs({
+Reflect.putGlobs({
     ModuleType.Nodejs: nodeJsGlobs,
     // the remaining...
 })
 
 ```
 
-The `Memory.cacheGlobs()` static method keeps assigns the globs by their paths.
+The `Reflect.putGlobs()` static method registers all the files required for the Reflect package.
 
-You could update it multiple times, which is recommended during the development. Since, Memory cache will remove the glob if it removed
+You could update it multiple times, which is recommended during the development stage. Since, Memory cache will remove the glob if it removed
 in the directory. 
 
 To make it consisted, Memory has an adapter that you can inject it too
