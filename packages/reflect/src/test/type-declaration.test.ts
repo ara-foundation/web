@@ -4,7 +4,7 @@ import { type Page } from "@ara-web/ts-enhancement";
 import { AstNode } from "../code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../code-level/ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
-import { ModuleType } from "../module.js";
+import { ModuleCategory } from "../module.js";
 import { ProjectMemory } from "../memory/ProjectMemory.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
@@ -33,7 +33,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
 
     // Linting
     const projectMemory = new ProjectMemory()
-    const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+    const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
     moduleMemory.addIdentifiers(types.getValue())
     const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -75,7 +75,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -121,7 +121,7 @@ test('Support the custom data as part of union such as false, number, float', as
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -167,7 +167,7 @@ test('Support the literals in the union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -211,7 +211,7 @@ test('Support the literals with union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -246,7 +246,7 @@ test('Support the expression as a type alias', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -278,7 +278,7 @@ test('Support the generic types', async () => {
 
   // // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -314,7 +314,7 @@ test('Support the generic union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -359,7 +359,7 @@ test('Support the generic types with the nested generic types and union types', 
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
@@ -496,7 +496,7 @@ test('Support the type that has another type in the reference defined later than
 
   // Lint
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(ModuleType.Page, "type-declaration.test.ts", {});
+  const moduleMemory = new ModuleMemory<Page>(ModuleCategory.Page, "type-declaration.test.ts", {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 

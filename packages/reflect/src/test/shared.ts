@@ -1,12 +1,14 @@
-import type { Result } from "@ara-web/ts-enhancement";
+import  {type Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 import { ProjectMemory } from "../memory/ProjectMemory.js";
-import { ModuleType } from "../module.js";
+import { ModuleCategory } from "../module.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
+import { ModuleLink } from "../ara-link/ReflectAraLink.js";
+import { PossibleModuleLinksBuilder } from "../extension-interface.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 
@@ -74,19 +76,23 @@ export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => 
 }
 
 export const modulePath = `./funcs.js`;
+const moduleLinkBuilder: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
+  const moduleCategory = "script";
+  const moduleLink = new ModuleLink("namespace", "name", moduleCategory, modulePath);
+  return [moduleLink];
+}
 
 export const getProjectMemory = async (): Promise<ProjectMemory> => {
-  const moduleType = ModuleType.Script;
   let glob = await import(modulePath)
-  const moduleMemory = new ModuleMemory<unknown>(moduleType, modulePath, glob);
-
+  const moduleMemory = new ModuleMemory<unknown>(moduleLinkBuilder(modulePath)[0], glob);
   const projectMemory = new ProjectMemory();
-  projectMemory.putModuleMemory(moduleType, modulePath, moduleMemory);
-  
+  projectMemory.putModuleMemory(moduleMemory);
+  projectMemory.putModuleLinksBuilder(moduleLinkBuilder);
   return projectMemory;
 }
 
 
 export const getEmptyModule = (): ModuleMemory<unknown> => {
-  return new ModuleMemory<unknown>(ModuleType.Untracked, '', undefined);
+  const moduleLink = new ModuleLink("namespace", "name", ModuleCategory.Untracked, "");
+  return new ModuleMemory<unknown>(moduleLink, undefined);
 }
