@@ -1,13 +1,8 @@
-import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
-import type { Props } from "astro";
+import type { ComponentNode as AstroComponentNode, ElementNode } from "@astrojs/compiler/types";
 
 import { type Component, type ComponentCategory, StringTraits, Result } from "@ara-web/ts-enhancement";
 import { AraWebModuleSlugs, PurlProtocol, type AraLink } from "@ara-web/ts-enhancement/ara-link";
 
-// Which types of Components supported?
-export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
-// WARNING: Every time whenever a new extension added, add support here.
-export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) => React.JSX.Element) | (() => React.JSX.Element);
 
 const elementCategory: ComponentCategory = {
     name: "WWW",
