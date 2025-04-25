@@ -97,7 +97,7 @@ export class AraLink<T> {
                 resourceUrl = (this.resource as any).toString();
             }
         }
-        let url = `${this._protocol}:${this.slugs.join('/')}:${resourceUrl}`
+        let url = `${this._protocol}:${this.slugs.join('/')}/${resourceUrl}`
         let properties: string = "";
         for (let key in this._properties) {
             if (properties.length > 0 && properties[properties.length - 1] !== "&") {

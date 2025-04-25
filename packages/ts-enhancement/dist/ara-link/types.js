@@ -1,6 +1,6 @@
 import {} from "../keyValue.js";
 import { isEqualArray } from "../array.js";
-export const PurlProtocol = "purl";
+export const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules
  */
@@ -88,7 +88,7 @@ export class AraLink {
                 resourceUrl = this.resource.toString();
             }
         }
-        let url = `${this._protocol}:${this.slugs.join('/')}:${resourceUrl}`;
+        let url = `${this._protocol}:${this.slugs.join('/')}/${resourceUrl}`;
         let properties = "";
         for (let key in this._properties) {
             if (properties.length > 0 && properties[properties.length - 1] !== "&") {

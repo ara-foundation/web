@@ -1,5 +1,5 @@
 import { type ObjectLikeKeyValue, type ObjectValueLike } from "../keyValue.js";
-export declare const PurlProtocol = "purl";
+export declare const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules
  */
