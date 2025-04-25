@@ -1,8 +1,8 @@
 import { Result } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, } from "./code-level/ast-node.js";
-import { ValueTypeString } from "./code-level/ast-node-data.js";
-import { Code } from "./code-level/Code.js";
-import { VariableStatement } from "./code-level/variable-level/variable-statement.js";
+import { AstNode, AstNodeType, } from "@ara-web/reflect/code-level/ast-node";
+import { ValueTypeString } from "@ara-web/reflect/code-level/ast-node@types";
+import { Code } from "@ara-web/reflect/code-level";
+import { VariableStatement } from "@ara-web/reflect/code-level/variable-level/variable-statement";
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler = (astNode, values) => {
     if (values.length !== 1) {

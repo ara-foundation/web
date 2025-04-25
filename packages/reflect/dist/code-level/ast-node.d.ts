@@ -2,6 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "./ts-node.js";
 import { Result } from "@ara-web/ts-enhancement";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
+import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
 export declare enum AstNodeType {
     Variable = "variable",
     Enum = "enum",
@@ -30,7 +31,7 @@ export declare class AstNode {
     public?: boolean;
     dataType?: IdentifiedNodeDataType;
     data?: ValueType;
-    importPath?: AraLink<ValueType>;
+    importPath?: ModuleLink;
     identifier?: string;
     private _genericHandler?;
     private _nodeMemory?;
@@ -49,7 +50,6 @@ export declare class AstNode {
     getAllMemoryData(skippedIdentifiers?: string[]): AstNode[];
     getMemoryData(index: number): AstNode | undefined;
     deleteMemoryData(): void;
-    getImportModulePath: () => string | undefined;
     static isDefinedInOtherModule: AstNodeValidator;
     static isDefinedInLocal: AstNodeValidator;
     static isDataNotEmpty: AstNodeValidator;

@@ -1,27 +1,22 @@
 import { Debug } from "@ara-web/ts-enhancement";
 import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
 export class ModuleMemory extends AstIdentifierMemory {
-    _moduleType;
-    _modulePath;
+    _moduleLink;
     _glob;
     _content;
-    constructor(moduleType, modulePath, glob) {
+    constructor(moduleLink, glob) {
         super();
-        this._moduleType = moduleType;
-        this._modulePath = modulePath;
+        this._moduleLink = moduleLink;
         this._glob = glob;
     }
     print = (filterKey, filterValue) => {
-        Debug.push(`Module (${this._modulePath}) '${this._moduleType}'`);
+        Debug.push(`Module (${this._moduleLink.toString()})`);
         Debug.log(`Printing the Identifiers`);
         super.print(filterKey, filterValue);
         Debug.pop();
     };
-    get moduleType() {
-        return this._moduleType;
-    }
-    get modulePath() {
-        return this._modulePath;
+    get moduleLink() {
+        return this._moduleLink;
     }
     get glob() {
         return this._glob;

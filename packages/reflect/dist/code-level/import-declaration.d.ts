@@ -7,11 +7,12 @@ import { ImportDeclaration as TsImportDeclaration } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement";
 import { type AstIdentifiers } from "./ast-node.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
+import type { ProjectMemory } from "../memory/ProjectMemory.js";
 export declare class ImportDeclaration extends TsNode {
-    private _moduleLink?;
+    private _moduleLink;
     protected _tsNode: TsImportDeclaration;
     private constructor();
-    static fromTsNode(tsNode: TsNode): Result<ImportDeclaration>;
+    static fromTsNode(tsNode: TsNode, projectMemory: ProjectMemory): Result<ImportDeclaration>;
     static isImportClause: TsNodeValidator;
     static isImportDeclaration: TsNodeValidator;
     private getNamedImports;

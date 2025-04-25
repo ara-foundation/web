@@ -6,7 +6,7 @@
 import { NamedImports } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement";
 import { AstNodeType, type AstIdentifiers } from "../ast-node.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { ModuleLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 export declare class NamedImport extends TsNode {
     protected _tsNode: NamedImports;
@@ -28,5 +28,5 @@ export declare class NamedImport extends TsNode {
      * @param importPath
      * @returns
      */
-    static getIdentifiers: (nodeType: AstNodeType, moduleLink: AraLink<string>, namedChildren: TsNode[]) => Result<AstIdentifiers>;
+    static getIdentifiers: (nodeType: AstNodeType, moduleLink: ModuleLink, namedChildren: TsNode[]) => Result<AstIdentifiers>;
 }

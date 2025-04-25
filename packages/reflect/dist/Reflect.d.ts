@@ -1,12 +1,15 @@
-import { Result, type Component, type Page } from "@ara-web/ts-enhancement";
-import { ModuleType } from "./module.js";
-export type ModuleGlobs = {
+import { Result } from "@ara-web/ts-enhancement";
+import type { ExtensionInterface } from "./extension-interface.js";
+export type ModuleData = {
     [key: string]: {
         glob: unknown;
     };
 };
-export type CategorizedModuleGlobs = {
-    [key in ModuleType]?: ModuleGlobs;
+export type CategorizedModules = {
+    [key: string]: ModuleData;
+};
+export type ReflectSetup = {
+    extensions?: ExtensionInterface[];
 };
 /**
  * Reflect is the main source to Reflect on the website itself.
@@ -14,43 +17,40 @@ export type CategorizedModuleGlobs = {
 export declare class Reflect {
     private _memory;
     private _autoImportFunc?;
-    constructor();
+    private _extensions;
+    /**
+     * Pass the Reflect Setup to support new types of the modules and their parsing
+     * @param reflectSetup
+     */
+    constructor(reflectSetup?: ReflectSetup);
+    private _fetchModules;
+    /**
+     * Returns the module's memory using the extension to define how to store the module in the form of
+     * JSON.
+     * @param moduleCategory
+     * @param modulePath
+     * @param glob
+     */
+    private _getNewModuleMemory;
     /**
      * Put the glob files into the reflect memory.
-     * If the moduleGlobs are not given, then it will dynamically load the
-     * globs when other public function are inserted.
-     * @param {CategorizedModuleGlobs?} moduleGlobs optional.
-     * @notice To enable auto import, simply call the this.putAutoGlobImport(funcReference)
+     * The JSON representation of the module is defined by the extensions.
+     * @param {CategorizedModules?} categorizedModules optional.
      */
-    putGlobs: (moduleGlobs?: CategorizedModuleGlobs) => Result<undefined>;
+    postModules: (categorizedModules: CategorizedModules) => Result<undefined>;
     /**
      * Put a function that loads the globs whenever any function is called.
      * @param importFunc
      */
-    putAutoGlobImporter: (importFunc?: (() => CategorizedModuleGlobs)) => void;
-    private _pre;
+    postAutoImporter: (importFunc?: (() => CategorizedModules)) => void;
     /**
-     * Returns the all the components.
-     * Components are not evaluated by internal structures.
+     * Pre-reflection operation to reload all the modules.
+     * Additionally, this operation adds all supported built-in identifiers provided by NodeJS.
      */
-    getComponents: () => Promise<Result<Component[]>>;
+    private beforeGet;
     /**
-     * Returns the all the layout components
+     * Get the content by the module category
+     * @param moduleCategory
      */
-    getLayouts: () => Promise<Result<Component[]>>;
-    /**
-     * Returns all the pages
-     * @returns {Result<Page[]>}
-     */
-    getPages: () => Promise<Result<Page[]>>;
-    /**
-     * Returns a page by it's path
-     */
-    getPageByUrl: (url: string | undefined) => Promise<Page | undefined>;
-    private getPageTraits;
-    private postBuiltInIdentifiers;
-    private identifyImports;
-    private lintTypes;
-    private lintImports;
-    private identifyTypes;
+    get: <T>(moduleCategory: string) => Promise<Result<T[]>>;
 }

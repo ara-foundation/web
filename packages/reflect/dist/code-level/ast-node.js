@@ -128,12 +128,6 @@ export class AstNode {
     deleteMemoryData() {
         this._nodeMemory = undefined;
     }
-    getImportModulePath = () => {
-        if (!AstNode.isDefinedInOtherModule(this)) {
-            return undefined;
-        }
-        return this.importPath.resource;
-    };
     //----------------------------------------------------------
     //
     // Pure Ast node work, therefore static methods.

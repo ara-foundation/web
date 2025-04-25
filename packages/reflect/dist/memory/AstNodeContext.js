@@ -1,7 +1,7 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode } from "../code-level/ast-node.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { Result } from "@ara-web/ts-enhancement";
 /**
  * Collection of the variables, functions that are available for the Ast Node.
  * Ast Nodes have three layers of the memories:
@@ -110,6 +110,6 @@ export class AstNodeContext {
         if (astNode.importPath === undefined) {
             return Result.fail(`No import path found for the identifier`, `The identifier is not imported`);
         }
-        return Result.ok(astNode.importPath.resource);
+        return Result.ok(astNode.importPath);
     };
 }

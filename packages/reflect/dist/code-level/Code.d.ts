@@ -47,7 +47,7 @@ export declare class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    getImportedIdentifiers: () => Result<AstIdentifiers>;
+    getImportedIdentifiers: (projectMemory: ProjectMemory) => Result<AstIdentifiers>;
     /**
      * Lint dependencies of the given module identified by type and path.
      *
