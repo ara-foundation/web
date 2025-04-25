@@ -1,0 +1,30 @@
+{
+  "name": "@ara-web/reflect-astro-ext",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && tsc",
+    "_chore": "pnpm i",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1"
+  },
+  "dependencies": {
+    "@ara-web/reflect": "workspace:*",
+    "@ara-web/ts-enhancement": "workspace:*",
+    "@astrojs/compiler": "^2.11.0",
+    "astro": "^5.7.5",
+    "comment-parser": "^1.4.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}
