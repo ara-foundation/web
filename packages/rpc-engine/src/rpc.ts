@@ -2,7 +2,7 @@
  * RPCs are stored in the scripts to avoid
  * collision with the Astro Framework's Actions.
  */
-import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
+import { AraLink, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
 import {
     RpcType,
     type RpcCallType,
@@ -38,9 +38,9 @@ export const rpcBySlug = (slug: string): RPC|undefined => {
 }
 
 export const isRpcCallComponentLink = (araLink: AraLink<string>): boolean => {
-    if (!araLink.isCorrectPath(PurlProtocol, AraWebModuleSlugs)) {
-        return false;
-    }
+    // if (!araLink.isCorrectPath(PurlProtocol, AraWebModuleSlugs)) {
+    //     return false;
+    // }
 
     return isRpcComponentModulePath(araLink.resource);
 }
