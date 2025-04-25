@@ -70,3 +70,36 @@ export class Result {
         return Result.ok();
     }
 }
+export class OkResult {
+    isSuccess;
+    isFailure;
+    errorTitle;
+    errorDescription;
+    constructor(isSuccess, errorTitle, errorDescription) {
+        if ((isSuccess && errorTitle) || (isSuccess && errorDescription)) {
+            throw new Error(`InvalidOperation: A result cannot be 
+        successful and contain an error`);
+        }
+        if ((!isSuccess && !errorTitle) || (!isSuccess && !errorDescription)) {
+            throw new Error(`InvalidOperation: A failing result 
+        needs to contain an error message`);
+        }
+        this.isSuccess = isSuccess;
+        this.isFailure = !isSuccess;
+        this.errorTitle = errorTitle;
+        this.errorDescription = errorDescription;
+        Object.freeze(this);
+    }
+    static ok() {
+        return new OkResult(true, undefined, undefined);
+    }
+    static fail(errorTitle, errorDescription) {
+        if (typeof errorTitle === "string") {
+            if (errorDescription === undefined) {
+                throw `Error Description is undefined, pass it please as the second argument of Result.fail`;
+            }
+            return new OkResult(false, errorTitle, errorDescription);
+        }
+        return new OkResult(false, errorTitle.errorTitle, errorTitle.errorDescription);
+    }
+}

@@ -16,10 +16,13 @@
     },
     "./ara-link": {
       "types": "./src/ara-link/types.ts",
-      "default": "./src/ara-link/types.js"
+      "default": "./dist/ara-link/types.js"
     }
   },
   "devDependencies": {
     "typescript": "^5.5.2"
+  },
+  "dependencies": {
+    "packageurl-js": "^2.0.1"
   }
 }

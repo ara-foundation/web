@@ -31,3 +31,15 @@ export declare class Result<T> {
     static errorCode404<U>(slugs: string[], functionPath: string, data: string): Result<U>;
     static combine(results: Result<any>[]): Result<any>;
 }
+export declare class OkResult {
+    isSuccess: boolean;
+    isFailure: boolean;
+    errorTitle?: string;
+    errorDescription?: string;
+    private constructor();
+    static ok(): OkResult;
+    static fail(errorTitle: string | {
+        errorTitle: string;
+        errorDescription: string;
+    }, errorDescription?: string): OkResult;
+}
