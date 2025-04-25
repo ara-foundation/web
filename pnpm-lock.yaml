@@ -375,9 +375,6 @@ importers:
       typescript:
         specifier: ~5.7.2
         version: 5.7.3
-      vite:
-        specifier: ^6.3.1
-        version: 6.3.3(@types/node@22.10.5)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
 
   packages/rpc-engine:
     dependencies:
@@ -6738,7 +6735,7 @@ snapshots:
   '@astrojs/telemetry@3.2.1':
     dependencies:
       ci-info: 4.2.0
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       dlv: 1.1.3
       dset: 3.1.4
       is-docker: 3.0.0
@@ -9255,7 +9252,7 @@ snapshots:
       common-ancestor-path: 1.0.1
       cookie: 1.0.2
       cssesc: 3.0.0
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       deterministic-object-hash: 2.0.2
       devalue: 5.1.1
       diff: 5.2.0
@@ -9936,6 +9933,10 @@ snapshots:
     optional: true
 
   death@1.1.0: {}
+
+  debug@4.4.0:
+    dependencies:
+      ms: 2.1.3
 
   debug@4.4.0(supports-color@8.1.1):
     dependencies:
@@ -11913,7 +11914,7 @@ snapshots:
   micromark@4.0.2:
     dependencies:
       '@types/debug': 4.1.12
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       decode-named-character-reference: 1.1.0
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.3

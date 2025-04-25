@@ -1,6 +1,20 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "declaration": true,
+      "emitDeclarationOnly": false,
+      "strict": true,
+      "moduleResolution": "nodenext",
+      "target": "ES2022",
+      "module": "NodeNext",
+      "resolveJsonModule": true,
+      "resolvePackageJsonImports": true,
+      "resolvePackageJsonExports": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "verbatimModuleSyntax": true,
+    "stripInternal": true,
+
+    "jsx": "preserve",
     "outDir": "dist",
     "rootDir": "src"
   },

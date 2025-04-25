@@ -8,7 +8,7 @@ import { ProjectMemory } from "../memory/ProjectMemory.js";
 import { ModuleCategory } from "../module.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import { ModuleLink } from "../ara-link/ReflectAraLink.js";
-import { PossibleModuleLinksBuilder } from "../extension-interface.js";
+import { type PossibleModuleLinksBuilder } from "../extension-interface.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 

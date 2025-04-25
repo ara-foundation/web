@@ -1,12 +1,10 @@
 {
-  "private": true,
   "name": "@ara-web/reflect",
   "version": "1.0.0",
   "type": "module",
   "description": "Reflect on it's own code structure and alter it",
-  "keywords": [],
-  "author": "",
   "license": "ISC",
+  "main": "dist",
   "dependencies": {
     "@ara-web/ts-enhancement": "workspace:*",
     "packageurl-js": "^2.0.1",

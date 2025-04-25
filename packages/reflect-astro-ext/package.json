@@ -1,19 +1,23 @@
 {
   "name": "@ara-web/reflect-astro-ext",
-  "private": false,
-  "version": "0.0.1",
   "type": "module",
+  "author": "Medet Ahmetson",
+  "license": "ISC",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",
-    "prepublishOnly": "pnpm test:lint && tsc",
-    "_chore": "pnpm i",
-    "preview": "vite preview"
+    "prepublishOnly": "pnpm test:lint && pnpm build",
+    "_chore": "pnpm i"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
   },
   "devDependencies": {
     "@types/react": "^19.0.10",
-    "typescript": "~5.7.2",
-    "vite": "^6.3.1"
+    "typescript": "~5.7.2"
   },
   "dependencies": {
     "@ara-web/reflect": "workspace:*",
@@ -22,11 +26,5 @@
     "astro": "^5.7.5",
     "comment-parser": "^1.4.1",
     "react": "^19.0.0"
-  },
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./dist/index.js"
-    }
   }
 }
