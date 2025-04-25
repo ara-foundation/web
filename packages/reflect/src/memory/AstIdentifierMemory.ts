@@ -54,7 +54,7 @@ export abstract class AstIdentifierMemory {
         return this._identifiers[identifier];
     }
 
-    public identifierByType = (identifier: string, astNode: AstNodeType): AstNode|undefined => {
+    public identifierByType = (identifier: string): AstNode|undefined => {
         let node = this.identifierByName(identifier);
         if (node === undefined) {
             return node;

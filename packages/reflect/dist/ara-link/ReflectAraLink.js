@@ -21,7 +21,7 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { TsNode } from "../code-level/ts-node.js";
 import { PackageURL } from "packageurl-js";

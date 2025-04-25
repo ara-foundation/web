@@ -2,9 +2,8 @@
  * Handles the AST Node's values
  */
 import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
-import { TypeDeclaration, ValueTypeString } from "./ast-node-data.js";
+import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
-import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
 import { AstNodeType } from "./ast-node.js";
 import { Literal } from "./value-level/literal.js";
 import { FunctionCall } from "./value-level/function-call.js";
@@ -116,29 +115,28 @@ export class ValueLevel {
      * @returns
      */
     static getValueTypeString = (tsNode) => {
-        const exp = tsNode.getNode();
-        if (exp.getText() === "undefined") {
+        if (tsNode.getText() === "undefined") {
             return Result.ok(ValueTypeString.undefined);
         }
-        if (exp instanceof ObjectLiteralExpression) {
+        if (ObjectLiteral.isA(tsNode)) {
             return Result.ok(ValueTypeString.object);
         }
-        else if (exp instanceof SpreadAssignment) {
+        else if (SpreadLiteral.isA(tsNode)) {
             return Result.ok(ValueTypeString.object);
         }
-        else if (exp instanceof PropertyAssignment) { // {obj.property: val}
+        else if (PropertyLiteral.isA(tsNode)) { // {obj.property: val}
             return Result.ok(ValueTypeString.property);
         }
         else if (Identifier.isA(tsNode)) {
             return Result.ok(ValueTypeString.default);
         }
-        else if (exp instanceof ArrayLiteralExpression) {
+        else if (ArrayLiteral.isA(tsNode)) {
             return Result.ok(ValueTypeString.array);
         }
-        else if (exp instanceof PropertyAccessExpression) {
+        else if (PropertyAccess.isA(tsNode)) {
             return Result.ok(ValueTypeString.property);
         }
-        else if (exp instanceof CallExpression) {
+        else if (FunctionCall.isA(tsNode)) {
             return Result.ok(ValueTypeString.default);
         }
         else if (Literal.isStringLiteral(tsNode)) {
@@ -150,13 +148,13 @@ export class ValueLevel {
         else if (Literal.isNumericLiteral(tsNode)) {
             return Result.ok(ValueTypeString.number);
         }
-        else if (exp instanceof ShorthandPropertyAssignment) {
+        else if (ShorthandAccess.isA(tsNode)) {
             return Result.ok(ValueTypeString.property);
         }
-        else if (exp instanceof ConditionalExpression) {
+        else if (Conditional.isA(tsNode)) {
             return Result.ok(ValueTypeString.default);
         }
-        return Result.fail(`Can not detect the expression's value type`, `The '${exp.getText()}' is not supported by Ara Web`);
+        return Result.fail(`Can not detect the expression's value type`, `The '${tsNode.getText()}' is not supported by Ara Web`);
     };
     /**
      * Get the ValueTypeString by the given data

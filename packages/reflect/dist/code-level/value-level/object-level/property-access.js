@@ -32,7 +32,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode } from "../../ts-node.js";
 import { Node, PropertyAccessExpression } from "ts-morph";
@@ -62,7 +62,7 @@ let PropertyAccess = (() => {
             const node = child.getNode();
             return node instanceof PropertyAccessExpression;
         };
-        identifyValue = async (tsNode, typedData, astNodeContext) => {
+        identifyValue = async (tsNode, _, astNodeContext) => {
             if (!tsNode.isChildExist(0)) {
                 return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
             }

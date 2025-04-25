@@ -88,12 +88,6 @@ let BinarialOperation = (() => {
             }
             return Result.fail(`For now applying '${op.dataType}' not supported`, `Please update BinarialOperation() to support '${op.data}' prefix`);
         };
-        static isExpectedType = (dataType, prefixType) => {
-            if (dataType !== undefined && typeof dataType === prefixType || dataType === prefixType) {
-                return Result.ok();
-            }
-            return Result.fail(`The '${dataType}' of returned type not '${prefixType}'`, `Check the code`);
-        };
         static identifyConditionValue = (leftSide, condition, rightSide) => {
             if (condition.indexOf("!") > -1) {
                 return leftSide != rightSide;

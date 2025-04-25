@@ -15,7 +15,6 @@ export declare class BinarialOperation {
      * @returns
      */
     private static applyOperation;
-    private static isExpectedType;
     private static identifyConditionValue;
     private static identifyArithmeticValue;
     private static isBooleanOperation;

@@ -1,6 +1,6 @@
 import { OkResult, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory } from "./ModuleMemory.js";
-import type { ModuleLink, ModuleURL } from "../ara-link/ReflectAraLink.js";
+import { ModuleLink, type ModuleURL } from "../ara-link/ReflectAraLink.js";
 import type { PossibleModuleLinksBuilder } from "../extension-interface.js";
 export type ModuleMemories<T> = {
     [key: ModuleURL]: ModuleMemory<T | unknown>;
@@ -39,7 +39,7 @@ export declare class ProjectMemory {
      * @returns
      */
     getPossibleModuleLink(importClause: string): Result<ModuleLink>;
-    getModuleMemory<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>>;
+    getModuleMemory<T>(moduleLink: ModuleLink | ModuleURL): Result<ModuleMemory<T>>;
     /**
      * Put Module Content puts if the module in the URL exists
      * @param moduleURL

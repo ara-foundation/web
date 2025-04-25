@@ -4,6 +4,7 @@
 import { Debug, OkResult, Result } from "@ara-web/ts-enhancement";
 // import { trimPath, urlToFileNames } from "../module.js";
 import { ModuleMemory } from "./ModuleMemory.js";
+import { ModuleLink } from "../ara-link/ReflectAraLink.js";
 //  purl -> memory of Ceo.tsx
 export class ProjectMemory {
     _memories = {};
@@ -92,11 +93,12 @@ export class ProjectMemory {
         return Result.fail(`Possible URLs not found`, `The '${importClause}' not found with '${this._moduleLinksBuilders.length}' module links builder in the memory`);
     }
     getModuleMemory(moduleLink) {
-        const moduleMemory = this._memories[moduleLink.moduleURL];
+        const moduleURL = moduleLink instanceof ModuleLink ? moduleLink.moduleURL : moduleLink;
+        const moduleMemory = this._memories[moduleURL];
         if (moduleMemory !== undefined) {
             return Result.ok(moduleMemory);
         }
-        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleLink.toString()} not found in the memory`);
+        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleURL} not found in the memory`);
     }
     /**
      * Put Module Content puts if the module in the URL exists

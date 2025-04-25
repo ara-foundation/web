@@ -5,7 +5,7 @@
 import { Debug, OkResult, Result } from "@ara-web/ts-enhancement";
 // import { trimPath, urlToFileNames } from "../module.js";
 import { ModuleMemory } from "./ModuleMemory.js";
-import type { ModuleLink, ModuleURL } from "../ara-link/ReflectAraLink.js";
+import { ModuleLink, type ModuleURL } from "../ara-link/ReflectAraLink.js";
 import type { PossibleModuleLinksBuilder } from "../extension-interface.js";
 
 export type ModuleMemories<T> = {[key: ModuleURL]: ModuleMemory<T|unknown>};
@@ -116,13 +116,14 @@ export class ProjectMemory {
         );
     }
 
-    public getModuleMemory<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>> {
-        const moduleMemory = this._memories[moduleLink.moduleURL] as ModuleMemory<T>;
+    public getModuleMemory<T>(moduleLink: ModuleLink|ModuleURL): Result<ModuleMemory<T>> {
+        const moduleURL = moduleLink instanceof ModuleLink ? moduleLink.moduleURL : moduleLink;
+        const moduleMemory = this._memories[moduleURL] as ModuleMemory<T>;
         if (moduleMemory !== undefined) {
             return Result.ok(moduleMemory);
         }
 
-        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleLink.toString()} not found in the memory`)
+        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleURL} not found in the memory`)
     }
 
     /**

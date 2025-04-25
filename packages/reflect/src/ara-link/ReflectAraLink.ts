@@ -21,7 +21,7 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
-import { Debug, Result, type EnumlikeKeyValue } from "@ara-web/ts-enhancement";
+import { Result, type EnumlikeKeyValue } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { ValueType } from "../code-level/ast-node-data.js";
 import { TsNode } from "../code-level/ts-node.js";

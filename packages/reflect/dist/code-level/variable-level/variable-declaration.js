@@ -40,7 +40,6 @@ export class VariableDeclaration extends TsNode {
      * Returns the variable's identifier
      */
     getIdentifier = () => {
-        const rawChildren = this.getChildren([], [TsNode.isNonImportant, TsNode.isConstKeyword]);
         const children = this.getChildren([Identifier.isA]);
         if (children.length === 0) {
             return Result.fail(`The variable statement has no identifier`, `Please update the VariableStatement class to support '${this.getText()}' variable statement identifier fetching`);

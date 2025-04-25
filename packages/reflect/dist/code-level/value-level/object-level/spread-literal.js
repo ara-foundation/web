@@ -32,13 +32,11 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Debug, Result } from "@ara-web/ts-enhancement";
-import { ValueTypeString } from "../../ast-node-data.js";
+import { Result } from "@ara-web/ts-enhancement";
 import { TsNode } from "../../ts-node.js";
 import { Node, SpreadAssignment } from "ts-morph";
 import { staticImplements } from "../value-level-interface.js";
 import { ValueLevel } from "../../value-level.js";
-import { Identifier } from "../idenitifier.js";
 /**
  * Property assignment such as {...obj} of the object literals
  */

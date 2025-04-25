@@ -1,4 +1,4 @@
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ParenthesizedExpression } from "ts-morph";
 import type { TypedData } from "../ast-node.js";

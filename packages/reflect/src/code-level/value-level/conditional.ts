@@ -5,7 +5,7 @@ import type { TypedData } from "../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 import { ValueLevel } from "../value-level.js";
-import { ValueTypeString, type ValueType } from "../ast-node-data.js";
+import { ValueTypeString } from "../ast-node-data.js";
 
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.

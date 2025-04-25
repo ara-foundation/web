@@ -35,12 +35,6 @@ export declare class Code {
      */
     getTsNodes: (filters?: TsNodeValidator[]) => TsNode[];
     /**
-     * Clone the Code with the new AST.
-     * Used to evaluate various attributes by manipulating AST itself.
-     * @returns {Code}
-     */
-    private clone;
-    /**
      * Parses the entire code for any import clauses. If any import clause,
      * then, using `./import-declarations.ts` will turn them into the import identifiers.
      *
@@ -81,11 +75,5 @@ export declare class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    identifyCodePiece: <T>(exp: string) => Promise<Result<T>>;
-    /**
-     * Get the variable declaration AST tree for the variable
-     * @param identifier The variable's name
-     * @returns {Result<VariableDeclaration>}
-     */
-    private identifyVariableDeclaration;
+    identifyCodePiece: <T>(_exp: string) => Promise<Result<T>>;
 }

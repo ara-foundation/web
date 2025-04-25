@@ -43,7 +43,7 @@ export class AstIdentifierMemory {
         }
         return this._identifiers[identifier];
     };
-    identifierByType = (identifier, astNode) => {
+    identifierByType = (identifier) => {
         let node = this.identifierByName(identifier);
         if (node === undefined) {
             return node;

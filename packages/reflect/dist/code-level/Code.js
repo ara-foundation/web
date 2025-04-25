@@ -5,7 +5,7 @@
  * @todo fix the parsing of all pages
  * @todo somehow we need to show on PageModal the meta components
  */
-import { Project, SourceFile as TsSourceFile, VariableDeclarationKind, VariableDeclaration } from "ts-morph";
+import { Project, SourceFile as TsSourceFile } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { ImportDeclaration } from "./import-declaration.js";
@@ -50,15 +50,15 @@ export class Code {
         }
         return nodes;
     };
-    /**
-     * Clone the Code with the new AST.
-     * Used to evaluate various attributes by manipulating AST itself.
-     * @returns {Code}
-     */
-    clone = () => {
-        const cloned = new this.constructor(this.code, this.tempCodeAmount);
-        return cloned;
-    };
+    // /**
+    //  * Clone the Code with the new AST.
+    //  * Used to evaluate various attributes by manipulating AST itself.
+    //  * @returns {Code}
+    //  */
+    // private clone = (): this => {
+    //     const cloned = new (this.constructor as typeof Code)(this.code, this.tempCodeAmount) as this;
+    //     return cloned;
+    // }
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Import Declarations
@@ -257,24 +257,27 @@ export class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    identifyCodePiece = async (exp) => {
-        this.tempCodeAmount++;
-        const varName = `__temp_var_${this.tempCodeAmount}`;
-        let cloned = this.clone();
-        const varStatement = cloned._ast.addVariableStatement({
-            declarationKind: VariableDeclarationKind.Const, // defaults to "let"
-            declarations: [{
-                    name: varName,
-                    type: "string",
-                    initializer: exp,
-                }],
-        });
-        // If Attribute name is an identifier, get variable statements that define them:
-        // For example `const v: number = 1`
-        const varDeclaration = this.identifyVariableDeclaration(varName);
-        if (varDeclaration.isFailure) {
-            return Result.fail(`this.identifyVariableDeclaration(identifier='${varName}'): ${varDeclaration.errorTitle}`, varDeclaration.errorDescription);
-        }
+    identifyCodePiece = async (_exp) => {
+        // this.tempCodeAmount++;
+        // const varName = `__temp_var_${this.tempCodeAmount}`;
+        // let cloned = this.clone();
+        // const varStatement = cloned._ast.addVariableStatement({
+        //     declarationKind: VariableDeclarationKind.Const, // defaults to "let"
+        //     declarations: [{
+        //       name: varName,
+        //       type: "string",
+        //       initializer: exp,
+        //     }],
+        // });
+        //         // If Attribute name is an identifier, get variable statements that define them:
+        // // For example `const v: number = 1`
+        // const varDeclaration = this.identifyVariableDeclaration(varName);
+        // if (varDeclaration.isFailure) {
+        //     return Result.fail(
+        //         `this.identifyVariableDeclaration(identifier='${varName}'): ${varDeclaration.errorTitle}`,
+        //         varDeclaration.errorDescription!
+        //     );
+        // }
         return Result.errorCode501(['Code'], 'identifyCodePiece');
         // Debug.push(`identifyVariable(varName='${varName}', update=false)`)
         // // It may be not only identifier so clone and put it in the ast
@@ -291,17 +294,5 @@ export class Code {
         //     )
         // }
         // return Result.ok(variable.getValue() as T)
-    };
-    /**
-     * Get the variable declaration AST tree for the variable
-     * @param identifier The variable's name
-     * @returns {Result<VariableDeclaration>}
-     */
-    identifyVariableDeclaration = (identifier) => {
-        const varDeclaration = this._ast.getVariableDeclaration(identifier);
-        if (varDeclaration === undefined) {
-            return Result.fail(`this.ast.getVariableDeclaration(identifier='${identifier}')`, `The '${identifier}' variable's declaration not found in the AST`);
-        }
-        return Result.ok(varDeclaration);
     };
 }

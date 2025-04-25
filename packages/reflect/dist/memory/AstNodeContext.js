@@ -1,7 +1,7 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode } from "../code-level/ast-node.js";
 import { ModuleLink, ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 /**
  * Collection of the variables, functions that are available for the Ast Node.
  * Ast Nodes have three layers of the memories:

@@ -5,7 +5,7 @@ import type { TypedData } from "../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 import { ValueLevel } from "../value-level.js";
-import { ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "../ast-node-data.js";
+import { ValueTypeString, type ValueType } from "../ast-node-data.js";
 
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
@@ -47,14 +47,6 @@ export class BinarialOperation {
             return Result.ok(res)
         }
         return Result.fail(`For now applying '${op.dataType}' not supported`, `Please update BinarialOperation() to support '${op.data}' prefix`)
-    }
-    
-    private static isExpectedType = (dataType: IdentifiedNodeDataType | undefined, prefixType: ValueTypeString): Result<undefined> => {
-            if (dataType !== undefined && typeof dataType === prefixType || dataType === prefixType) {
-                return Result.ok()
-            }
-    
-            return Result.fail(`The '${dataType}' of returned type not '${prefixType}'`, `Check the code`)
     }
     
     private static identifyConditionValue = (leftSide: any, condition: string, rightSide: any): boolean => {

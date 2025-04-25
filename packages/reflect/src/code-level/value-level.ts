@@ -3,9 +3,8 @@
  */
 
 import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
-import { TypeDeclaration, ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "./ast-node-data.js";
+import { ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
-import { Node, ObjectLiteralExpression, SpreadAssignment, PropertyAssignment, ArrayLiteralExpression, PropertyAccessExpression, CallExpression, ShorthandPropertyAssignment, ConditionalExpression } from "ts-morph";
 import { AstNodeType, type AstNode, type TypedData } from "./ast-node.js";
 import type { AstNodeContext } from "../memory/AstNodeContext.js";
 import { Literal } from "./value-level/literal.js";
@@ -131,39 +130,38 @@ export class ValueLevel {
      * @returns 
      */
     public static getValueTypeString = (tsNode: TsNode): Result<ValueTypeString> => {
-        const exp = tsNode.getNode<Node>();
-        if (exp.getText() === "undefined") {
+        if (tsNode.getText() === "undefined") {
             return Result.ok(ValueTypeString.undefined);
         }
-        if (exp instanceof ObjectLiteralExpression) {
-                return Result.ok(ValueTypeString.object)
-        } else if (exp instanceof SpreadAssignment) {
-                return Result.ok(ValueTypeString.object);
-            } else if (exp instanceof PropertyAssignment) { // {obj.property: val}
-                return Result.ok(ValueTypeString.property)
-            } else if (Identifier.isA(tsNode)) {
-                return Result.ok(ValueTypeString.default);
-            } else if (exp instanceof ArrayLiteralExpression) {
-                return Result.ok(ValueTypeString.array)
-            } else if (exp instanceof PropertyAccessExpression) {
-                return Result.ok(ValueTypeString.property)
-            } else if (exp instanceof CallExpression) {
-                return Result.ok(ValueTypeString.default);
-            } else if (Literal.isStringLiteral(tsNode)) {
-                return Result.ok(ValueTypeString.string)
-            } else if (Literal.isBooleanLiteral(tsNode)) {
-                return Result.ok(ValueTypeString.boolean)
-            } else if (Literal.isNumericLiteral(tsNode)) {
-                return Result.ok(ValueTypeString.number)
-            } else if (exp instanceof ShorthandPropertyAssignment) {
-                return Result.ok(ValueTypeString.property)
-            } else if (exp instanceof ConditionalExpression) {
-                return Result.ok(ValueTypeString.default);
+        if (ObjectLiteral.isA(tsNode)) {
+            return Result.ok(ValueTypeString.object)
+        } else if (SpreadLiteral.isA(tsNode)) {
+            return Result.ok(ValueTypeString.object);
+        } else if (PropertyLiteral.isA(tsNode)) { // {obj.property: val}
+            return Result.ok(ValueTypeString.property)
+        } else if (Identifier.isA(tsNode)) {
+            return Result.ok(ValueTypeString.default);
+        } else if (ArrayLiteral.isA(tsNode)) {
+            return Result.ok(ValueTypeString.array)
+        } else if (PropertyAccess.isA(tsNode)) {
+            return Result.ok(ValueTypeString.property)
+        } else if (FunctionCall.isA(tsNode)) {
+            return Result.ok(ValueTypeString.default);
+        } else if (Literal.isStringLiteral(tsNode)) {
+            return Result.ok(ValueTypeString.string)
+        } else if (Literal.isBooleanLiteral(tsNode)) {
+            return Result.ok(ValueTypeString.boolean)
+        } else if (Literal.isNumericLiteral(tsNode)) {
+            return Result.ok(ValueTypeString.number)
+        } else if (ShorthandAccess.isA(tsNode)) {
+            return Result.ok(ValueTypeString.property)
+        } else if (Conditional.isA(tsNode)) {
+            return Result.ok(ValueTypeString.default);
         }
     
         return Result.fail(
             `Can not detect the expression's value type`,
-            `The '${exp.getText()}' is not supported by Ara Web`
+            `The '${tsNode.getText()}' is not supported by Ara Web`
         )
     }
 

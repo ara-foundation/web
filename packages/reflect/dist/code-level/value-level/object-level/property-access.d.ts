@@ -8,5 +8,5 @@ import type { AstNodeContext } from "../../../memory/AstNodeContext.js";
 export declare class PropertyAccess {
     static get name(): string;
     static isA: TsNodeValidator;
-    identifyValue: (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext) => Promise<Result<TypedData>>;
+    identifyValue: (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext) => Promise<Result<TypedData>>;
 }

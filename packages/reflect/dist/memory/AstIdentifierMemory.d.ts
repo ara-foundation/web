@@ -14,7 +14,7 @@ export declare abstract class AstIdentifierMemory {
      Otherwise you have to check that this identifier is not an alias of another identifier.
     */
     identifierByName: (identifier: string) => AstNode | undefined;
-    identifierByType: (identifier: string, astNode: AstNodeType) => AstNode | undefined;
+    identifierByType: (identifier: string) => AstNode | undefined;
     getIdentifiers: (filters?: AstNodeValidator[], skippedIdentifiers?: string[]) => AstIdentifiers;
     identifiersByType: (astNode: AstNodeType) => AstNode[];
     print(filterKey?: string, filterValue?: any): void;

@@ -1,4 +1,4 @@
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
 import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
 import { Node, PropertyAccessExpression } from "ts-morph";
@@ -22,7 +22,7 @@ export class PropertyAccess {
         return node instanceof PropertyAccessExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
         if (!tsNode.isChildExist(0)) {
             return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
         }
