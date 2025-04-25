@@ -268,7 +268,7 @@ export class TypeDeclaration extends TsNode {
     };
     static lintTypeData = (data, nodeContext) => {
         if (data instanceof AraLink) {
-            // Debug.push(`this.lintAraLinkData('${data.toString()}', ${nodeContext.localScopeLength} local scopes)`)
+            // Debug.push(`this.lintAraLinkData()`, {araLink: data.toString(), nodeContext: `${nodeContext.localScopeLength} local scopes)`})
             const identifiedData = this.lintAraLinkData(data, nodeContext);
             // Debug.pop();
             if (identifiedData.isFailure) {

@@ -1,6 +1,6 @@
-import { type ExtensionInterface } from "@ara-web/reflect";
+import { type ExtensionInterface } from "../extension-interface.js";
 import { OkResult, Result } from "@ara-web/ts-enhancement";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
+import { ModuleMemory, ProjectMemory } from "../memory/index.js";
 import { ModuleLink } from "../ara-link/ReflectAraLink.js";
 import type { PossibleModuleLinksBuilder } from "../extension-interface.js";
 /**

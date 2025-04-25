@@ -328,12 +328,6 @@ importers:
 
   packages/reflect:
     dependencies:
-      '@ara-web/component-engine':
-        specifier: workspace:*
-        version: link:../component-engine
-      '@ara-web/rpc-engine':
-        specifier: workspace:*
-        version: link:../rpc-engine
       '@ara-web/ts-enhancement':
         specifier: workspace:*
         version: link:../ts-enhancement

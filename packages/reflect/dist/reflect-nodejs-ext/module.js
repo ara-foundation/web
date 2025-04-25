@@ -1,6 +1,6 @@
 import { Debug, Result } from "@ara-web/ts-enhancement";
 import { EnabledNodejsModules } from "./enabled-nodejs-module.js";
-import { ModuleCategory as BaseCategory, FileExtension, trimPath } from "@ara-web/reflect";
+import { ModuleCategory as BaseCategory, FileExtension, trimPath } from "../module.js";
 export var ModuleCategory;
 (function (ModuleCategory) {
     ModuleCategory["NodeJsModule"] = "node_modules";

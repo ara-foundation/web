@@ -1,4 +1,4 @@
-import { ModuleCategory as BaseCategory, FileExtension } from "@ara-web/reflect";
+import { ModuleCategory as BaseCategory, FileExtension } from "../module.js";
 export declare enum ModuleCategory {
     NodeJsModule = "node_modules"
 }

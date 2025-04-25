@@ -8,8 +8,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ara-web/component-engine": "workspace:*",
-    "@ara-web/rpc-engine": "workspace:*",
     "@ara-web/ts-enhancement": "workspace:*",
     "packageurl-js": "^2.0.1",
     "ts-morph": "^25.0.1"
