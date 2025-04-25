@@ -53,7 +53,6 @@ export class Debug {
         if (Debug.instance.stack.length > 0) {
             console.log(`Can not reset as there are ${Debug.instance.stack.length} objects in the stack:`);
             let padding = ""
-            let i 
             for (let i in Debug.instance.stack) {
                 console.log(`${padding} ${i+1}) ${Debug.instance.stack[i]}`);
                 padding += "\t"
