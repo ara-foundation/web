@@ -120,12 +120,12 @@ export class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    public getImportedIdentifiers = (): Result<AstIdentifiers> => {
+    public getImportedIdentifiers = (projectMemory: ProjectMemory): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
         const tsNodes = this.getTsNodes([ImportDeclaration.isImportDeclaration])
 
         for (let tsNode of tsNodes) {
-            const importDeclaration = ImportDeclaration.fromTsNode(tsNode);
+            const importDeclaration = ImportDeclaration.fromTsNode(tsNode, projectMemory);
             
             if (importDeclaration.isFailure) {
                 return Result.fail(
@@ -224,8 +224,7 @@ export class Code {
             return Result.ok(identifiedNode);
         }
 
-        const modulePath = identifiedNode.getImportModulePath();
-        if (modulePath === undefined) {
+        if (identifiedNode.importPath === undefined) {
             return Result.fail(
                 `getImportModulePath(): '${identifiedNode.identifier}' module path is not found`,
                 `Make sure this node is import node, or fix AstNode.getImportModulePath()`
@@ -233,16 +232,16 @@ export class Code {
         }
 
         // Debug.push(`memory.identifyModuleByPath()`, {modulePath})
-        const identifiedMemory = memory.identifyModuleByPath(modulePath);
+        const identifiedMemory = memory.getModuleMemory(identifiedNode.importPath);
         // Debug.pop();
         if (identifiedMemory.isFailure) {
             return Result.fail(
-                `memory.identifyModuleByPath(modulePath: '${modulePath}'): ${identifiedMemory.errorTitle}`,
+                `memory.identifyModuleByPath(modulePath: '${identifiedNode.importPath.toString()}'): ${identifiedMemory.errorTitle}`,
                 identifiedMemory.errorDescription!
             )
         }
 
-        const glob = identifiedMemory.getValue().moduleMemory.glob
+        const glob = identifiedMemory.getValue().glob
         // If the import is default import, then data is AraLink.
         if (identifiedNode.data instanceof AraLink) {
             identifiedNode.data = (glob as any).default;

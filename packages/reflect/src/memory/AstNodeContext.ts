@@ -1,8 +1,8 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { Result } from "@ara-web/ts-enhancement";
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -114,10 +114,9 @@ export class AstNodeContext {
     /**
      * Identify the Import Path of the given identifier
      * @param {string} identifier
-     * @param {ImportDeclaration} astImport 
      * @returns {string} the module path
      */
-    public identifyImportPath = (identifier: string): Result<string> => {
+    public identifyImportPath = (identifier: string): Result<ModuleLink> => {
         const astNode = this.getIdentifier(identifier);
         if (astNode === undefined) {
             return Result.fail(
@@ -133,6 +132,6 @@ export class AstNodeContext {
             )
         }
 
-        return Result.ok(astNode.importPath.resource as string)
+        return Result.ok(astNode.importPath)
     }
 }

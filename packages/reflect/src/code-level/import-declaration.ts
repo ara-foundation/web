@@ -6,29 +6,40 @@
 import { ImportClause, ImportDeclaration as TsImportDeclaration } from "ts-morph";
 import { Result, Debug, StringTraits } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
-import { AraLink, PurlProtocol, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { NamedImport } from "./import-level/named-import.js";
 import { Identifier } from "./value-level/idenitifier.js";
+import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
+import type { ProjectMemory } from "../memory/ProjectMemory.js";
 
 export class ImportDeclaration extends TsNode {
-    private _moduleLink?: AraLink<string>;
+    private _moduleLink: ModuleLink;
     protected _tsNode: TsImportDeclaration;
 
-    private constructor (tsNode: TsNode) {
+    private constructor (tsNode: TsNode, projectMemory: ProjectMemory) {
         super(tsNode);
         this._tsNode = tsNode.getNode<TsImportDeclaration>()!;
+        const moduleLink = this.getModuleLink(projectMemory);
+        if (moduleLink.isFailure) {
+            throw `${moduleLink.errorTitle}: ${moduleLink.errorDescription}`
+        } 
+        this._moduleLink = moduleLink.getValue();
     }
 
-    public static fromTsNode(tsNode: TsNode): Result<ImportDeclaration> {
+    public static fromTsNode(tsNode: TsNode, projectMemory: ProjectMemory): Result<ImportDeclaration> {
         if (!this.isImportDeclaration(tsNode)) {
             return Result.fail(
                 `The given node is not import declaration`,
                 `Please check the ts node '' is valid import declaration`
             )
         }
-        const importDeclaration = new ImportDeclaration(tsNode);
-        return Result.ok(importDeclaration)
+
+        try {
+            const importDeclaration = new ImportDeclaration(tsNode, projectMemory);
+            return Result.ok(importDeclaration)
+        } catch (e) {
+            return Result.fail(`new ImportDeclaration()`, `${e}`)
+        }
     }
 
     public static isImportClause: TsNodeValidator = (child: TsNode): boolean => {
@@ -69,7 +80,7 @@ export class ImportDeclaration extends TsNode {
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
      */
-    private getModuleLink = (): Result<AraLink<string>> => {
+    private getModuleLink = (projectMemory: ProjectMemory): Result<ModuleLink> => {
         const children = this.getChildren( 
             [],
             [Identifier.isA, TsNode.isNonImportant],
@@ -77,8 +88,8 @@ export class ImportDeclaration extends TsNode {
         )
         if (children.length === 0) {
             return Result.fail(
-                "It can not be", 
-                "ImportDeclaration doesn't have data, check astImport is correct, or update AstNode.getChildren()"
+                "It can not be empty in the import declaration", 
+                "ImportDeclaration doesn't have data, update ImportDeclaration.getModuleLink()"
             )
         }
 
@@ -86,10 +97,26 @@ export class ImportDeclaration extends TsNode {
             if (ImportDeclaration.isImportClause(tsNode)) {
                 const stringNodes = tsNode.getChildren([TsNode.isString])
                 if (stringNodes.length !== 0) {
-                    return Result.ok(new AraLink(PurlProtocol, StringTraits.unquote(stringNodes[0].getText()), AraWebModuleSlugs));
+                    const importPath = StringTraits.unquote(stringNodes[0].getText());
+                    const moduleLink = projectMemory.getPossibleModuleLink(importPath)
+                    if (moduleLink.isFailure) {
+                        return Result.fail(
+                            `projectMemory.getPossibleModuleLink('${importPath}'): ${moduleLink.errorTitle}`,
+                            moduleLink.errorDescription!
+                        )
+                    }
+                    return Result.ok(moduleLink.getValue());
                 }
             } else if (TsNode.isString(tsNode)) {
-                return Result.ok(new AraLink(PurlProtocol, StringTraits.unquote(tsNode.getText()), AraWebModuleSlugs));
+                const importPath = StringTraits.unquote(tsNode.getText());
+                const moduleLink = projectMemory.getPossibleModuleLink(importPath)
+                if (moduleLink.isFailure) {
+                    return Result.fail(
+                        `projectMemory.getPossibleModuleLink('${importPath}'): ${moduleLink.errorTitle}`,
+                        moduleLink.errorDescription!
+                    )
+                }
+                return Result.ok(moduleLink.getValue());
             } else {
                 const err = Debug.error(
                     `Unsupported child of import declaration`,
@@ -219,23 +246,6 @@ export class ImportDeclaration extends TsNode {
     */
     public getIdentifiers = (): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
-
-        if (this._moduleLink === undefined) {
-            let importPath = this.getModuleLink();
-            if (importPath.isFailure) {
-                return Result.fail(
-                    `this.getModuleLink(): ${importPath.errorTitle}`,
-                    importPath.errorDescription!
-                )
-            } else if (importPath.getValue().isEmpty()) {
-                return Result.fail(
-                    `Can not identify the import module path`,
-                    `Failed to identify the import path by '${this.getText()}'`
-                )
-            } else {
-                this._moduleLink = importPath.getValue();
-            }
-        }
 
         // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();

@@ -7,7 +7,7 @@ import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { ModuleLink, ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Identifier } from "../value-level/idenitifier.js";
 
@@ -71,7 +71,7 @@ export class NamedImport extends TsNode {
      * @param importPath 
      * @returns 
      */
-    public static getIdentifiers = (nodeType: AstNodeType, moduleLink: AraLink<string>, namedChildren: TsNode[]): Result<AstIdentifiers> => {
+    public static getIdentifiers = (nodeType: AstNodeType, moduleLink: ModuleLink, namedChildren: TsNode[]): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
 
             const namedImportChildCount = namedChildren.length;

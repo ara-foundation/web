@@ -2,6 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "./ts-node.js";
 import { Result } from "@ara-web/ts-enhancement";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
+import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
 
 export enum AstNodeType {
     Variable = "variable",
@@ -36,7 +37,7 @@ export class AstNode {
     public public?: boolean;   // If the module exposes it
     public dataType?: IdentifiedNodeDataType;    // Identify the value in the future
     public data?: ValueType;
-    public importPath?: AraLink<ValueType>;    // the import identifier
+    public importPath?: ModuleLink;    // the import identifier
     public identifier?: string;              // If the ast node has an alias, then alias is the second parameter
     // If the ast node has a Generic Handler, then use this function to overwrite
     private _genericHandler?: GenericHandler;
@@ -168,14 +169,6 @@ export class AstNode {
 
     public deleteMemoryData(): void {
         this._nodeMemory = undefined;
-    }
-
-    public getImportModulePath = (): string|undefined => {
-        if (!AstNode.isDefinedInOtherModule(this)) {
-            return undefined;
-        }
-
-        return this.importPath!.resource as string;
     }
 
     //----------------------------------------------------------
