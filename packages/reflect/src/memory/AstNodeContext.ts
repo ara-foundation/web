@@ -2,7 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
 import { ModuleLink, ReflectAraLink } from "../ara-link/ReflectAraLink.js";
-import { Result } from "@ara-web/ts-enhancement";
+import { Debug, Result } from "@ara-web/ts-enhancement";
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -80,10 +80,12 @@ export class AstNodeContext {
             return undefined;
         }
 
-        if (this._pageIdentifiers[identifier] instanceof AraLink) {
-            return this.getIdentifier(this._pageIdentifiers[identifier] as AraLink<string>)
-        } else if (this._pageIdentifiers[identifier] instanceof AstNode) {
-            return this._pageIdentifiers[identifier] as AstNode;
+        const identified = this._pageIdentifiers[identifier];
+
+        if (identified instanceof AraLink) {
+            return this.getIdentifier(identified)
+        } else if (identified instanceof AstNode) {
+            return identified;
         }
         return undefined;
     }

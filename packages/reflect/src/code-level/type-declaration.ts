@@ -256,7 +256,7 @@ export class TypeDeclaration extends TsNode {
                     `Please update the identifyTypes() to fix it`
                 )
             }
-                
+            
             const memoryNodeContext = nodeContext.clone(node.getAllMemoryData([memoryNode!.identifier!]))
 
             // Debug.push(`this.lintType()`, {node: memoryNode.identifier!});
@@ -403,7 +403,7 @@ export class TypeDeclaration extends TsNode {
         nodeContext: AstNodeContext,
     ): Result<TypedData> => {
         if (data instanceof AraLink) {
-            // Debug.push(`this.lintAraLinkData('${data.toString()}', ${nodeContext.localScopeLength} local scopes)`)
+            // Debug.push(`this.lintAraLinkData()`, {araLink: data.toString(), nodeContext: `${nodeContext.localScopeLength} local scopes)`})
             const identifiedData = this.lintAraLinkData(data, nodeContext);
             // Debug.pop();
             if (identifiedData.isFailure) {
@@ -620,7 +620,7 @@ export class TypeDeclaration extends TsNode {
                 `Please, pass the AST Node with the initial data`
             )
         }
-        
+
         // Debug.push(`this.lintTypeData('${astNode.identifier}', nodeContext: ${nodeContext.localScopeLength} local scopes)`)
         const identifiedData = this.lintTypeData(astNode.data, nodeContext);
         // Debug.pop();

@@ -89,14 +89,14 @@ export class ProjectMemory {
                 return Result.ok(moduleLink);
             }
         }
-        return Result.fail(`Possible URLs not found`, `The given module path is not in the memory`);
+        return Result.fail(`Possible URLs not found`, `The '${importClause}' not found with '${this._moduleLinksBuilders.length}' module links builder in the memory`);
     }
     getModuleMemory(moduleLink) {
         const moduleMemory = this._memories[moduleLink.moduleURL];
         if (moduleMemory !== undefined) {
             return Result.ok(moduleMemory);
         }
-        return Result.fail(`Possible URLs not found`, `The given module path is not in the memory`);
+        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleLink.toString()} not found in the memory`);
     }
     /**
      * Put Module Content puts if the module in the URL exists

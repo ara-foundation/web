@@ -30,7 +30,7 @@ export class ImportDeclaration extends TsNode {
             return Result.ok(importDeclaration);
         }
         catch (e) {
-            return Result.fail(`new ImportDeclaration(): ${e.message}`);
+            return Result.fail(`new ImportDeclaration()`, `${e}`);
         }
     }
     static isImportClause = (child) => {

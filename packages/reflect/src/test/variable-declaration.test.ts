@@ -10,7 +10,7 @@ import type { TsNode } from "../code-level/ts-node.js";
 import { TypeRef } from "../code-level/type-level/type-ref.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 import { ValueLevel } from "../code-level/value-level.js";
-import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
+import { EnabledNodejsModules } from "../reflect-nodejs-ext/enabled-nodejs-module.js";
 
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'

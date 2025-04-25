@@ -1,4 +1,4 @@
-import  {type Result, Debug } from "@ara-web/ts-enhancement";
+import  {type Result } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../code-level/ast-node-data.js";
@@ -76,7 +76,7 @@ export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => 
 }
 
 export const modulePath = `./funcs.js`;
-const moduleLinkBuilder: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
+export const moduleLinkBuilder: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
   const moduleCategory = "script";
   const moduleLink = new ModuleLink("namespace", "name", moduleCategory, modulePath);
   return [moduleLink];
@@ -90,7 +90,6 @@ export const getProjectMemory = async (): Promise<ProjectMemory> => {
   projectMemory.putModuleLinksBuilder(moduleLinkBuilder);
   return projectMemory;
 }
-
 
 export const getEmptyModule = (): ModuleMemory<unknown> => {
   const moduleLink = new ModuleLink("namespace", "name", ModuleCategory.Untracked, "");

@@ -5,14 +5,14 @@ import {
     type AstIdentifiers, 
     type AstNodeValidator, 
     type GenericHandler, 
-} from "@ara-web/reflect/code-level/ast-node";
+} from "../code-level/ast-node.js";
 import {
     ValueTypeString, 
     type ValueType 
-} from "@ara-web/reflect/code-level/ast-node@types";
-import { Code } from "@ara-web/reflect/code-level";
-import { VariableStatement } from "@ara-web/reflect/code-level/variable-level/variable-statement";
-import type { TsNode } from "@ara-web/reflect/code-level/ts-node";
+} from "../code-level/ast-node-data.js";
+import { Code } from "../code-level/Code.js";
+import { VariableStatement } from "../code-level/variable-level/variable-statement.js";
+import type { TsNode } from "../code-level/ts-node.js";
 
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType[]): Result<AstNode> => {

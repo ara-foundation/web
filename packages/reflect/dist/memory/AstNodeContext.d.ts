@@ -28,7 +28,6 @@ export declare class AstNodeContext {
     /**
      * Identify the Import Path of the given identifier
      * @param {string} identifier
-     * @param {ImportDeclaration} astImport
      * @returns {string} the module path
      */
     identifyImportPath: (identifier: string) => Result<ModuleLink>;

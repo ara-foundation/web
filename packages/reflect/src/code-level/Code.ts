@@ -6,52 +6,25 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { 
-    CallExpression,
-    Identifier, 
-    ImportClause, 
-    JSDoc, 
     Project, 
     SourceFile as TsSourceFile, 
-    StringLiteral, 
     VariableDeclarationKind,
-    SyntaxList,
-    ImportDeclaration as TsImportDeclaration,
-    ExpressionStatement,
-    BinaryExpression,
-    ObjectLiteralExpression,
-    SpreadAssignment,
-    PropertyAssignment,
-    VariableDeclaration,
-    ArrayLiteralExpression,
-    PropertyAccessExpression,
-    EnumMember,
-    NumericLiteral,
-    ShorthandPropertyAssignment,
-    CommentStatement,
-    VariableStatement as TsVariableStatement,
-    ParenthesizedExpression,
-    ConditionalExpression,
-    PrefixUnaryExpression,
-    Node,
+    VariableDeclaration
 } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
+import { Result, Debug } from "@ara-web/ts-enhancement";
 import { ImportDeclaration } from "./import-declaration.js";
 import { AstNode, type AstIdentifiers, AstNodeType } from "./ast-node.js";
 import { 
     ValueTypeString, 
     type ValueType, 
-    type IdentifiedNodeDataType, 
-    type EnumMembers 
 } from "./ast-node-data.js";
-import { deepCopy } from "@ara-web/ts-enhancement";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TypeDeclaration } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
-import { EnabledNodejsModules } from "../enabled-nodejs-module.js";
+import { EnabledNodejsModules } from "../reflect-nodejs-ext/enabled-nodejs-module.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 
 export type Object = {[key: string]: ValueType};
@@ -278,7 +251,6 @@ export class Code {
             EnabledNodejsModules.isNonBuiltInIdentifier,
         ]
         const typesToLint  = memory.getIdentifiers(localTypeFilters)
-
         const typesCount = Object.keys(typesToLint).length;
         if (typesCount == 0) {
             return Result.ok(memory.getIdentifiers());
