@@ -149,7 +149,7 @@ const identifyPageByComment = (source: string): Result<PageFromComments> => {
  * Identify each component within the page. All data of the page are represented as the components.
  * @returns {Result<Page>}
  */
-export const identifyComponents = async (page: Page, uiContent: UiContent, code: Code): Promise<Result<Page>> => {
+export const identifyComponents = async (_page: Page, _uiContent: UiContent, _code: Code): Promise<Result<Page>> => {
     return Result.errorCode501(["UI Level", "Page Level"], "identifyComponents")
     // for (let componentNode of uiContent.elements!) {
     //     const identificationResult = await identifyComponent(page, uiContent, componentNode)

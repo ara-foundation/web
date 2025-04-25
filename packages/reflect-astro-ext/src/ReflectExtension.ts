@@ -240,7 +240,7 @@ export class ReflectExtension implements ExtensionInterface {
         //
         //---------------------------------------------------------------
         
-        const importsIdentifed = await this.identifyImports(pageTraits.getValue(), pageModules);
+        const importsIdentifed = await this.identifyImports(pageTraits.getValue(), pageModules, projectMemory);
         if (importsIdentifed.isFailure) {
             return Result.fail(
                 `this.identifyImports(): ${importsIdentifed.errorTitle}`,
@@ -517,31 +517,32 @@ export class ReflectExtension implements ExtensionInterface {
         return Result.ok();
     }
     
-    private lintTypes = async <T>(contentModuleType: ModuleCategory, contents: AllPageTraits, projectMemory: ProjectMemory): Promise<Result<undefined>> => {
+    private lintTypes = async <T>(contentModuleCategory: ModuleCategory, contents: AllPageTraits, projectMemory: ProjectMemory): Promise<Result<undefined>> => {
         for (let modulePath in contents) {
+            const moduleURL = modulePath as ModuleURL;
             // It's from the cache.
-            if (contents[modulePath].uiContent === undefined) {
+            if (contents[moduleURL].uiContent === undefined) {
                 continue;
-            } else if (contents[modulePath].code === undefined) {
+            } else if (contents[moduleURL].code === undefined) {
                 continue;
             }
 
             // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
-            const memory = projectMemory.getPossibleModuleMemory<T>([modulePath as ModuleURL]);
+            const memory = projectMemory.getModuleMemory<T>(moduleURL);
             // Debug.pop();
             if (memory === undefined) {
                 return Result.fail(
-                    `projectMemory.getModuleMemory(moduleType: '${contentModuleType}', modulePath: '${modulePath}'): Module not found`,
-                    `The memory doesn't have the '${modulePath}' module of '${contentModuleType}' type`
+                    `projectMemory.getModuleMemory(moduleType: '${contentModuleCategory}', modulePath: '${modulePath}'): Module not found`,
+                    `The memory doesn't have the '${modulePath}' module of '${contentModuleCategory}' type`
                 )
             }
 
             Debug.push(`code.getLintedTypeIdentifiers()`, {moduleMemory: modulePath})
-            const depsIdentified = await contents[modulePath].code.getLintedTypeIdentifiers<T>(memory.getValue(), projectMemory)
+            const depsIdentified = await contents[moduleURL].code.getLintedTypeIdentifiers<T>(memory.getValue(), projectMemory)
             Debug.pop();
             if (depsIdentified.isFailure) {
                 return Result.fail(
-                    `code.getLintedTypeIdentifiers(modulePath: '${modulePath}'): ${depsIdentified.errorTitle}`,
+                    `code.getLintedTypeIdentifiers(moduleURL: '${moduleURL}'): ${depsIdentified.errorTitle}`,
                     depsIdentified.errorDescription!
                 )
             }
@@ -597,15 +598,16 @@ export class ReflectExtension implements ExtensionInterface {
     // Then, will apply them into the identifiers node data types, and data parameters.
     private lintImports = async <T>(contentModuleType: ModuleCategory, contents: AllPageTraits, projectMemory: ProjectMemory): Promise<Result<undefined>> => {
         for (let modulePath in contents) {
+            const moduleURL = modulePath as ModuleURL;
             // It's from the cache.
-            if (contents[modulePath].uiContent === undefined) {
+            if (contents[moduleURL].uiContent === undefined) {
                 continue;
-            } else if (contents[modulePath].code === undefined) {
+            } else if (contents[moduleURL].code === undefined) {
                 continue;
             }
 
             // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
-            const memory = projectMemory.getPossibleModuleMemory<T>([modulePath as ModuleURL]);
+            const memory = projectMemory.getModuleMemory<T>(moduleURL);
             // Debug.pop();
             if (memory === undefined) {
                 return Result.fail(
@@ -615,7 +617,7 @@ export class ReflectExtension implements ExtensionInterface {
             }
 
             // Debug.push(`code.getLintedImportIdentifiers()`, {memory: modulePath})
-            const depsIdentified = await contents[modulePath].code.getLintedImportIdentifiers<T>(memory.getValue(), projectMemory)
+            const depsIdentified = await contents[moduleURL].code.getLintedImportIdentifiers<T>(memory.getValue(), projectMemory)
             // Debug.pop();
             if (depsIdentified.isFailure) {
                 return Result.fail(
@@ -635,16 +637,17 @@ export class ReflectExtension implements ExtensionInterface {
 
     private identifyTypes = async <T>(contentModuleType: ModuleCategory, contents: AllPageTraits, pageMemories: ModuleMemories<Page>, projectMemory: ProjectMemory): Promise<Result<undefined>> => {
         for (let modulePath in contents) {
+            const moduleURL = modulePath as ModuleURL;
             // It's from the cache.
             // It's from the cache.
-            if (contents[modulePath].uiContent === undefined) {
+            if (contents[moduleURL].uiContent === undefined) {
                 continue;
-            } else if (contents[modulePath].code === undefined) {
+            } else if (contents[moduleURL].code === undefined) {
                 continue;
             }
 
             // Debug.push(`memories.getModuleMemory()`, {moduleType, modulePath})
-            const memory = projectMemory.getPossibleModuleMemory<T>([modulePath as ModuleURL]);
+            const memory = projectMemory.getModuleMemory<T>(moduleURL);
             // Debug.pop();
             if (memory === undefined) {
                 return Result.fail(
@@ -654,7 +657,7 @@ export class ReflectExtension implements ExtensionInterface {
             }
 
             Debug.push(`code.getTypeIdentifiers()`, {memory: modulePath})
-            const identifiers = await contents[modulePath].code.getTypeIdentifiers();
+            const identifiers = await contents[moduleURL].code.getTypeIdentifiers();
             Debug.pop();
             if (identifiers.isFailure) {
                 return Result.fail(

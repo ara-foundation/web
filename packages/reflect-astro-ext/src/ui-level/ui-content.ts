@@ -4,7 +4,7 @@
  * 
  * Receives the GLOBS and returns FileContents.
  */
-import { parse as AstroParse, transform, type TransformResult } from "@astrojs/compiler";
+import { parse as AstroParse } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
 import { readFile } from "node:fs/promises"
 import type { AstroInstance } from 'astro';
@@ -298,18 +298,18 @@ const extractAstroComponents = (ast: RootNode): {componentNodes: AstroNode[], fr
     return {componentNodes, frontmatterCode};
 }
 
-/**
- * Convert the Astro to the typescript so that we can use the Typescript AST manipulator to detect all components
- * @param fileName a full path to the file name that ends with .astro extension
- * @param astroSource a content of the file
- * @returns {TransformResult}
- */
-const astroToTs = async(fileName: string, astroSource: string): Promise<TransformResult> => {
-    const result = await transform(astroSource, {
-        filename: fileName,
-        sourcemap: "both",
-        internalURL: "astro/runtime/server/index.js",
-    });
+// /**
+//  * Convert the Astro to the typescript so that we can use the Typescript AST manipulator to detect all components
+//  * @param fileName a full path to the file name that ends with .astro extension
+//  * @param astroSource a content of the file
+//  * @returns {TransformResult}
+//  */
+// const astroToTs = async(fileName: string, astroSource: string): Promise<TransformResult> => {
+//     const result = await transform(astroSource, {
+//         filename: fileName,
+//         sourcemap: "both",
+//         internalURL: "astro/runtime/server/index.js",
+//     });
 
-    return result;
-}
+//     return result;
+// }

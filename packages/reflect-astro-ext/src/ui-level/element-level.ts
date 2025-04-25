@@ -11,25 +11,25 @@
  *  - RPCs
  *  - Layouts
  */
-import type { ExpressionNode, Node as AstroComponentNode } from "@astrojs/compiler/types";
+// import type { ExpressionNode, Node as AstroComponentNode } from "@astrojs/compiler/types";
 
-import { ColumnSlug, RowSlug, ComponentIdentity, Result } from "@ara-web/ts-enhancement";
-import type { LayoutSlugs, Expression, Page, IdentifiedComponent, Component } from "@ara-web/ts-enhancement";
+// import { ColumnSlug, RowSlug, ComponentIdentity, Result } from "@ara-web/ts-enhancement";
+// import type { LayoutSlugs, Expression, Page, IdentifiedComponent, Component } from "@ara-web/ts-enhancement";
 
-// TODO move to the app/interface/reflect to understand the RPCs
-// The pages traits adds to the Page the following:
-// -- RPCs and refer to RPC types
-// -- File Content
-// -- AST
-// -- Components
-// import { type RpcCallType, rpcBySlug, isRpcCallComponentLink } from "@ara-web/rpc-engine";
-import { type UiContent } from "./ui-content.js";
-// Make sure that we move the component
-// import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
-import { attributeByName, identifyAttribute } from "./attribute-level.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-import type { AstroNode } from "../component.js";
+// // TODO move to the app/interface/reflect to understand the RPCs
+// // The pages traits adds to the Page the following:
+// // -- RPCs and refer to RPC types
+// // -- File Content
+// // -- AST
+// // -- Components
+// // import { type RpcCallType, rpcBySlug, isRpcCallComponentLink } from "@ara-web/rpc-engine";
+// import { type UiContent } from "./ui-content.js";
+// // Make sure that we move the component
+// // import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
+// import { attributeByName, identifyAttribute } from "./attribute-level.js";
+// import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+// import type { ModuleMemory } from "@ara-web/reflect/memory";
+// import type { AstroNode } from "../component.js";
 
 
 // //////////////////////////////////////////////////////////////////////////////////

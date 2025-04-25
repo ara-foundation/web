@@ -27,12 +27,7 @@ export const attributeByName = (node: AstroNode, name?: string): AttributeNode|u
  * Expected to be called by identifyComponent()
  * @param {AttributeNode} attr expression in the attribute
 */
-export const identifyAttribute = async <T>(uiContent: UiContent, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<TsNode>>> => {
-    const ret: {error?: string, data?: T} = {
-        error: undefined,
-        data: undefined,
-    }
-    
+export const identifyAttribute = async <T>(_uiContent: UiContent, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<TsNode>>> => {
     if (kind !== undefined && attr.kind !== kind) {
         return Result.fail(
             `Attribute kind mismatch`,

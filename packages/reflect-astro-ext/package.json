@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/react": "^19.0.10",
     "typescript": "~5.7.2",
     "vite": "^6.3.1"
   },
@@ -19,7 +20,8 @@
     "@ara-web/ts-enhancement": "workspace:*",
     "@astrojs/compiler": "^2.11.0",
     "astro": "^5.7.5",
-    "comment-parser": "^1.4.1"
+    "comment-parser": "^1.4.1",
+    "react": "^19.0.0"
   },
   "exports": {
     ".": {

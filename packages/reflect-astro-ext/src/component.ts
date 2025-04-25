@@ -78,7 +78,7 @@ export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) =>
 //     )
 // }
 
-export const fileContentToComponent = async (memory: ModuleMemory<unknown>): Promise<Result<Component>> => {
+export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<Component>> => {
     return Result.errorCode501(["component"], "fileContentToComponent")
     // const component: Component = {
     //     label: "",
