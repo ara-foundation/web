@@ -5,6 +5,7 @@ import { ModuleCategory } from "./module.js";
 import { EnabledNodejsModules } from "./enabled-nodejs-module.js";
 import { ModuleLink, type ModuleURL } from "../ara-link/ReflectAraLink.js";
 import type { PossibleModuleLinksBuilder } from "../extension-interface.js";
+import type { CategorizedModules } from "../setup.js";
 
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
@@ -34,19 +35,37 @@ export class ReflectExtension implements ExtensionInterface {
         return Result.ok(new ModuleMemory<unknown>(moduleLink, glob));
     }
 
+    public getCategorizedModuleData(moduleRecords: Record<string, unknown>): Result<CategorizedModules> {
+        const categorizedModules: CategorizedModules = {
+            [ModuleCategory.NodeJsModule]: {}
+        };
+        for (let modulePath in moduleRecords) {
+            categorizedModules[ModuleCategory.NodeJsModule][modulePath] = {
+                glob: moduleRecords[modulePath]
+            }
+        } 
+
+        return Result.ok(categorizedModules);
+    }
+
+
     /**
      * NodeJs Extension's hook before the get operation will put the built in Nodejs built in identifiers
      * into all modules
      * @param projectMemory 
      * @returns 
      */
-    public async beforeGet(_: string, projectMemory: ProjectMemory): Promise<OkResult> {
+    public async beforeGet(moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> {
         const builtInIdentified = await this.postBuiltInIdentifiers(projectMemory);
         if (builtInIdentified.isFailure) {
             return Result.fail(
                 `this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`,
                 builtInIdentified.errorDescription!
             )
+        }
+
+        if (moduleCategory === ModuleCategory.NodeJsModule) {
+            this.postNodeJSContents(projectMemory);
         }
 
         return OkResult.ok();
@@ -82,6 +101,20 @@ export class ReflectExtension implements ExtensionInterface {
     // Internal
     //
     //****************************************************************
+
+    private postNodeJSContents = (projectMemory: ProjectMemory): void => {
+        const modules = projectMemory.getModuleMemories(ModuleCategory.NodeJsModule);
+        if (modules === undefined) {
+            return;
+        }
+
+        for (let modulePath in modules) {
+            const moduleURL = modulePath as ModuleURL;
+            if (modules[moduleURL].content === undefined) {
+                modules[moduleURL].content = modules[moduleURL].glob;
+            }
+        }
+    }
 
     //
     // Adds the Array, Object and other classes, types that are available in the Environment

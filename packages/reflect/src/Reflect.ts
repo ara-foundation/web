@@ -3,19 +3,15 @@ import { ModuleMemory, ProjectMemory } from "./memory/index.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { ReflectExtension } from "./reflect-nodejs-ext/ReflectExtension.js";
 import type { ModuleLink } from "./ara-link/ReflectAraLink.js";
-
-export type ModuleData = {
-    [key: string]: {                // Module path
-        glob: unknown,
-    }
-}
-
-export type CategorizedModules = {
-    [key: string]: ModuleData;
-};
+import type { CategorizedModules } from "./setup.js";
 
 export type ReflectSetup = {
     extensions?: ExtensionInterface[],
+}
+
+export class ThroughCategorizer {
+    public recordsGetter: (() => Record<string, unknown>)|undefined = undefined;
+    public categorizer: ExtensionInterface|undefined = undefined;
 }
 
 /**
@@ -24,7 +20,7 @@ export type ReflectSetup = {
 export class Reflect {
     // Category => Path => ModuleMemory Instance
     private _memory: ProjectMemory;
-    private _autoImportFunc?: () => CategorizedModules;
+    private _autoImportFunc?: (() => CategorizedModules)|ThroughCategorizer;
     private _extensions: ExtensionInterface[];
 
     /**
@@ -48,6 +44,10 @@ export class Reflect {
         }
     }
 
+    public get nodeJsExt(): ExtensionInterface {
+        return this._extensions[0];
+    }
+
     //****************************************************************
     // 
     // Modules Imports from the Project and Setting up internal Reflect memory.
@@ -59,6 +59,18 @@ export class Reflect {
             return undefined
         }
         
+        if (typeof this._autoImportFunc !== "function") {
+            if (this._autoImportFunc.recordsGetter === undefined || 
+                this._autoImportFunc.categorizer === undefined) {
+                return undefined;
+            }
+            const records = this._autoImportFunc.recordsGetter();
+            const categorizedModules = this._autoImportFunc.categorizer.getCategorizedModuleData(records);
+            if (categorizedModules.isFailure) {
+                return undefined;
+            }
+            return categorizedModules.getValue();
+        }
         return this._autoImportFunc();
     }
 
@@ -142,7 +154,7 @@ export class Reflect {
      * Put a function that loads the globs whenever any function is called.
      * @param importFunc 
      */
-    public postAutoImporter = (importFunc?: (() => CategorizedModules)) => {
+    public postAutoImporter = (importFunc?: (() => CategorizedModules)| ThroughCategorizer) => {
         this._autoImportFunc = importFunc;
     }
 

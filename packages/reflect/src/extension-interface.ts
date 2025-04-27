@@ -2,6 +2,7 @@ import type { OkResult, Result } from "@ara-web/ts-enhancement";
 import type { ModuleMemory } from "./memory/ModuleMemory.js";
 import type { ProjectMemory } from "./memory/ProjectMemory.js";
 import type { ModuleLink } from "./ara-link/ReflectAraLink.js";
+import type { CategorizedModules } from "./setup.js";
 
 export type PossibleModuleLinksBuilder = (modulePath: string) => ModuleLink[];
 
@@ -16,6 +17,8 @@ export interface ExtensionInterface {
      */
     moduleCategories: string[];
     
+
+    
     /**
      * Whether the given string is one of the supported module categories or not
      * @param moduleCategory 
@@ -29,6 +32,17 @@ export interface ExtensionInterface {
      * @param glob 
      */
     getNewModuleMemory(moduleLink: ModuleLink, glob: unknown): Result<ModuleMemory<unknown>>;
+
+    /**************************************************************************
+     * Setup
+     * Everything, needed for a Reflect setup in the website
+     **************************************************************************/
+    
+    /**
+     * Categorize the given list of all imported module data
+     * @param moduleRecords
+     */
+    getCategorizedModuleData(moduleRecords: Record<string, unknown>): Result<CategorizedModules>;
 
     /**************************************************************************
      * Paths
