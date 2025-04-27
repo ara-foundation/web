@@ -1,6 +1,6 @@
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug, enumValues } from "@ara-web/ts-enhancement";
 import { EnabledNodejsModules } from "./enabled-nodejs-module.js";
-import { ModuleCategory as BaseCategory, FileExtension, trimPath } from "../module.js";
+import { ModuleCategory as BaseCategory, FileExtension, getFileExtension, trimPath } from "../module.js";
 
 export enum ModuleCategory {
     NodeJsModule = "node_modules",
@@ -10,7 +10,7 @@ export enum ModuleCategory {
  * @param url Usually an import clause, which is turned into the file
  */
 export const urlToFileNames = (url: string, fileExtension?: FileExtension.Typescript): string[] => {
-    const identifiedFileExtension = getFileExtension(url);
+    const identifiedFileExtension = getFileExtension(url, enumValues(FileExtension));
     if (identifiedFileExtension.isSuccess) {
         return [url];
     }
@@ -52,36 +52,6 @@ export const identifyModuleType = async (path: string): Promise<ModuleCategory|B
     return BaseCategory.Untracked;
 }
 
-
-/**
- * Detects the file type by the file extension, if not supported file then return PathType.DirectoryOrUndefined.
- * @param filePath the full path to the file within the Ara Web
- * @returns {FileExtension}
- */
-const getFileExtension = (filePath: string): Result<FileExtension> => {
-    const extensionIndex = filePath.lastIndexOf(".");
-    if (extensionIndex === -1) {
-        return Result.fail(
-            `Extension not found in the given file path`,
-            `The '${filePath}' file path doesn't have an extension`
-        )
-    }
-
-    const extension = filePath.substring(extensionIndex);
-
-    const pathTypes = Object.keys(FileExtension)
-    for (const pathType of pathTypes) {
-        const key = pathType as keyof typeof FileExtension;
-        if (FileExtension[key] === extension) {
-            return Result.ok(FileExtension[key]);
-        }
-    }
-
-    return Result.fail(
-        `The module's '${extension}' extension not supported`,
-        `The '${filePath}' doesn't have recognized file extension`
-    )
-}
 
 // Moved from fileLevel.js and used by the UILevel and Astro page detection
 // /**
