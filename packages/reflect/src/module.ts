@@ -17,7 +17,5 @@ export enum FileExtension {
  * @param module path
  */
 export const trimPath = (path: string): string => {
-    return path.replace("./", "").replace("../", "").replace("@", "/src/")
+    return path.replace("../", "").replace("./", "").replace("@", "/src/")
 }
-
-
