@@ -83,6 +83,26 @@ export class ProjectMemory {
     }
 
     /**
+     * Returns the modules that doesn't have contents
+     * @param moduleCategory 
+     */
+    public getNoContentModules<T>(filterCategory?: string): ModuleMemories<T|unknown> {
+        let modules: ModuleMemories<unknown> = {}
+        for (const modulePath in this._memories) {
+            const moduleURL = modulePath as ModuleURL;
+            if (this._memories[moduleURL].content !== undefined) {
+                continue;
+            }
+            const moduleCategory = this._memories[moduleURL].moduleLink.category;
+            if (filterCategory === undefined || moduleCategory === filterCategory) {
+                modules[moduleURL] = this._memories[moduleURL]
+            }
+        }
+
+        return modules;
+    }
+
+    /**
      * Returns all the contents
      * @param moduleCategory 
      * @returns 
