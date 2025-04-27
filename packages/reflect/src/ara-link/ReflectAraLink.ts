@@ -51,6 +51,10 @@ export class ModuleLink extends PackageURL {
         return this.toString() as ModuleURL;
     }
 
+    public get modulePath(): string|undefined {
+        return this.subpath;
+    }
+
     public isEqual(moduleUrl: ModuleURL): boolean {
         return this.moduleURL === moduleUrl;
     }
