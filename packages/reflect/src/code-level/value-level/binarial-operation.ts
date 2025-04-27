@@ -127,9 +127,9 @@ export class BinarialOperation {
         const leftSide = tsNode.getChild(0)!;
         const rightSide = tsNode.getChild(2)!;
                 
-        Debug.push(`Left: this.identifyValue('${leftSide.getText()}')`)
+        // Debug.push(`Left: this.identifyValue('${leftSide.getText()}')`)
         const leftValue = await ValueLevel.identifyValue(leftSide, {dataType: ValueTypeString.default}, astNodeContext!);
-        Debug.pop();
+        // Debug.pop();
         if (leftValue.isFailure) {
             return Result.fail(
                 `Left: this.identifyValue('${leftSide.getText()}'): ${leftValue.errorTitle}`,
@@ -145,9 +145,9 @@ export class BinarialOperation {
         //     )
         // }
 
-        Debug.push(`Right: this.identifyValue('${rightSide.getText()}')`)
+        // Debug.push(`Right: this.identifyValue('${rightSide.getText()}')`)
         const rightValue = await ValueLevel.identifyValue(rightSide, {dataType: ValueTypeString.default}, astNodeContext!);
-        Debug.pop();
+        // Debug.pop();
         if (rightValue.isFailure) {
             return Result.fail(
                 `Right: this.identifyValue('${rightSide.getText()}'): ${rightValue.errorTitle}`,

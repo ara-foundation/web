@@ -45,9 +45,9 @@ export class FunctionCall {
         }
 
         if (PropertyAccess.isA(identifier)) {
-            Debug.push(`this.identifyMethodCall()`, {'method': identifier.getText(), 'methodArgs': syntaxList.getText()})
+            // Debug.push(`this.identifyMethodCall()`, {'method': identifier.getText(), 'methodArgs': syntaxList.getText()})
             const res = await this.identifyMethodCall(identifier, funcArgs.getValue(), astNodeContext!)
-            Debug.pop();
+            // Debug.pop();
             if (res.isFailure) {
                 return Result.fail(
                     `this.identifyMethodCall('${identifier.getText()}', syntaxList='[${syntaxList.getText()}]'): ${res.errorTitle}`,
