@@ -38,7 +38,7 @@ export class ReflectExtension implements ExtensionInterface {
         return enumValues(ModuleCategory);
     }
 
-    public getModuleCategory = (modulePath: string): Result<ModuleCategory> => {
+    public getModuleCategory = (modulePath: string): Result<ModuleCategory|string> => {
         //modulePath = trimPath(modulePath);
         if (!modulePath.includes("src/")) {
             return Result.fail(`The Astro Framework records must be in the 'src' directory`, `Please pass correct path or update ${this.moduleName} to support '${modulePath}'`)
@@ -50,7 +50,12 @@ export class ReflectExtension implements ExtensionInterface {
             }
         }
 
-        return Result.fail(`Failed to categorize, module path is not in any category`, `Please update ${this.moduleName} to support '${modulePath}'`)
+        const moduleSlugs = modulePath.substring(modulePath.indexOf('src/') + 'src/'.length).split("/");
+        if (moduleSlugs.length < 2) {
+            return Result.fail(`The '${modulePath}' doesn't have a category`, `Are you sure its in the sub-directory of the src/?`)
+        }
+
+        return Result.ok(moduleSlugs[0])
     }
 
     public getCategorizedModuleData(moduleRecords: Record<string, unknown>): Result<CategorizedModules> {
@@ -78,13 +83,9 @@ export class ReflectExtension implements ExtensionInterface {
             return Result.ok(new ModuleMemory<Component>(moduleLink, glob));
         } else if (moduleLink.category === ModuleCategory.Page) {
             return Result.ok(new ModuleMemory<Page>(moduleLink, glob));
-        } else if (moduleLink.category === ModuleCategory.Script) {
-            return Result.ok(new ModuleMemory<unknown>(moduleLink, glob));
-        } 
-        
-        return Result.fail(
-            `The module '${moduleLink.toString()}' not supported by Reflect`
-        )
+        } else {
+            return Result.ok(new ModuleMemory<unknown>(moduleLink, glob))
+        }
     }
 
     public isSupportedModuleCategory(moduleCategory: string): boolean {
@@ -92,10 +93,6 @@ export class ReflectExtension implements ExtensionInterface {
     }
 
     public getNewModuleLink(moduleCategory: string, filePath: string): Result<ModuleLink> {
-        if (!this.isSupportedModuleCategory(moduleCategory)) {
-            return Result.fail(`this.isSupportedModuleCategory('${moduleCategory}'): false`, `Please pass the correct module category`)
-        }
-
         const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, filePath);
         return Result.ok(moduleLink);
     }

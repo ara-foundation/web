@@ -41,7 +41,6 @@ test(`Test the categorization of the import.meta.glob`, async () => {
   
     const reflectExtension = new ReflectExtension();
     const validated = reflectExtension.getCategorizedModuleData(modules);
-    Debug.log(validated)
     expect(validated.isSuccess).toBe(true);
 
     // Make sure they are all no content moduled

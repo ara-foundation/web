@@ -1,7 +1,7 @@
-/**
- * Testing the functions for the setup of the plugin into the website,
- * which means setting up shared modules.
- */
+// /**
+//  * Testing the functions for the setup of the plugin into the website,
+//  * which means setting up shared modules.
+//  */
 
 import { expect, test } from "vitest";
 import { ReflectExtension } from "../src/ReflectExtension";
@@ -24,6 +24,8 @@ test(`Make sure the module parts are importing`, async () => {
     for (let modulePath in moduleMemories) {
         const moduleURL = modulePath as ModuleURL;
         const moduleParts = await ModulePartitioner.partition(moduleMemories[moduleURL]);
+        Debug.log(`identified module parts for ${moduleURL}`)
+        Debug.log(moduleParts)
         expect(moduleParts.isSuccess).toBe(true);
 
         if (moduleParts.getValue().fileExtension === FileExtension.Astro) {

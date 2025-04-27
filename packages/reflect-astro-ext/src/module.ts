@@ -28,6 +28,8 @@ export enum ModuleCategory {
  */
 export enum FileExtension {
     Astro = ".astro",
+    Svg = ".svg",
+    Markdown = ".md",
     Tsx = BaseExtension.Tsx,
     Jsx = BaseExtension.Jsx,
     Typescript = BaseExtension.Typescript,

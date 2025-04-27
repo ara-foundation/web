@@ -2,6 +2,7 @@ import { CategorizedModules, ExtensionInterface } from "@ara-web/reflect";
 import { getFileAbsolutePath } from "@ara-web/reflect/module"
 import { ProjectMemory } from "@ara-web/reflect/memory";
 import { expect } from "vitest";
+import { Debug } from "@ara-web/ts-enhancement";
 
 let categorizedModuleAmount = 0;
 export const getCategorizedModuleAmount = (): number => {
@@ -9,7 +10,7 @@ export const getCategorizedModuleAmount = (): number => {
 }
 
 export const getImportRecords = (): Record<string, unknown> => {
-    const imported = import.meta.glob(['/test/test-app/**/*.{astro,ts}'], {eager: true});
+    const imported = import.meta.glob(['/test/test-app/src/**/*.{astro,ts,svg}'], {eager: true});
     const records: Record<string, unknown> = {};
 
     categorizedModuleAmount = 0;
@@ -32,6 +33,7 @@ export const getNewProjectMemory = (ext: ExtensionInterface, modules: Categorize
     for (let moduleCategory in modules) {
         for (let modulePath in modules[moduleCategory]) {
             const moduleLink = ext.getNewModuleLink(moduleCategory, modulePath);
+            expect(moduleLink.isSuccess).toBe(true);
             const moduleData = modules[moduleCategory][modulePath];
             const moduleMemory = ext.getNewModuleMemory(moduleLink.getValue(), moduleData.glob);
             expect(moduleMemory.isSuccess).toBe(true);
