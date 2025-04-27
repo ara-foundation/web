@@ -1,9 +1,7 @@
 {
   "name": "@ara-web/rpc-engine",
   "description": "Ara Web's RPC Engine allowing to call some local or remote functions",
-  "repository": {
-
-  },
+  "repository": {},
   "version": "0.0.1",
   "type": "module",
   "scripts": {
@@ -24,10 +22,9 @@
     "@ara-web/ts-enhancement": "workspace:*"
   },
   "devDependencies": {
-    "astro": "^5.6.1",
     "@types/react": "^19.0.10",
+    "astro": "^5.7.5",
     "vite": "^5.2.11"
-
   },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"

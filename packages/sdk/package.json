@@ -18,27 +18,26 @@
       "default": "./dist/index.js"
     }
   },
-
   "dependencies": {
-    "@aztec/bb.js": "0.65.2",
-    "@mach-34/noir-bignum-paramgen": "1.1.2",
+    "@aztec/bb.js": "^0.78.1",
+    "@mach-34/noir-bignum-paramgen": "^1.1.2",
     "@nanostores/persistent": "^0.10.2",
-    "@noir-lang/noir_js": "1.0.0-beta.0",
+    "@noir-lang/noir_js": "^1.0.0-beta.3",
     "@shield-labs/utils": "^0.1.0",
     "@shield-labs/zklogin-contracts": "workspace:*",
     "js-cookie": "^3.0.5",
-    "ky": "^1.7.2",
+    "ky": "^1.7.5",
     "lodash-es": "^4.17.21",
     "nanostores": "^0.11.4",
     "ox": "^0.4.0",
-    "ts-essentials": "^10.0.3",
-    "zod": "^3.23.8"
+    "ts-essentials": "^10.0.4",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
     "@types/lodash-es": "^4.17.12",
     "prettier": "^3.2.5",
-    "typescript": "^5.5.2"
+    "typescript": "~5.7.3"
   },
   "repository": {
     "type": "git",

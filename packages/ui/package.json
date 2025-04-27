@@ -32,14 +32,14 @@
     "bits-ui": "^0.21.16",
     "clsx": "^2.1.1",
     "lucide-svelte": "^0.441.0",
-    "prettier": "^3.1.1",
-    "prettier-plugin-svelte": "^3.1.2",
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.2.7",
     "svelte-check": "^4.0.5",
     "tailwind-merge": "^2.5.2",
     "tailwind-variants": "^0.2.1",
-    "tailwindcss": "^3.4.9",
+    "tailwindcss": "^4.0.9",
     "tslib": "^2.4.1",
-    "typescript": "^5.0.0",
+    "typescript": "~5.7.3",
     "vite": "^5.2.11"
   },
   "dependencies": {
@@ -49,7 +49,7 @@
     "svelte-french-toast": "^1.2.0",
     "svelte-typed-context": "^1.0.1",
     "sveltekit-superforms": "^2.19.1",
-    "ts-essentials": "^10.0.2",
-    "zod": "^3.23.8"
+    "ts-essentials": "^10.0.4",
+    "zod": "^3.24.2"
   }
 }

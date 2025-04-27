@@ -20,7 +20,7 @@
     }
   },
   "devDependencies": {
-    "typescript": "^5.5.2"
+    "typescript": "~5.7.3"
   },
   "dependencies": {
     "packageurl-js": "^2.0.1"

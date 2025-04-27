@@ -5,17 +5,12 @@
   "description": "Reflect on it's own code structure and alter it",
   "license": "ISC",
   "main": "dist",
-  "dependencies": {
-    "@ara-web/ts-enhancement": "workspace:*",
-    "packageurl-js": "^2.0.1",
-    "ts-morph": "^25.0.1"
-  },
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",
     "prepublishOnly": "pnpm test:lint && tsc",
     "_chore": "pnpm i",
-    "test": "vitest"
+    "test": "vitest -r ./"
   },
   "exports": {
     ".": {
@@ -25,6 +20,14 @@
     "./nodejs-ext": {
       "types": "./src/reflect-nodejs-ext/index.ts",
       "default": "./dist/reflect-nodejs-ext/index.js"
+    },
+    "./ara-link": {
+      "types": "./src/ara-link/ReflectAraLink.ts",
+      "default": "./dist/ara-link/ReflectAraLink.js"
+    },
+    "./module": {
+      "types": "./src/module.ts",
+      "default": "./dist/module.js"
     },
     "./memory": {
       "types": "./src/memory/index.ts",
@@ -51,10 +54,16 @@
       "default": "./dist/code-level/variable-level/variable-statement.js"
     }
   },
+  "dependencies": {
+    "@ara-web/ts-enhancement": "workspace:*",
+    "packageurl-js": "^2.0.1",
+    "ts-morph": "^25.0.1"
+  },
   "devDependencies": {
+    "@types/node": "^20.10.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "vite": "^5.2.11",
-    "vitest": "^3.1.1"
+    "vitest": "2.1.6"
   }
 }
