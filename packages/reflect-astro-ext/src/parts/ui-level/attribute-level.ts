@@ -1,6 +1,6 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
 import { Result } from "@ara-web/ts-enhancement";
-import { type AstroNode } from "../component.js";
+import { type AstroNode } from "../../component.js";
 import type { UiContent } from "./ui-content.js";
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "@ara-web/reflect/code-level/ts-node";
