@@ -1,36 +1,42 @@
-# Astro Reflection
-This is the extension for the Reflect package to support reflecting websites written with Astro Framework.
+# Reflect Astro Extension
+Reflect the [Astro Framework](https://astro.build/) website to convert the website into a form of JSON and vice-versa. ;)
 
-## Getting Started
-First, let's create a sample project by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations)
+Possible use case:
+- Edit the web pages, add new pages right on the website.
+- The cheapest AI interface for your web page, since AI works with the JSON representation
+- Clean code, less code since admin panel is just made with the few NPM packages.
+
+> Requires `@ara-web/reflect`
+
+## Tutorial
+For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations)
 
 ```bash
 pnpm create astro@latest --add react ./sample-app
 cd ./sample-app
 ```
 
-In the project, install the reflect packages:
+In the project, install *@ara-web/reflect* packages:
 
 ```bash
 pnpm add @ara-web/reflect @ara-web/reflect-astro-ext
 ```
 
-### Setup
-Once, all the packages are installed, 
-we need to create a script that let's know Reflect about our codebase.
+Our installation process is ready. Before using the Reflect, let's set up the package.
 
+### Setup
 Create a script in `src/scripts/reflect.ts`:
 
 ```typescript
 import { Reflect } from "@ara-web/reflect"
 import { ReflectExtension, ModuleCategory } from "@ara-web/reflect-astro-ext"
 
-const reflect = new Reflect({extensions: [ReflectExtension]});
+const reflect = new Reflect({extensions: [new ReflectExtension()]});
 
-const pages = import.meta.glob("../pages/**/*.{js|astro|jsx}");
-const components = import.meta.glob("../components/**/*.{js|astro|jsx}")
-const layuts = import.meta.glob("../layouts/**/*.{js|astro|jsx}")
-const scripts = import.meta.glob("../scripts/**/*.{js|ts}")
+const pages = import.meta.glob("src/pages/**/*.{js|astro|jsx}");
+const components = import.meta.glob("src/components/**/*.{js|astro|jsx}")
+const layuts = import.meta.glob("src/layouts/**/*.{js|astro|jsx}")
+const scripts = import.meta.glob("src/scripts/**/*.{js|ts}")
 const nodeJs = import.meta.glob(["node_modules/package/index.cjs"])
 
 reflect.postModules({
@@ -50,8 +56,7 @@ This will add a support of Astro Parameters.
 Then, we load all the modules that Reflect will need, by each Astro
 Framework's categories.
 
-Once, Reflect knows that we use Astro, and knows which astro modules are
-in our project, we create an instance and return it back.
+Once, Reflect knows that we use Astro, we can analyze the website as the JSON.
 
 ### Usage
 > Test the entire tutorial by following the steps.
@@ -72,7 +77,7 @@ console.log(pages);
 
 The above example will print all the pages in your console as the JSON.
 
-### Development
+### Auto Module Imports
 Sometimes, during the development, we need to update the data in live.
 For example, when we add a new component, we edited the page etc.
 
@@ -81,9 +86,7 @@ But Reflect doesn't know about any new files since it already loaded what we ask
 To automatically update the Reflect's memory to match the filesystem,
 Reflect has a useful function: `Reflect.postAutoImporter()`:
 
-In the `src/scripts/reflect.ts` replace the
-
- `reflect.postModules()` with the following:
+In the `src/scripts/reflect.ts` replace the following:
 
 ```typescript
 reflect.postModules({
@@ -113,4 +116,50 @@ const importModules = (): CategorizedModules => {
 reflect.postAutoImporter(importModules);
 ```
 
-Whenever you call `reflect.get()` the reflect will automatically update the memory by reloading everything from the file structure.
+Whenever you call `reflect.get()` the reflect will automatically update the memory by reloading everything from the file system.
+
+
+# Optimize the loading for each importer.
+Listing all the modules that Astro understands is tiresome.
+Is there a way to run it faster? There is not but we can create it
+by adding auto-importer into the extensions.
+
+Add to the extension interface:
+
+`getCategorizedModuleData(records: Record<string, unknown>) => CategorizedModules`
+
+Then:
+
+```typescript
+import { Reflect } from "@ara-web/reflect";
+import AstroReflectExt from "@ara-web/reflect-astro-ext";
+
+const astroReflect = new AstroReflectExt();
+
+const astroModuleRecords = import.meta.glob("src/**/*.{js|ts|astro|tsx|jsx}");
+const astroModules = astroReflect.getCategorizedModuleData(astroModuleRecords);
+
+const reflect = new Reflect({extensions: [astroReflect]});
+reflect.postModules(astroModules);
+
+```
+
+---
+In order to update automatically:
+
+```typescript
+const getAstroRecords = () => {
+    return import.meta.glob("src/**/*.{js|ts|astro|tsx|jsx}");
+}
+
+const astroAutoImporter = ({recordsGetter: getAstroRecords, categorizer: astroReflect})
+reflect.postAutoImporter(astroAutoImporter)
+
+// Allow access to some node_modules packages
+const getNodeJsRecords = () => {
+    return import.meta.glob("@fontawesome/free-svg-icons")
+}
+const fontAwesomeImporter = ({records: getNodejsRecords, categorizer: reflect.nodeJsExt})
+```
+
+The reflect package comes with the included extension that deals with the NodeJS Environment. This extension also allows using the features of the typescript such as `Array`, `Record` generics.

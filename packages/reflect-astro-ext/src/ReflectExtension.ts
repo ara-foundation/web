@@ -1,4 +1,4 @@
-import { trimPath, type ExtensionInterface } from "@ara-web/reflect";
+import { trimPath, type CategorizedModules, type ExtensionInterface } from "@ara-web/reflect";
 import { Debug, enumValues, OkResult, Result, type Component, type Page } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
 import { type UiContent } from "./ui-level/ui-content.js";
@@ -38,6 +38,10 @@ export class ReflectExtension implements ExtensionInterface {
         return "@ara-web";
     }
 
+    public get moduleName(): string {
+        return `${this.namespace}/${this.name}`;
+    }
+
     public get label(): string {
         return "Astro Framework Reflection";
     }
@@ -48,6 +52,37 @@ export class ReflectExtension implements ExtensionInterface {
 
     public get moduleCategories(): string[] {
         return enumValues(ModuleCategory);
+    }
+
+    private getModuleCategory = (modulePath: string): Result<ModuleCategory> => {
+        modulePath = trimPath(modulePath);
+        if (!modulePath.startsWith("src/")) {
+            return Result.fail(`The Astro Framework records must be in the 'src' directory`, `Please pass correct path or update ${this.moduleName} to support '${modulePath}'`)
+        }
+
+        for (let moduleCategory of this.moduleCategories) {
+            if (modulePath.startsWith(`src/${moduleCategory}`)) {
+                return Result.ok(moduleCategory as ModuleCategory);
+            }
+        }
+
+        return Result.fail(`Failed to categorize, module path is not in any category`, `Please update ${this.moduleName} to support '${modulePath}'`)
+    }
+
+    public getCategorizedModuleData(moduleRecords: Record<string, unknown>): Result<CategorizedModules> {
+        const categorizedModules: CategorizedModules = {
+        };
+        for (let modulePath in moduleRecords) {
+            const moduleCategory = this.getModuleCategory(modulePath);
+            if (moduleCategory.isFailure) {
+                return Result.fail(`this.getModuleCategory('${modulePath}'): ${moduleCategory.errorTitle}`, moduleCategory.errorDescription!)
+            }
+            categorizedModules[moduleCategory.getValue()][modulePath] = {
+                glob: moduleRecords[modulePath]
+            }
+        } 
+    
+        return Result.ok(categorizedModules);
     }
 
     public isSupportedModuleType(moduleCategory: string): boolean {
