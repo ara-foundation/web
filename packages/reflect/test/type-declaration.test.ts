@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { Code } from "../src/code-level/Code.js";
-import { type Page, Debug } from "@ara-web/ts-enhancement";
+import { type Page } from "@ara-web/ts-enhancement";
 import { AstNode } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
 import { ModuleMemory } from "../src/memory/ModuleMemory.js";

@@ -54,6 +54,7 @@
   "devDependencies": {
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "vite": "^5.2.11",
     "vitest": "^3.1.1"
   }
 }
