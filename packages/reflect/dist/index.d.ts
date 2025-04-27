@@ -1,4 +1,4 @@
-export { ModuleCategory, FileExtension, trimPath } from "./module.js";
-export { Reflect, type ModuleData, type CategorizedModules, type ReflectSetup } from "./Reflect.js";
-export type { ExtensionInterface } from "./extension-interface.js";
+export { Reflect, type ReflectSetup } from "./Reflect.js";
+export { type ModuleData, type CategorizedModules } from "./setup.js";
+export { type ExtensionInterface, type PossibleModuleLinksBuilder } from "./extension-interface.js";
 export default Reflect;

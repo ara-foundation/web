@@ -68,9 +68,9 @@ let Conditional = (() => {
             const condition = tsNode.getChild(0);
             const trueExpression = tsNode.getChild(2);
             const falseExpression = tsNode.getChild(4);
-            Debug.push(`this.identifyValue('${condition.getText()}')`);
+            // Debug.push(`this.identifyValue('${condition.getText()}')`)
             const conditionResult = await ValueLevel.identifyValue(condition, { dataType: ValueTypeString.boolean }, astNodeContext);
-            Debug.pop();
+            // Debug.pop();
             if (conditionResult.isFailure) {
                 return Result.fail(`this.identifyValue('${condition.getText()}'): ${conditionResult.errorTitle}`, conditionResult.errorDescription);
             }

@@ -1,16 +1,13 @@
 import { Result } from "@ara-web/ts-enhancement";
 import type { ExtensionInterface } from "./extension-interface.js";
-export type ModuleData = {
-    [key: string]: {
-        glob: unknown;
-    };
-};
-export type CategorizedModules = {
-    [key: string]: ModuleData;
-};
+import type { CategorizedModules } from "./setup.js";
 export type ReflectSetup = {
     extensions?: ExtensionInterface[];
 };
+export declare class ThroughCategorizer {
+    recordsGetter: (() => Record<string, unknown>) | undefined;
+    categorizer: ExtensionInterface | undefined;
+}
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
@@ -23,6 +20,7 @@ export declare class Reflect {
      * @param reflectSetup
      */
     constructor(reflectSetup?: ReflectSetup);
+    get nodeJsExt(): ExtensionInterface;
     private _fetchModules;
     /**
      * Returns the module's memory using the extension to define how to store the module in the form of
@@ -42,7 +40,7 @@ export declare class Reflect {
      * Put a function that loads the globs whenever any function is called.
      * @param importFunc
      */
-    postAutoImporter: (importFunc?: (() => CategorizedModules)) => void;
+    postAutoImporter: (importFunc?: (() => CategorizedModules) | ThroughCategorizer) => void;
     /**
      * Pre-reflection operation to reload all the modules.
      * Additionally, this operation adds all supported built-in identifiers provided by NodeJS.

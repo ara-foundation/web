@@ -205,17 +205,16 @@ export class ValueLevel {
         ];
         for (let supported of supportedValueLevels) {
             if (supported.isA(tsNode)) {
-                Debug.push(supported.name, { tsNode: tsNode.getText() });
+                // Debug.push(supported.name, {tsNode: tsNode.getText()})
                 const supportedIdentifier = new supported();
                 const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
-                Debug.pop();
+                // Debug.pop();
                 if (identified.isFailure) {
                     return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription);
                 }
                 return Result.ok(identified.getValue());
             }
         }
-        Debug.log(tsNode);
         return Result.errorCode404(['ValueLevel'], 'identifyValue', `${tsNode.getText()}`);
     };
     static identifyDataType = (astDataType, astNodeContext) => {
@@ -318,9 +317,9 @@ export class ValueLevel {
             }
             astNode.dataType = identifiedDataType.getValue();
         }
-        Debug.push(`this.identifyValue()`, { tsNode: expTsNode.getText() });
+        // Debug.push(`this.identifyValue()`, {tsNode: expTsNode.getText()})
         const identifiedValue = await ValueLevel.identifyValue(expTsNode, astNode.typedData, astNodeContext);
-        Debug.pop();
+        // Debug.pop();
         if (identifiedValue.isFailure) {
             return Result.fail(`this.identifyValue(): ${identifiedValue.errorTitle}`, identifiedValue.errorDescription);
         }

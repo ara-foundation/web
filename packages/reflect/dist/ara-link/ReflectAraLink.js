@@ -43,6 +43,9 @@ export class ModuleLink extends PackageURL {
     get moduleURL() {
         return this.toString();
     }
+    get modulePath() {
+        return this.subpath;
+    }
     isEqual(moduleUrl) {
         return this.moduleURL === moduleUrl;
     }

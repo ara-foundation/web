@@ -28,6 +28,11 @@ export declare class ProjectMemory {
      */
     getModuleMemories<T>(moduleCategory?: string): ModuleMemories<T | unknown>;
     /**
+     * Returns the modules that doesn't have contents
+     * @param moduleCategory
+     */
+    getNoContentModules<T>(filterCategory?: string): ModuleMemories<T | unknown>;
+    /**
      * Returns all the contents
      * @param moduleCategory
      * @returns

@@ -31,6 +31,7 @@ export declare class ModuleLink extends PackageURL {
     constructor(namespace: string, name: string, category: string, subpath: string);
     get category(): string;
     get moduleURL(): ModuleURL;
+    get modulePath(): string | undefined;
     isEqual(moduleUrl: ModuleURL): boolean;
     static fromModuleURL(moduleURL: ModuleURL): Result<ModuleLink>;
 }

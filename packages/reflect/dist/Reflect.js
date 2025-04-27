@@ -1,6 +1,10 @@
 import { OkResult, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory } from "./memory/index.js";
 import { ReflectExtension } from "./reflect-nodejs-ext/ReflectExtension.js";
+export class ThroughCategorizer {
+    recordsGetter = undefined;
+    categorizer = undefined;
+}
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
@@ -26,6 +30,9 @@ export class Reflect {
             this._memory.putModuleLinksBuilder(extension.getPossibleModuleLinks);
         }
     }
+    get nodeJsExt() {
+        return this._extensions[0];
+    }
     //****************************************************************
     // 
     // Modules Imports from the Project and Setting up internal Reflect memory.
@@ -34,6 +41,18 @@ export class Reflect {
     _fetchModules = () => {
         if (this._autoImportFunc === undefined) {
             return undefined;
+        }
+        if (typeof this._autoImportFunc !== "function") {
+            if (this._autoImportFunc.recordsGetter === undefined ||
+                this._autoImportFunc.categorizer === undefined) {
+                return undefined;
+            }
+            const records = this._autoImportFunc.recordsGetter();
+            const categorizedModules = this._autoImportFunc.categorizer.getCategorizedModuleData(records);
+            if (categorizedModules.isFailure) {
+                return undefined;
+            }
+            return categorizedModules.getValue();
         }
         return this._autoImportFunc();
     };

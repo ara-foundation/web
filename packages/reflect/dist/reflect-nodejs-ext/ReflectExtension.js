@@ -26,16 +26,30 @@ export class ReflectExtension {
     getNewModuleMemory(moduleLink, glob) {
         return Result.ok(new ModuleMemory(moduleLink, glob));
     }
+    getCategorizedModuleData(moduleRecords) {
+        const categorizedModules = {
+            [ModuleCategory.NodeJsModule]: {}
+        };
+        for (let modulePath in moduleRecords) {
+            categorizedModules[ModuleCategory.NodeJsModule][modulePath] = {
+                glob: moduleRecords[modulePath]
+            };
+        }
+        return Result.ok(categorizedModules);
+    }
     /**
      * NodeJs Extension's hook before the get operation will put the built in Nodejs built in identifiers
      * into all modules
      * @param projectMemory
      * @returns
      */
-    async beforeGet(_, projectMemory) {
+    async beforeGet(moduleCategory, projectMemory) {
         const builtInIdentified = await this.postBuiltInIdentifiers(projectMemory);
         if (builtInIdentified.isFailure) {
             return Result.fail(`this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`, builtInIdentified.errorDescription);
+        }
+        if (moduleCategory === ModuleCategory.NodeJsModule) {
+            this.postNodeJSContents(projectMemory);
         }
         return OkResult.ok();
     }
@@ -65,6 +79,18 @@ export class ReflectExtension {
     // Internal
     //
     //****************************************************************
+    postNodeJSContents = (projectMemory) => {
+        const modules = projectMemory.getModuleMemories(ModuleCategory.NodeJsModule);
+        if (modules === undefined) {
+            return;
+        }
+        for (let modulePath in modules) {
+            const moduleURL = modulePath;
+            if (modules[moduleURL].content === undefined) {
+                modules[moduleURL].content = modules[moduleURL].glob;
+            }
+        }
+    };
     //
     // Adds the Array, Object and other classes, types that are available in the Environment
     //
