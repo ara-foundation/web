@@ -3,7 +3,6 @@ import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
 import { Code } from "@ara-web/reflect/code-level";
 import { AstNode, type AstIdentifiers } from "@ara-web/reflect/code-level/ast-node";
 import { IntersectedUnionType, UnionTypeDeclaration } from "@ara-web/reflect/code-level/ast-node@types";
-import { ModuleCategory } from "../../module.js";
 
 /**
  * Reflect is the main source to Reflect on the website itself.
@@ -19,16 +18,9 @@ export class CodeLevel {
         if (source === undefined) {
             return Result.ok(moduleMemory);
         }
-        const code = new Code(source);
+        const code = new Code(source, moduleMemory.moduleLink);
 
-        const pageModules = projectMemory.getModuleMemories<Page>(ModuleCategory.Page);
-        
-        //---------------------------------------------------------------
-        //
         // The identified Imports
-        //
-        //---------------------------------------------------------------
-        
         const importsIdentifed = await this.identifyImports(code, projectMemory);
         if (importsIdentifed.isFailure) {
             return Result.fail(
@@ -53,23 +45,14 @@ export class CodeLevel {
         //     }
         // Debug.pop();
         
-        //---------------------------------------------------------------
-        //
         // The type declarations
-        //
-        //---------------------------------------------------------------
-        
         const identifiedTypes = await this.identifyTypes<T>(code, moduleMemory);
         if (identifiedTypes.isFailure) {
             return Result.fail(
                 `this.identifyTypes(): ${identifiedTypes.errorTitle}`,
                 identifiedTypes.errorDescription!
             )
-        } else {
-            projectMemory.putModuleMemories(pageModules);
         }
-
-        Debug.log(`Types in all pages declared.`);
 
         // Debug.push("All type declarations within the page:")
         // let count = 0;
@@ -91,12 +74,7 @@ export class CodeLevel {
         // }
         // Debug.pop()
 
-        //---------------------------------------------------------------
-        //
         // The Linted import identifiers
-        //
-        //---------------------------------------------------------------
-        
         // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
         const importsLinted = await this.lintImports<T>(code, moduleMemory, projectMemory);
         // Debug.pop()
@@ -122,12 +100,7 @@ export class CodeLevel {
         // }
         // Debug.pop()
 
-        //---------------------------------------------------------------
-        //
         // The Linted locally defined types
-        //
-        //---------------------------------------------------------------
-        
         // Debug.push(`this.lintImports()`, {moduleType: ModuleType.Page})
         const typesLinted = await this.lintTypes<T>(code, moduleMemory, projectMemory);
         // Debug.pop()
@@ -209,7 +182,7 @@ export class CodeLevel {
     //
     private static identifyImports = async (code: Code, projectMemory: ProjectMemory): Promise<Result<AstIdentifiers>> => {
         // Debug.push(`code.getImportedIdentifiers()`, {memory: modulePath})
-        const importIdentifiers = code.getImportedIdentifiers(projectMemory);
+        const importIdentifiers = await code.getImportedIdentifiers(projectMemory);
         // Debug.pop();
         if (importIdentifiers.isFailure) {
             return Result.fail(

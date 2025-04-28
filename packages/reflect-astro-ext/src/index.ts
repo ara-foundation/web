@@ -1,2 +1,5 @@
-export * from "./module.js"
-export { ReflectExtension } from "./ReflectExtension.js"
+export { ModuleCategory, FileExtension, ModulePartitioner, type ModuleParts, extractModuleCategory } from "./module.js"
+import { ReflectAstroFramework as ReflectExtension } from "./ReflectExtension.js"
+
+export const ReflectAstroFramework = ReflectExtension;
+export default ReflectExtension;

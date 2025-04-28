@@ -2,10 +2,8 @@ import type { AstroInstance } from "astro";
 import { parse as AstroParse } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
 import { 
-    getFileExtension, 
-    ModuleCategory as BaseCategory, 
     FileExtension as BaseExtension,
-    getFileContent 
+    FilePath
 } from "@ara-web/reflect/module";
 import { ModuleMemory } from "@ara-web/reflect/memory";
 import { Debug, enumValues, Result, type Page } from "@ara-web/ts-enhancement";
@@ -30,8 +28,8 @@ export enum FileExtension {
     Astro = ".astro",
     Svg = ".svg",
     Markdown = ".md",
-    Tsx = BaseExtension.Tsx,
-    Jsx = BaseExtension.Jsx,
+    Tsx = ".tsx",
+    Jsx = ".jsx",
     Typescript = BaseExtension.Typescript,
     Javascript = BaseExtension.Javascript,
 }
@@ -46,89 +44,36 @@ export type ModuleParts = {
 }
 
 /**
- * Identify the path as path to a script, component, or a page?
- * @param {string} path the file path 
- * @returns {ModuleCategory}
+ * Detects the module category. To detct, it must be in the src.
+ * @param modulePath 
+ * @returns 
  */
-export const identifyModuleType = (path: string): ModuleCategory|BaseCategory => {
-    // path = trimPath(path);
-    if (path.indexOf(ModuleCategory.Layout) > -1) {
-        return ModuleCategory.Layout;
+export const extractModuleCategory = (srcDir: string, modulePath: string): Result<ModuleCategory|string> => {
+    if (!modulePath.startsWith(srcDir)) {
+        return Result.fail(
+            `The Astro Framework records must be in the 'src' of the root directory`, 
+            `Please pass a module in '${srcDir}', not as '${modulePath}'`
+        )
     }
 
-    if (path.indexOf(ModuleCategory.Script) > -1) {
-        return ModuleCategory.Script;
-    } 
-    if (path.indexOf(ModuleCategory.Component) > -1) {
-        return ModuleCategory.Component;
-    } 
-    if (path.indexOf(ModuleCategory.Page) > -1) {
-        return ModuleCategory.Page;
-    }
-
-    return BaseCategory.Untracked;
-}
-
-
-/**
- * The modulePath that usually seen in the `import {} from 'module-path'` clause.
- * This function returns all possible ways how this modulePath is
- * written as the file in the ProjectMemory.
- * 
- * For example: import type {MyType} from "@scripts/libs"
- * Returns:
- *  - src/scripts/lib.ts
- *  - src/scripts/lib.tsx
- *  - src/scripts/lib.jsx
- *  - src/scripts/lib.js
- *  - src/scripts/lib.astro
- *  - src/scripts/lib/index.js
- *  - src/scripts/lib/index.ts
- *  - src/scripts/lib/index.astro
- *  - src/scripts/lib/index.tsx
- *  - src/scripts/lib/index.jsx
- * @param modulePath
- */
-export const modulePathToAllPossibleFileNames = (modulePath: string, fileExtension?: FileExtension.Typescript): string[] => {
-    const identifiedFileExtension = getFileExtension(modulePath, enumValues(FileExtension));
-    if (identifiedFileExtension.isSuccess) {
-        return [modulePath];
-    }
-    
-    if (fileExtension !== undefined) {
-        return [modulePath + fileExtension];
-    }
-
-    let urls: string[] = enumValues(FileExtension).filter((fileExtension) => (modulePath + fileExtension));
-
-    if (!modulePath.endsWith("index") && !modulePath.endsWith("index/")) {
-        let index: string;
-        if (modulePath.endsWith("/")) {
-            index = "index"
-        } else {
-            index = "/index"
+    // Could be one of the pre-defined categories such as 'pages', 'components' etc.
+    for (let moduleCategory of enumValues(ModuleCategory)) {
+        if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory]))) {
+            return Result.ok(moduleCategory as ModuleCategory);
         }
-        urls = [...urls, ...enumValues(FileExtension).filter((fileExtension) => (modulePath + index + fileExtension))]
     }
 
-    return urls;
+    // User-made category
+    const moduleSlugs = modulePath.substring(srcDir.length).split("/");
+    if (moduleSlugs.length < 2) {
+        return Result.fail(`The '${modulePath}' doesn't have a category`, `Are you sure its in the sub-directory of the src/?`)
+    }
+
+    return Result.ok(moduleSlugs[0])
 }
 
-// /**
-//  * Converts the file name into a Url within the Ara Web
-//  * @param fileName a page
-//  */
-// export const fileNameToUrl = (fileName: string): string => {
-//     let index = fileName.indexOf("/index.astro");
-//     if (index > -1) {
-//         return fileName.substring(0, index)
-//     }
-
-//     return fileName.substring(0, fileName.indexOf(".astro"));
-// }
-
 /**
- * Reflect is the main source to Reflect on the website itself.
+ * Partition the Module into the UI elements and the source code
  */
 export class ModulePartitioner {
     private constructor() {}
@@ -184,8 +129,6 @@ export class ModulePartitioner {
     // Private methods of the pages
     //
     //************************************************************** */
-
-    
     
     private static getAstroFilePath = (glob: unknown): string => {
         // Astro framework adds the absolute file paths.
@@ -200,10 +143,10 @@ export class ModulePartitioner {
      */
     private static getModuleParts = async <T>(moduleMemory: ModuleMemory<T>): Promise<Result<ModuleParts>> => {
         // const absoluteModulePath = absolutePath(modulePath, glob);
-        const fileExtensionResult = getFileExtension(moduleMemory.moduleLink.modulePath, enumValues(FileExtension));
+        const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, enumValues(FileExtension));
         if (fileExtensionResult.isFailure) {
             return Result.fail(
-                `getFileExtension('${moduleMemory.moduleLink.modulePath}'): ${fileExtensionResult.errorTitle}`,
+                `getFileExtension('${moduleMemory.moduleLink.toFilePath}'): ${fileExtensionResult.errorTitle}`,
                 fileExtensionResult.errorDescription!
             )
         }
@@ -217,7 +160,7 @@ export class ModulePartitioner {
         //     const absolutePath = fileExtension === FileExtension.Astro ?
         //         this.getAstroFilePath(moduleMemory.glob) : 
         //         `/${moduleMemory.moduleLink.modulePath!}`;
-        const readResult = await getFileContent(absolutePath);
+        const readResult = await FilePath.getFileContent(absolutePath);
         if (readResult.isFailure) {
             return Result.fail(`getFileContent(${absolutePath}): ${readResult.errorTitle}`, readResult.errorDescription!)
         }

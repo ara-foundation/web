@@ -1,33 +1,54 @@
-import { type CategorizedModules, type ExtensionInterface } from "@ara-web/reflect";
+import { type AutoImporter, type ExtensionInterface, type ImportedRecords } from "@ara-web/reflect";
 import { Debug, enumValues, OkResult, Result, type Component, type Page } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
 import { fileContentToComponent } from "./component.js";
-import { ModuleCategory, modulePathToAllPossibleFileNames, ModulePartitioner } from "./module.js";
-import { ModuleLink, type ModuleURL } from "@ara-web/reflect/ara-link";
-import type { PossibleModuleLinksBuilder } from "@ara-web/reflect";
-import { trimPath } from "@ara-web/reflect/module";
+import { extractModuleCategory, ModuleCategory, ModulePartitioner } from "./module.js";
+import { ModuleLink, type ModuleURL } from "@ara-web/reflect/module-link";
 import { CodeLevel } from "./parts/code-level/CodeLevel.js";
+import { FilePath } from "@ara-web/reflect/module";
 
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export class ReflectExtension implements ExtensionInterface {
-    constructor() {}
+export class ReflectAstroFramework implements ExtensionInterface {
+    private _rootDir: ModuleLink;
+    private _moduleLink: ModuleLink;
+    private _moduleMemories: ModuleMemories<unknown> = {};
+    private _autoImporter?: AutoImporter;
     
-    public get name(): string {
-        return "reflect-astro-ext";
+    /**
+     * The *rootDir* must be absolute absolute path. Example:
+     * 
+     * ```
+     * const rootDir = FilePath.getAbsolutePath('./test-app', import.meta.filename);
+     * const astroReflect = new ReflectAstroFramework(FilePath.getAbsolutePath())
+     * ```
+     * 
+     * @param rootDir 
+     */
+    constructor(rootDir?: ModuleLink) {
+        if (rootDir !== undefined) {
+            if (!FilePath.isAbsolutePath(rootDir.toFilePath)) {
+                throw `rootDir must be absolute, '${rootDir}' not absolute, perhaps use FilePath.getAbsolutePath(rootDir, moduleThatCalls)`
+            }
+            this._rootDir = rootDir;
+        } else {
+            this._rootDir = ModuleLink.newFileURL(FilePath.getCurrentWorkingDir());
+        }
+        const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
+        this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink)
+    }
+    
+    public get operatorId(): ModuleLink {
+        return this.moduleLink;
+    }
+    
+    public get moduleLink(): ModuleLink {
+        return this._moduleLink;
     }
 
-    public get namespace(): string {
-        return "@ara-web";
-    }
-
-    public get moduleName(): string {
-        return `${this.namespace}/${this.name}`;
-    }
-
-    public get label(): string {
-        return "Astro Framework Reflection";
+    public get moduleMemories(): ModuleMemory<unknown>[] {
+        return Object.values(this._moduleMemories);
     }
 
     public get description(): string {
@@ -38,92 +59,107 @@ export class ReflectExtension implements ExtensionInterface {
         return enumValues(ModuleCategory);
     }
 
-    public getModuleCategory = (modulePath: string): Result<ModuleCategory|string> => {
-        //modulePath = trimPath(modulePath);
-        if (!modulePath.includes("src/")) {
-            return Result.fail(`The Astro Framework records must be in the 'src' directory`, `Please pass correct path or update ${this.moduleName} to support '${modulePath}'`)
-        }
-
-        for (let moduleCategory of this.moduleCategories) {
-            if (modulePath.includes(`src/${moduleCategory}`)) {
-                return Result.ok(moduleCategory as ModuleCategory);
-            }
-        }
-
-        const moduleSlugs = modulePath.substring(modulePath.indexOf('src/') + 'src/'.length).split("/");
-        if (moduleSlugs.length < 2) {
-            return Result.fail(`The '${modulePath}' doesn't have a category`, `Are you sure its in the sub-directory of the src/?`)
-        }
-
-        return Result.ok(moduleSlugs[0])
+    public get rootDir(): string {
+        return this._rootDir.toFilePath;
     }
 
-    public getCategorizedModuleData(moduleRecords: Record<string, unknown>): Result<CategorizedModules> {
-        const categorizedModules: CategorizedModules = {};
-        for (let modulePath in moduleRecords) {
-            const moduleCategory = this.getModuleCategory(modulePath);
-            if (moduleCategory.isFailure) {
-                return Result.fail(`this.getModuleCategory('${modulePath}'): ${moduleCategory.errorTitle}`, moduleCategory.errorDescription!)
-            }
-            if (categorizedModules[moduleCategory.getValue()] === undefined) {
-                categorizedModules[moduleCategory.getValue()] = {};
-            }
-            categorizedModules[moduleCategory.getValue()][modulePath] = {
-                glob: moduleRecords[modulePath]
-            }
-        } 
-    
-        return Result.ok(categorizedModules);
+    public get srcDir(): string {
+        return FilePath.join([this._rootDir.toFilePath, 'src']);
     }
 
-    public getNewModuleMemory(moduleLink: ModuleLink, glob: unknown): Result<ModuleMemory<unknown>> {
-        if (moduleLink.category === ModuleCategory.Layout) {
-            return Result.ok(new ModuleMemory<Component>(moduleLink, glob));
-        } else if (moduleLink.category === ModuleCategory.Component) {
-            return Result.ok(new ModuleMemory<Component>(moduleLink, glob));
-        } else if (moduleLink.category === ModuleCategory.Page) {
-            return Result.ok(new ModuleMemory<Page>(moduleLink, glob));
-        } else {
-            return Result.ok(new ModuleMemory<unknown>(moduleLink, glob))
-        }
-    }
-
-    public isSupportedModuleCategory(moduleCategory: string): boolean {
-        return this.moduleCategories.includes(moduleCategory);
-    }
-
-    public getNewModuleLink(moduleCategory: string, filePath: string): Result<ModuleLink> {
-        const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, filePath);
-        return Result.ok(moduleLink);
+    public async putPackage(_: ImportedRecords & { importClause: string; }): Promise<Result<ModuleLink>> {
+        return Result.errorCode501([this.moduleLink.moduleURL], 'putPackage');
     }
 
     /**
-     * ModulePath is received from the 'import clauses' converted into Module Links
-     * defined in @ara-web/reflect/src/ara-link/ModuleLink.ts
+     * Put the modules, the Astro Framework's Reflect will require the modules
+     * to be in the `this.srcDir`.
+     * @param importedRecords 
+     * @returns 
      */
-    public getPossibleModuleLinks: PossibleModuleLinksBuilder = (importClause: string): ModuleLink[] => {
-        // importClause = trimPath(importClause);
+    public async putModules(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>> {
         const moduleLinks: ModuleLink[] = [];
-        const moduleCategories = this.moduleCategories;
-        for (let moduleCategory of moduleCategories) {
-            const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, importClause)
-            moduleLinks.push(moduleLink)
-
-            const modulePaths = modulePathToAllPossibleFileNames(importClause);
-            modulePaths.forEach(
-                (possibleModulePath) => (
-                    moduleLinks.push(
-                        new ModuleLink(
-                            this.namespace, 
-                            this.name, 
-                            moduleCategory, 
-                            possibleModulePath
-                        )
-                    )
+        for (let filePath in importedRecords.records) {
+            const moduleLink = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(await FilePath.isFileExist(moduleLink))) {
+                return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`)
+            }
+            const category = extractModuleCategory(this.srcDir, moduleLink.toFilePath);
+            if (category.isFailure) {
+                return Result.fail(
+                    `this.extractModuleCategory('${moduleLink.toFilePath}'): ${category.errorTitle}`,
+                    category.errorDescription!
                 )
-            )
+            }
+            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, importedRecords.records[filePath]);
+            moduleLinks.push(moduleLink);
         }
-        return moduleLinks;
+        
+        if (moduleLinks.length === 0) {
+            return Result.fail(`No record to put in`, `Please pass the correct node`);
+        }
+        return Result.ok(moduleLinks);
+    }
+
+    public watchModules = async(autoImporter: AutoImporter) => {
+        this._autoImporter = autoImporter;
+    }
+    
+    private _autoPut = async(_: string): Promise<Result<ModuleLink[]>> => {
+        if (this._autoImporter === undefined) {
+            return Result.ok([]);
+        }
+        const imported = this._autoImporter();
+        const putResult = await this.putModules(imported);
+        if (putResult.isFailure) {
+            return Result.fail(`this.putModules(): ${putResult.errorTitle}`, putResult.errorDescription!);
+        }
+        return Result.ok(putResult.getValue());
+    }
+    
+    /**
+     * @param moduleLink absolute path or a path relative to the `this.rootDir`
+     * @returns 
+     */
+    public getModule<T>(moduleLink: ModuleLink|string): Result<ModuleMemory<T>> {
+        if (typeof moduleLink === "string") {
+            moduleLink = ModuleLink.newFileURL(FilePath.join([this.rootDir, moduleLink]));
+        }
+        if (!this.isModuleExist(moduleLink)) {
+            return Result.errorCode404([this.moduleLink.moduleURL], `this.isModuleExist()`, `The link: ${moduleLink}`)
+        }
+        return Result.ok(this._moduleMemories[moduleLink.moduleURL] as ModuleMemory<T>);
+    }
+    
+    public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
+        const moduleMemories: ModuleMemory<T>[] = [];
+        for (let moduleMemory of this.moduleMemories) {
+            if (moduleCategory === undefined || moduleMemory.moduleCategory === moduleCategory) {
+                moduleMemories.push(moduleMemory as ModuleMemory<T>);
+            }
+        }
+        return moduleMemories;
+    }
+    
+    public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
+        let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
+        return this._moduleMemories[url] !== undefined;
+    }
+    
+    public getModuleContents<T>(moduleCategory?: string): T[] {
+        const moduleMemories = this.getModules(moduleCategory);
+    
+        return moduleMemories.map((memory) => (memory.content as T))
+    }
+    
+    public getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
+        const moduleMemories = this.getModules<T>(moduleCategory);
+    
+        return moduleMemories.filter((memory) => (memory.content === undefined));
+    }
+    
+    public isSupportedModuleCategory(moduleCategory: string): boolean {
+        return this.moduleCategories.includes(moduleCategory);
     }
 
     /**
@@ -133,29 +169,33 @@ export class ReflectExtension implements ExtensionInterface {
      * @returns 
      */
     public beforeGet? = async (moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> => {
+        if (this._autoImporter !== undefined) {
+            const result = await this._autoPut(moduleCategory);
+            if (result.isFailure) {
+                return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription!);
+            }
+        }
+        
         if (moduleCategory === ModuleCategory.Page) {
             const contents = await this.postPageContents(projectMemory);
             if (contents.isFailure) {
                 return Result.fail(`this.postPageContents(): ${contents.errorTitle}`, contents.errorDescription!)
             }
             return OkResult.ok()
-            // return Result.ok(contents.getValue() as T[]);
         } else if (moduleCategory === ModuleCategory.Component) {
-            const contents = await this.getComponents(projectMemory);
+            const contents = await this.getComponents();
             if (contents.isFailure) {
                 return Result.fail(`this.getComponents(): ${contents.errorTitle}`, contents.errorDescription!)
             }
 
             return OkResult.ok()
-            // return Result.ok(contents.getValue() as T[]);
         } else if (moduleCategory === ModuleCategory.Layout) {
-            const contents = await this.getLayouts(projectMemory);
+            const contents = await this.getLayouts();
             if (contents.isFailure) {
                 return Result.fail(`this.getLayouts(): ${contents.errorTitle}`, contents.errorDescription!)
             }
 
             return OkResult.ok()
-            // return Result.ok(contents.getValue() as T[]);
         }
 
         return OkResult.ok();
@@ -171,17 +211,15 @@ export class ReflectExtension implements ExtensionInterface {
      * Returns the all the components.
      * Components are not evaluated by internal structures.
      */
-    private getComponents = async (projectMemory: ProjectMemory): Promise<Result<Component[]>> => {
-        const modules = projectMemory.getModuleMemories<Component>(ModuleCategory.Component);
-        if (modules === undefined) {
+    private getComponents = async (): Promise<Result<Component[]>> => {
+        const modules = this.getModules<Component>(ModuleCategory.Component);
+        if (modules.length === 0) {
             return Result.ok([])
         }
 
         const components: Component[] = [];
 
-        for (let moduleURL in modules) {
-            const moduleMemory = modules[moduleURL as ModuleURL];
-            
+        for (let moduleMemory of modules) {
             if (moduleMemory.content !== undefined) {
                 components.push(moduleMemory.content as Component);
                 continue;
@@ -194,7 +232,6 @@ export class ReflectExtension implements ExtensionInterface {
                     component.errorDescription!
                 )
             }
-            projectMemory.putModuleContent<Component>(moduleURL as ModuleURL, component.getValue());
             components.push(component.getValue())
         }
 
@@ -204,17 +241,15 @@ export class ReflectExtension implements ExtensionInterface {
     /**
      * Returns the all the layout components
      */
-    private getLayouts = async (projectMemory: ProjectMemory): Promise<Result<Component[]>> => {
-        const modules = projectMemory.getModuleMemories<Component>(ModuleCategory.Layout) as ModuleMemories<Component>;
-        if (modules === undefined) {
+    private getLayouts = async (): Promise<Result<Component[]>> => {
+        const modules = this.getModules<Component>(ModuleCategory.Layout);
+        if (modules.length === 0) {
             return Result.ok([])
         }
 
         const components: Component[] = [];
 
-        for (let moduleURL in modules) {
-            const moduleMemory = modules[moduleURL as ModuleURL];
-            
+        for (let moduleMemory of modules) {
             if (moduleMemory.content !== undefined) {
                 components.push(moduleMemory.content as Component);
                 continue;
@@ -227,7 +262,6 @@ export class ReflectExtension implements ExtensionInterface {
                     component.errorDescription!
                 )
             }
-            projectMemory.putModuleContent<Component>(moduleURL as ModuleURL, component.getValue());
             components.push(component.getValue())
         }
 
@@ -239,27 +273,23 @@ export class ReflectExtension implements ExtensionInterface {
      * @returns {Result<Page[]>}
      */
     private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = projectMemory.getNoContentModules<Page>(ModuleCategory.Page);
+        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
         // identify ui content
         // identify source code
         // identify the page
         Debug.log(`Fetch the no content modules:`)
         Debug.log(Object.keys(noContentModules))
-        for (let modulePath in noContentModules) {
-            const moduleURL = modulePath as ModuleURL;
-            const moduleMemory = noContentModules[moduleURL] as ModuleMemory<Page>;
+        for (let moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
-                return OkResult.fail(`UILevel.identifyModuleParts<Page>('${moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+                return OkResult.fail(`UILevel.identifyModuleParts<Page>('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
             }
 
             const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
             if (identifiedMemory.isFailure) {
-                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
+                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
-            Debug.log(`TODO: '${moduleURL}' make sure to generate the content of the web page`);
-            
-            projectMemory.putModuleMemory(identifiedMemory.getValue());
+            Debug.log(`TODO: '${moduleMemory.moduleLink.moduleURL}' make sure to generate the content of the web page`);
         }
         return OkResult.ok();
     }

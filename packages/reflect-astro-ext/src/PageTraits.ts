@@ -11,7 +11,7 @@ import type { Page } from "@ara-web/ts-enhancement";
 // -- File Content
 // -- AST
 // -- Components
-import { FileExtension, type UiContent } from "./parts/ui-level/ui-content.js";
+import { FileExtension } from "./module.js";
 import { Code } from "@ara-web/reflect/code-level";
 
 //////////////////////////////////////////////////////////////////
