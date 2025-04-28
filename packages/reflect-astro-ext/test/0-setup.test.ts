@@ -4,16 +4,12 @@
  */
 
 import { expect, test } from "vitest";
-import { ReflectExtension } from "../src/ReflectExtension";
 import { ModuleCategory } from "../src/module";
-import { Debug } from "@ara-web/ts-enhancement";
-import { getImportRecords, getNewProjectMemory, welcomeComponentPath } from "./shared";
+import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { ImportedRecords } from "@ara-web/reflect";
 
 test('Simply creating a reflect extension', async () => {
-    const reflectExtension = new ReflectExtension();
-    expect(reflectExtension.namespace).toEqual("@ara-web");
-    expect(reflectExtension.name).toEqual("reflect-astro-ext");
-    expect(reflectExtension.label.length).toBeGreaterThan(0)
+    const reflectExtension = await getNewAstroReflect();
     expect(reflectExtension.description.length).toBeGreaterThan(0)
 
     const unsupportedModuleCategory = "node_modules";
@@ -23,29 +19,38 @@ test('Simply creating a reflect extension', async () => {
 });
 
 test(`Simply testing that path is identified as the category data`, async () => {
-    const reflectExtension = new ReflectExtension();
-
+    const reflectExtension = await getNewAstroReflect();
     const faviconModulePath = './test-app/public/favicon.svg';
-    const invalidRecords: Record<string, unknown> = {[faviconModulePath]: undefined};
-    const invalidated = reflectExtension.getCategorizedModuleData(invalidRecords);
+    const invalidRecords: ImportedRecords = {
+        records: {
+            [faviconModulePath]: undefined
+        },
+        importingFilePath: import.meta.dirname
+    };
+    const invalidated = await reflectExtension.putModules(invalidRecords);
     expect(invalidated.isSuccess).toBe(false);
 
-    const indexAstroPath = "./src/pages/index.astro";
-    const validRecords: Record<string, unknown> = {[indexAstroPath]: undefined};
-    const validated = reflectExtension.getCategorizedModuleData(validRecords);
+    const indexAstroPath = "./test-app/src/pages/index.astro";
+    const validRecords: ImportedRecords = {
+        records: {
+            [indexAstroPath]: undefined
+        },
+        importingFilePath: import.meta.dirname
+    };
+    const validated = await reflectExtension.putModules(validRecords);
     expect(validated.isSuccess).toBe(true);
 })
 
 test(`Test the categorization of the import.meta.glob`, async () => {
     const modules = getImportRecords()
   
-    const reflectExtension = new ReflectExtension();
-    const validated = reflectExtension.getCategorizedModuleData(modules);
+    const reflectExtension = await getNewAstroReflect();
+    const validated = await reflectExtension.putModules(modules);
     expect(validated.isSuccess).toBe(true);
 
     // Make sure they are all no content moduled
-    const projectMemory = getNewProjectMemory(reflectExtension, validated.getValue());
+    const projectMemory = getNewProjectMemory(reflectExtension);
 
-    let noContentModules = projectMemory.getNoContentModules<unknown>();
-    expect(noContentModules[welcomeComponentPath] !== undefined).toBe(true);
+    let welcomeComponent = projectMemory.getModule<unknown>('src/components/Welcome.astro');
+    expect(welcomeComponent.isSuccess).toBe(true);
 })

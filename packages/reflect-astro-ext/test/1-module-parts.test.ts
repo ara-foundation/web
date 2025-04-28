@@ -4,28 +4,22 @@
 //  */
 
 import { expect, test } from "vitest";
-import { ReflectExtension } from "../src/ReflectExtension";
 import { FileExtension, ModulePartitioner } from "../src/module";
-import { Debug } from "@ara-web/ts-enhancement";
-import { getImportRecords, getNewProjectMemory, welcomeComponentPath } from "./shared";
-import { ModuleURL } from "@ara-web/reflect/ara-link";
+import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 
 test(`Make sure the module parts are importing`, async () => {
     const modules = getImportRecords()
   
-    const reflectExtension = new ReflectExtension();
-    const validated = reflectExtension.getCategorizedModuleData(modules);
+    const reflectExtension = await getNewAstroReflect();
+    const validated = await reflectExtension.putModules(modules);
     expect(validated.isSuccess).toBe(true);
     // Make sure they are all no content moduled
-    const projectMemory = getNewProjectMemory(reflectExtension, validated.getValue());
+    const projectMemory = getNewProjectMemory(reflectExtension);
 
-    const moduleMemories = projectMemory.getModuleMemories();
+    const moduleMemories = projectMemory.getModules();
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
-    for (let modulePath in moduleMemories) {
-        const moduleURL = modulePath as ModuleURL;
-        const moduleParts = await ModulePartitioner.partition(moduleMemories[moduleURL]);
-        Debug.log(`identified module parts for ${moduleURL}`)
-        Debug.log(moduleParts)
+    for (let moduleMemory of moduleMemories) {
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
         expect(moduleParts.isSuccess).toBe(true);
 
         if (moduleParts.getValue().fileExtension === FileExtension.Astro) {
@@ -36,6 +30,6 @@ test(`Make sure the module parts are importing`, async () => {
         }
     }
 
-    let noContentModules = projectMemory.getNoContentModules<unknown>();
-    expect(noContentModules[welcomeComponentPath] !== undefined).toBe(true);
+    let welcomeComponent = projectMemory.getModule<unknown>('src/components/Welcome.astro');
+    expect(welcomeComponent.isSuccess).toBe(true);
 })
