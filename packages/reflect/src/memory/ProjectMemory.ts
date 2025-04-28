@@ -2,101 +2,103 @@
 // E.g.
 //  Page -> Index -> memory of index
 
-import { Debug, OkResult, Result } from "@ara-web/ts-enhancement";
-// import { trimPath, urlToFileNames } from "../module.js";
+import { Debug, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory } from "./ModuleMemory.js";
-import { ModuleLink, type ModuleURL } from "../ara-link/ReflectAraLink.js";
-import type { PossibleModuleLinksBuilder } from "../extension-interface.js";
+import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
+import type { MemoryOperations } from "../extension-interface.js";
 
 export type ModuleMemories<T> = {[key: ModuleURL]: ModuleMemory<T|unknown>};
 
 //  purl -> memory of Ceo.tsx
-export class ProjectMemory {
-    private _memories: ModuleMemories<unknown> = {};
-    private _moduleLinksBuilders: PossibleModuleLinksBuilder[] = [];
+/**
+ * `ProjectMemory` links all the module memories between extensions. 
+ */
+export class ProjectMemory implements MemoryOperations {
+    private _memOps: MemoryOperations[] = [];
+    private _moduleLink: ModuleLink;
 
-    public get memories(): ModuleMemories<unknown> {
-        return this._memories;
+    constructor() {
+        const absPath = ModuleLink.newFileURL(import.meta.filename);
+        this._moduleLink = ModuleLink.newPackageURL(`@ara-web`, `reflect`, absPath, 'memory/ProjectMemory')
     }
 
-    public putModuleLinksBuilder(moduleLinksBuilder: PossibleModuleLinksBuilder): void {
-        this._moduleLinksBuilders.push(moduleLinksBuilder)
+    public get operatorId(): ModuleLink {
+        return this._moduleLink;
     }
 
-    public putModuleMemory(moduleMemory: ModuleMemory<unknown>): ModuleLink {
-        this._memories[moduleMemory.moduleLink.moduleURL] = moduleMemory;
-        return moduleMemory.moduleLink;
+    public putMemoryOperations = (memOp: MemoryOperations): void => {
+        this._memOps.push(memOp);
     }
 
-    public putModuleMemories(memories: ModuleMemories<unknown>): void {
-        for (let moduleURL in memories) {
-            this.putModuleMemory(memories[moduleURL as ModuleURL]);
+    public getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>> {
+        for (let memOp of this._memOps) {
+            const module = memOp.getModule<T>(moduleLink);
+            if (module.isSuccess) {
+                return module;
+            }
         }
+        return Result.fail(`Module ${moduleLink} not found in any of the memory operations`, `Are you sure that it exists?`);
     }
-
-    /**
-     * Cleans the memory that belong to the moduleType category, if the memory module path is
-     * not in the given list.
-     * @param moduleType 
-     * @param modulePaths 
-     * @returns 
-     */
-    public cleanMemoryExcept(moduleCategory: string, moduleLinks: ModuleLink[]): void {
-        // Delete the orphans
-        let deletedModulePaths = Object.keys(
-            this._memories
-        )
-        .filter((moduleURL) => (this._memories[moduleURL as ModuleURL].moduleLink.category === moduleCategory))
-        .filter((modulePath) => (!moduleLinks.map((link) => (!link.isEqual(modulePath as ModuleURL)))))
-        for (let orphan of deletedModulePaths) {
-            delete this._memories[orphan as ModuleURL]
-        }
-    }
-
-    private getPossibleModuleLinks(modulePath: string): ModuleLink[] {
-        let moduleLinks: ModuleLink[] = [];
-        for (let moduleLinksBuilder of this._moduleLinksBuilders) {
-            moduleLinks = [...moduleLinks, ...moduleLinksBuilder(modulePath)];
+    public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
+        let modules: ModuleMemory<T>[] = [];
+        for (let memOp of this._memOps) {
+            modules = [...modules, ...memOp.getModules<T>(moduleCategory)];
         }
 
-        return moduleLinks;
+        return []
     }
+
+    public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
+        for (let memOp of this._memOps) {
+            const exist = memOp.isModuleExist(moduleLink);
+            if (exist) {
+                return true;
+            }
+        }
+        return false;
+    }
+    // /**
+    //  * Cleans the memory that belong to the moduleType category, if the memory module path is
+    //  * not in the given list.
+    //  * @param moduleType 
+    //  * @param modulePaths 
+    //  * @returns 
+    //  */
+    // public cleanMemoryExcept(moduleCategory: string, moduleLinks: ModuleLink[]): void {
+    //     // Delete the orphans
+    //     let deletedModulePaths = Object.keys(
+    //         this._memories
+    //     )
+    //     .filter((moduleURL) => (this._memories[moduleURL as ModuleURL].moduleLink.category === moduleCategory))
+    //     .filter((modulePath) => (!moduleLinks.map((link) => (!link.isEqual(modulePath as ModuleURL)))))
+    //     for (let orphan of deletedModulePaths) {
+    //         delete this._memories[orphan as ModuleURL]
+    //     }
+    // }
+
+    // private getPossibleModuleLinks(modulePath: string): ModuleLink[] {
+    //     let moduleLinks: ModuleLink[] = [];
+    //     for (let moduleLinksBuilder of this._moduleLinksBuilders) {
+    //         moduleLinks = [...moduleLinks, ...moduleLinksBuilder(modulePath)];
+    //     }
+
+    //     return moduleLinks;
+    // }
 
     /**
      * Returns all module memories of the moduleType category.
      * @param moduleType 
      * @returns 
      */
-    public getModuleMemories<T>(moduleCategory?: string): ModuleMemories<T|unknown> {
-        if (moduleCategory === undefined) {
-            return this._memories;
-        }
-        let modules: ModuleMemories<unknown> = {}
-        for (const moduleURL in this._memories) {
-            if (moduleCategory === undefined ||
-                this._memories[moduleURL as ModuleURL].moduleLink.category === moduleCategory) {
-                modules[moduleURL as ModuleURL] = this._memories[moduleURL as ModuleURL]
-            }
-        }
-
-        return modules;
-    }
 
     /**
      * Returns the modules that doesn't have contents
      * @param moduleCategory 
      */
-    public getNoContentModules<T>(filterCategory?: string): ModuleMemories<T|unknown> {
-        let modules: ModuleMemories<unknown> = {}
-        for (const modulePath in this._memories) {
-            const moduleURL = modulePath as ModuleURL;
-            if (this._memories[moduleURL].content !== undefined) {
-                continue;
-            }
-            const moduleCategory = this._memories[moduleURL].moduleLink.category;
-            if (filterCategory === undefined || moduleCategory === filterCategory) {
-                modules[moduleURL] = this._memories[moduleURL]
-            }
+    public getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
+        let modules: ModuleMemory<T>[] = [];
+        for (let memOp of this._memOps) {
+            modules = [...modules, ...memOp.getModules<T>(moduleCategory)];
         }
 
         return modules;
@@ -108,56 +110,56 @@ export class ProjectMemory {
      * @returns 
      */
     public getModuleContents<T>(moduleCategory?: string): T[] {
-        const moduleMemories = this.getModuleMemories<T>(moduleCategory);
-        if (moduleMemories === undefined || Object.keys(moduleMemories).length === 0) {
-            return [];
+        let modules: T[] = [];
+        for (let memOp of this._memOps) {
+            modules = [...modules, ...memOp.getModuleContents<T>(moduleCategory)];
         }
 
-        return Object.values(moduleMemories).map((moduleMemory) => (moduleMemory.content as T))
+        return modules;
     }
 
-    /**
-     * Converts the import clause into a valid module link within the project memory.
-     * @param importClause the import clause to 
-     * @returns 
-     */
-    public getPossibleModuleLink(importClause: string): Result<ModuleLink> {
-        const moduleLinks = this.getPossibleModuleLinks(importClause)
-        for (let moduleLink of moduleLinks) {
-            const moduleMemory = this._memories[moduleLink.moduleURL];
-            if (moduleMemory !== undefined) {
-                return Result.ok(moduleLink);
-            }
-        }
+    // /**
+    //  * Converts the import clause into a valid module link within the project memory.
+    //  * @param importClause the import clause to 
+    //  * @returns 
+    //  */
+    // public getPossibleModuleLink(importClause: string): Result<ModuleLink> {
+    //     const moduleLinks = this.getPossibleModuleLinks(importClause)
+    //     for (let moduleLink of moduleLinks) {
+    //         const moduleMemory = this._memories[moduleLink.moduleURL];
+    //         if (moduleMemory !== undefined) {
+    //             return Result.ok(moduleLink);
+    //         }
+    //     }
 
-        return Result.fail(
-            `Possible URLs not found`,
-            `The '${importClause}' not found with '${this._moduleLinksBuilders.length}' module links builder in the memory`
-        );
-    }
+    //     return Result.fail(
+    //         `Possible URLs not found`,
+    //         `The '${importClause}' not found with '${this._moduleLinksBuilders.length}' module links builder in the memory`
+    //     );
+    // }
 
-    public getModuleMemory<T>(moduleLink: ModuleLink|ModuleURL): Result<ModuleMemory<T>> {
-        const moduleURL = moduleLink instanceof ModuleLink ? moduleLink.moduleURL : moduleLink;
-        const moduleMemory = this._memories[moduleURL] as ModuleMemory<T>;
-        if (moduleMemory !== undefined) {
-            return Result.ok(moduleMemory);
-        }
+    // public getModuleMemory<T>(moduleLink: ModuleLink|ModuleURL): Result<ModuleMemory<T>> {
+    //     const moduleURL = moduleLink instanceof ModuleLink ? moduleLink.moduleURL : moduleLink;
+    //     const moduleMemory = this._memories[moduleURL] as ModuleMemory<T>;
+    //     if (moduleMemory !== undefined) {
+    //         return Result.ok(moduleMemory);
+    //     }
 
-        return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleURL} not found in the memory`)
-    }
+    //     return Result.errorCode404(['src', 'ProjectMemory'], 'getModuleMemory', `${moduleURL} not found in the memory`)
+    // }
 
-    /**
-     * Put Module Content puts if the module in the URL exists
-     * @param moduleURL 
-     * @param content 
-     */
-    public putModuleContent<T>(moduleURL: ModuleURL, content: T): OkResult {
-        if (this._memories[moduleURL] === undefined) {
-            return OkResult.fail(`Module '${moduleURL}' not found`, `Please pass correct URL or check that memory didn't leak`)
-        }
-        this._memories[moduleURL].content = content;
-        return OkResult.ok();
-    }
+    // /**
+    //  * Put Module Content puts if the module in the URL exists
+    //  * @param moduleURL 
+    //  * @param content 
+    //  */
+    // public putModuleContent<T>(moduleURL: ModuleURL, content: T): OkResult {
+    //     if (this._memories[moduleURL] === undefined) {
+    //         return OkResult.fail(`Module '${moduleURL}' not found`, `Please pass correct URL or check that memory didn't leak`)
+    //     }
+    //     this._memories[moduleURL].content = content;
+    //     return OkResult.ok();
+    // }
 
     // /**
     //  * Get the file content loaded from modulePath.
@@ -244,12 +246,12 @@ export class ProjectMemory {
          * @param filterValue 
          */
     public print = (filteredModuleCategory?: string, filterKey?: string, filterValue?: any): void => {
-        let categoryModules = this.getModuleMemories(filteredModuleCategory);
+        let categoryModules = this.getModules(filteredModuleCategory);
 
         Debug.push(`Project Memory:`)
-        for (let moduleURL in categoryModules) {
-            Debug.log(`The '${moduleURL}' module:`);
-            categoryModules[moduleURL as ModuleURL].print(filterKey, filterValue)
+        for (let module of categoryModules) {
+            Debug.log(`The '${module.moduleLink}' module:`);
+            module.print(filterKey, filterValue)
         }
             
         Debug.pop();

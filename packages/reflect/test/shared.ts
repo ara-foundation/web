@@ -1,16 +1,16 @@
-import  { type Result } from "@ara-web/ts-enhancement";
+import  { Debug, type Result } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNodeContext } from "../src/memory/AstNodeContext.js";
 import { ProjectMemory } from "../src/memory/ProjectMemory.js";
-import { ModuleCategory, trimPath } from "../src/module.js";
 import { ModuleMemory } from "../src/memory/ModuleMemory.js";
-import { ModuleLink } from "../src/ara-link/ReflectAraLink.js";
-import { type PossibleModuleLinksBuilder } from "../src/extension-interface.js";
-import { CategorizedModules } from "../src/setup.js";
-import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-ext/module.js";
+import { ModuleLink } from "../src/ara-link/ModuleLink.js";
+import { ExtensionInterface, ImportedRecords, MemoryOperations } from "../src/extension-interface.js";
+import { Reflect } from "../src/Reflect.js"
+import { ModuleCategory } from "../src/reflect-nodejs-ext/module.js";
+import { FilePath } from "../src/module.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">
 
@@ -77,25 +77,27 @@ export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => 
   return context;
 }
 
-export const modulePath = `./funcs.js`;
-export const moduleLinkBuilder: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
-  const moduleCategory = "script";
-  const moduleLink = new ModuleLink("namespace", "name", moduleCategory, modulePath);
-  return [moduleLink];
-}
+export const modulePath = `./funcs.ts`;
 
-export const getProjectMemory = async (): Promise<ProjectMemory> => {
-  let glob = await import(modulePath)
-  const moduleMemory = new ModuleMemory<unknown>(moduleLinkBuilder(modulePath)[0], glob);
+export const getProjectMemory = (modOps: MemoryOperations): ProjectMemory => {
   const projectMemory = new ProjectMemory();
-  projectMemory.putModuleMemory(moduleMemory);
-  projectMemory.putModuleLinksBuilder(moduleLinkBuilder);
+  projectMemory.putMemoryOperations(modOps);
   return projectMemory;
 }
 
 export const getEmptyModule = (): ModuleMemory<unknown> => {
-  const moduleLink = new ModuleLink("namespace", "name", ModuleCategory.Untracked, "");
-  return new ModuleMemory<unknown>(moduleLink, undefined);
+  const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
+  const moduleLink = ModuleLink.newPackageURL("reflect", "test", fileModuleLink, modulePath);
+  return new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, undefined);
+}
+
+export const putFuncModule = async (ext: ExtensionInterface): Promise<ExtensionInterface> => {
+  const glob = await import(modulePath);
+  const importedRecords: ImportedRecords = {records: {[modulePath]: glob}, importingFilePath: import.meta.filename};
+
+  const putted = await ext.putModules(importedRecords)
+  expect(putted.isSuccess).toBe(true);
+  return ext;
 }
 
 let categorizedModuleAmount = 0;
@@ -103,35 +105,31 @@ export const getCategorizedModuleAmount = (): number => {
   return categorizedModuleAmount;
 }
 
-export const getImportRecords = (): Record<string, unknown> => {
+/**
+ * Imports the packageurl-js as a file
+ * @returns 
+ */
+export const getImportRecords = (): ImportedRecords => {
   const imported = import.meta.glob("../node_modules/packageurl-js/**/*.js", {eager: true});
   
-  const records: Record<string, unknown> = {};
-
-  categorizedModuleAmount = 0;
-  for (let rawModulePath in imported) {
-    const modulePath = trimPath(rawModulePath).replace("node_modules", "");
-    records[modulePath] = imported[rawModulePath];
-    categorizedModuleAmount++;
+  categorizedModuleAmount = Object.keys(imported).length;
+  return {
+    records: imported,
+    importingFilePath: import.meta.filename,
   }
-
-  return records;
 }
 
-export const getCategorizedModuleData = (): CategorizedModules => {
-  const imported = getImportRecords();
-  
-  const categorizedModules: CategorizedModules = {
-    [BuiltinModuleCategory.NodeJsModule]: {}
-  };
-  
-  categorizedModuleAmount = 0;
-  for (let modulePath in imported) {
-    categorizedModules[BuiltinModuleCategory.NodeJsModule][modulePath] = {
-      glob: imported[modulePath]
-    };
+/**
+ * Put the data into the module
+ * @param reflect 
+ * @returns 
+ */
+export const getSamplePackage = (): ImportedRecords & {importClause: string} => {
+  const imported = import.meta.glob("packageurl-js", {eager: true});
 
-    categorizedModuleAmount++;
+  return {
+    records: imported,
+    importingFilePath: FilePath.getCurrentWorkingDir(),
+    importClause: 'packageurl-js'
   }
-  return categorizedModules;
 }

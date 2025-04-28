@@ -1,6 +1,6 @@
 import { Result } from "@ara-web/ts-enhancement";
 import { AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
-export declare class EnabledNodejsModules {
+export declare class BuiltInIdentifiers {
     private static prefix;
     private static identifiers;
     private static builtInSrc;

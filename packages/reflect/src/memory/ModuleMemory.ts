@@ -1,15 +1,17 @@
 import { Debug } from "@ara-web/ts-enhancement";
 import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
-import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
+import { ModuleLink } from "../ara-link/ModuleLink.js";
 
 export class ModuleMemory<T> extends AstIdentifierMemory {
     private _moduleLink: ModuleLink;
     private _glob: unknown;
     private _content?: T;
+    private _moduleCategory: string;    // to filter out
 
-    constructor(moduleLink: ModuleLink, glob: unknown) {
+    constructor(moduleCategory: string, moduleLink: ModuleLink, glob: unknown) {
         super()
         this._moduleLink = moduleLink;
+        this._moduleCategory = moduleCategory;
         this._glob = glob;
     }
 
@@ -18,6 +20,10 @@ export class ModuleMemory<T> extends AstIdentifierMemory {
         Debug.log(`Printing the Identifiers`)
         super.print(filterKey, filterValue);
         Debug.pop();
+    }
+
+    public get moduleCategory(): string {
+        return this._moduleCategory;
     }
 
     public get moduleLink(): ModuleLink {

@@ -13,6 +13,7 @@ import {
 import { Code } from "../code-level/Code.js";
 import { VariableStatement } from "../code-level/variable-level/variable-statement.js";
 import type { TsNode } from "../code-level/ts-node.js";
+import { ModuleLink } from "../ara-link/ModuleLink.js";
 
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType[]): Result<AstNode> => {
@@ -43,7 +44,7 @@ const recordGenericHandler: GenericHandler = (astNode: AstNode, values: ValueTyp
     return Result.ok(astNode);
 }
 
-export class EnabledNodejsModules {
+export class BuiltInIdentifiers {
     private static prefix = '_';
     private static identifiers = ['Array', 'Record'];
     private static builtInSrc = `
@@ -95,7 +96,7 @@ export class EnabledNodejsModules {
             return Result.ok(this._identifiers);
         }
         let identifiers: AstIdentifiers = {};
-        const code = new Code(this.builtInSrc);
+        const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
     
         const varStatements = code.getTsNodes([VariableStatement.isVariableStatement])
         

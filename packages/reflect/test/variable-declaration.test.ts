@@ -5,18 +5,20 @@ import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeS
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement";
 import { ReflectAraLink } from "../src/ara-link/ReflectAraLink.js";
-import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, type AstNodeProperties } from "./shared.js";
+import { Reflect } from "../src/Reflect.js"
+import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
 import type { TsNode } from "../src/code-level/ts-node.js";
 import { TypeRef } from "../src/code-level/type-level/type-ref.js";
 import { AstNodeContext } from "../src/memory/AstNodeContext.js";
 import { ValueLevel } from "../src/code-level/value-level.js";
-import { EnabledNodejsModules } from "../src/reflect-nodejs-ext/enabled-nodejs-module.js";
+import { BuiltInIdentifiers } from "../src/reflect-nodejs-ext/BuiltInIdentifiers.js";
+import { ModuleLink } from "../src/ara-link/ModuleLink.js";
 
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
   let src = `const ${varName} = "${varValue}"`;
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Result
@@ -30,7 +32,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
 
   // Not a constant format
   src = `let ${varName} = "${varValue}"`;
-  code = new Code(src);
+  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
@@ -39,7 +41,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
 
   // Export and constant
   src = `export const ${varName} = "${varValue}"`;
-  code = new Code(src);
+  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
@@ -49,7 +51,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
 
   // Data undefined
   src = `export let ${varName};`;
-  code = new Code(src);
+  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   vars = await code.getVariableIdentifiers();
   expectAstNodeResult(vars, varName)
   astNode = vars.getValue()[varName] as AstNode;
@@ -63,7 +65,7 @@ test('Supports the variable declaration derived from the object decoupling', asy
   const varName = 'slug'
   const varValue = "Astro.params";
   const src = `const { ${varName} } = "${varValue}"`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const vars = await code.getVariableIdentifiers();
   // Result
   expectAstNodeResult(vars, varName)
@@ -93,7 +95,7 @@ test('Supports the variable declaration by alias derived from the object decoupl
   const propertyName = 'slug'
   const varValue = "Astro.params";
   const src = `const { ${propertyName}: ${varName} } = "${varValue}"`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const vars = await code.getVariableIdentifiers();
   // Result
   expectAstNodeResult(vars, varName)
@@ -121,7 +123,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   const varName = 'action'
   const varValue = "getActionBySlug(slug)";
   let src = `const ${varName}: Action | undefined = ${varValue}`;
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Result
@@ -147,7 +149,7 @@ test('Supports the the variable declaration with the generic value', async () =>
   const varName = 'data'
   const varValue = "func<string>()";
   let src = `const ${varName}: Array<string> = ${varValue}`;
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Result
@@ -178,7 +180,7 @@ test('Supports the literal value assignment', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
   let src = `const ${varName} = "${varValue}"`;
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // We don't check the result, as previous tests must ensure its passing
@@ -198,8 +200,10 @@ test('Supports the literal value assignment', async () => {
 // To work with function result, we need to create a function declaration.
 // function call as a result.
 test('Supports the function call as variable value', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const funcName = 'fooBar'
   const varName = 'nameLength'
@@ -208,12 +212,10 @@ test('Supports the function call as variable value', async () => {
   let src = `import { ${funcName} } from "${modulePath}";` +
   ` const ${varName} = ${varValue}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
-  let imports = code.getImportedIdentifiers(projectMemory);
-  Debug.log(`Imports`);
-  Debug.log(imports)
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -236,8 +238,10 @@ test('Supports the function call as variable value', async () => {
 // function call, but variable has defined type such as string
 // but function returns another type.
 test('Supports the function call as variable value but mismatch the types', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const funcName = 'fooBar'
   const varName = 'nameLength'
@@ -246,10 +250,10 @@ test('Supports the function call as variable value but mismatch the types', asyn
   let src = `import { ${funcName} } from "${modulePath}";` +
   ` const ${varName}: string = ${varValue}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
-  let imports = code.getImportedIdentifiers(projectMemory);
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -268,8 +272,10 @@ test('Supports the function call as variable value but mismatch the types', asyn
 
 // function call without any argument
 test('Supports the function call without any argument', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const funcName = 'helloAndWelcome'
   const varName = 'greeting'
@@ -278,10 +284,10 @@ test('Supports the function call without any argument', async () => {
   let src = `import { ${funcName} } from "${modulePath}";` +
   ` const ${varName}: string = ${funcName}( );`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
-  let imports = code.getImportedIdentifiers(projectMemory);
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -303,8 +309,10 @@ test('Supports the function call without any argument', async () => {
 
 // method call as a result
 test('Supports the method call', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const funcName = 'fooBar'
   const objName = 'CustomObj'
@@ -316,10 +324,10 @@ test('Supports the method call', async () => {
   ` const ${objName} = {customMethod: ${funcName} }` +
   ` const ${varName}: number = CustomObj.customMethod('12345', '67890');`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
-  let imports = code.getImportedIdentifiers(projectMemory);
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -346,8 +354,10 @@ test('Supports the method call', async () => {
 });
 
 test('Supports the spread assignment through enums', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const enumName = 'Sex'
   const profileName = 'profile'
@@ -358,11 +368,11 @@ test('Supports the spread assignment through enums', async () => {
   ` const ${profileName} = {name: "Medet", sex: ${enumName}.Male}; ` +
    ` const ${varName} = {...profile} `;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add imports and lint them.
-  let imports = code.getImportedIdentifiers(projectMemory);
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -395,8 +405,10 @@ test('Supports the spread assignment through enums', async () => {
 });
 
 test('Supports the type from the imports', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
 
   const typeName = 'CustomType'
   const profileName = 'profile'
@@ -407,11 +419,11 @@ test('Supports the type from the imports', async () => {
   ` const ${profileName}: ${typeName} = {name: "Medet", sex: 0}; ` +
    ` const ${varName} = {...profile} `;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add imports and lint them.
-  let imports = code.getImportedIdentifiers(projectMemory);
+  let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   moduleMemory.addIdentifiers(imports.getValue())
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -450,7 +462,8 @@ AS Keyword but with local
    ` const ${varName} = {...profile} as CustomType`;
 */
 test('Supports the type from the local type with `as` keyword', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -462,7 +475,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
   ` const ${profileName}: ${typeName} = {name: "Medet", sex: 1}; ` +
    ` const ${varName} = {...profile} as ${typeName}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -494,7 +507,8 @@ test('Supports the type from the local type with `as` keyword', async () => {
 
 // Support with the UnionType
 test('Supports the union types', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -506,7 +520,7 @@ test('Supports the union types', async () => {
   ` export type ${profileTypeName} = ${typeName} | {surname: string}; ` +
    ` const ${varName}: ${profileTypeName} = {surname: 'Ahmetson'}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -537,7 +551,8 @@ test('Supports the union types', async () => {
 
 // Support with the Intersected
 test('Supports the intersected types', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -549,7 +564,7 @@ test('Supports the intersected types', async () => {
   ` export type ${profileTypeName} = ${typeName} & {surname: string}; ` +
    ` const ${varName}: ${profileTypeName} = {'name': 'Medet', sex: -1, surname: 'Ahmetson'}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -579,7 +594,8 @@ test('Supports the intersected types', async () => {
 });
 
 test('Supports the arrays through Array generic', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -589,7 +605,7 @@ test('Supports the arrays through Array generic', async () => {
   ` export type ${typeName} = { name: string; sex: number };` +
    ` const ${varName}: Array<${typeName}> = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -600,7 +616,7 @@ test('Supports the arrays through Array generic', async () => {
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
 
   // Type checks
   let typeAstNode = types.getValue()[typeName] as AstNode;
@@ -623,7 +639,8 @@ test('Supports the arrays through Array generic', async () => {
 
 // Support of the arrays through the Array literals instead Generic Array
 test('Supports the arrays through Array literals', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -633,7 +650,7 @@ test('Supports the arrays through Array literals', async () => {
   ` export type ${typeName} = { name: string; sex: number };` +
    ` const ${varName}: ${typeName}[] = [{'name': 'Medet', sex: 0}, {name: 'Brynn', sex: 1}]`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -644,7 +661,7 @@ test('Supports the arrays through Array literals', async () => {
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
 
   // Type checks
   let typeAstNode = types.getValue()[typeName] as AstNode;
@@ -668,7 +685,8 @@ test('Supports the arrays through Array literals', async () => {
 
 // Support array with the primitive types
 test('Supports the arrays with primitive types', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'string'
@@ -676,11 +694,11 @@ test('Supports the arrays with primitive types', async () => {
 
   let src = ` const ${varName}: ${typeName}[] = ['Medet', 'Brynn']`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
 
   // Variable check
   let varAstNode = vars.getValue()[varName] as AstNode;
@@ -699,7 +717,8 @@ test('Supports the arrays with primitive types', async () => {
 
 // Support array with the primitive types
 test('Supports the shorthand project assign with primitive types', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -710,7 +729,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
     ` const ${propertyName} = 'Medet'; ` +
     ` const ${varName}: ${typeName} = {${propertyName}, sex: 1}`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -726,7 +745,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object)
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
 
   // Variable check
@@ -745,7 +764,8 @@ test('Supports the shorthand project assign with primitive types', async () => {
 
 // Support array with the primitive types
 test('Supports the parenthesis', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -756,7 +776,7 @@ test('Supports the parenthesis', async () => {
     ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
     ` const ${varName}: ${typeName} = ({${propertyName}: 'Medet', sex: +1})`;
 
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -772,7 +792,7 @@ test('Supports the parenthesis', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object)
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
 
   // Variable check
@@ -790,7 +810,8 @@ test('Supports the parenthesis', async () => {
 });
 
 test('Supports the conditional expression', async () => {
-  const projectMemory = await getProjectMemory();
+  const reflect = new Reflect();
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
   const typeName = 'CustomType'
@@ -803,7 +824,7 @@ test('Supports the conditional expression', async () => {
     ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
     ` const data = ${trueCondition}; ` +
     ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
-  let code = new Code(src);
+  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -819,7 +840,7 @@ test('Supports the conditional expression', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object)
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
 
   // Variable check
@@ -844,7 +865,7 @@ test('Supports the conditional expression', async () => {
   ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
   ` const data = ${falseCondition}; ` +
   ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
-  code = new Code(src);
+  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
@@ -860,7 +881,7 @@ test('Supports the conditional expression', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object)
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await EnabledNodejsModules.getBuiltInIdentifiers()).getValue())
+  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
   moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
 
   // Variable check

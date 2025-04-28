@@ -6,7 +6,8 @@
 import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
-import { ModuleLink, ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { ModuleLink } from "../../ara-link/ModuleLink.js"
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Identifier } from "../value-level/idenitifier.js";
 

@@ -7,17 +7,17 @@ import { ModuleMemory } from "../src/memory/ModuleMemory.js";
 import { ProjectMemory } from "../src/memory/ProjectMemory.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ReflectAraLink } from "../src/ara-link/ReflectAraLink.js";
-import { EnabledNodejsModules } from "../src/reflect-nodejs-ext/enabled-nodejs-module.js";
+import { BuiltInIdentifiers } from "../src/reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
-import { expectAstNodeResult, expectValidTypeNode, moduleLinkBuilder } from "./shared.js";
+import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
+import { ModuleLink } from "../src/ara-link/ModuleLink.js";
 
-const modulePath = "type-declaration.test.ts";
-const moduleLink = moduleLinkBuilder(modulePath)[0]
+const moduleLink = ModuleLink.newFileURL(import.meta.filename);
 
 test('Supports the union types: type Primary = string | number | boolean', async () => {
   const varName = 'Primary'  
   const src = `type ${varName} = string | number | boolean`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
     // Result
@@ -34,7 +34,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
 
     // Linting
     const projectMemory = new ProjectMemory()
-    const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+    const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
     moduleMemory.addIdentifiers(types.getValue())
     const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -54,7 +54,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
 test('Supports the union types with nested union: type Type2 = string | "keyword" | (number|keyword)()', async () => {
   const varName = `Type2`
   const src = `type ${varName} = number | "keyword" | (number|"keyword")[]`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -76,7 +76,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -100,7 +100,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
 test('Support the custom data as part of union such as false, number, float', async () => {
   const varName = `LiteralType`
   const src = `type ${varName} = number | 30 | 1995.05 | boolean | false | true | string | "string literal text"`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -122,7 +122,7 @@ test('Support the custom data as part of union such as false, number, float', as
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -147,7 +147,7 @@ test('Support the custom data as part of union such as false, number, float', as
 test('Support the literals in the union types', async () => {
   const varName = `TypeUnionWithTypeLiteral`
   const src = `type ${varName} = number | 30 | 1995.05 | {name: string}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -168,7 +168,7 @@ test('Support the literals in the union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -192,7 +192,7 @@ test('Support the literals in the union types', async () => {
 test('Support the literals with union types', async () => {
   const varName = `TypeLiteralWithTypeUnion`
   const src = `type ${varName} = {name: string, sex: "male" | "female"}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -212,7 +212,7 @@ test('Support the literals with union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -237,7 +237,7 @@ test('Support the literals with union types', async () => {
 test('Support the expression as a type alias', async () => {
   const varName = `ExpressionType`
   const src = `type ${varName} = string`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -247,7 +247,7 @@ test('Support the expression as a type alias', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -261,7 +261,7 @@ test('Support the generic types', async () => {
   const varName = `Generic`
   const genericName = 'T'
   const src = `type ${varName}<${genericName}> = ${genericName}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -279,7 +279,7 @@ test('Support the generic types', async () => {
 
   // // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -294,7 +294,7 @@ test('Support the generic union types', async () => {
   const varName = `GenericUnion`
   const genericName = 'T'
   const src = `type ${varName}<${genericName}> = ${genericName} | string`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -315,7 +315,7 @@ test('Support the generic union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 
@@ -338,7 +338,7 @@ test('Support the generic types with the nested generic types and union types', 
   const recordName = `Record`
   const arrayName = `Array`
   const src = `type ${varName}<${genericName} extends Array<number>> = number | Record<string, ${genericName}>`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -360,8 +360,8 @@ test('Support the generic types with the nested generic types and union types', 
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
-  const buitInIdentifiers = await EnabledNodejsModules.getBuiltInIdentifiers();
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const buitInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
   moduleMemory.addIdentifiers(buitInIdentifiers.getValue())
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
@@ -380,7 +380,7 @@ test('Support the generic types with the nested generic types and union types', 
 test('Support the generic types with the nested generic types and union types', async () => {
   const varName = `IntersectionWithPrimitive`
   const src = `type ${varName} = string[] & number & {name: string}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -393,7 +393,7 @@ test('Support the generic types with the nested generic types and union types', 
 test('Support the intersect types', async () => {
   const varName = `Intersection`
   const src = `type ${varName} = {numValue: number} & {name: string}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -411,7 +411,7 @@ test('Support the intersect types', async () => {
 test('Support the intersect types with union type', async () => {
   const varName = `UnionIntersection`
   const src = `type ${varName} = {name: string} & {girly: boolean} | {masculine: number}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -437,7 +437,7 @@ test('Support the intersect types with union type', async () => {
 test('Support the intersect types with union type', async () => {
   const varName = `ParenthesizedUnionIntersection`
   const src = `type ${varName} = {name: string} & ({girly: boolean} | {masculine: number})`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -467,7 +467,7 @@ test('Support the type that has another type in the reference defined later than
   const src = 
     `type ${varName} = ${simpleVarName} & {profession: string}; ` + 
     `type ${simpleVarName} = {name: string, age: number}`;
-  const code = new Code(src);
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   const types = await code.getTypeIdentifiers();
 
   // Result
@@ -496,7 +496,7 @@ test('Support the type that has another type in the reference defined later than
 
   // Lint
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>(moduleLink, {});
+  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
   const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
 

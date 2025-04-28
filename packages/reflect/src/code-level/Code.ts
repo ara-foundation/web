@@ -19,14 +19,16 @@ import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TypeDeclaration } from "./type-declaration.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
-import { EnabledNodejsModules } from "../reflect-nodejs-ext/enabled-nodejs-module.js";
+import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
+import type { ModuleLink } from "../ara-link/ModuleLink.js";
 
 export type Object = {[key: string]: ValueType};
 
 
 export class Code {
     private _ast: TsSourceFile;
+    private _moduleLink: ModuleLink;    // Module that this code belong to
     code: string;
     project: Project;
     tempCodeAmount: number;
@@ -37,12 +39,13 @@ export class Code {
      * Convert the source code into the AST tree
      * @param source the typescript code
      */
-    constructor(code: string, tempCodeAmount = 0) {
+    constructor(code: string, moduleLink: ModuleLink, tempCodeAmount = 0) {
         this.tempCodeAmount = tempCodeAmount;
         this.code = code;
         this.project = new Project({
             useInMemoryFileSystem: true
-        })
+        });
+        this._moduleLink = moduleLink;
         
         this._ast = this.project.createSourceFile(`__temp.ts`, code);
     }
@@ -88,12 +91,12 @@ export class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    public getImportedIdentifiers = (projectMemory: ProjectMemory): Result<AstIdentifiers> => {
+    public getImportedIdentifiers = async (projectMemory: ProjectMemory): Promise<Result<AstIdentifiers>> => {
         let identifiers: AstIdentifiers = {};
         const tsNodes = this.getTsNodes([ImportDeclaration.isImportDeclaration])
 
         for (let tsNode of tsNodes) {
-            const importDeclaration = ImportDeclaration.fromTsNode(tsNode, projectMemory);
+            const importDeclaration = await ImportDeclaration.fromTsNode(tsNode, this._moduleLink, projectMemory);
             
             if (importDeclaration.isFailure) {
                 return Result.fail(
@@ -200,7 +203,7 @@ export class Code {
         }
 
         // Debug.push(`memory.identifyModuleByPath()`, {modulePath})
-        const identifiedMemory = memory.getModuleMemory(identifiedNode.importPath);
+        const identifiedMemory = memory.getModule(identifiedNode.importPath);
         // Debug.pop();
         if (identifiedMemory.isFailure) {
             return Result.fail(
@@ -243,7 +246,7 @@ export class Code {
         const localTypeFilters = [
             AstNode.isDefinedInLocal, 
             AstNode.isTypeDeclaration,
-            EnabledNodejsModules.isNonBuiltInIdentifier,
+            BuiltInIdentifiers.isNonBuiltInIdentifier,
         ]
         const typesToLint  = memory.getIdentifiers(localTypeFilters)
         const typesCount = Object.keys(typesToLint).length;

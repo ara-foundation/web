@@ -2,7 +2,7 @@ import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "./ts-node.js";
 import { Result } from "@ara-web/ts-enhancement";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
-import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
+import type { ModuleLink } from "../ara-link/ModuleLink.js";
 export declare enum AstNodeType {
     Variable = "variable",
     Enum = "enum",

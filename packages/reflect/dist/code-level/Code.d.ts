@@ -12,11 +12,13 @@ import { type ValueType } from "./ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
+import type { ModuleLink } from "../ara-link/ModuleLink.js";
 export type Object = {
     [key: string]: ValueType;
 };
 export declare class Code {
     private _ast;
+    private _moduleLink;
     code: string;
     project: Project;
     tempCodeAmount: number;
@@ -25,7 +27,7 @@ export declare class Code {
      * Convert the source code into the AST tree
      * @param source the typescript code
      */
-    constructor(code: string, tempCodeAmount?: number);
+    constructor(code: string, moduleLink: ModuleLink, tempCodeAmount?: number);
     /**
      * Gets from AST all child nodes.
      * AST's children at the root level are list of code pieces.
@@ -41,7 +43,7 @@ export declare class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    getImportedIdentifiers: (projectMemory: ProjectMemory) => Result<AstIdentifiers>;
+    getImportedIdentifiers: (projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
     /**
      * Lint dependencies of the given module identified by type and path.
      *

@@ -9,24 +9,21 @@ import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { NamedImport } from "./import-level/named-import.js";
 import { Identifier } from "./value-level/idenitifier.js";
-import type { ModuleLink } from "../ara-link/ReflectAraLink.js";
+import { ModuleLink } from "../ara-link/ModuleLink.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
+import { FilePath } from "../module.js";
 
 export class ImportDeclaration extends TsNode {
     private _moduleLink: ModuleLink;
     protected _tsNode: TsImportDeclaration;
 
-    private constructor (tsNode: TsNode, projectMemory: ProjectMemory) {
+    private constructor (tsNode: TsNode) {
         super(tsNode);
         this._tsNode = tsNode.getNode<TsImportDeclaration>()!;
-        const moduleLink = this.getModuleLink(projectMemory);
-        if (moduleLink.isFailure) {
-            throw `${moduleLink.errorTitle}: ${moduleLink.errorDescription}`
-        } 
-        this._moduleLink = moduleLink.getValue();
+        this._moduleLink = ModuleLink.newFileURL(import.meta.filename);
     }
 
-    public static fromTsNode(tsNode: TsNode, projectMemory: ProjectMemory): Result<ImportDeclaration> {
+    public static async fromTsNode(tsNode: TsNode, callingModulePath: ModuleLink, projectMemory: ProjectMemory): Promise<Result<ImportDeclaration>> {
         if (!this.isImportDeclaration(tsNode)) {
             return Result.fail(
                 `The given node is not import declaration`,
@@ -35,7 +32,13 @@ export class ImportDeclaration extends TsNode {
         }
 
         try {
-            const importDeclaration = new ImportDeclaration(tsNode, projectMemory);
+            const importDeclaration = new ImportDeclaration(tsNode);
+            const moduleLink = await importDeclaration.getModuleLink(callingModulePath, projectMemory);
+            if (moduleLink.isFailure) {
+                throw `${moduleLink.errorTitle}: ${moduleLink.errorDescription}`
+            } 
+            importDeclaration._moduleLink = moduleLink.getValue();
+            
             return Result.ok(importDeclaration)
         } catch (e) {
             return Result.fail(`new ImportDeclaration()`, `${e}`)
@@ -80,7 +83,7 @@ export class ImportDeclaration extends TsNode {
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
      */
-    private getModuleLink = (projectMemory: ProjectMemory): Result<ModuleLink> => {
+    private getModuleLink = async (callingModulePath: ModuleLink, projectMemory: ProjectMemory): Promise<Result<ModuleLink>> => {
         const children = this.getChildren( 
             [],
             [Identifier.isA, TsNode.isNonImportant],
@@ -98,25 +101,27 @@ export class ImportDeclaration extends TsNode {
                 const stringNodes = tsNode.getChildren([TsNode.isString])
                 if (stringNodes.length !== 0) {
                     const importPath = StringTraits.unquote(stringNodes[0].getText());
-                    const moduleLink = projectMemory.getPossibleModuleLink(importPath)
-                    if (moduleLink.isFailure) {
+                    const absolueImportPath = await FilePath.getFileAbsolutePath(importPath, callingModulePath.toFilePath)
+                    const moduleExists = projectMemory.isModuleExist(absolueImportPath)
+                    if (!moduleExists) {
                         return Result.fail(
-                            `projectMemory.getPossibleModuleLink('${importPath}'): ${moduleLink.errorTitle}`,
-                            moduleLink.errorDescription!
+                            `projectMemory.isModuleExist(): not found`,
+                            `The module '${absolueImportPath}' not found in the project memory, please add the module through the extension`
                         )
                     }
-                    return Result.ok(moduleLink.getValue());
+                    return Result.ok(absolueImportPath);
                 }
             } else if (TsNode.isString(tsNode)) {
                 const importPath = StringTraits.unquote(tsNode.getText());
-                const moduleLink = projectMemory.getPossibleModuleLink(importPath)
-                if (moduleLink.isFailure) {
+                const absolueImportPath = await FilePath.getFileAbsolutePath(importPath, callingModulePath.toFilePath)
+                const moduleExists = projectMemory.isModuleExist(absolueImportPath)
+                if (!moduleExists) {
                     return Result.fail(
-                        `projectMemory.getPossibleModuleLink('${importPath}'): ${moduleLink.errorTitle}`,
-                        moduleLink.errorDescription!
+                        `projectMemory.isModuleExist(): not found`,
+                        `The module '${absolueImportPath}' not found in the project memory, please add the module through the extension`
                     )
                 }
-                return Result.ok(moduleLink.getValue());
+                return Result.ok(absolueImportPath);
             } else {
                 const err = Debug.error(
                     `Unsupported child of import declaration`,
