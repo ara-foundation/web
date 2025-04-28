@@ -41,11 +41,10 @@ export class FilePath {
         if (filePath === undefined) {
             return Result.fail(`The filepath is undefined`, `Are you sure your ModuleLink has the subpath?`);
         }
-        let extName = PathModule.extname(filePath);
-        if (extName.length === 0) {
+        let extension = PathModule.extname(filePath);
+        if (extension.length === 0) {
             return Result.fail(`The file path has no file extension`, `Pass the corrent name to support ${filePath}`);
         }
-        const extension = '.' + extName;
         if (supportedExtensions.includes(extension)) {
             return Result.ok(extension);
         }

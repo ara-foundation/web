@@ -17,6 +17,7 @@ import { TsNode } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
+import { ModuleLink } from "../ara-link/ModuleLink.js";
 export class Code {
     _ast;
     _moduleLink; // Module that this code belong to
@@ -119,7 +120,7 @@ export class Code {
                 return Result.fail(`identifyImportedIdentifier(identifier='${identifier}'): ${identifiedValue.errorTitle}`, identifiedValue.errorDescription);
             }
             if (identifiedValue.getValue().data === undefined) {
-                const err = Debug.error(`The import identifier '${identifier}' of '${node.nodeType}' node type data couldn't be identified`, `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`, { node, identifiedValue });
+                const err = Debug.error(`The import identifier '${identifier}' of '${node.nodeType}' data is undefined`, `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`, { node, identifiedValue });
                 return Result.fail(err);
             }
             identifiers[identifier] = identifiedValue.getValue();
@@ -156,7 +157,7 @@ export class Code {
         }
         const glob = identifiedMemory.getValue().glob;
         // If the import is default import, then data is AraLink.
-        if (identifiedNode.data instanceof AraLink) {
+        if (identifiedNode.data instanceof ModuleLink) {
             identifiedNode.data = glob.default;
             identifiedNode.importPath = undefined;
         }
