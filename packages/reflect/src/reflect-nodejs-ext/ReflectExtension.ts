@@ -92,9 +92,12 @@ export class NodejsReflectExtension implements ExtensionInterface {
         return Result.ok(putResult.getValue());
     }
 
-    public getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>> {
+    public getModule<T>(moduleLink: ModuleLink|string): Result<ModuleMemory<T>> {
+        if (typeof moduleLink === "string") {
+            return Result.fail(`${this.moduleLink.moduleURL} accepts module links only`, `Please pass the absolute path`)
+        }
         if (!this.isModuleExist(moduleLink)) {
-            return Result.errorCode404(['reflect-nodejs-ext', 'ReflectExtension'], `this.isModuleExist()`, `The link: ${moduleLink}`)
+            return Result.errorCode404([this.moduleLink.moduleURL], `this.isModuleExist()`, `The link: ${moduleLink}`)
         }
         return Result.ok(this._moduleMemories[moduleLink.moduleURL] as ModuleMemory<T>);
     }

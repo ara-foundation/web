@@ -28,7 +28,7 @@ export interface MemoryOperations {
      * Returns the Module Memory by the provided module link by the module link
      * @param moduleLink 
      */
-    getModule: <T>(moduleLink: ModuleLink) => Result<ModuleMemory<T>>;
+    getModule: <T>(moduleLink: ModuleLink|string) => Result<ModuleMemory<T>>;
     /**
      * Returns all the modules that match to the category
      * @param moduleCategory? 

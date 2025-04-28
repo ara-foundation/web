@@ -30,7 +30,7 @@ export class ProjectMemory implements MemoryOperations {
         this._memOps.push(memOp);
     }
 
-    public getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>> {
+    public getModule<T>(moduleLink: ModuleLink|string): Result<ModuleMemory<T>> {
         for (let memOp of this._memOps) {
             const module = memOp.getModule<T>(moduleLink);
             if (module.isSuccess) {
@@ -42,7 +42,10 @@ export class ProjectMemory implements MemoryOperations {
     public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
         let modules: ModuleMemory<T>[] = [];
         for (let memOp of this._memOps) {
-            modules = [...modules, ...memOp.getModules<T>(moduleCategory)];
+            Debug.log(`Get modules for ${memOp.operatorId} for '${moduleCategory}' category`)
+            const memOpModules = memOp.getModules<T>(moduleCategory);
+            Debug.log(memOpModules)
+            modules = [...modules, ...memOpModules];
         }
 
         return []

@@ -14,7 +14,7 @@ export declare class ProjectMemory implements MemoryOperations {
     constructor();
     get operatorId(): ModuleLink;
     putMemoryOperations: (memOp: MemoryOperations) => void;
-    getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>>;
+    getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     /**

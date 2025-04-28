@@ -21,7 +21,7 @@ export declare class NodejsReflectExtension implements ExtensionInterface {
     putModules: (importedRecords: ImportedRecords) => Promise<Result<ModuleLink[]>>;
     watchModules: (autoImporter: AutoImporter) => Promise<void>;
     private _autoPut;
-    getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>>;
+    getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     get moduleCategories(): string[];

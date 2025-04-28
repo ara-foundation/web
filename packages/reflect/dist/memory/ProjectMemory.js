@@ -33,7 +33,10 @@ export class ProjectMemory {
     getModules(moduleCategory) {
         let modules = [];
         for (let memOp of this._memOps) {
-            modules = [...modules, ...memOp.getModules(moduleCategory)];
+            Debug.log(`Get modules for ${memOp.operatorId} for '${moduleCategory}' category`);
+            const memOpModules = memOp.getModules(moduleCategory);
+            Debug.log(memOpModules);
+            modules = [...modules, ...memOpModules];
         }
         return [];
     }
