@@ -70,6 +70,9 @@ export class Result {
         return Result.ok();
     }
 }
+/**
+ * Simple version of Result that provides error message.
+ */
 export class OkResult {
     isSuccess;
     isFailure;

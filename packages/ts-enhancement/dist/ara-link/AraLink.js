@@ -1,5 +1,5 @@
-import {} from "../keyValue.js";
-import { isEqualArray } from "../array.js";
+import {} from "#main";
+import { ArrayTraits } from "#traits";
 export const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules
@@ -120,7 +120,7 @@ export class AraLink {
         if (this.slugs.length === 0) {
             return false;
         }
-        if (!isEqualArray(this.slugs, slugs)) {
+        if (!ArrayTraits.isEqualArray(this.slugs, slugs)) {
             return false;
         }
         return true;

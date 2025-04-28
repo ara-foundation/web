@@ -1,4 +1,9 @@
-export function isEqualArray(a: any[], b: any[]): boolean {
+/**
+ * Useful methods to work with the Arrays that Typescript doesn't have,
+ * and downloading the different package isn't worth it.
+ */
+export class ArrayTraits {
+  public static isEqualArray = (a: any[], b: any[]): boolean => {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
@@ -13,3 +18,4 @@ export function isEqualArray(a: any[], b: any[]): boolean {
     }
     return true;
   }
+}

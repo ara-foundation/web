@@ -1,4 +1,4 @@
-import { ColumnSlug, RowSlug } from "./araWebOntology/layout.js";
+import { AraLayoutColumnSlug, AraLayoutRowSlug } from "#ontology";
 
 /**
  * Converts the Row and Column to the full slug of the page layout slug
@@ -6,9 +6,9 @@ import { ColumnSlug, RowSlug } from "./araWebOntology/layout.js";
  * @param column Column
  * @returns {string} is the path
  */
-export const slugsToLayoutPath = (row: RowSlug, column: ColumnSlug): string => {
+export const slugsToLayoutPath = (row: AraLayoutRowSlug, column: AraLayoutColumnSlug): string => {
     return `${row}-${column}`
 }
 
-export const contentLeftPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Left);
-export const contentRightPath = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+export const contentLeftPath = slugsToLayoutPath(AraLayoutRowSlug.Content, AraLayoutColumnSlug.Left);
+export const contentRightPath = slugsToLayoutPath(AraLayoutRowSlug.Content, AraLayoutColumnSlug.Right);

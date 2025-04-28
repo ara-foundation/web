@@ -80,6 +80,9 @@ export class Result<T> {
     }
 }
 
+/**
+ * Simple version of Result that provides error message.
+ */
 export class OkResult {
   public isSuccess: boolean;
   public isFailure: boolean

@@ -1,5 +1,5 @@
-import { type ObjectLikeKeyValue, type ObjectValueLike, type WithGetTextMethod } from "../keyValue.js"
-import { isEqualArray } from "../array.js"
+import { type WithGetTextMethod } from "#main"
+import { ArrayTraits } from "#traits"
 export const NpmProtocol = "npm";
 
 /**
@@ -12,9 +12,9 @@ export class AraLink<T> {
     private _protocol: string;
     private _slugs: string[];
     private _resource: string|T;
-    private _properties: ObjectLikeKeyValue;
+    private _properties: object;
 
-    constructor (protocol: string, resource: string|T, slugsOrProperties?: string[]|ObjectLikeKeyValue, properties?: ObjectLikeKeyValue) {
+    constructor (protocol: string, resource: string|T, slugsOrProperties?: string[]|object, properties?: object) {
         const slugs = slugsOrProperties === undefined ? undefined :
          Array.isArray(slugsOrProperties) ? slugsOrProperties : undefined;
         properties = ((properties !== undefined) ? properties :
@@ -35,7 +35,7 @@ export class AraLink<T> {
         return this;
     }
 
-    public copyWithProperties = (properties: ObjectLikeKeyValue): AraLink<T> => {
+    public copyWithProperties = (properties: object): AraLink<T> => {
         const araLink = new AraLink(this._protocol, this._resource, this._slugs, properties);
         return araLink;
     }
@@ -63,7 +63,7 @@ export class AraLink<T> {
         return this._resource;
     }
 
-    public get properties(): ObjectLikeKeyValue {
+    public get properties(): object {
         return this._properties;
     }
 
@@ -77,12 +77,12 @@ export class AraLink<T> {
         return false;
     }
 
-    public property = (property: string): ObjectValueLike|undefined => {
+    public property = (property: string): object|undefined => {
         if (!this.isPropertyExist(property)) {
             return undefined;
         }
 
-        return this._properties[property]
+        return (this._properties as any)[property]
     }
 
     public toString = () : string => {
@@ -135,7 +135,7 @@ export class AraLink<T> {
             return false;
         }
 
-        if (!isEqualArray(this.slugs, slugs)) {
+        if (!ArrayTraits.isEqualArray(this.slugs, slugs)) {
             return false;
         }
 

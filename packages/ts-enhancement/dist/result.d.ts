@@ -31,6 +31,9 @@ export declare class Result<T> {
     static errorCode404<U>(slugs: string[], functionPath: string, data: string): Result<U>;
     static combine(results: Result<any>[]): Result<any>;
 }
+/**
+ * Simple version of Result that provides error message.
+ */
 export declare class OkResult {
     isSuccess: boolean;
     isFailure: boolean;
