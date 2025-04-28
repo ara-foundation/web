@@ -42,13 +42,11 @@ export class ProjectMemory implements MemoryOperations {
     public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
         let modules: ModuleMemory<T>[] = [];
         for (let memOp of this._memOps) {
-            Debug.log(`Get modules for ${memOp.operatorId} for '${moduleCategory}' category`)
             const memOpModules = memOp.getModules<T>(moduleCategory);
-            Debug.log(memOpModules)
             modules = [...modules, ...memOpModules];
         }
 
-        return []
+        return modules;
     }
 
     public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
