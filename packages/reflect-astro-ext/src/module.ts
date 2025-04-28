@@ -6,8 +6,9 @@ import {
     FilePath
 } from "@ara-web/reflect/module";
 import { ModuleMemory } from "@ara-web/reflect/memory";
-import { Debug, enumValues, Result, type Page } from "@ara-web/ts-enhancement";
+import { Debug, enumValues, Result, type AraPage } from "@ara-web/ts-enhancement";
 import type { AstroNode } from "./component.js";
+import type { ModuleLink } from "@ara-web/reflect/module-link";
 
 /**
  * Module Category to sort the modules.
@@ -38,6 +39,7 @@ export enum FileExtension {
  * Any UI Content is composed of the HTML Elements and the source code
  */
 export type ModuleParts = {
+    moduleLink: ModuleLink,
     fileExtension: FileExtension,
     elements?: AstroNode[],             // Change to the generic to support react.
     source?: string,
@@ -80,7 +82,7 @@ export class ModulePartitioner {
     
     /**
      * Identifies the parts that the module has. Additionally, it also identifies the source code
-     * @returns {Result<Page[]>}
+     * @returns {Result<AraPage[]>}
      */
     public static partition = async <T>(moduleMemory: ModuleMemory<T>): Promise<Result<ModuleParts>> => {
         const uiContent = await this.getModuleParts(moduleMemory);
@@ -97,7 +99,7 @@ export class ModulePartitioner {
     /**
      * Returns a page by it's path
      */
-    getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
+    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
         if (url === undefined) {
             return undefined;
         }
@@ -107,19 +109,6 @@ export class ModulePartitioner {
         if (url[url.length - 1] === "/") {
             url = url.substring(0, url.length - 1);
         }
-
-        // const pages = await this.getPages();
-
-        // if (pages.isFailure) {
-        //     return undefined;
-        // }
-
-        // for (const page of pages.getValue()) {
-        //     const pageUrl = fileNameToUrl(page.fileName);
-        //     if (url === pageUrl) {
-        //         return page;
-        //     }
-        // }
 
         return undefined;
     }
@@ -166,6 +155,7 @@ export class ModulePartitioner {
         }
         const source = readResult.getValue();
 
+        // If we start to support the TSX or JSX
         //     if (fileExtension !== FileExtension.Astro) {
         //         return Result.ok({fileExtension, elements: [], source})
         //     }

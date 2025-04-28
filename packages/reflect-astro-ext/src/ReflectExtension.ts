@@ -1,5 +1,5 @@
 import { type AutoImporter, type ExtensionInterface, type ImportedRecords } from "@ara-web/reflect";
-import { Debug, enumValues, OkResult, Result, type Component, type Page } from "@ara-web/ts-enhancement";
+import { Debug, enumValues, OkResult, Result, type AraComponent, type AraPage } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
 import { fileContentToComponent } from "./component.js";
 import { extractModuleCategory, ModuleCategory, ModulePartitioner } from "./module.js";
@@ -211,17 +211,17 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * Returns the all the components.
      * Components are not evaluated by internal structures.
      */
-    private getComponents = async (): Promise<Result<Component[]>> => {
-        const modules = this.getModules<Component>(ModuleCategory.Component);
+    private getComponents = async (): Promise<Result<AraComponent[]>> => {
+        const modules = this.getModules<AraComponent>(ModuleCategory.Component);
         if (modules.length === 0) {
             return Result.ok([])
         }
 
-        const components: Component[] = [];
+        const components: AraComponent[] = [];
 
         for (let moduleMemory of modules) {
             if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as Component);
+                components.push(moduleMemory.content as AraComponent);
                 continue;
             }
 
@@ -241,17 +241,17 @@ export class ReflectAstroFramework implements ExtensionInterface {
     /**
      * Returns the all the layout components
      */
-    private getLayouts = async (): Promise<Result<Component[]>> => {
-        const modules = this.getModules<Component>(ModuleCategory.Layout);
+    private getLayouts = async (): Promise<Result<AraComponent[]>> => {
+        const modules = this.getModules<AraComponent>(ModuleCategory.Layout);
         if (modules.length === 0) {
             return Result.ok([])
         }
 
-        const components: Component[] = [];
+        const components: AraComponent[] = [];
 
         for (let moduleMemory of modules) {
             if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as Component);
+                components.push(moduleMemory.content as AraComponent);
                 continue;
             }
 
@@ -269,18 +269,19 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
 
     /**
-     * Check all modules and if no content is given, then return
-     * @returns {Result<Page[]>}
+     * Check all modules and if no content is given, then return.
+     * It also updates the memory by parsing the source code.
+     * @returns {Result<AraPage[]>}
      */
     private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
+        const noContentModules = this.getNoContentModules<AraPage>(ModuleCategory.Page);
         // identify ui content
         // identify source code
         // identify the page
         Debug.log(`Fetch the no content modules:`)
         Debug.log(Object.keys(noContentModules))
         for (let moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
+            const moduleParts = await ModulePartitioner.partition<AraPage>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`UILevel.identifyModuleParts<Page>('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
             }
@@ -297,7 +298,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     /**
      * Returns a page by it's path
      */
-    getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
+    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
         if (url === undefined) {
             return undefined;
         }

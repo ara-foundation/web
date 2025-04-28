@@ -1,7 +1,7 @@
 // The component engine.
 // List of components and fetching them by a simple class. 
 
-import { type Component, Result } from "@ara-web/ts-enhancement";
+import { type AraComponent, Result } from "@ara-web/ts-enhancement";
 
 // Move the parts to the Astro Framework itself.
 // TODO:
@@ -78,7 +78,7 @@ export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) =>
 //     )
 // }
 
-export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<Component>> => {
+export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<AraComponent>> => {
     return Result.errorCode501(["component"], "fileContentToComponent")
     // const component: Component = {
     //     label: "",

@@ -4,7 +4,7 @@
 import { parse as commentParse} from "comment-parser";
 
 import { Result } from "@ara-web/ts-enhancement";
-import type { Page } from "@ara-web/ts-enhancement";
+import type { AraPage } from "@ara-web/ts-enhancement";
 
 // The pages traits adds to the Page the following:
 // -- RPCs and refer to RPC types
@@ -21,10 +21,10 @@ import { Code } from "@ara-web/reflect/code-level";
 //////////////////////////////////////////////////////////////////
 
 export class PageTraits {
-    private _page!: Page;
+    private _page!: AraPage;
     private _code!: Code;
 
-    public get page(): Page {
+    public get page(): AraPage {
         return this._page;
     }
 
@@ -78,10 +78,10 @@ export class PageTraits {
     /**
      * Validates the file content to be a page.
      * The pages are for example only .astro files that has frontmatter and at least a one component.
-     * @returns {Page}
+     * @returns {AraPage}
      */
-    private identifyPageByFileContent = (uiContent: UiContent): Result<Page> => {
-        const page: Page = {
+    private identifyPageByFileContent = (uiContent: UiContent): Result<AraPage> => {
+        const page: AraPage = {
             title: "Warning: Undefined",
             description: "Not yet set",
             fileName: uiContent.absoluteModulePath.substring(uiContent.absoluteModulePath.lastIndexOf("/src/pages") + "/src/pages".length),

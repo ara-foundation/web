@@ -1,4 +1,4 @@
-import { Debug, OkResult, Result, type Page } from "@ara-web/ts-enhancement";
+import { Debug, OkResult, Result, type AraPage } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
 import { Code } from "@ara-web/reflect/code-level";
 import { AstNode, type AstIdentifiers } from "@ara-web/reflect/code-level/ast-node";
@@ -12,7 +12,7 @@ export class CodeLevel {
     
     /**
      * Identifies all the types, variables that were defined in the source code.
-     * @returns {Result<Page[]>}
+     * @returns {Result<AraPage[]>}
      */
     public static identifySourceCode = async <T>(source: string|undefined, moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<ModuleMemory<T>>> => {
         if (source === undefined) {
@@ -143,7 +143,7 @@ export class CodeLevel {
     /**
      * Returns a page by it's path
      */
-    getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
+    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
         if (url === undefined) {
             return undefined;
         }
