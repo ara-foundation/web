@@ -168,3 +168,32 @@ export type AraPage = {
     glob: unknown;
 }
 
+export type Component = {
+    title: string;
+    description: string;
+    url: string;
+    slots: {
+        // `default`: Component[],  
+        [key: string]: Component[]
+    };
+    glob: unknown;
+}
+
+export type Expression =  AraComponent & {
+    prefix: string;
+    elements: (AraComponent|Expression)[];
+    suffix: string;
+}
+
+export const DEFAULT_PAGE_SLOT = 'default'
+
+export type Page = {
+    title: string;
+    description: string;
+    url: string;
+    slots: {
+        // `default`: Component[],  
+        [key: string]: Component[]
+    };
+    glob: unknown;
+}

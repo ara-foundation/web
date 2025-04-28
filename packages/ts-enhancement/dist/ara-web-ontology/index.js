@@ -50,3 +50,4 @@ export var AraRpcType;
     AraRpcType["Independent"] = "independent";
     AraRpcType["Proxy"] = "proxy";
 })(AraRpcType || (AraRpcType = {}));
+export const DEFAULT_PAGE_SLOT = 'default';
