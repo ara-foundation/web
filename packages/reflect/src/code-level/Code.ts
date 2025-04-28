@@ -21,7 +21,7 @@ import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
-import type { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "../ara-link/ModuleLink.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -158,7 +158,7 @@ export class Code {
             }
             if (identifiedValue.getValue().data === undefined) {
                 const err = Debug.error(
-                    `The import identifier '${identifier}' of '${node.nodeType}' node type data couldn't be identified`,
+                    `The import identifier '${identifier}' of '${node.nodeType}' data is undefined`,
                     `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`,
                     {node, identifiedValue},
                 )
@@ -214,7 +214,7 @@ export class Code {
 
         const glob = identifiedMemory.getValue().glob
         // If the import is default import, then data is AraLink.
-        if (identifiedNode.data instanceof AraLink) {
+        if (identifiedNode.data instanceof ModuleLink) {
             identifiedNode.data = (glob as any).default;
             identifiedNode.importPath = undefined;
         } else {
