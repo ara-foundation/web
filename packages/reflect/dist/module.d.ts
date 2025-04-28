@@ -33,6 +33,7 @@ export declare class FilePath {
      */
     static getFileExtension: (filePath: string | undefined, supportedExtensions: string[]) => Result<string>;
     static getCurrentWorkingDir: () => string;
+    static isAbsolutePath: (dirOrFilePath: string) => boolean;
     static isDirectory: (filePath: string) => Promise<boolean>;
     /**
      * If the file path is a directory then simply return it.
@@ -41,6 +42,7 @@ export declare class FilePath {
      */
     static getDirectory: (dirOrfilePath: string) => Promise<string>;
     static getFileAbsolutePath: (filePath: string, filePathFrom: string) => Promise<ModuleLink>;
+    static join: (segments: string[]) => string;
     /**
      * Returns true if the file exists by given `moduleLink`.
      * For now it only supports the `file://` module URLs and in this case

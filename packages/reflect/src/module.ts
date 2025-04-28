@@ -64,6 +64,10 @@ export class FilePath {
         return process.cwd();
     }
 
+    public static isAbsolutePath = (dirOrFilePath: string): boolean => {
+        return PathModule.isAbsolute(dirOrFilePath);
+    }
+
     public static isDirectory = async (filePath: string): Promise<boolean> => {
         try {
             const stats = await stat(filePath);
@@ -88,6 +92,10 @@ export class FilePath {
 
     public static getFileAbsolutePath = async(filePath: string, filePathFrom: string): Promise<ModuleLink> => {
         return ModuleLink.newFileURL(PathModule.resolve(await this.getDirectory(filePathFrom), filePath));
+    }
+
+    public static join = (segments: string[]): string => {
+        return PathModule.join(...segments);
     }
 
     /**

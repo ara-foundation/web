@@ -1,5 +1,5 @@
 import { type ExtensionInterface } from "../extension-interface.js";
-import { Debug, enumValues, OkResult, Result } from "@ara-web/ts-enhancement";
+import { enumValues, OkResult, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "../memory/index.js";
 import { ModuleCategory } from "./module.js";
 import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
@@ -20,6 +20,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-nodejs-ext", fileModuleLink)
     }
+    
     public get operatorId(): ModuleLink {
         return this.moduleLink;
     }
@@ -150,38 +151,13 @@ export class NodejsReflectExtension implements ExtensionInterface {
         return OkResult.ok();
     }
 
-    //****************************************************************
-    // 
-    // Paths
-    //
-    //****************************************************************
-
-    // public getNewModuleLink(moduleCategory: string, filePath: string): Result<ModuleLink> {
-    //     if (!this.isSupportedModuleCategory(moduleCategory)) {
-    //         return Result.fail(`this.isSupportedModuleCategory('${moduleCategory}'): false`, `Please pass the correct module category`)
-    //     }
-
-    //     const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, filePath);
-    //     return Result.ok(moduleLink);
-    // }
-
-    // public getPossibleModuleLinks: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
-    //     const moduleLinks: ModuleLink[] = [];
-    //     const moduleCategories = this.moduleCategories;
-    //     for (let moduleCategory of moduleCategories) {
-    //         const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, modulePath)
-    //         moduleLinks.push(moduleLink)
-    //     }
-    //     return moduleLinks
-    // }
-
-    getModuleContents<T>(moduleCategory?: string): T[] {
+    public getModuleContents<T>(moduleCategory?: string): T[] {
         const moduleMemories = this.getModules(moduleCategory);
 
         return moduleMemories.map((memory) => (memory.content as T))
     }
 
-    getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
+    public getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
         const moduleMemories = this.getModules<T>(moduleCategory);
 
         return moduleMemories.filter((memory) => (memory.content === undefined));

@@ -1,5 +1,5 @@
 import {} from "../extension-interface.js";
-import { Debug, enumValues, OkResult, Result } from "@ara-web/ts-enhancement";
+import { enumValues, OkResult, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory } from "../memory/index.js";
 import { ModuleCategory } from "./module.js";
 import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
@@ -121,27 +121,6 @@ export class NodejsReflectExtension {
         }
         return OkResult.ok();
     }
-    //****************************************************************
-    // 
-    // Paths
-    //
-    //****************************************************************
-    // public getNewModuleLink(moduleCategory: string, filePath: string): Result<ModuleLink> {
-    //     if (!this.isSupportedModuleCategory(moduleCategory)) {
-    //         return Result.fail(`this.isSupportedModuleCategory('${moduleCategory}'): false`, `Please pass the correct module category`)
-    //     }
-    //     const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, filePath);
-    //     return Result.ok(moduleLink);
-    // }
-    // public getPossibleModuleLinks: PossibleModuleLinksBuilder = (modulePath: string): ModuleLink[] => {
-    //     const moduleLinks: ModuleLink[] = [];
-    //     const moduleCategories = this.moduleCategories;
-    //     for (let moduleCategory of moduleCategories) {
-    //         const moduleLink = new ModuleLink(this.namespace, this.name, moduleCategory, modulePath)
-    //         moduleLinks.push(moduleLink)
-    //     }
-    //     return moduleLinks
-    // }
     getModuleContents(moduleCategory) {
         const moduleMemories = this.getModules(moduleCategory);
         return moduleMemories.map((memory) => memory.content);

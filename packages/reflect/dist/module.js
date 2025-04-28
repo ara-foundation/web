@@ -54,6 +54,9 @@ export class FilePath {
     static getCurrentWorkingDir = () => {
         return process.cwd();
     };
+    static isAbsolutePath = (dirOrFilePath) => {
+        return PathModule.isAbsolute(dirOrFilePath);
+    };
     static isDirectory = async (filePath) => {
         try {
             const stats = await stat(filePath);
@@ -76,6 +79,9 @@ export class FilePath {
     };
     static getFileAbsolutePath = async (filePath, filePathFrom) => {
         return ModuleLink.newFileURL(PathModule.resolve(await this.getDirectory(filePathFrom), filePath));
+    };
+    static join = (segments) => {
+        return PathModule.join(...segments);
     };
     /**
      * Returns true if the file exists by given `moduleLink`.
