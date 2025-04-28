@@ -3,7 +3,6 @@
  * - Identifiers
  * - Expressions
  */
-import {} from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { TsNode } from "../code-level/ts-node.js";
 const ReflectProtocol = "reflect";

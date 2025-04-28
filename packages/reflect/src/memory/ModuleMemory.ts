@@ -1,4 +1,4 @@
-import { Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
 import { ModuleLink } from "../ara-link/ModuleLink.js";
 

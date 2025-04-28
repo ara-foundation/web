@@ -1,7 +1,7 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleLink } from "../ara-link/ModuleLink.js";
 /**
  * Collection of the variables, functions that are available for the Ast Node.

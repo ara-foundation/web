@@ -1,4 +1,5 @@
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
 import { ArrayLiteralExpression, Node } from "ts-morph";
 import { staticImplements, type ValueLevelInterface } from "./../value-level-interface.js";

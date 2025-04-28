@@ -1,4 +1,5 @@
-import { deepCopy, Result } from "@ara-web/ts-enhancement";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
@@ -35,7 +36,7 @@ export class ObjectLiteral {
                 identified.errorDescription!
             )
         } else {
-            const copied = deepCopy(identified.getValue().data as object);
+            const copied = ObjectTraits.deepCopy(identified.getValue().data as object);
             return Result.ok({data: copied, dataType: identified.getValue().dataType})
         }        
     }

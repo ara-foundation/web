@@ -1,7 +1,7 @@
 /**
  * Handles the AST Node's values
  */
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { ValueTypeString, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { type AstNode, type TypedData } from "./ast-node.js";

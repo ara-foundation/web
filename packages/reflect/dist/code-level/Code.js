@@ -7,7 +7,8 @@
  */
 import { Project, SourceFile as TsSourceFile } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { ImportDeclaration } from "./import-declaration.js";
 import { AstNode, AstNodeType } from "./ast-node.js";
 import { ValueTypeString, } from "./ast-node-data.js";

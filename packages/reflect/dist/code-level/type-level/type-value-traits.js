@@ -7,7 +7,8 @@
  */
 import { ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../ast-node-data.js";
 import { TsNode } from "../ts-node.js";
 import { TypeRef } from "./type-ref.js";

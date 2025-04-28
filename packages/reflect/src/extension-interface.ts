@@ -1,4 +1,4 @@
-import type { OkResult, Result } from "@ara-web/ts-enhancement";
+import type { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import type { ModuleMemory } from "./memory/ModuleMemory.js";
 import type { ProjectMemory } from "./memory/ProjectMemory.js";
 import type { ModuleLink, ModuleURL } from "./ara-link/ModuleLink.js";

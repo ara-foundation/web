@@ -1,4 +1,5 @@
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, CallExpression } from "ts-morph";
 import type { TypedData } from "../ast-node.js";

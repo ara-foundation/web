@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "./ast-node-data.js";
 export class TypeLevel {
     /**

@@ -10,7 +10,9 @@ import {
     TypeAliasDeclaration,
     TypeParameterDeclaration,
 } from "ts-morph";
-import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { StringTraits } from "@ara-web/ts-enhancement/traits";
 import { AstNode, AstNodeType, type TypedData } from "./ast-node.js";
 import { 
     ValueTypeString, 

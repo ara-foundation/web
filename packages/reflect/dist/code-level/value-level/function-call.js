@@ -32,7 +32,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import { Node, CallExpression } from "ts-morph";
 import { staticImplements } from "./value-level-interface.js";

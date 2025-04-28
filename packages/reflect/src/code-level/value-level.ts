@@ -2,7 +2,9 @@
  * Handles the AST Node's values
  */
 
-import { Debug, deepCopy, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 import { ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { AstNodeType, type AstNode, type TypedData } from "./ast-node.js";
@@ -115,7 +117,7 @@ export class ValueLevel {
         } else if (typedData.dataType === ValueTypeString.string) {
             return Result.ok("" as string);
         } else if (typedData.dataType === ValueTypeString.object) {
-            return Result.ok(typeof typedData.data === "object" ? deepCopy(typedData.data) : {})
+            return Result.ok(typeof typedData.data === "object" ? ObjectTraits.deepCopy(typedData.data) : {})
         }
 
         return Result.fail(

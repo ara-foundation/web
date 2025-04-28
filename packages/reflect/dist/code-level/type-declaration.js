@@ -6,7 +6,9 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { Node, TypeAliasDeclaration, TypeParameterDeclaration, } from "ts-morph";
-import { StringTraits, Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { StringTraits } from "@ara-web/ts-enhancement/traits";
 import { AstNode, AstNodeType } from "./ast-node.js";
 import { ValueTypeString, UnionTypeDeclaration, IntersectedUnionType, TypeDeclaration as TypeDeclarationData } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";

@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TypedData } from "./ast-node.js";
 export type LiteralType = string | number | boolean;

@@ -17,7 +17,7 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 export type ModuleURL = `pkg:npm${string}` | `file://${string}`;
 /**
  * ModuleLink

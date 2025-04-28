@@ -7,7 +7,7 @@
  */
 import { TypeReferenceNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result, type ObjectLikeKeyValue } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import type { ValueType } from "../ast-node-data.js";
 export declare class TypeRef extends TsNode {
@@ -15,7 +15,7 @@ export declare class TypeRef extends TsNode {
     protected _tsNode: TypeReferenceNode;
     private constructor();
     static isTypeRef: (child: TsNode) => boolean;
-    static genericValuesToLinkProperty: (values: ValueType[]) => ObjectLikeKeyValue;
+    static genericValuesToLinkProperty: (values: ValueType[]) => object;
     static linkPropertyToGenericValues: (araLink: AraLink<string>) => ValueType[];
     static fromTsNode(tsNode: TsNode): Result<TypeRef>;
     /**

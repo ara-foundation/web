@@ -1,4 +1,4 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ProjectMemory } from "./memory/index.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/ReflectExtension.js";
 /**

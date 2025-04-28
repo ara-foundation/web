@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
 import type { AstNodeContext } from "../../../memory/AstNodeContext.js";
 import type { TypedData } from "../../ast-node.js";

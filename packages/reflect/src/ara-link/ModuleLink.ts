@@ -17,7 +17,7 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { PackageURL } from "packageurl-js";
 import { fileURLToPath, pathToFileURL } from "url";
 

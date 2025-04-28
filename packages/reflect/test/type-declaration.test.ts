@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { Code } from "../src/code-level/Code.js";
-import { type Page } from "@ara-web/ts-enhancement";
+import { type AraPage } from "@ara-web/ts-enhancement/ontology";
 import { AstNode } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
 import { ModuleMemory } from "../src/memory/ModuleMemory.js";
@@ -34,9 +34,9 @@ test('Supports the union types: type Primary = string | number | boolean', async
 
     // Linting
     const projectMemory = new ProjectMemory()
-    const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+    const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
     moduleMemory.addIdentifiers(types.getValue())
-    const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+    const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
     // Linting Result
     expectAstNodeResult(linted, varName)
@@ -76,9 +76,9 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -122,9 +122,9 @@ test('Support the custom data as part of union such as false, number, float', as
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -168,9 +168,9 @@ test('Support the literals in the union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -212,9 +212,9 @@ test('Support the literals with union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -247,9 +247,9 @@ test('Support the expression as a type alias', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -279,9 +279,9 @@ test('Support the generic types', async () => {
 
   // // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // // Linting Result
   expectAstNodeResult(linted, varName)
@@ -315,9 +315,9 @@ test('Support the generic union types', async () => {
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, varName)
@@ -360,11 +360,11 @@ test('Support the generic types with the nested generic types and union types', 
 
   // Linting
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   const buitInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
   moduleMemory.addIdentifiers(buitInIdentifiers.getValue())
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
   // Linting Result
   expectAstNodeResult(linted, varName)
   const lintedNode = linted.getValue()[varName] as AstNode;
@@ -496,9 +496,9 @@ test('Support the type that has another type in the reference defined later than
 
   // Lint
   const projectMemory = new ProjectMemory()
-  const moduleMemory = new ModuleMemory<Page>("page", moduleLink, {});
+  const moduleMemory = new ModuleMemory<AraPage>("page", moduleLink, {});
   moduleMemory.addIdentifiers(types.getValue())
-  const linted = await code.getLintedTypeIdentifiers<Page>(moduleMemory, projectMemory)
+  const linted = await code.getLintedTypeIdentifiers<AraPage>(moduleMemory, projectMemory)
 
   // Linting Result
   expectAstNodeResult(linted, [varName, simpleVarName])

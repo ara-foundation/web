@@ -4,7 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ImportSpecifier, NamedImports } from "ts-morph";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNode, AstNodeType } from "../ast-node.js";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { ModuleLink } from "../../ara-link/ModuleLink.js";

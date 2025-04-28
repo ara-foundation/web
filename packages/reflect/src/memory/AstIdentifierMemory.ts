@@ -1,5 +1,5 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
 import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 

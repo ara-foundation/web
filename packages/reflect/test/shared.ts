@@ -1,4 +1,5 @@
-import  { Debug, type Result } from "@ara-web/ts-enhancement";
+import  { type Result } from "@ara-web/ts-enhancement/result";
+import  { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";

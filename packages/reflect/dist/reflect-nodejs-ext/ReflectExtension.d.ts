@@ -1,5 +1,5 @@
 import { type ExtensionInterface } from "../extension-interface.js";
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory } from "../memory/index.js";
 import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
 import type { AutoImporter, ImportedRecords } from "../extension-interface.js";

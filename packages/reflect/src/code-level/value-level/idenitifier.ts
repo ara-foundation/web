@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Identifier as TsIdentifier, Node } from "ts-morph";

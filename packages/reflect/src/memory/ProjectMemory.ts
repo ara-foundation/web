@@ -2,7 +2,8 @@
 // E.g.
 //  Page -> Index -> memory of index
 
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory } from "./ModuleMemory.js";
 import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
 import type { MemoryOperations } from "../extension-interface.js";

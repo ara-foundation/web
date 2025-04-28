@@ -1,5 +1,5 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, type IdentifiedNodeDataType, type LiteralType } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 type PossibleTypeValue = ValueTypeString | AraLink<string> | TypeDeclaration | Array<IdentifiedNodeDataType> | LiteralType | UnionTypeDeclaration;

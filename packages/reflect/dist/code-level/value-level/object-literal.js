@@ -32,7 +32,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { deepCopy, Result } from "@ara-web/ts-enhancement";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
 import { TsNode } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
@@ -72,7 +73,7 @@ let ObjectLiteral = (() => {
                 return Result.fail(`this.identifyObjectLiteral(): ${identified.errorTitle}`, identified.errorDescription);
             }
             else {
-                const copied = deepCopy(identified.getValue().data);
+                const copied = ObjectTraits.deepCopy(identified.getValue().data);
                 return Result.ok({ data: copied, dataType: identified.getValue().dataType });
             }
         };

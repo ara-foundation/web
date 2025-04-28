@@ -3,7 +3,6 @@
  * - Identifiers
  * - Expressions
  */
-import { type EnumlikeKeyValue } from "@ara-web/ts-enhancement";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { ValueType } from "../code-level/ast-node-data.js";
 import { TsNode } from "../code-level/ts-node.js";
@@ -14,7 +13,7 @@ const IdentifierSlugs = ["id"]
 const ExpressionSlugs = ["exp"]
 
 export class ReflectAraLink {
-    public static linkToIdentifier = (identifier: string, properties?: EnumlikeKeyValue): AraLink<string> => {
+    public static linkToIdentifier = (identifier: string, properties?: object): AraLink<string> => {
         const araLink = new AraLink(ReflectProtocol, identifier, IdentifierSlugs, properties);
         return araLink;
     }

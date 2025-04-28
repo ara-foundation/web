@@ -3,7 +3,7 @@ import { Code } from "../src/code-level/Code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { ReflectAraLink } from "../src/ara-link/ReflectAraLink.js";
 import { Reflect } from "../src/Reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";

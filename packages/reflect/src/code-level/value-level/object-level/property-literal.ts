@@ -1,4 +1,5 @@
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
 import { Node, PropertyAssignment } from "ts-morph";

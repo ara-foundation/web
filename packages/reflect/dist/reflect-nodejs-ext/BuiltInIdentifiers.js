@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { AstNode, AstNodeType, } from "../code-level/ast-node.js";
 import { ValueTypeString } from "../code-level/ast-node-data.js";
 import { Code } from "../code-level/Code.js";

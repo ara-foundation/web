@@ -1,5 +1,6 @@
 import { type ExtensionInterface } from "../extension-interface.js";
-import { enumValues, OkResult, Result } from "@ara-web/ts-enhancement";
+import { EnumTraits } from "@ara-web/ts-enhancement/traits";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "../memory/index.js";
 import { ModuleCategory } from "./module.js";
 import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
@@ -118,7 +119,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
     }
 
     public get moduleCategories(): string[] {
-        return enumValues(ModuleCategory);
+        return EnumTraits.enumValues(ModuleCategory);
     }
 
     public isSupportedModuleCategory(moduleCategory: string): boolean {

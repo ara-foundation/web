@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
 export declare class BuiltInIdentifiers {
     private static prefix;

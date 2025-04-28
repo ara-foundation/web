@@ -4,7 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { VariableStatement as TsVariableStatement, VariableDeclarationList, Node } from "ts-morph";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import {} from "../ast-node.js";
 import { VariableDeclaration } from "./variable-declaration.js";

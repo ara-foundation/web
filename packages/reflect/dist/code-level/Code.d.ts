@@ -6,7 +6,7 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { Project } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { type AstIdentifiers } from "./ast-node.js";
 import { type ValueType } from "./ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";

@@ -1,6 +1,6 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "./ts-node.js";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
 import type { ModuleLink } from "../ara-link/ModuleLink.js";
 

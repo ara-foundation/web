@@ -1,7 +1,8 @@
 // ModuleCategory => Module Path => Module Memory
 // E.g.
 //  Page -> Index -> memory of index
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory } from "./ModuleMemory.js";
 import { ModuleLink } from "../ara-link/ModuleLink.js";
 //  purl -> memory of Ceo.tsx

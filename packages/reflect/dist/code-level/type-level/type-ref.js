@@ -7,7 +7,8 @@
  */
 import { TypeReferenceNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
 import { TsNode } from "../ts-node.js";
 import { TypeValueTraits } from "./type-value-traits.js";

@@ -4,7 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration } from "ts-morph";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import { AstNode, AstNodeType } from "../ast-node.js";
 import { TypeValueTraits } from "../type-level/type-value-traits.js";
