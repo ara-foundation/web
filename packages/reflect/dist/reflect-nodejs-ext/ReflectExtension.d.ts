@@ -1,7 +1,7 @@
 import { type ExtensionInterface } from "../extension-interface.js";
 import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory } from "../memory/index.js";
-import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
+import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
 import type { AutoImporter, ImportedRecords } from "../extension-interface.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.

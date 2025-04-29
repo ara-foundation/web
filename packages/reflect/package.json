@@ -21,10 +21,6 @@
       "types": "./src/reflect-nodejs-ext/index.ts",
       "default": "./dist/reflect-nodejs-ext/index.js"
     },
-    "./module-link": {
-      "types": "./src/ara-link/ModuleLink.ts",
-      "default": "./dist/ara-link/ModuleLink.js"
-    },
     "./ara-link": {
       "types": "./src/ara-link/ReflectAraLink.ts",
       "default": "./dist/ara-link/ReflectAraLink.js"

@@ -4,15 +4,15 @@
  * - Expressions
  */
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import type { ValueType } from "../code-level/ast-node-data.js";
-import { TsNode } from "../code-level/ts-node.js";
+import type { ValueType } from "./ast-node-data.js";
+import { TsNode } from "./ts-node.js";
 
 const ReflectProtocol = "reflect"
 
 const IdentifierSlugs = ["id"]
 const ExpressionSlugs = ["exp"]
 
-export class ReflectAraLink {
+export class CodeLink {
     public static linkToIdentifier = (identifier: string, properties?: object): AraLink<string> => {
         const araLink = new AraLink(ReflectProtocol, identifier, IdentifierSlugs, properties);
         return araLink;

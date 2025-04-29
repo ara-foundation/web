@@ -18,7 +18,7 @@ import { TsNode } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 export class Code {
     _ast;
     _moduleLink; // Module that this code belong to

@@ -11,7 +11,7 @@ import { AstNode, AstNodeType, type AstIdentifiers } from "./ast-node.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { NamedImport } from "./import-level/named-import.js";
 import { Identifier } from "./value-level/idenitifier.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { FilePath } from "../module.js";
 

@@ -1,7 +1,7 @@
 import type { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import type { ModuleMemory } from "./memory/ModuleMemory.js";
 import type { ProjectMemory } from "./memory/ProjectMemory.js";
-import type { ModuleLink, ModuleURL } from "./ara-link/ModuleLink.js";
+import type { ModuleLink, ModuleURL } from "@ara-web/ts-enhancement/module-link";
 /**
  * A type of imported records fetched by `import.meta.glob` if you use `vite` plugin.
  * The `importingFilePath` property is the module that records. You may set it using `import.meta.filename`

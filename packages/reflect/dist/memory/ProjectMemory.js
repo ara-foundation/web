@@ -4,7 +4,7 @@
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory } from "./ModuleMemory.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 //  purl -> memory of Ceo.tsx
 /**
  * `ProjectMemory` links all the module memories between extensions.

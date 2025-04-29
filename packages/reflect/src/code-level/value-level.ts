@@ -13,7 +13,7 @@ import { Literal } from "./value-level/literal.js";
 import type { ValueLevelInterface } from "./value-level/value-level-interface.js";
 import { FunctionCall } from "./value-level/function-call.js";
 import { Identifier } from "./value-level/idenitifier.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { CodeLink } from "./CodeLink.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { ObjectLiteral } from "./value-level/object-literal.js";
 import { PropertyLiteral } from "./value-level/object-level/property-literal.js";
@@ -256,7 +256,7 @@ export class ValueLevel {
 
             return Result.ok([identifiedElement.getValue()]);
         }
-        if (ReflectAraLink.isIdentifierLink(astDataType)) {
+        if (CodeLink.isIdentifierLink(astDataType)) {
             const dataTypeLink = astDataType as AraLink<string>;
             const dataType = astNodeContext.getIdentifier(dataTypeLink);
 
@@ -282,13 +282,13 @@ export class ValueLevel {
                         
                 const genericValues = TypeRef.linkPropertyToGenericValues(dataTypeLink);
                 for (let genericIndex = 0; genericIndex < genericValues.length; genericIndex++) {
-                    if (ReflectAraLink.isIdentifierLink(genericValues[genericIndex])) {
+                    if (CodeLink.isIdentifierLink(genericValues[genericIndex])) {
                         const identifiedGeneric = astNodeContext.getIdentifier(genericValues[genericIndex] as AraLink<string>);
                         if (identifiedGeneric === undefined) {
                             return Result.fail(`The generic type '${dataType.identifier}' links to the data type that is not found in the Ast Node Context`, `Please fix the error`)
                         }
                         genericValues[genericIndex] = identifiedGeneric.data!
-                    } else if (ReflectAraLink.isExpressionLink(genericValues[genericIndex])) {
+                    } else if (CodeLink.isExpressionLink(genericValues[genericIndex])) {
                         return Result.fail(`The generic type '${dataType.identifier}' ${genericIndex} value is an expression`, `Ara Web doesn't support it yet, update ValueLevel.identifyAstNodeData()`)
                     }
                 }
@@ -354,11 +354,11 @@ export class ValueLevel {
      * @returns 
      */
     private static identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!ReflectAraLink.isExpressionLink(astNode.data)) {
+        if (!CodeLink.isExpressionLink(astNode.data)) {
             return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`)
         }
     
-        const expTsNode = ReflectAraLink.getExpressionResource(astNode.data)!;
+        const expTsNode = CodeLink.getExpressionResource(astNode.data)!;
     
         if (astNode.dataType === undefined) {
             // Debug.push(`this.getValueTypeString(expTsNode='${expTsNode?.getText()}')`)

@@ -8,7 +8,7 @@ import { Result } from "@ara-web/ts-enhancement/result";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNode, AstNodeType } from "../ast-node.js";
 import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
-import { ModuleLink } from "../../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import { TsNode } from "../ts-node.js";
 import { Identifier } from "../value-level/idenitifier.js";
 export class NamedImport extends TsNode {

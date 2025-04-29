@@ -1,6 +1,6 @@
 import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory } from "./ModuleMemory.js";
-import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
+import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
 import type { MemoryOperations } from "../extension-interface.js";
 export type ModuleMemories<T> = {
     [key: ModuleURL]: ModuleMemory<T | unknown>;

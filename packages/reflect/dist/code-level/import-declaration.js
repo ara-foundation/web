@@ -11,7 +11,7 @@ import { AstNode, AstNodeType } from "./ast-node.js";
 import { TsNode } from "./ts-node.js";
 import { NamedImport } from "./import-level/named-import.js";
 import { Identifier } from "./value-level/idenitifier.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import { FilePath } from "../module.js";
 export class ImportDeclaration extends TsNode {
     _moduleLink;

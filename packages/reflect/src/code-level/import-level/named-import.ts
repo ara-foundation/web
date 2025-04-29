@@ -7,8 +7,8 @@ import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../ast-node.js";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
-import { ModuleLink } from "../../ara-link/ModuleLink.js"
+import { CodeLink } from "../CodeLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link"
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Identifier } from "../value-level/idenitifier.js";
 
@@ -135,7 +135,7 @@ export class NamedImport extends TsNode {
                         )
                     }
     
-                    identifiers[alias.getText()] = ReflectAraLink.linkToIdentifier(identifiedNode.identifier)
+                    identifiers[alias.getText()] = CodeLink.linkToIdentifier(identifiedNode.identifier)
                     i++;
                     continue;
                 } else {

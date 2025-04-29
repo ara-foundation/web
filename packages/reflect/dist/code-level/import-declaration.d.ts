@@ -7,7 +7,7 @@ import { ImportDeclaration as TsImportDeclaration } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { type AstIdentifiers } from "./ast-node.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 export declare class ImportDeclaration extends TsNode {
     private _moduleLink;

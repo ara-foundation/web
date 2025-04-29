@@ -13,7 +13,7 @@ import {
 import { Code } from "../code-level/Code.js";
 import { VariableStatement } from "../code-level/variable-level/variable-statement.js";
 import type { TsNode } from "../code-level/ts-node.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType[]): Result<AstNode> => {

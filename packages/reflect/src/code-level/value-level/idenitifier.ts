@@ -6,7 +6,7 @@ import type { TypedData } from "../ast-node.js";
 import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { CodeLink } from "../CodeLink.js";
 import { ValueLevel } from "../value-level.js";
 
 /**
@@ -40,7 +40,7 @@ export class Identifier {
             return Result.ok({data: identifier.data, dataType: identifier.dataType})
         }
 
-        const exp = ReflectAraLink.getExpressionResource(identifier.data);
+        const exp = CodeLink.getExpressionResource(identifier.data);
         
         const astNodeContext = parentNodeContext?.clone(identifier.getAllMemoryData(), [identifier.identifier!])
         const identifiedExp = await ValueLevel.identifyValue(exp!, {dataType: ValueTypeString.default}, astNodeContext!)

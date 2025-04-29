@@ -1,5 +1,5 @@
 import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 export declare class ModuleMemory<T> extends AstIdentifierMemory {
     private _moduleLink;
     private _glob;

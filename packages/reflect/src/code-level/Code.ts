@@ -22,7 +22,7 @@ import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { VariableStatement } from "./variable-level/variable-statement.js";
 import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 
 export type Object = {[key: string]: ValueType};
 

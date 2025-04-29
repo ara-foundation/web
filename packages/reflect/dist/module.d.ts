@@ -1,5 +1,5 @@
 import { Result } from "@ara-web/ts-enhancement/result";
-import { ModuleLink } from "./ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 /**
  * Defualt Module Categories
  */

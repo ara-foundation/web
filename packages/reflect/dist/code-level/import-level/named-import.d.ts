@@ -6,7 +6,7 @@
 import { NamedImports } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { AstNodeType, type AstIdentifiers } from "../ast-node.js";
-import { ModuleLink } from "../../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 export declare class NamedImport extends TsNode {
     protected _tsNode: NamedImports;

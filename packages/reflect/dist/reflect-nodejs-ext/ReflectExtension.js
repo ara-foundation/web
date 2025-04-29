@@ -4,7 +4,7 @@ import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory } from "../memory/index.js";
 import { ModuleCategory } from "./module.js";
 import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import { FilePath } from "../module.js";
 import PathModule from "node:path";
 /**

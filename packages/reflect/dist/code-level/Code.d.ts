@@ -12,7 +12,7 @@ import { type ValueType } from "./ast-node-data.js";
 import { ModuleMemory } from "../memory/ModuleMemory.js";
 import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { ModuleLink } from "../ara-link/ModuleLink.js";
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 export type Object = {
     [key: string]: ValueType;
 };

@@ -1,9 +1,8 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode, type AstIdentifiers } from "../code-level/ast-node.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { Result } from "@ara-web/ts-enhancement/result";
-import { ModuleLink } from "../ara-link/ModuleLink.js"
+import { ModuleLink } from "@ara-web/ts-enhancement/module-link"
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -94,9 +93,6 @@ export class AstNodeContext {
     public getIdentifier = (data: AraLink<string>|string): AstNode|undefined => {
         let identifier: string;
         if (typeof data !== "string") {
-            if (!ReflectAraLink.isIdentifierLink(data)) {
-                return undefined;
-            }
             identifier = data.resource;
         } else {
             identifier = data;

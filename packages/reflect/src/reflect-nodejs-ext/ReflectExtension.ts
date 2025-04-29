@@ -4,7 +4,7 @@ import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "../memory/index.js";
 import { ModuleCategory } from "./module.js";
 import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
-import { ModuleLink, type ModuleURL } from "../ara-link/ModuleLink.js";
+import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
 import type { AutoImporter, ImportedRecords } from "../extension-interface.js";
 import { FilePath } from "../module.js";
 import PathModule from "node:path"
