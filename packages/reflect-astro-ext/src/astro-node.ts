@@ -1,7 +1,7 @@
-import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode, Node } from "@astrojs/compiler/types";
+import type { AstroNode } from "#ontology";
+import type { Node } from "@astrojs/compiler/types";
 import type { Props } from "astro";
 
-export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
 
 // WARNING: Every time whenever a new extension added, add support here.
 type AstroImport = ((_props: Props) => any);

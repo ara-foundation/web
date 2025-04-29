@@ -4,7 +4,8 @@
  */
 
 import { expect, test } from "vitest";
-import { FileExtension, ModulePartitioner } from "#module";
+import { ModulePartitioner } from "#module";
+import { FileExtension } from "#ontology";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { CodeLevel } from "../src/parts/code-level/CodeLevel";
 

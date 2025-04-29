@@ -4,11 +4,11 @@
  */
 
 import { expect, test } from "vitest";
-import { FileExtension, ModuleCategory, ModulePartitioner } from "#module";
+import { ModuleCategory, ModulePartitioner } from "#module";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { CodeLevel } from "../src/parts/code-level/CodeLevel";
 import { PageLevel } from "../src/parts/ui-level/page-level";
-import { Page } from "#ontology";
+import { type Page, FileExtension } from "#ontology";
 import { ModuleMemory } from "@ara-web/reflect/memory";
 
 test(`Make sure the that pages JSON are generated`, async () => {
@@ -39,3 +39,5 @@ test(`Make sure the that pages JSON are generated`, async () => {
         expect(page.isSuccess).toBe(true);
     }
 })
+
+// TODO make sure that page content is updated in the reflect.beforeGet() before fetching.

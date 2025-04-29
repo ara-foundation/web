@@ -12,12 +12,25 @@
  *  - Layouts
  */
 import type { ComponentNode, ExpressionNode } from "@astrojs/compiler/types";
-import { Result } from "@ara-web/ts-enhancement/result";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { StringTraits } from "@ara-web/ts-enhancement/traits";
 import type { ModuleMemory } from "@ara-web/reflect/memory";
-import { DEFAULT_SLOT, ElementType, type Component, type Expression } from "#ontology";
-import type { ModuleParts } from "#module";
-import { AstroNodeTraits, type AstroNode } from "#astro-node";
+import { 
+    FileExtension, 
+    DEFAULT_SLOT, 
+    ElementType, 
+    type Component, 
+    type Expression, 
+    type Layout, 
+    type Slots,
+    type ModuleParts,
+    type AstroNode
+} from "#ontology";
+import { ModuleCategory } from "#module";
+import { AstroNodeTraits } from "#astro-node";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { FilePath } from "@ara-web/reflect/module";
+import { parse as commentParse} from "comment-parser";
 
 // // TODO move to the app/interface/reflect to understand the RPCs
 // // The pages traits adds to the Page the following:
@@ -119,7 +132,7 @@ export class ComponentLevel {
                 console.log(child);
                 continue;
             }
-            const content = await this.identifyComponent(uiContent, memory, child as AstroNode);
+            const content = await this.identifyAstroNode(uiContent, memory, child as AstroNode);
             if (content.isFailure) {
                 return Result.fail(
                     `Invalid first element of expression:(component(i='${i}')='${node.children[1].type}'): ${content.errorTitle}`,
@@ -161,12 +174,120 @@ export class ComponentLevel {
         return Result.ok(expression);
     }
 
+    private static validateModuleParts = (parts: ModuleParts): OkResult => {
+        if (parts.fileExtension !== FileExtension.Astro) {
+            return OkResult.fail("Unsupported page type", "Only .astro files should be in the pages")
+        }
+            
+        if (parts.elements === undefined) {
+            return OkResult.fail("Missing any component", "Please include the any component even if its empty");
+        }
+    
+        return OkResult.ok();
+    }
+    
     /**
-     * Identifies what kind of component and it's value.
+     * Converts the module into a component
+     * @param parts 
+     * @param memory 
+     * @returns 
+     */
+    public static identifyComponent = async(parts: ModuleParts, memory: ModuleMemory<Component>): Promise<Result<Component>> => {
+        if (memory.moduleCategory !== ModuleCategory.Component) {
+            return Result.fail(`The memory passed to identify component is not categorized as component category memory`, `This method expects '${ModuleCategory.Component}', not '${memory.moduleCategory}'`)
+        }
+        const validated = this.validateModuleParts(parts);
+        if (validated.isFailure) {
+            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
+        }
+           
+        const slots = await this.identifySlots<Component>(parts, memory);
+        if (slots.isFailure) {
+            return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
+        }
+    
+        const title = await FilePath.getFileName(memory.moduleLink.toFilePath);
+        if (title.isFailure) {
+            return Result.fail(`FilePath.getFileName('${memory.moduleLink.toFilePath}'): ${title.errorTitle}`, title.errorDescription!)
+        }
+        const description = this.getDescriptionFromComment(parts.source!);
+
+        const component: Component = {
+            title: title.getValue(), 
+            description,
+            url: memory.moduleLink.moduleURL,
+            glob: memory.glob,
+            slots: slots.getValue(),
+            type: ElementType.Component,
+        }
+        
+        return Result.ok(component);
+    }
+
+    /**
+     * Extracts the Description from the Component Meta.
+     * Returns an empty string if no comment.
+    */
+    private static getDescriptionFromComment = (source: string): string => {
+        let description = '';
+        const parsed = commentParse(source);
+        if (parsed.length === 0) {
+            return description;
+        }
+        
+        for (let block of parsed) {
+            description = block.description
+            for (let tag of block.tags) {
+                if (tag.tag === "param") {
+                    if (tag.type !== "string") {
+                        continue;
+                    }
+                        
+                    if (tag.name === "Description") {
+                        if (tag.description.length > 0) {
+                            return tag.description;
+                        }
+                    }
+                }
+            }
+        }
+    
+        return description;
+    }
+    
+
+    /**
+     * Identify each component within the page. All data of the page are represented as the components.
+     * @returns {Result<AraPage>}
+     */
+    private static identifySlots = async <T>(uiContent: ModuleParts, memory: ModuleMemory<T>): Promise<Result<Slots>> => {
+        const slots: Slots = {
+            [DEFAULT_SLOT]: []
+        };
+            
+        for (let componentNode of uiContent.elements!) {
+            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode)
+            if (identificationResult.isFailure) {
+                const err = Debug.error(
+                    `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
+                    identificationResult.errorDescription!,
+                    componentNode,
+                )    
+                    
+                return Result.fail(err)
+            }
+            
+            slots[DEFAULT_SLOT].push(identificationResult.getValue())
+        }
+        return Result.ok(slots)
+    }
+
+    /**
+     * Converts the AstroNode into the Component
      * @param element Node that we need to identify
      * @returns {IdentifiedComponent}
      */
-    public static identifyComponent = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component|Expression>> => {
+    public static identifyAstroNode = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component|Expression>> => {
         if (element.type === "element") {
             const component = this.identifyHTMLElement(element);
             component.url = memory.moduleLink.moduleURL
@@ -205,6 +326,7 @@ export class ComponentLevel {
             )
         }
 
+        // Following is the part of the ara-web extension
         //
         // Component indicates an RPC Call?
         //
@@ -238,6 +360,13 @@ export class ComponentLevel {
         // }
     }
 
+    /**
+     * Astro Framework's `ComponentNode` converted into ontological `Component`
+     * @param node 
+     * @param glob 
+     * @param filePath 
+     * @returns 
+     */
     public static astroNodeToComponent = (node: ComponentNode, glob: unknown, filePath: string): Result<Component> => {
         const component: Component = {
             title: node.name,
@@ -252,58 +381,59 @@ export class ComponentLevel {
 
         return Result.ok(component);
     }
+
+    /**
+     * Converts the module into layout 
+     * The identified components are pushed into the page's layout.
+     * Only the Components are supported, the nested layout or RPC calls inside the layout is prohibited.
+     * @returns {Result<Page>}
+     * @todo Include the nested components
+    */
+    public static identifyLayout = async(parts: ModuleParts, memory: ModuleMemory<Layout>): Promise<Result<Layout>> => {
+        if (memory.moduleCategory !== ModuleCategory.Layout) {
+            return Result.fail(`The memory passed to identify layout is not categorized as layout category memory`, `This method expects '${ModuleCategory.Layout}', not '${memory.moduleCategory}'`)
+        }
+        const validated = this.validateModuleParts(parts);
+        if (validated.isFailure) {
+            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
+        }
+        
+        // TODO in the identifySlots add the following
+        // const layoutSlugsResult = await detectComponentLayoutSlug(page, uiContent, child)
+        // if (layoutSlugsResult.isFailure) {
+        //     return Result.fail(
+        //         `this.detectComponentLayoutSlug(child=${componentName(child)}): ${layoutSlugsResult.errorTitle}`, 
+        //         layoutSlugsResult.errorDescription!,
+        //     )
+        // }
+        // pushComponentAtLayoutSlugs(page, identificationResult.getValue(), layoutSlugsResult.getValue());
+        const slots = await this.identifySlots<Layout>(parts, memory);
+        if (slots.isFailure) {
+            return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
+        }
+    
+        const title = await FilePath.getFileName(memory.moduleLink.toFilePath);
+        if (title.isFailure) {
+            return Result.fail(`FilePath.getFileName('${memory.moduleLink.toFilePath}'): ${title.errorTitle}`, title.errorDescription!)
+        }
+        const description = this.getDescriptionFromComment(parts.source!);
+
+        const layout: Layout = {
+            title: title.getValue(), 
+            description,
+            url: memory.moduleLink.moduleURL,
+            glob: memory.glob,
+            slots: slots.getValue(),
+            type: ElementType.Layout,
+        }
+        
+        
+        return Result.ok(layout);
+    }
+
 }
 
 
-// ///////////////////////////////////////////////////////////////////////////////////
-// //
-// // Layout specific methods
-// //
-// ///////////////////////////////////////////////////////////////////////////////////
-
-// /**
-//      * Identify the components in the layout node. 
-//      * The identified components are pushed into the page's layout.
-//      * Only the Components are supported, the nested layout or RPC calls inside the layout is prohibited.
-//      * @param {NodeType} layoutNode 
-//      * @returns {Result<Page>}
-//      * @todo Include the nested components
-//  */
-// const identifyLayoutComponents = async<T>(page: Page, uiContent: UiContent, memory: ModuleMemory<T>, layoutNode: AstroNode): Promise<Result<Page>> => {
-//         for (const child of layoutNode.children) {
-//             if (child.type === "text" || child.type === "comment" || child.type === "doctype") {
-//                 continue;
-//             }
-//             if (child.type !== "component" && 
-//                 child.type !== "element" && 
-//                 child.type !== "expression") {
-//                 return Result.fail(
-//                     `Unsupported component in layout`, 
-//                     `One of the components is of '${child.type}' kind which is not yet supported by Ara Web`
-//                 )
-//             }
-    
-//             const identificationResult = await identifyComponent(page, uiContent, memory, child)
-//             if (identificationResult.isFailure) {
-//                 return Result.fail(
-//                     `this.identifyComponent(child=${componentName(child)}): ${identificationResult.errorTitle}`, 
-//                     identificationResult.errorDescription!
-//                 )
-//             }
-
-//             const layoutSlugsResult = await detectComponentLayoutSlug(page, uiContent, child)
-//             if (layoutSlugsResult.isFailure) {
-//                 return Result.fail(
-//                     `this.detectComponentLayoutSlug(child=${componentName(child)}): ${layoutSlugsResult.errorTitle}`, 
-//                     layoutSlugsResult.errorDescription!,
-//                 )
-//             }
-
-//             pushComponentAtLayoutSlugs(page, identificationResult.getValue(), layoutSlugsResult.getValue());
-//         }
-    
-//         return Result.ok(page);
-//     }
 
 //     /**
 //      * Detect's the Component's layout within the page.

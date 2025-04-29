@@ -1,4 +1,5 @@
-export { ModuleCategory, FileExtension, ModulePartitioner, type ModuleParts, extractModuleCategory } from "./module.js"
+export { ModuleCategory, ModulePartitioner, extractModuleCategory } from "./module.js"
+export { FileExtension } from "./ontology/index.js"
 import { ReflectAstroFramework as ReflectExtension } from "./ReflectExtension.js"
 
 export const ReflectAstroFramework = ReflectExtension;

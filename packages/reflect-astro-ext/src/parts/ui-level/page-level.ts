@@ -1,6 +1,6 @@
 import { parse as commentParse} from "comment-parser";
 import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { FileExtension, type ModuleParts } from "../../module.js";
+import { FileExtension, type ModuleParts } from "#ontology";
 import type { ModuleMemory } from "@ara-web/reflect/memory";
 import { ComponentLevel } from "./component-level.js";
 import { Debug } from "@ara-web/ts-enhancement/debug";
@@ -101,7 +101,7 @@ export class PageLevel {
             [DEFAULT_SLOT]: []
         };
         for (let componentNode of uiContent.elements!) {
-            const identificationResult = await ComponentLevel.identifyComponent(uiContent, memory, componentNode)
+            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode)
             if (identificationResult.isFailure) {
                 const err = Debug.error(
                     `this.identifyComponent(): ${identificationResult.errorTitle}`, 

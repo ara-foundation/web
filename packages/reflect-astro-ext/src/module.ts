@@ -1,16 +1,11 @@
-import type { AstroInstance } from "astro";
 import { parse as AstroParse } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
-import { 
-    FileExtension as BaseExtension,
-    FilePath
-} from "@ara-web/reflect/module";
+import { FilePath } from "@ara-web/reflect/module";
 import { ModuleMemory } from "@ara-web/reflect/memory";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { EnumTraits } from "@ara-web/ts-enhancement/traits";
-import type { AstroNode } from "./astro-node.js";
-import type { Component } from "#ontology";
+import { FileExtension, type Component, type AstroNode, type ModuleParts } from "#ontology";
 
 /**
  * Module Category to sort the modules.
@@ -24,27 +19,7 @@ export enum ModuleCategory {
     Layout = "layouts"
 }
 
-/**
- * List of file extensions Astro Framework Reflection could reflect.
- */
-export enum FileExtension {
-    Astro = ".astro",
-    Svg = ".svg",
-    Markdown = ".md",
-    Tsx = ".tsx",
-    Jsx = ".jsx",
-    Typescript = BaseExtension.Typescript,
-    Javascript = BaseExtension.Javascript,
-}
 
-/**
- * Any UI Content is composed of the HTML Elements and the source code
- */
-export type ModuleParts = {
-    fileExtension: FileExtension,
-    elements?: AstroNode[],             // Change to the generic to support react.
-    source?: string,
-}
 
 /**
  * Detects the module category. To detct, it must be in the src.
@@ -120,13 +95,9 @@ export class ModulePartitioner {
     //
     //************************************************************** */
     
-    private static getAstroFilePath = (glob: unknown): string => {
-        // Astro framework adds the absolute file paths.
-        return (glob as AstroInstance).file;
-    }
-
     /**
      * Loads the module and returns the module parts such as which HTML elements it contains and source code.
+     * 
      * @param modulePath The module path is used to define the absolute path to the file
      * @param glob 
      * @returns 
@@ -216,5 +187,26 @@ export class ModulePartitioner {
         }
 
         return {componentNodes, frontmatterCode};
+    }
+}
+
+/**
+ * If Module is Script or Asset, basically anything that is not UI Level, but also
+ * doesn't require identifying code structure, therefore not in Code Level too.
+ */
+export class ModuleIdentifier {
+    /**
+     * Checks is the following a script, which are the files that ends with TS and JS.
+     * @param fileExtension 
+     */
+    public static isScript = (fileExtension: FileExtension): boolean => {
+        return ([
+            FileExtension.Javascript, 
+            FileExtension.Typescript,
+        ]).includes(fileExtension);
+    }
+
+    public static isAsset = (fileExtension: FileExtension): boolean => {
+        return (fileExtension !== FileExtension.Astro && !this.isScript(fileExtension));
     }
 }
