@@ -1,12 +1,18 @@
-import { parse as AstroParse } from "@astrojs/compiler";
 import type { RootNode } from "@astrojs/compiler/types";
-import { FilePath } from "@ara-web/reflect/module";
-import { ModuleMemory } from "@ara-web/reflect/memory";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement/traits";
-import { FileExtension, type Component, type AstroNode, type ModuleParts, type OntologoicalIdentifier, ElementType, type Script, type Asset } from "#ontology";
+import { parse as AstroParse } from "@astrojs/compiler";
 import { parse as commentParse} from "comment-parser";
+import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement";
+import { FilePath, ModuleMemory } from "@ara-web/reflect";
+import { 
+    FileExtension, 
+    type Component, 
+    type AstroNode, 
+    type ModuleParts, 
+    type OntologoicalIdentifier, 
+    ElementType, 
+    type Script, 
+    type Asset 
+} from "./ontology/index.js";
 
 /**
  * Module Category to sort the modules.

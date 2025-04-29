@@ -1,8 +1,7 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { type AstroNode, type ModuleParts } from "#ontology";
-import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import type { TsNode } from "@ara-web/reflect/code-level/ts-node";
+import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { TsNode } from "@ara-web/reflect/code-level";
+import { type AstroNode, type ModuleParts } from "../index.js";
 
 /**
  * Look up and retreive the attribute by its name

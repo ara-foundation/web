@@ -1,6 +1,6 @@
-import type { AstroNode } from "#ontology";
 import type { Node } from "@astrojs/compiler/types";
 import type { Props } from "astro";
+import type { AstroNode } from "./ontology/index.js";
 
 
 // WARNING: Every time whenever a new extension added, add support here.

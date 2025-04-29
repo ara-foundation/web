@@ -1,6 +1,6 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import { type ModuleParts } from "#ontology";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
+import { Result } from "@ara-web/ts-enhancement";
+import type { ModuleMemory } from "@ara-web/reflect";
+import { type ModuleParts } from "../index.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */

@@ -1,7 +1,6 @@
 import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
-import type { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-import type { Result } from "@ara-web/ts-enhancement/result";
+import { type ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory } from "@ara-web/reflect";
 export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode;
 /**
  * Any UI Content is composed of the HTML Elements and the source code

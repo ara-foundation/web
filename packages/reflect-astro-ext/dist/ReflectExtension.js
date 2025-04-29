@@ -1,15 +1,6 @@
-import {} from "@ara-web/reflect";
-import { EnumTraits } from "@ara-web/ts-enhancement/traits";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import {} from "@ara-web/ts-enhancement/ontology";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
-import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner } from "./module.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import { CodeLevel } from "./parts/code-level/CodeLevel.js";
-import { FilePath } from "@ara-web/reflect/module";
-import { PageLevel } from "./parts/ui-level/page-level.js";
-import {} from "#ontology";
-import { ComponentLevel } from "./parts/ui-level/component-level.js";
+import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
+import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
+import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, ComponentLevel } from "./index.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */

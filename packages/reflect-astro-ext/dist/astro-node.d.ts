@@ -1,6 +1,6 @@
-import type { AstroNode } from "#ontology";
 import type { Node } from "@astrojs/compiler/types";
 import type { Props } from "astro";
+import type { AstroNode } from "./ontology/index.js";
 type AstroImport = ((_props: Props) => any);
 type TsxImport = (({ children }: Props) => React.JSX.Element);
 type JsxImport = (() => React.JSX.Element);

@@ -33,13 +33,10 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { parse as AstroParse } from "@astrojs/compiler";
-import { FilePath } from "@ara-web/reflect/module";
-import { ModuleMemory } from "@ara-web/reflect/memory";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement/traits";
-import { FileExtension, ElementType } from "#ontology";
 import { parse as commentParse } from "comment-parser";
+import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement";
+import { FilePath, ModuleMemory } from "@ara-web/reflect";
+import { FileExtension, ElementType } from "./ontology/index.js";
 /**
  * Module Category to sort the modules.
  * By design module categories supposed to match the directory in the file system.

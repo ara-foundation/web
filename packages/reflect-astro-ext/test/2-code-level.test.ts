@@ -4,10 +4,8 @@
  */
 
 import { expect, test } from "vitest";
-import { ModulePartitioner } from "#module";
-import { FileExtension } from "#ontology";
+import { ModulePartitioner, FileExtension, CodeLevel } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { CodeLevel } from "../src/parts/code-level/CodeLevel";
 
 test(`Make sure the that code is importing`, async () => {
     const modules = getImportRecords()

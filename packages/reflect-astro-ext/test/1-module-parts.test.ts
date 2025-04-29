@@ -4,8 +4,7 @@
 //  */
 
 import { expect, test } from "vitest";
-import { ModulePartitioner } from "#module";
-import { FileExtension } from "#ontology";
+import { FileExtension, ModulePartitioner } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 
 test(`Make sure the module parts are importing`, async () => {

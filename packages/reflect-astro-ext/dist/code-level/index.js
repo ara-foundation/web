@@ -1,9 +1,8 @@
-import {} from "@ara-web/ts-enhancement/ontology";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
+import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code } from "@ara-web/reflect/code-level";
 /**
- * Reflect is the main source to Reflect on the website itself.
+ * Code analyzing
  */
 export class CodeLevel {
     constructor() { }
@@ -40,31 +39,6 @@ export class CodeLevel {
             return Result.fail(`this.typesLinted(): ${typesLinted.errorTitle}`, typesLinted.errorDescription);
         }
         return Result.ok(moduleMemory);
-    };
-    /**
-     * Returns a page by it's path
-     */
-    getPageByUrl = async (url) => {
-        if (url === undefined) {
-            return undefined;
-        }
-        if (url.length === 0) {
-            return undefined;
-        }
-        if (url[url.length - 1] === "/") {
-            url = url.substring(0, url.length - 1);
-        }
-        // const pages = await this.getPages();
-        // if (pages.isFailure) {
-        //     return undefined;
-        // }
-        // for (const page of pages.getValue()) {
-        //     const pageUrl = fileNameToUrl(page.fileName);
-        //     if (url === pageUrl) {
-        //         return page;
-        //     }
-        // }
-        return undefined;
     };
     //************************************************************** */
     //

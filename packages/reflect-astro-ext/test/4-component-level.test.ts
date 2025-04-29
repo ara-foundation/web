@@ -4,13 +4,19 @@
  */
 
 import { expect, test } from "vitest";
-import { ModuleCategory, ModuleIdentifier, ModulePartitioner } from "#module";
-import { Asset, FileExtension, Script } from "#ontology";
+import { ModuleMemory } from "@ara-web/reflect";
+import { 
+    Component, 
+    Layout, CodeLevel, 
+    Asset, 
+    FileExtension, 
+    Script, 
+    ModuleCategory, 
+    ModuleIdentifier, 
+    ModulePartitioner,
+    ComponentLevel
+} from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { CodeLevel } from "../src/parts/code-level/CodeLevel";
-import { Component, Layout } from "#ontology";
-import { ModuleMemory } from "@ara-web/reflect/memory";
-import { ComponentLevel } from "../src/parts/ui-level/component-level";
 
 test(`Make sure the that components are generated`, async () => {
     const modules = getImportRecords()
@@ -130,3 +136,10 @@ test(`Make sure the that assets are generated`, async () => {
     expect(assetFound).toBe(true);
 });
 
+// TODO claude supports the explanation of the SVG, use it to generate the description of the asset
+// TODO, add AI to generate the description of the pages
+// TODO, imports in package.json are only point to the index.js and includes all directory path, remove it
+// so that we can check one layer between the module dependencies
+// TODO, test in ts-enhancement that there is no ../.. or parent/parent/
+// TODO, test in reflect that there is no ../.. or parent/parent/
+// TODO, test in reflect-astro-ext that there is no ../.. or parent/parent/

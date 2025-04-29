@@ -1,4 +1,5 @@
-import { FileExtension as BaseExtension } from "@ara-web/reflect/module";
+import { Result } from "@ara-web/ts-enhancement";
+import { FileExtension as BaseExtension, ModuleMemory } from "@ara-web/reflect";
 /**
  * List of file extensions Astro Framework Reflection could reflect.
  */

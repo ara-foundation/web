@@ -1,5 +1,6 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import {} from "#ontology";
+import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { TsNode } from "@ara-web/reflect/code-level";
+import {} from "../index.js";
 /**
  * Look up and retreive the attribute by its name
  * @param {AstroNode} node that has the attributes of a sinle component

@@ -32,14 +32,10 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ObjectTraits, StringTraits } from "@ara-web/ts-enhancement/traits";
-import { FileExtension, DEFAULT_SLOT, ElementType } from "#ontology";
-import { ModuleCategory } from "#module";
-import { AstroNodeTraits } from "#astro-node";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { FilePath } from "@ara-web/reflect/module";
 import { parse as commentParse } from "comment-parser";
+import { OkResult, Result, Debug, ObjectTraits, StringTraits } from "@ara-web/ts-enhancement";
+import { ModuleMemory, FilePath } from "@ara-web/reflect";
+import { FileExtension, DEFAULT_SLOT, ElementType, ModuleCategory, AstroNodeTraits } from "../index.js";
 // // TODO move to the app/interface/reflect to understand the RPCs
 // // The pages traits adds to the Page the following:
 // // -- RPCs and refer to RPC types

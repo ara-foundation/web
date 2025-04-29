@@ -1,8 +1,9 @@
 import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
-import type { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import { FileExtension as BaseExtension } from "@ara-web/reflect/module";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-import type { Result } from "@ara-web/ts-enhancement/result";
+import { type ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { 
+    FileExtension as BaseExtension, 
+    ModuleMemory 
+} from "@ara-web/reflect";
 export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
 
 /**

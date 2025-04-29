@@ -1,13 +1,21 @@
-import { type AutoImporter, type ExtensionInterface, type ImportedRecords } from "@ara-web/reflect";
-import { EnumTraits } from "@ara-web/ts-enhancement/traits";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { type AraPage, type AraComponent } from "@ara-web/ts-enhancement/ontology";
-import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
-import { extractModuleCategory, ModuleCategory, ModulePartitioner } from "./module.js";
-import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
-import { CodeLevel } from "./parts/code-level/CodeLevel.js";
-import { FilePath } from "@ara-web/reflect/module";
+import { 
+    type AutoImporter, 
+    type ExtensionInterface, 
+    type ImportedRecords,
+    ModuleMemory, 
+    ProjectMemory, 
+    type ModuleMemories,
+    FilePath
+} from "@ara-web/reflect";
+import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { 
+    extractModuleCategory, 
+    ModuleCategory, 
+    ModuleIdentifier, 
+    ModulePartitioner,
+    CodeLevel, PageLevel, ComponentLevel,
+    type Asset, type Component, type Layout, type Page, type Script
+ } from "./index.js";
 
 /**
  * ReflectExtension adds Astro Framework support.
@@ -154,6 +162,11 @@ export class ReflectAstroFramework implements ExtensionInterface {
         return moduleMemories.map((memory) => (memory.content as T))
     }
     
+    /**
+     * Returns the modules whose content is undefined
+     * @param moduleCategory 
+     * @returns 
+     */
     public getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
         const moduleMemories = this.getModules<T>(moduleCategory);
     
@@ -165,7 +178,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
 
     /**
-     * Retreives the data of the data
+     * Called by the `@ara-web/reflect` before fetching anything, so that Astro Framework
+     * could convert the required module from file system for example, and convert that module
+     * into the ontological data.
      * @param moduleCategory 
      * @param projectMemory 
      * @returns 
@@ -185,19 +200,29 @@ export class ReflectAstroFramework implements ExtensionInterface {
             }
             return OkResult.ok()
         } else if (moduleCategory === ModuleCategory.Component) {
-            const contents = await this.getComponents();
+            const contents = await this.identifyComponentContents(projectMemory);
             if (contents.isFailure) {
-                return Result.fail(`this.getComponents(): ${contents.errorTitle}`, contents.errorDescription!)
+                return Result.fail(`this.identifyComponentContents(): ${contents.errorTitle}`, contents.errorDescription!)
             }
 
             return OkResult.ok()
         } else if (moduleCategory === ModuleCategory.Layout) {
-            const contents = await this.getLayouts();
+            const contents = await this.postLayoutContents(projectMemory);
             if (contents.isFailure) {
-                return Result.fail(`this.getLayouts(): ${contents.errorTitle}`, contents.errorDescription!)
+                return Result.fail(`this.postLayoutContents(): ${contents.errorTitle}`, contents.errorDescription!)
             }
 
             return OkResult.ok()
+        } else {
+            const scriptsPosted = await this.postScripts();
+            if (scriptsPosted.isFailure) {
+                return Result.fail(`this.postScripts(): ${scriptsPosted.errorTitle}`, scriptsPosted.errorDescription!)
+            }
+
+            const assetsPosted = await this.postAssets();
+            if (assetsPosted.isFailure) {
+                return Result.fail(`this.postAssets(): ${assetsPosted.errorTitle}`, assetsPosted.errorDescription!)
+            }
         }
 
         return OkResult.ok();
@@ -210,89 +235,143 @@ export class ReflectAstroFramework implements ExtensionInterface {
     //****************************************************************
 
     /**
-     * Returns the all the components.
-     * Components are not evaluated by internal structures.
+     * Identifies the data of the component modules.
+     * @notice Components are not evaluated by internal structures.
+     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
      */
-    private getComponents = async (): Promise<Result<AraComponent[]>> => {
-        const modules = this.getModules<AraComponent>(ModuleCategory.Component);
-        if (modules.length === 0) {
-            return Result.ok([])
-        }
-
-        const components: AraComponent[] = [];
-
-        for (let moduleMemory of modules) {
-            if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as AraComponent);
-                continue;
-            }
-
-            // const component = await fileContentToComponent(moduleMemory)
-            // if (component.isFailure) {
-            //     return Result.fail(
-            //         `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
-            //         component.errorDescription!
-            //     )
-            // }
-            // components.push(component.getValue())
-        }
-
-        return Result.ok(components);
-    }
-
-    /**
-     * Returns the all the layout components
-     */
-    private getLayouts = async (): Promise<Result<AraComponent[]>> => {
-        const modules = this.getModules<AraComponent>(ModuleCategory.Layout);
-        if (modules.length === 0) {
-            return Result.ok([])
-        }
-
-        const components: AraComponent[] = [];
-
-        for (let moduleMemory of modules) {
-            if (moduleMemory.content !== undefined) {
-                components.push(moduleMemory.content as AraComponent);
-                continue;
-            }
-
-            // const component = await fileContentToComponent(moduleMemory)
-            // if (component.isFailure) {
-            //     return Result.fail(
-            //         `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
-            //         component.errorDescription!
-            //     )
-            // }
-            // components.push(component.getValue())
-        }
-
-        return Result.ok(components);
-    }
-
-    /**
-     * Check all modules and if no content is given, then return.
-     * It also updates the memory by parsing the source code.
-     * @returns {Result<AraPage[]>}
-     */
-    private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<AraPage>(ModuleCategory.Page);
-        // identify ui content
-        // identify source code
-        // identify the page
-        Debug.log(`Fetch the no content modules:`)
-        Debug.log(Object.keys(noContentModules))
+    private identifyComponentContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
+        const noContentModules = this.getNoContentModules<Component>(ModuleCategory.Component);
         for (let moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition<AraPage>(moduleMemory);
+            const moduleParts = await ModulePartitioner.partition<Component>(moduleMemory);
             if (moduleParts.isFailure) {
-                return OkResult.fail(`UILevel.identifyModuleParts<Page>('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
             }
 
             const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
             if (identifiedMemory.isFailure) {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
-            Debug.log(`TODO: '${moduleMemory.moduleLink.moduleURL}' make sure to generate the content of the web page`);
+
+            const data = await ComponentLevel.identify<Component>(moduleParts.getValue(), identifiedMemory.getValue());
+            if (data.isFailure) {
+                return OkResult.fail(`ComponentLevel.identify<Component>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+            }
+
+            moduleMemory.content = data.getValue();
+        }
+        return OkResult.ok();
+    }
+
+    /**
+     * Identifies the data of the layout modules.
+     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
+     */
+    private postLayoutContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
+        const noContentModules = this.getNoContentModules<Layout>(ModuleCategory.Layout);
+        for (let moduleMemory of noContentModules) {
+            const moduleParts = await ModulePartitioner.partition<Layout>(moduleMemory);
+            if (moduleParts.isFailure) {
+                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+            }
+
+            const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
+            if (identifiedMemory.isFailure) {
+                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
+            }
+
+            const data = await ComponentLevel.identify<Layout>(moduleParts.getValue(), identifiedMemory.getValue());
+            if (data.isFailure) {
+                return OkResult.fail(`ComponentLevel.identify<Layout>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+            }
+
+            moduleMemory.content = data.getValue();
+        }
+        return OkResult.ok();
+    }
+
+    /**
+     * Check all modules and if no content is given, then return.
+     * It also updates the memory by parsing the source code.
+     * @param {ProjectMemory} projectMemory is used to identify the dependencies that page depends on.
+     * @returns {Result<AraPage[]>}
+     */
+    private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
+        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
+        for (let moduleMemory of noContentModules) {
+            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
+            if (moduleParts.isFailure) {
+                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+            }
+
+            const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
+            if (identifiedMemory.isFailure) {
+                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
+            }
+
+            const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
+            if (page.isFailure) {
+                return OkResult.fail(`PageLevel.identify('${moduleMemory.moduleLink.moduleURL}'): ${page.errorTitle}`, page.errorDescription!)
+            }
+
+            moduleMemory.content = page.getValue();
+        }
+        return OkResult.ok();
+    }
+
+    /**
+     * All modules whose file extensions are considered as script (typescript, javascript) are converted
+     * into the `Script` ontological data.
+     * @returns 
+     */
+    private postScripts = async (): Promise<OkResult> => {
+        const noContentModules = this.getNoContentModules();
+        for (let moduleMemory of noContentModules) {
+            const moduleParts = await ModulePartitioner.partition(moduleMemory);
+            if (moduleParts.isFailure) {
+                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+            }
+
+            const extension = moduleParts.getValue().fileExtension
+            if (!ModuleIdentifier.isScript(extension)) {
+                continue;
+            }
+
+            const data = await ModuleIdentifier.identify<Script>(moduleParts.getValue(), moduleMemory as ModuleMemory<Script>);
+
+            if (data.isFailure) {
+                return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+            }
+
+            moduleMemory.content = data.getValue();
+        }
+        return OkResult.ok();
+    }
+
+    /**
+     * All modules whose file extensions are considered as asset (markdown, react, and svg) are converted
+     * into the `Asset` ontological data.
+     * @returns 
+     */
+    private postAssets = async (): Promise<OkResult> => {
+        const noContentModules = this.getNoContentModules();
+        for (let moduleMemory of noContentModules) {
+            const moduleParts = await ModulePartitioner.partition(moduleMemory);
+            if (moduleParts.isFailure) {
+                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+            }
+
+            const extension = moduleParts.getValue().fileExtension
+            if (!ModuleIdentifier.isAsset(extension)) {
+                continue;
+            }
+
+            const data = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>);
+
+            if (data.isFailure) {
+                return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+            }
+
+            moduleMemory.content = data.getValue();
         }
         return OkResult.ok();
     }
@@ -300,7 +379,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     /**
      * Returns a page by it's path
      */
-    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
+    public getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
         if (url === undefined) {
             return undefined;
         }
@@ -310,19 +389,6 @@ export class ReflectAstroFramework implements ExtensionInterface {
         if (url[url.length - 1] === "/") {
             url = url.substring(0, url.length - 1);
         }
-
-        // const pages = await this.getPages();
-
-        // if (pages.isFailure) {
-        //     return undefined;
-        // }
-
-        // for (const page of pages.getValue()) {
-        //     const pageUrl = fileNameToUrl(page.fileName);
-        //     if (url === pageUrl) {
-        //         return page;
-        //     }
-        // }
 
         return undefined;
     }

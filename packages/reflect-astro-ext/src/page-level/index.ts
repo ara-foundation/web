@@ -1,12 +1,18 @@
 import { parse as commentParse} from "comment-parser";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { FileExtension, type ModuleParts, type OntologoicalIdentifier } from "#ontology";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-import { ComponentLevel } from "./component-level.js";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { DEFAULT_SLOT, type Page, type Meta, ElementType, type Slots } from "#ontology";
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
-import { ModuleCategory } from "#module";
+import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/ts-enhancement";
+import type { ModuleMemory } from "@ara-web/reflect";
+import {
+    FileExtension, 
+    type ModuleParts, 
+    type OntologoicalIdentifier,
+    ModuleCategory,
+    DEFAULT_SLOT, 
+    type Page, 
+    type Meta, 
+    ElementType, 
+    type Slots
+} from "../index.js";
+import { ComponentLevel } from "../component-level/index.js";
 
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data

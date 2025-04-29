@@ -1,7 +1,5 @@
-import { ExtensionInterface, ImportedRecords } from "@ara-web/reflect";
-import { ProjectMemory } from "@ara-web/reflect/memory";
-import { ReflectAstroFramework } from "../src/ReflectExtension";
-import { FilePath } from "@ara-web/reflect/module";
+import { ProjectMemory, FilePath, ExtensionInterface, ImportedRecords } from "@ara-web/reflect";
+import ReflectAstroFramework from "../src";
 
 let categorizedModuleAmount = 0;
 export const getCategorizedModuleAmount = (): number => {

@@ -12,9 +12,9 @@
  *  - Layouts
  */
 import type { ComponentNode, ExpressionNode } from "@astrojs/compiler/types";
-import { Result } from "@ara-web/ts-enhancement/result";
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-import { type Component, type Expression, type ModuleParts, type AstroNode } from "#ontology";
+import { Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory } from "@ara-web/reflect";
+import { type Component, type Expression, type ModuleParts, type AstroNode } from "../index.js";
 /**
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */

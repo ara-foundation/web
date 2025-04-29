@@ -1,8 +1,6 @@
-import { type AutoImporter, type ExtensionInterface, type ImportedRecords } from "@ara-web/reflect";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
-import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
-import { type Page } from "#ontology";
+import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { type Page } from "./index.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */

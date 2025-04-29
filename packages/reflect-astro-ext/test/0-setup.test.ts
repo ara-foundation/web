@@ -4,9 +4,9 @@
  */
 
 import { expect, test } from "vitest";
-import { ModuleCategory } from "#module";
-import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { ImportedRecords } from "@ara-web/reflect";
+import { ModuleCategory } from "../src";
+import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 
 test('Simply creating a reflect extension', async () => {
     const reflectExtension = await getNewAstroReflect();

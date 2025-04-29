@@ -4,12 +4,9 @@
  */
 
 import { expect, test } from "vitest";
-import { ModuleCategory, ModulePartitioner } from "#module";
+import { ModuleMemory } from "@ara-web/reflect";
+import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { CodeLevel } from "../src/parts/code-level/CodeLevel";
-import { PageLevel } from "../src/parts/ui-level/page-level";
-import { type Page, FileExtension } from "#ontology";
-import { ModuleMemory } from "@ara-web/reflect/memory";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()

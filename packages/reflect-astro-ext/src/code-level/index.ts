@@ -1,11 +1,9 @@
-import { type AraPage } from "@ara-web/ts-enhancement/ontology";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
-import { Code } from "@ara-web/reflect/code-level";
-import type { AstIdentifiers } from "@ara-web/reflect/code-level/ast-node";
+import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import { Code, type AstIdentifiers } from "@ara-web/reflect/code-level";
 
 /**
- * Reflect is the main source to Reflect on the website itself.
+ * Code analyzing
  */
 export class CodeLevel {
     constructor() {}
@@ -59,36 +57,6 @@ export class CodeLevel {
         }
         
         return Result.ok(moduleMemory);
-    }
-
-    /**
-     * Returns a page by it's path
-     */
-    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
-        if (url === undefined) {
-            return undefined;
-        }
-        if (url.length === 0) {
-            return undefined;
-        }
-        if (url[url.length - 1] === "/") {
-            url = url.substring(0, url.length - 1);
-        }
-
-        // const pages = await this.getPages();
-
-        // if (pages.isFailure) {
-        //     return undefined;
-        // }
-
-        // for (const page of pages.getValue()) {
-        //     const pageUrl = fileNameToUrl(page.fileName);
-        //     if (url === pageUrl) {
-        //         return page;
-        //     }
-        // }
-
-        return undefined;
     }
 
     //************************************************************** */

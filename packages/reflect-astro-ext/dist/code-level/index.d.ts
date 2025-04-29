@@ -1,8 +1,7 @@
-import { type AraPage } from "@ara-web/ts-enhancement/ontology";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
+import { Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 /**
- * Reflect is the main source to Reflect on the website itself.
+ * Code analyzing
  */
 export declare class CodeLevel {
     constructor();
@@ -11,10 +10,6 @@ export declare class CodeLevel {
      * @returns {Result<AraPage[]>}
      */
     static identifySourceCode: <T>(source: string | undefined, moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<ModuleMemory<T>>>;
-    /**
-     * Returns a page by it's path
-     */
-    getPageByUrl: (url: string | undefined) => Promise<AraPage | undefined>;
     private static identifyImports;
     private static lintTypes;
     private static lintImports;

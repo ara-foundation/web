@@ -1,6 +1,6 @@
-import { ModuleMemory } from "@ara-web/reflect/memory";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { FileExtension, type Component, type ModuleParts } from "#ontology";
+import { Result } from "@ara-web/ts-enhancement";
+import { ModuleMemory } from "@ara-web/reflect";
+import { FileExtension, type Component, type ModuleParts } from "./ontology/index.js";
 /**
  * Module Category to sort the modules.
  * By design module categories supposed to match the directory in the file system.
