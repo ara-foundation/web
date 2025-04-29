@@ -28,7 +28,7 @@
     },
     "./module-link": {
       "types": "./src/ara-link/ModuleLink.ts",
-      "default": "./src/ara-link/ModuleLink.js"
+      "default": "./dist/ara-link/ModuleLink.js"
     },
     "./ontology": {
       "types": "./src/ara-web-ontology/index.ts",
