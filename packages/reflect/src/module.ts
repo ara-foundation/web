@@ -58,6 +58,28 @@ export class FilePath {
         )
     }
 
+    /**
+     * Returns the file name
+     * @param filePath 
+     * @returns 
+     */
+    public static getFileName = async (filePath: string|undefined, includeExt: boolean = false): Promise<Result<string>> => {
+        if (filePath === undefined) {
+            return Result.fail(`File path is empty`, `Please pass the correct file name`);
+        }
+
+        if (await this.isDirectory(filePath)) {
+            return Result.fail(`The path is directory`, `The '${filePath}' is directory in the file system, no file name there`)
+        }
+
+        const segments = filePath.split(PathModule.sep);
+        let fileName = segments[segments.length - 1];
+        if (!includeExt) {
+            fileName = fileName.substring(0, fileName.lastIndexOf("."))
+        }
+        return Result.ok(fileName);
+    }
+
     public static getCurrentWorkingDir = (): string => {
         return process.cwd();
     }

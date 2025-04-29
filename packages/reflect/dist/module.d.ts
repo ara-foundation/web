@@ -32,6 +32,12 @@ export declare class FilePath {
      * @returns {FileExtension}
      */
     static getFileExtension: (filePath: string | undefined, supportedExtensions: string[]) => Result<string>;
+    /**
+     * Returns the file name
+     * @param filePath
+     * @returns
+     */
+    static getFileName: (filePath: string | undefined, includeExt?: boolean) => Promise<Result<string>>;
     static getCurrentWorkingDir: () => string;
     static isAbsolutePath: (dirOrFilePath: string) => boolean;
     static isDirectory: (filePath: string) => Promise<boolean>;
