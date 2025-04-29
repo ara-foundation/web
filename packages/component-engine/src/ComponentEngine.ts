@@ -69,22 +69,7 @@ export class ComponentEngine {
     public static isLayoutModulePath = (filePath: string): boolean => {
         return (filePath.indexOf(AraWebLayoutPath) > -1);
     }
-    /**
-     * Converts the ElementNode (HTML elements such as Body, Head, Div etc) into a Component
-     * @param {ElementNode} element 
-     * @returns {Component}
-     */
-    public static astroElementNodeToComponent = (element: ElementNode): Component => {
-        const component: Component = {
-            label: `<${StringTraits.capitalizeFirstLetter(element.name)}>`,
-            description: `Show the data`,
-            category: elementCategory,
-            modulePath: ``,
-            glob: element
-        }
 
-        return component;
-    }
 
     public static astroLayoutNodeToComponent = (node: AstroComponentNode, filePath: string): Component => {
         const component: Component = {
@@ -98,25 +83,7 @@ export class ComponentEngine {
         return component;
     }
 
-    public static astroNodeToComponent = (node: AstroComponentNode, filePath: string): Result<Component> => {
-        const category = ComponentEngine.filePathToCategory(filePath);
-        if (category === undefined) {
-            return Result.fail(
-                `filePathToCategory(filePath='${filePath}')`,
-                `The ${node.name} not found in the Ara Web's built in components list`
-            )
-        }
-        
-        const component: Component = {
-            label: node.name,
-            description: "",
-            modulePath: filePath,
-            category: componentCategories[0],
-            glob: node,
-        }
-
-        return Result.ok(component);
-    }
+    
 
     private static filePathToCategory = (filePath: string): ComponentCategory|undefined => {
         for (const componentCategory of componentCategories) {

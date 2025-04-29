@@ -1,27 +1,41 @@
-/**
- * Ara Web Level Reflection that deals with the Astro Components and Astro Component Attributes
- */
 import { parse as commentParse} from "comment-parser";
-
-import { OkResult, Result, type AraPage } from "@ara-web/ts-enhancement";
-
-// The pages traits adds to the Page the following:
-// -- RPCs and refer to RPC types
-// -- File Content
-// -- AST
-// -- Components
-import type { Code } from "@ara-web/reflect/code-level";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { FileExtension, type ModuleParts } from "../../module.js";
 import type { ModuleMemory } from "@ara-web/reflect/memory";
-// Make sure that we move the component
-
-type PageFromComments = {
-    title: string;
-    description: string;
-}
+import { ComponentLevel } from "./component-level.js";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { DEFAULT_SLOT, type Page, type Meta, ElementType, type Slots } from "#ontology";
 
 export class PageLevel {
-    private static validateParts = (parts: ModuleParts): OkResult => {
+    /**
+     * Generates the UI Element (Page, layout or component) from the module `parts` and `memory`.
+     * @param {Parts} parts 
+     * @returns {Component}
+     */
+    public static identifyPage = async (parts: ModuleParts, memory: ModuleMemory<Page>): Promise<Result<Page>> => {
+        const validated = this.validateModuleParts(parts);
+        if (validated.isFailure) {
+            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
+        }
+                
+        const meta = this.getMetaFromComment(parts.source!);
+        const slots = await this.identifySlots(parts, memory);
+        if (slots.isFailure) {
+            return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
+        }
+        
+        const page: Page = {
+            url: memory.moduleLink.moduleURL,
+            glob: memory.glob,
+            slots: slots.getValue(),
+            type: ElementType.Page,
+            ...meta
+        }
+
+        return Result.ok(page);
+    }
+
+    private static validateModuleParts = (parts: ModuleParts): OkResult => {
         if (parts.fileExtension !== FileExtension.Astro) {
             return OkResult.fail("Unsupported page type", "Only .astro files should be in the pages")
         }
@@ -37,106 +51,44 @@ export class PageLevel {
 
         return OkResult.ok();
     }
-    /**
-     * Generates the page from the `parts` and `memory`.
-     * @param {Parts} parts 
-     * @returns {error?: string, data?: PageTraits}
-     */
-    public static identifyPage = (parts: ModuleParts, memory: ModuleMemory<AraPage>): Result<AraPage> => {
-        const validated = this.validateParts(parts);
-        if (validated.isFailure) {
-            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
-        }
-        
-        const page: AraPage = {
-            title: "Warning: Undefined",
-            description: "Not yet set",
-            fileName: memory.moduleLink.moduleURL,
-            glob: memory.glob,
-        }
-        
-        const commentResult = this.identifyPageByComment(parts.source!);
-        if (commentResult.isFailure) {
-            return Result.fail("identifyPageByComment: " + commentResult.errorTitle!, commentResult.errorDescription!)
-        }
-
-        if (page.rpcs === undefined) {
-            page.rpcs = {};
-        }
-        
-        if (page.components === undefined) {
-            page.components = {};
-        }
-        
-        if (page.metaComponents === undefined) {
-            page.metaComponents = [];
-        }
-
-        page.title = commentResult.getValue().title;
-        page.description = commentResult.getValue().description;
-
-        return Result.ok(page);
-    }
 
     /**
      * Extracts the Title, Description from the Page Meta.
      * Returns true if extraction was successful. Otherwise returns false and
      * the error message will be set in the page.title and page.description
      */
-    private static identifyPageByComment = (source: string): Result<PageFromComments> => {
-        const page: PageFromComments = {
+    private static getMetaFromComment = (source: string): Meta => {
+        const componentMeta: Meta = {
             title: "",
             description: "",
         }
 
         const parsed = commentParse(source);
         if (parsed.length === 0) {
-            return Result.fail("Page has no comment", "The web page is missing any comment in the JSDoc format")
+            return componentMeta;
         }
         
-        let pageCommentFound = false;
-        let pageTitleFound = false;
-        let pageDescriptionFound = false;
-            
         for (let block of parsed) {
             for (let tag of block.tags) {
-                if (tag.tag === "this") {
-                    if (tag.name === "Page") {
-                        pageCommentFound = true;
-                    }
-                } else if (tag.tag === "param") {
+                if (tag.tag === "param") {
                     if (tag.type !== "string") {
                         continue;
                     }
                     
                     if (tag.name === "Title") {
                         if (tag.description.length > 0) {
-                            page.title = tag.description;
-                            pageTitleFound = true;
+                            componentMeta.title = tag.description;
                         }
                     } else if (tag.name === "Description") {
                         if (tag.description.length > 0) {
-                            page.description = tag.description;
-                            pageDescriptionFound = true;
+                            componentMeta.description = tag.description;
                         }
                     }
                 }
             }
-        
-            if (!pageCommentFound) {
-                return Result.fail("Invalid Comment Detection", "Missing a '@type Page' in the page comment")
-            } else if (!pageTitleFound) {
-                return Result.fail("Invalid Title", "Missing the '@param {string} Title {...}'")
-            } else if (!pageDescriptionFound) {
-                return Result.fail("Invalid Description", "Missing the '@param {string} Description {...}' in the page comment")
-            } 
-        
-            if (pageCommentFound && pageTitleFound && pageDescriptionFound) {
-                return Result.ok(page);
-            }
         }
-        
-        return Result.fail("Invalid Page Comment Detection", "No comment dedicated for the web page itself");
+
+        return componentMeta;
     }
 
 
@@ -144,20 +96,23 @@ export class PageLevel {
      * Identify each component within the page. All data of the page are represented as the components.
      * @returns {Result<AraPage>}
      */
-    static identifyComponents = async (_page: AraPage, _uiContent: ModuleParts, _code: Code): Promise<Result<AraPage>> => {
-        return Result.errorCode501(["UI Level", "Page Level"], "identifyComponents")
-        // for (let componentNode of uiContent.elements!) {
-        //     const identificationResult = await identifyComponent(page, uiContent, componentNode)
-        //     if (identificationResult.isFailure) {
-        //         const err = Debug.error(
-        //             `this.identifyComponent(componentNode: ${componentName(componentNode)}): ${identificationResult.errorTitle}`, 
-        //              identificationResult.errorDescription!,
-        //             componentNode,
-        //         )    
+    private static identifySlots = async (uiContent: ModuleParts, memory: ModuleMemory<Page>): Promise<Result<Slots>> => {
+        const slots: Slots = {
+            [DEFAULT_SLOT]: []
+        };
+        for (let componentNode of uiContent.elements!) {
+            const identificationResult = await ComponentLevel.identifyComponent(uiContent, memory, componentNode)
+            if (identificationResult.isFailure) {
+                const err = Debug.error(
+                    `this.identifyComponent(): ${identificationResult.errorTitle}`, 
+                     identificationResult.errorDescription!,
+                    componentNode,
+                )    
                 
-        //         return Result.fail(err)
-        //     }
-            
+                return Result.fail(err)
+            }
+            Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`)
+            slots[DEFAULT_SLOT].push(identificationResult.getValue())
         //     const identifiedComponent = identificationResult.getValue();
                 
         //         // Let's detect the ComponentType
@@ -201,7 +156,7 @@ export class PageLevel {
         //         } else {
         //             console.log(`Component ${componentName(componentNode)} was not identified. It's neither Layout, nor Component nor RPC Call`);
         //         }
-        // }
-        // return Result.ok(pageTraits.page)
+        }
+        return Result.ok(slots)
     }
 }

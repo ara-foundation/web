@@ -1,7 +1,7 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
-import { Result } from "@ara-web/ts-enhancement";
-import { type AstroNode } from "../../component.js";
-import type { UiContent } from "./ui-content.js";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { type AstroNode } from "../../astro-node.js";
+import type { ModuleParts } from "./../../module.js";
 import type { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import type { TsNode } from "@ara-web/reflect/code-level/ts-node";
 
@@ -27,7 +27,7 @@ export const attributeByName = (node: AstroNode, name?: string): AttributeNode|u
  * Expected to be called by identifyComponent()
  * @param {AttributeNode} attr expression in the attribute
 */
-export const identifyAttribute = async <T>(_uiContent: UiContent, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<TsNode>>> => {
+export const identifyAttribute = async <T>(_uiContent: ModuleParts, attr: AttributeNode, kind?: string): Promise<Result<T|AraLink<TsNode>>> => {
     if (kind !== undefined && attr.kind !== kind) {
         return Result.fail(
             `Attribute kind mismatch`,

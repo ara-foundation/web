@@ -1,20 +1,26 @@
-// The component engine.
-// List of components and fetching them by a simple class. 
-
-import { type AraComponent, Result } from "@ara-web/ts-enhancement";
-
-// Move the parts to the Astro Framework itself.
-// TODO:
-// Make sure to allow supported components to the Astro Reflect Extension.
-// import { ComponentEngine, componentCategories } from "@ara-web/component-engine"
-import type { ModuleMemory } from "@ara-web/reflect/memory";
-
-import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
+import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode, Node } from "@astrojs/compiler/types";
 import type { Props } from "astro";
-// Which types of Components supported?
+
 export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode
+
 // WARNING: Every time whenever a new extension added, add support here.
-export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) => React.JSX.Element) | (() => React.JSX.Element);
+type AstroImport = ((_props: Props) => any);
+type TsxImport = (({ children }: Props) => React.JSX.Element);
+type JsxImport = (() => React.JSX.Element);
+export type AstroNodeType = AstroImport | TsxImport | JsxImport;
+
+export class AstroNodeTraits {
+    public static componentName = (astNode: AstroNode): string => {
+        if (astNode.type === "expression") {
+            return `Expression with ${astNode.children[0].type}`
+        }
+        return astNode.name;
+    }
+
+    public static isSupportedNode = (node: Node): boolean => {
+        return node.type === "component" || node.type === "element" || node.type === "expression"
+    }
+}
 
 // export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
 //     const componentId = modulePathToCategoryFileName(modulePath);
@@ -78,8 +84,8 @@ export type AstroNodeType = ((_props: Props) => any) | (({ children }: Props) =>
 //     )
 // }
 
-export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<AraComponent>> => {
-    return Result.errorCode501(["component"], "fileContentToComponent")
+// export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<AraComponent>> => {
+    // return Result.errorCode501(["component"], "fileContentToComponent")
     // const component: Component = {
     //     label: "",
     //     description: "",
@@ -100,4 +106,4 @@ export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<
     // component.modulePath = fileName;
 
     // return Result.ok(component);
-}
+// }

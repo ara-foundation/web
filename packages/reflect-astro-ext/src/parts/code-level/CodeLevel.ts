@@ -1,4 +1,6 @@
-import { Debug, OkResult, Result, type AraPage } from "@ara-web/ts-enhancement";
+import { type AraPage } from "@ara-web/ts-enhancement/ontology";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
 import { Code } from "@ara-web/reflect/code-level";
 import { AstNode, type AstIdentifiers } from "@ara-web/reflect/code-level/ast-node";
@@ -210,40 +212,41 @@ export class CodeLevel {
                 memory.addIdentifiers(depsIdentified.getValue());
             }
 
-            Debug.log(`Linted data of`)
+            // Debug.log(`Linted data of`)
+            
             const memoryIdentifiers = memory.getIdentifiers([AstNode.isTypeDeclaration]);
             for (let identifier in memoryIdentifiers) {
                 const data = (memoryIdentifiers[identifier] as AstNode).data
-                Debug.log(`The data of the '${identifier}' type:`);
-                Debug.log(data);
+                // Debug.log(`The data of the '${identifier}' type:`);
+                // Debug.log(data);
                 if (data instanceof IntersectedUnionType) {
-                    Debug.log(`'${identifier}' Intersected type:`);
-                    Debug.log(data)
-                    Debug.log(`'${identifier}' Union types memory`);
-                    Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
-                    Debug.log(`The union types:`);
+                    // Debug.log(`'${identifier}' Intersected type:`);
+                    // Debug.log(data)
+                    // Debug.log(`'${identifier}' Union types memory`);
+                    // Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
+                    // Debug.log(`The union types:`);
                     const unionData = data as IntersectedUnionType;
                     for (let unionIndex = 0; unionIndex < unionData.unionLength; unionIndex++) {
-                        Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
-                        Debug.log(unionData.getUnion(unionIndex))
+                        // Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
+                        // Debug.log(unionData.getUnion(unionIndex))
                     }
-                    Debug.log(`Intersection's non union part:`);
-                    Debug.log(unionData.records)
+                    // Debug.log(`Intersection's non union part:`);
+                    // Debug.log(unionData.records)
                 } else if (data instanceof UnionTypeDeclaration) {
-                    Debug.log(`'${identifier}' Union type:`);
-                    Debug.log(data)
-                    Debug.log(`'${identifier}' Union types memory`);
-                    Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
-                    Debug.log(`The union types:`);
+                    // Debug.log(`'${identifier}' Union type:`);
+                    // Debug.log(data)
+                    // Debug.log(`'${identifier}' Union types memory`);
+                    // Debug.log((memoryIdentifiers[identifier] as AstNode).getAllMemoryData())
+                    // Debug.log(`The union types:`);
                     const unionData = data as UnionTypeDeclaration;
                     for (let unionIndex = 0; unionIndex < unionData.unionLength; unionIndex++) {
-                        Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
-                        Debug.log(unionData.getUnion(unionIndex))
+                        // Debug.log(`Union child: ${unionIndex}/${unionData.unionLength - 1}:`);
+                        // Debug.log(unionData.getUnion(unionIndex))
                     }
                 } else {
                     if (identifier === 'Generic') {
-                        Debug.log(`'${identifier}' Non union type data`);
-                        Debug.log(memoryIdentifiers[identifier])
+                        // Debug.log(`'${identifier}' Non union type data`);
+                        // Debug.log(memoryIdentifiers[identifier])
                     }
                 }
             }
@@ -281,9 +284,9 @@ export class CodeLevel {
      * @returns 
      */
     private static identifyTypes = async <T>(code: Code, memory: ModuleMemory<T>): Promise<Result<AstIdentifiers>> => {
-        Debug.push(`code.getTypeIdentifiers()`, {memory: memory.moduleLink.toString()})
+        // Debug.push(`code.getTypeIdentifiers()`, {memory: memory.moduleLink.toString()})
         const identifiers = await code.getTypeIdentifiers();
-        Debug.pop();
+        // Debug.pop();
         if (identifiers.isFailure) {
             return Result.fail(
                 `code.getTypeIdentifiers(): ${identifiers.errorTitle}`,

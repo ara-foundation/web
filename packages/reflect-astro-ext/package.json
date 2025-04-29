@@ -11,6 +11,11 @@
     "test": "vitest -r ./",
     "check-test-files": "astro check --root ./test/test-app/"
   },
+  "imports": {
+    "#ontology": "./src/ontology/index.ts",
+    "#astro-node": "./src/astro-node.ts",
+    "#module": "./src/module.ts"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

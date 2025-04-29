@@ -6,9 +6,11 @@ import {
     FilePath
 } from "@ara-web/reflect/module";
 import { ModuleMemory } from "@ara-web/reflect/memory";
-import { Debug, enumValues, Result, type AraPage } from "@ara-web/ts-enhancement";
-import type { AstroNode } from "./component.js";
-import type { ModuleLink } from "@ara-web/reflect/module-link";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { Result } from "@ara-web/ts-enhancement/result";
+import { EnumTraits } from "@ara-web/ts-enhancement/traits";
+import type { AstroNode } from "./astro-node.js";
+import type { Component } from "#ontology";
 
 /**
  * Module Category to sort the modules.
@@ -39,7 +41,6 @@ export enum FileExtension {
  * Any UI Content is composed of the HTML Elements and the source code
  */
 export type ModuleParts = {
-    moduleLink: ModuleLink,
     fileExtension: FileExtension,
     elements?: AstroNode[],             // Change to the generic to support react.
     source?: string,
@@ -59,7 +60,7 @@ export const extractModuleCategory = (srcDir: string, modulePath: string): Resul
     }
 
     // Could be one of the pre-defined categories such as 'pages', 'components' etc.
-    for (let moduleCategory of enumValues(ModuleCategory)) {
+    for (let moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
         if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory]))) {
             return Result.ok(moduleCategory as ModuleCategory);
         }
@@ -82,7 +83,7 @@ export class ModulePartitioner {
     
     /**
      * Identifies the parts that the module has. Additionally, it also identifies the source code
-     * @returns {Result<AraPage[]>}
+     * @returns {Result<ModuleParts>}
      */
     public static partition = async <T>(moduleMemory: ModuleMemory<T>): Promise<Result<ModuleParts>> => {
         const uiContent = await this.getModuleParts(moduleMemory);
@@ -99,7 +100,7 @@ export class ModulePartitioner {
     /**
      * Returns a page by it's path
      */
-    getPageByUrl = async(url: string | undefined): Promise<AraPage|undefined> => {
+    getPageByUrl = async(url: string | undefined): Promise<Component|undefined> => {
         if (url === undefined) {
             return undefined;
         }
@@ -132,7 +133,7 @@ export class ModulePartitioner {
      */
     private static getModuleParts = async <T>(moduleMemory: ModuleMemory<T>): Promise<Result<ModuleParts>> => {
         // const absoluteModulePath = absolutePath(modulePath, glob);
-        const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, enumValues(FileExtension));
+        const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, EnumTraits.enumValues(FileExtension));
         if (fileExtensionResult.isFailure) {
             return Result.fail(
                 `getFileExtension('${moduleMemory.moduleLink.toFilePath}'): ${fileExtensionResult.errorTitle}`,
@@ -140,15 +141,8 @@ export class ModulePartitioner {
             )
         }
         const fileExtension = fileExtensionResult.getValue() as FileExtension;    
-        if (fileExtension !== FileExtension.Astro) {
-            return Result.ok({fileExtension});
-        }       
 
-        const absolutePath = this.getAstroFilePath(moduleMemory.glob);
-        // For now we omit fetching anything but Astro.
-        //     const absolutePath = fileExtension === FileExtension.Astro ?
-        //         this.getAstroFilePath(moduleMemory.glob) : 
-        //         `/${moduleMemory.moduleLink.modulePath!}`;
+        const absolutePath = moduleMemory.moduleLink.toFilePath;
         const readResult = await FilePath.getFileContent(absolutePath);
         if (readResult.isFailure) {
             return Result.fail(`getFileContent(${absolutePath}): ${readResult.errorTitle}`, readResult.errorDescription!)
@@ -156,9 +150,9 @@ export class ModulePartitioner {
         const source = readResult.getValue();
 
         // If we start to support the TSX or JSX
-        //     if (fileExtension !== FileExtension.Astro) {
-        //         return Result.ok({fileExtension, elements: [], source})
-        //     }
+        if (fileExtension !== FileExtension.Astro) {
+            return Result.ok({fileExtension, elements: [], source: `${source}`})
+        }
 
         const fileContent: ModuleParts = await this.parseAstroFile(source);
         return Result.ok(fileContent);
@@ -177,8 +171,8 @@ export class ModulePartitioner {
         const {frontmatterCode, componentNodes} = this.extractAstroComponents(result.ast);
 
         const fileContent: ModuleParts = {
-            source: frontmatterCode.length > 0 ? frontmatterCode : undefined,
-            elements: componentNodes.length > 0 ? componentNodes : undefined,
+            source: frontmatterCode.length > 0 ? frontmatterCode : '',
+            elements: componentNodes.length > 0 ? componentNodes : [],
             fileExtension: FileExtension.Astro,
         }
 

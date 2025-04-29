@@ -1,7 +1,9 @@
 import { type AutoImporter, type ExtensionInterface, type ImportedRecords } from "@ara-web/reflect";
-import { Debug, enumValues, OkResult, Result, type AraComponent, type AraPage } from "@ara-web/ts-enhancement";
+import { EnumTraits } from "@ara-web/ts-enhancement/traits";
+import { Debug } from "@ara-web/ts-enhancement/debug";
+import { OkResult, Result } from "@ara-web/ts-enhancement/result";
+import { type AraPage, type AraComponent } from "@ara-web/ts-enhancement/ontology";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
-import { fileContentToComponent } from "./component.js";
 import { extractModuleCategory, ModuleCategory, ModulePartitioner } from "./module.js";
 import { ModuleLink, type ModuleURL } from "@ara-web/reflect/module-link";
 import { CodeLevel } from "./parts/code-level/CodeLevel.js";
@@ -56,7 +58,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
 
     public get moduleCategories(): string[] {
-        return enumValues(ModuleCategory);
+        return EnumTraits.enumValues(ModuleCategory);
     }
 
     public get rootDir(): string {
@@ -225,14 +227,14 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 continue;
             }
 
-            const component = await fileContentToComponent(moduleMemory)
-            if (component.isFailure) {
-                return Result.fail(
-                    `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
-                    component.errorDescription!
-                )
-            }
-            components.push(component.getValue())
+            // const component = await fileContentToComponent(moduleMemory)
+            // if (component.isFailure) {
+            //     return Result.fail(
+            //         `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
+            //         component.errorDescription!
+            //     )
+            // }
+            // components.push(component.getValue())
         }
 
         return Result.ok(components);
@@ -255,14 +257,14 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 continue;
             }
 
-            const component = await fileContentToComponent(moduleMemory)
-            if (component.isFailure) {
-                return Result.fail(
-                    `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
-                    component.errorDescription!
-                )
-            }
-            components.push(component.getValue())
+            // const component = await fileContentToComponent(moduleMemory)
+            // if (component.isFailure) {
+            //     return Result.fail(
+            //         `fileContentToComponent(modulePath: '${moduleMemory.moduleLink}'): ${component.errorTitle}`,
+            //         component.errorDescription!
+            //     )
+            // }
+            // components.push(component.getValue())
         }
 
         return Result.ok(components);
