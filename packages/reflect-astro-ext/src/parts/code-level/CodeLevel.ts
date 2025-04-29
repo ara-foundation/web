@@ -2,6 +2,7 @@ import { type AraPage } from "@ara-web/ts-enhancement/ontology";
 import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect/memory";
 import { Code } from "@ara-web/reflect/code-level";
+import type { AstIdentifiers } from "@ara-web/reflect/code-level/ast-node";
 
 /**
  * Reflect is the main source to Reflect on the website itself.
