@@ -24,15 +24,8 @@ test(`Make sure the module parts are importing`, async () => {
         expect(moduleParts.isSuccess).toBe(true);
 
         if (moduleParts.getValue().source?.length === 0) 
-        // Debug.log(`Sources:`);
-        // Debug.log(moduleParts)
         if (moduleParts.getValue().fileExtension === FileExtension.Astro) {
             expect(moduleParts.getValue().elements?.length).toBeGreaterThan(0);
-            // const elems = moduleParts.getValue().elements === undefined ? [] : moduleParts.getValue().elements!;
-            // for (let elem of elems) {
-            //     Debug.log(`Elements`)
-            //     Debug.log(elem)
-            // }
         }
     }
 
