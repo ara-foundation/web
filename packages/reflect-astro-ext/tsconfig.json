@@ -15,7 +15,8 @@
     "stripInternal": true,
 
     "jsx": "preserve",
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "test"]
