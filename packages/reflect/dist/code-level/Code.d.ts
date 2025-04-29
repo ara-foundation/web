@@ -6,13 +6,11 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { Project } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement/result";
+import { Result, ModuleLink } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory } from "../index.js";
 import { type AstIdentifiers } from "./ast-node.js";
 import { type ValueType } from "./ast-node-data.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
-import type { ProjectMemory } from "../memory/ProjectMemory.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 export type Object = {
     [key: string]: ValueType;
 };
@@ -44,6 +42,12 @@ export declare class Code {
      * @returns AstIdentifiers
      */
     getImportedIdentifiers: (projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
+    /**
+     * Creates a link that this import declaration imports from.
+     * @returns {AraLink<string>} Link to the import
+     */
+    private importClauseToModuleLink;
+    private setImportPaths;
     /**
      * Lint dependencies of the given module identified by type and path.
      *

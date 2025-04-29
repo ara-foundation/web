@@ -8,10 +8,8 @@ import {
     VariableDeclarationList,
     Node
 } from "ts-morph";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
-import { type AstIdentifiers } from "../ast-node.js";
+import { Debug, Result } from "@ara-web/ts-enhancement";
+import { TsNode, type TsNodeValidator, type AstIdentifiers } from "../index.js";
 import { VariableDeclaration } from "./variable-declaration.js";
 
 export class VariableStatement extends TsNode {

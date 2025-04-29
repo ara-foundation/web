@@ -1,6 +1,5 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { TypeLevel } from "./type-level.js";
+import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { TypeLevel } from "./type-level/index.js";
 export var ValueTypeString;
 (function (ValueTypeString) {
     ValueTypeString["default"] = "default";
@@ -15,7 +14,9 @@ export var ValueTypeString;
 ;
 ;
 ;
-// Types as objects
+/**
+ * The type declaration literal discovered in the source code represented as this class.
+ */
 export class TypeDeclaration {
     _records = {};
     constructor() { }

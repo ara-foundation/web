@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement/result";
+import { Result } from "@ara-web/ts-enhancement";
 import type { ExtensionInterface } from "./extension-interface.js";
 export type ReflectSetup = {
     extensions?: ExtensionInterface[];

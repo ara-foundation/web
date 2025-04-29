@@ -4,10 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { NamedImports } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { AstNodeType, type AstIdentifiers } from "../ast-node.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
+import { Result } from "@ara-web/ts-enhancement";
+import { AstNodeType, type AstIdentifiers, TsNode, type TsNodeValidator } from "../index.js";
 export declare class NamedImport extends TsNode {
     protected _tsNode: NamedImports;
     private constructor();
@@ -28,5 +26,5 @@ export declare class NamedImport extends TsNode {
      * @param importPath
      * @returns
      */
-    static getIdentifiers: (nodeType: AstNodeType, moduleLink: ModuleLink, namedChildren: TsNode[]) => Result<AstIdentifiers>;
+    static getIdentifiers: (nodeType: AstNodeType, namedChildren: TsNode[]) => Result<AstIdentifiers>;
 }

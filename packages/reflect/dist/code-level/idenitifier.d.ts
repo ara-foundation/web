@@ -1,0 +1,12 @@
+import { Result } from "@ara-web/ts-enhancement";
+import { TsNode, type TsNodeValidator } from "./ts-node.js";
+import type { TypedData } from "./ast-node.js";
+import type { AstNodeContext } from "./AstNodeContext.js";
+/**
+ * Literal class identifies the literal data such as "string", 123, false, true.
+ */
+export declare class Identifier {
+    static get name(): string;
+    static isA: TsNodeValidator;
+    identifyValue: (tsNode: TsNode, typedData?: TypedData, parentNodeContext?: AstNodeContext) => Promise<Result<TypedData>>;
+}

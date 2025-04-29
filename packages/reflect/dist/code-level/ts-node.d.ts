@@ -1,4 +1,9 @@
 import { Node } from "ts-morph";
+/**
+ * A method type to define method that validates the `TsNode`.
+ * Use this module to when creating various Ast Parser modules to filter the necessary data for
+ * your need.
+ */
 export type TsNodeValidator = (node: TsNode) => boolean;
 export declare class TsNode {
     static readonly GenericNodeLength = 3;

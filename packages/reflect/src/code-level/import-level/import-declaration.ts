@@ -1,0 +1,289 @@
+/**
+ * Import Declarations in the code.
+ * 
+ * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
+ */
+import { ImportClause, ImportDeclaration as TsImportDeclaration } from "ts-morph";
+import { OkResult, Result, Debug, StringTraits } from "@ara-web/ts-enhancement";
+import { 
+    AstNode, 
+    AstNodeType, 
+    type AstIdentifiers,
+    TsNode, 
+    type TsNodeValidator,
+    Identifier
+} from "../index.js";
+import { NamedImport } from "./named-import.js";
+
+export class ImportDeclaration extends TsNode {
+    private _importClause: string;
+    private _defaultIdentifier?: string;
+    private _identfiers: AstIdentifiers = {};
+    protected _tsNode: TsImportDeclaration;
+
+    private constructor (tsNode: TsNode) {
+        super(tsNode);
+        this._tsNode = tsNode.getNode<TsImportDeclaration>()!;
+        this._importClause = '';
+    }
+
+    public get importClause(): string {
+        return this._importClause;
+    }
+
+    public get defaultIdentifier(): string|undefined {
+        return this._defaultIdentifier;
+    }
+
+    public get astIdentifiers(): AstIdentifiers {
+        return this._identfiers;
+    }
+
+    public static async fromTsNode(tsNode: TsNode): Promise<Result<ImportDeclaration>> {
+        if (!this.isImportDeclaration(tsNode)) {
+            return Result.fail(
+                `The given node is not import declaration`,
+                `Please check the ts node '' is valid import declaration`
+            )
+        }
+
+        try {
+            const importDeclaration = new ImportDeclaration(tsNode);
+            const importClauseIdentified = await importDeclaration.identifyImportClause();
+            if (importClauseIdentified.isFailure) {
+                return Result.fail(`importDeclaration.identifyImportClause(): ${importClauseIdentified.errorTitle}`, importClauseIdentified.errorDescription!);
+            }
+
+            const identifiers = importDeclaration.getIdentifiers();
+            if (identifiers.isFailure) {
+                return Result.fail(`importDeclaration.getIdentifiers(): ${identifiers.errorTitle}`, identifiers.errorDescription!);
+            }
+            importDeclaration._identfiers = identifiers.getValue();
+            
+            return Result.ok(importDeclaration)
+        } catch (e) {
+            return Result.fail(`new ImportDeclaration()`, `${e}`)
+        }
+    }
+
+    public static isImportClause: TsNodeValidator = (child: TsNode): boolean => {
+        const node = child.getNode<Node>();
+        return node instanceof ImportClause;
+    }
+
+    public static isImportDeclaration: TsNodeValidator = (child: TsNode): boolean => {
+        const node = child.getNode<Node>();
+        return node instanceof TsImportDeclaration;
+    }
+
+    private getNamedImports = (): TsNode[] => {
+        const importSpecifiers = this._tsNode.getChildren();
+        if (importSpecifiers.length === 0) {
+            return [];
+        }
+
+        const tsNodes: TsNode[] = [];
+        for (let importSpecifier of importSpecifiers) {
+            const tsNode = new TsNode(importSpecifier);
+            if (TsNode.isNonImportant(tsNode)) {
+                continue;
+            } else if (TsNode.isString(tsNode)) {
+                continue;
+            } else if (TsNode.isKeyword(tsNode, ["from", "import"])) {
+                continue;
+            } else if (Identifier.isA(tsNode)) {
+                continue;
+            }
+            tsNodes.push(tsNode)
+        }
+
+        return tsNodes;
+    }
+
+    /**
+     * Creates a link that this import declaration imports from.
+     * @returns {AraLink<string>} Link to the import
+     */
+    private identifyImportClause = async (): Promise<OkResult> => {
+        const children = this.getChildren( 
+            [],
+            [Identifier.isA, TsNode.isNonImportant],
+            ["import", "from"]
+        )
+        if (children.length === 0) {
+            return OkResult.fail(
+                "It can not be empty in the import declaration", 
+                "ImportDeclaration doesn't have data, update ImportDeclaration.getModuleLink()"
+            )
+        }
+
+        for (let tsNode of children) {
+            if (ImportDeclaration.isImportClause(tsNode)) {
+                const stringNodes = tsNode.getChildren([TsNode.isString])
+                if (stringNodes.length !== 0) {
+                    const importPath = StringTraits.unquote(stringNodes[0].getText());
+                    this._importClause = importPath;
+                    return OkResult.ok();
+                }
+            } else if (TsNode.isString(tsNode)) {
+                const importPath = StringTraits.unquote(tsNode.getText());
+                this._importClause = importPath;
+                return OkResult.ok();
+            } else {
+                const err = Debug.error(
+                    `Unsupported child of import declaration`,
+                    `The '${tsNode.getText()}' node is not an import clause nor string literal`,
+                    tsNode,
+                
+                )
+                return OkResult.fail(err)
+            }
+        }
+
+        return OkResult.fail(
+            `No import path found`,
+            `The import declaration doesn't have the path in '${this.getText()}' import declaration`
+        )
+    }
+
+    /**
+     * Syntax to support:
+     * import DefaultName from "string-literal-path".
+     * @param astImport 
+     * @returns 
+     */
+    private identifyImportDefaultIdentifier = (): Result<AstNode|undefined> => {
+        let nodeType: AstNodeType = AstNodeType.Object;
+        const children = this.getChildren(
+            [],
+            [TsNode.isString, TsNode.isNonImportant],
+            ["import", "from"]
+        )
+        if (children.length === 0) {
+            return Result.fail(
+                "It can not be", 
+                "ImportDeclaration doesn't have data, check astImport is correct, or update AstNode.getChildren()"
+            )
+        }
+
+        let identifier: string|undefined = undefined;
+
+        for (let i = 0; i < children.length; i++) {
+            const tsNode = children[i];
+            if (ImportDeclaration.isImportClause(tsNode)) {
+                const identifiers = tsNode.getChildren([Identifier.isA])
+                if (identifiers.length !== 0) {
+                    identifier = identifiers[0].getText()
+                    
+                    const typeKeywords = tsNode.getChildren([TsNode.isTypeKeyword])
+                    if (typeKeywords.length > 0) {
+                        nodeType = AstNodeType.Type;
+                    }
+                    break;
+                }
+            } else if (Identifier.isA(tsNode)) {
+                identifier = tsNode.getText();
+                break;
+            } else if (TsNode.isTypeKeyword(tsNode)) {
+                nodeType = AstNodeType.Type;
+            } else {
+                const err = Debug.error(
+                    `Unsupported child of import declaration to determine the default identifier of import`,
+                    `The ts node '${this.getText()}' has a '${tsNode.getText()}' child that is not import clause`,
+                    tsNode,
+                )
+        
+                return Result.fail(err)
+            }
+        }
+
+        if (identifier === undefined) {
+            return Result.ok(undefined)
+        }
+
+        const astNode = AstNode.fromTsNode(this);
+        astNode.nodeType = nodeType;
+        // astNode.data = this._moduleLink!;   // Entire glob
+        // astNode.importPath = this._moduleLink!;
+        astNode.identifier = identifier;
+        astNode.public = false;
+        astNode.constant = true;
+        this._defaultIdentifier = identifier;
+
+        return Result.ok(astNode);
+    }
+
+    /**
+     * Import declarations could be named such as:
+     * import { name1, name2 } from "string-literal-path".
+     * 
+     * This function identifies the Ast nodes for each named import identifiers.
+     * @param astImport 
+     * @param importPath 
+     * @returns 
+     */
+    private identifyNamedImports = (): Result<AstIdentifiers> => {
+        let identifiers: AstIdentifiers = {};
+        // Maybe a component is actually defined outside, so its in the imports?
+        const namedImports = this.getNamedImports();
+        if (namedImports.length === 0) {
+            return Result.ok(identifiers)
+        }
+
+        for (let namedImport of namedImports) {
+            let nodeType = AstNodeType.Object;
+            const importClauseChildren = namedImport.getChildren([], [TsNode.isNonImportant])
+            
+            // Debug.push(`NamedImport.getIdentifiers()`, {nodeType, moduleLink: this._moduleLink!.toString(), namedImports: importClauseChildren.length.toString() + " elements"});
+            const namedIdentifiers = NamedImport.getIdentifiers(nodeType, importClauseChildren);
+            // Debug.pop();
+            if (namedIdentifiers.isFailure) {
+                return Result.fail(
+                    `NamedImport.getIdentifiers('').getIdentifiers(nodeType: '${nodeType}'): ${namedIdentifiers.errorTitle}`,
+                    namedIdentifiers.errorDescription!
+                )
+            }
+            identifiers = {...identifiers, ...namedIdentifiers.getValue()}
+        }
+        
+        return Result.ok(identifiers);
+    }
+
+    /**
+     * Does the given ImportDeclaration holds the definition of the literal?
+     * 
+     * Import declarations could be default if it's a single literal.
+     * 
+     * import DefaultName from "string-literla-path"
+     * @returns {AstIdentifiers}
+    */
+    private getIdentifiers = (): Result<AstIdentifiers> => {
+        let identifiers: AstIdentifiers = {};
+
+        // Debug.push(`this.identifyNamedImports()`)
+        const namedImportIdentifiers = this.identifyNamedImports();
+        // Debug.pop();
+        if (namedImportIdentifiers.isFailure) {
+                return Result.fail(
+                    `this.identifyNamedImports(tsNode='${this.getText()}', importPath='${this._importClause.toString()}'): ${namedImportIdentifiers.errorTitle}`,
+                    namedImportIdentifiers.errorDescription!
+                )
+        }
+
+        identifiers = {...identifiers, ...namedImportIdentifiers.getValue()};
+
+        let importIdentifier = this.identifyImportDefaultIdentifier();
+        
+        if (importIdentifier.isFailure) {
+            return Result.fail(
+                `this.identifyImportDefaultIdentifier('${this.getText()}'): ${importIdentifier.errorTitle}`,
+                importIdentifier.errorDescription!
+            )
+        } else if (importIdentifier.getValue() !== undefined) {
+            identifiers[importIdentifier.getValue()!.identifier!] = importIdentifier.getValue()!;
+        }
+        
+        return Result.ok(identifiers);
+    }
+
+}

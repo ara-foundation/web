@@ -1,5 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { Result, AraLink } from "@ara-web/ts-enhancement";
 import type { TypedData } from "./ast-node.js";
 export type LiteralType = string | number | boolean;
 export type EnumMembers = {
@@ -39,6 +38,9 @@ interface IntersectedUnionInterface extends TypeObjectInterface, UnionTypeInterf
     putUnions(unions: UnionTypeInterface): void;
     postAraLink(araLink: AraLink<string>): void;
 }
+/**
+ * The type declaration literal discovered in the source code represented as this class.
+ */
 export declare class TypeDeclaration implements TypeObjectInterface {
     protected _records: Record<string, IdentifiedNodeDataType>;
     constructor();

@@ -1,12 +1,16 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import { ValueTypeString, type IdentifiedNodeDataType, type ValueType } from "../ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, PrefixUnaryExpression } from "ts-morph";
-import type { TypedData } from "../ast-node.js";
-import { type ValueLevelInterface } from "./value-level-interface.js";
-import { AstNodeContext } from "../../memory/AstNodeContext.js";
-import { ValueLevel } from "../value-level.js";
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { 
+    ValueTypeString, 
+    type IdentifiedNodeDataType, 
+    type ValueType,
+    TsNode, 
+    type TsNodeValidator,
+    type TypedData,
+    AstNodeContext,
+    ValueLevel,
+    type ValueLevelInterface
+} from "../index.js";
 
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.

@@ -1,6 +1,6 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ProjectMemory } from "./memory/index.js";
-import { NodejsReflectExtension } from "./reflect-nodejs-ext/ReflectExtension.js";
+import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ProjectMemory } from "./ProjectMemory.js";
+import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 /**
  * Reflect is the main source to Reflect on the website itself.
  */

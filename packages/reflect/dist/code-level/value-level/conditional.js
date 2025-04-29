@@ -32,13 +32,9 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode } from "../ts-node.js";
 import { ConditionalExpression, Node } from "ts-morph";
-import {} from "./value-level-interface.js";
-import { ValueLevel } from "../value-level.js";
-import { ValueTypeString } from "../ast-node-data.js";
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { TsNode, AstNodeContext, ValueLevel, ValueTypeString } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */

@@ -6,19 +6,15 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { Project, SourceFile as TsSourceFile } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { ImportDeclaration } from "./import-declaration.js";
+import { AraLink, Result, Debug, ModuleLink } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
+import { VariableLevel } from "./variable-level/index.js";
+import { ImportLevel } from "./import-level/index.js";
+import { TypeLevel } from "./type-level/index.js";
 import { AstNode, AstNodeType } from "./ast-node.js";
-import { ValueTypeString, } from "./ast-node-data.js";
-import { ModuleMemory } from "../memory/ModuleMemory.js";
-import { TypeDeclaration } from "./type-declaration.js";
+import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
-import { VariableStatement } from "./variable-level/variable-statement.js";
-import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
-import { AstNodeContext } from "../memory/AstNodeContext.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
+import { AstNodeContext } from "./AstNodeContext.js";
 import { CodeLink } from "./CodeLink.js";
 export class Code {
     _ast;
@@ -78,19 +74,50 @@ export class Code {
      */
     getImportedIdentifiers = async (projectMemory) => {
         let identifiers = {};
-        const tsNodes = this.getTsNodes([ImportDeclaration.isImportDeclaration]);
+        const tsNodes = this.getTsNodes();
         for (let tsNode of tsNodes) {
-            const importDeclaration = await ImportDeclaration.fromTsNode(tsNode, this._moduleLink, projectMemory);
-            if (importDeclaration.isFailure) {
-                return Result.fail(`ImportDeclaration.fromTsNode(tsNode: '${tsNode.getText()}'): ${importDeclaration.errorTitle}`, importDeclaration.errorDescription);
+            if (!ImportLevel.isImportDeclaration(tsNode)) {
+                continue;
             }
-            const importIdentifiers = importDeclaration.getValue().getIdentifiers();
-            if (importIdentifiers.isFailure) {
-                return Result.fail(`importDeclaration.getIdentifiers('${tsNode.getText()}'): ${importIdentifiers.errorTitle}`, importIdentifiers.errorDescription);
+            const importClause = await ImportLevel.getImportClause(tsNode);
+            if (importClause.isFailure) {
+                return Result.fail(`ImportDeclaration.fromTsNode(tsNode: '${tsNode.getText()}'): ${importClause.errorTitle}`, importClause.errorDescription);
             }
-            identifiers = { ...identifiers, ...importIdentifiers.getValue() };
+            const identifiedModuleLink = await this.importClauseToModuleLink(importClause.getValue(), this._moduleLink, projectMemory);
+            if (identifiedModuleLink.isFailure) {
+                return Result.fail(`this.importClauseToModuleLink('${importClause.getValue()}', '${this._moduleLink.moduleURL}'): ${identifiedModuleLink.errorTitle}`, identifiedModuleLink.errorDescription);
+            }
+            let importIdentifiers = (await ImportLevel.getIdentifiers(tsNode)).getValue();
+            const defaultIdentifier = (await ImportLevel.getDefaultIdentifier(tsNode)).getValue();
+            importIdentifiers = this.setImportPaths(identifiedModuleLink.getValue(), defaultIdentifier, importIdentifiers);
+            identifiers = { ...identifiers, ...importIdentifiers };
         }
         return Result.ok(identifiers);
+    };
+    /**
+     * Creates a link that this import declaration imports from.
+     * @returns {AraLink<string>} Link to the import
+     */
+    importClauseToModuleLink = async (importClause, callingModulePath, projectMemory) => {
+        const absolueImportPath = await FilePath.getFileAbsolutePath(importClause, callingModulePath.toFilePath);
+        const moduleExists = projectMemory.isModuleExist(absolueImportPath);
+        if (!moduleExists) {
+            return Result.fail(`projectMemory.isModuleExist(): not found`, `The module '${absolueImportPath}' not found in the project memory, please add the module through the extension`);
+        }
+        return Result.ok(absolueImportPath);
+    };
+    setImportPaths = (importModuleLink, defaultIdentifier, astIdentifiers) => {
+        for (let ast in astIdentifiers) {
+            const astNode = astIdentifiers[ast];
+            if (!(astNode instanceof AstNode)) {
+                continue;
+            }
+            astNode.importPath = importModuleLink;
+            if (astNode.identifier === defaultIdentifier) {
+                astNode.data = importModuleLink;
+            }
+        }
+        return astIdentifiers;
     };
     /**
      * Lint dependencies of the given module identified by type and path.
@@ -207,11 +234,11 @@ export class Code {
             }
             const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
             const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
-            // Debug.push(`TypeDeclaration.lintType()`, {node: identifier})
-            const lintedNode = TypeDeclaration.lintType(node, memoryContext);
+            // Debug.push(`TypeLevel.lintType()`, {node: identifier})
+            const lintedNode = TypeLevel.lintType(node, memoryContext);
             // Debug.pop()
             if (lintedNode.isFailure) {
-                return Result.fail(`TypeDeclaration.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
+                return Result.fail(`TypeLevel.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
             }
         }
         return Result.ok(typesToLint);
@@ -222,22 +249,12 @@ export class Code {
      * @returns
      */
     getTypeIdentifiers = async () => {
-        let identifiers = {};
-        const tsNodes = this.getTsNodes([TypeDeclaration.isTypeDeclaration]);
-        for (let tsNode of tsNodes) {
-            const typeDeclaration = TypeDeclaration.fromTsNode(tsNode);
-            if (typeDeclaration.isFailure) {
-                return Result.fail(`TypeDeclaration.fromTsNode(tsNode: '${tsNode.getText()}'): ${typeDeclaration.errorTitle}`, typeDeclaration.errorDescription);
-            }
-            // Debug.push(`getAstNode()`)
-            const identifiedTypeDeclaration = await typeDeclaration.getValue().getAstNode();
-            // Debug.pop();
-            if (identifiedTypeDeclaration.isFailure) {
-                return Result.fail(`TypeDeclaration('${typeDeclaration.getValue().getText()}'): getAstNode(): ${identifiedTypeDeclaration.errorTitle}`, identifiedTypeDeclaration.errorDescription);
-            }
-            identifiers[identifiedTypeDeclaration.getValue().identifier] = identifiedTypeDeclaration.getValue();
+        const tsNodes = this.getTsNodes();
+        const typeDeclarations = await TypeLevel.getTypeIdentifiers(tsNodes);
+        if (typeDeclarations.isFailure) {
+            return Result.fail(`TypeLevel.getTypeIdentifiers(): ${typeDeclarations.errorTitle}`, typeDeclarations.errorDescription);
         }
-        return Result.ok(identifiers);
+        return Result.ok(typeDeclarations.getValue());
     };
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -245,17 +262,12 @@ export class Code {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
     getVariableIdentifiers = async () => {
-        let identifiers = {};
-        const varStatements = this.getTsNodes([VariableStatement.isVariableStatement]);
-        for (let tsNode of varStatements) {
-            var varStatement = await VariableStatement.fromTsNode(tsNode);
-            if (varStatement.isFailure) {
-                return Result.fail(`VariableStatement.fromTsNode(tsNode: '${tsNode.getText()}'): ${varStatement.errorTitle}`, varStatement.errorDescription);
-            }
-            const varIdentifiers = varStatement.getValue().getAstIdentifiers();
-            identifiers = { ...identifiers, ...varIdentifiers };
+        const tsNodes = this.getTsNodes();
+        const identifiers = await VariableLevel.getVariableIdentifiers(tsNodes);
+        if (identifiers.isFailure) {
+            return Result.fail(`VariableLevel.getVariableIdentifiers(): ${identifiers.errorTitle}`, identifiers.errorDescription);
         }
-        return Result.ok(identifiers);
+        return Result.ok(identifiers.getValue());
     };
     /**
      * Find the result of the expression, by setting it as a variable declaration.

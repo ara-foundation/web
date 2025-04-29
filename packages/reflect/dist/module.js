@@ -1,7 +1,6 @@
-import { Result } from "@ara-web/ts-enhancement/result";
 import PathModule from "node:path";
 import { readFile, stat } from "node:fs/promises";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
+import { Result, ModuleLink } from "@ara-web/ts-enhancement";
 /**
  * Defualt Module Categories
  */

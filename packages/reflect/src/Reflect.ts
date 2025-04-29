@@ -1,7 +1,7 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ProjectMemory } from "./memory/index.js";
+import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ProjectMemory } from "./ProjectMemory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
-import { NodejsReflectExtension } from "./reflect-nodejs-ext/ReflectExtension.js";
+import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 
 export type ReflectSetup = {
     extensions?: ExtensionInterface[],

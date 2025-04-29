@@ -6,15 +6,10 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { TypeReferenceNode } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { CodeLink } from "../CodeLink.js";
-import { TsNode } from "../ts-node.js";
+import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
+import { Identifier, CodeLink, TsNode, TypeLevel } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
-import { Identifier } from "../value-level/idenitifier.js";
 export class TypeRef extends TsNode {
-    static GENERIC_VALUES_LINK_PROPERTY = "generic_values";
     _tsNode;
     constructor(tsNode) {
         super(tsNode);
@@ -23,22 +18,6 @@ export class TypeRef extends TsNode {
     static isTypeRef = (child) => {
         const node = child.getNode();
         return node instanceof TypeReferenceNode;
-    };
-    static genericValuesToLinkProperty = (values) => {
-        return { [this.GENERIC_VALUES_LINK_PROPERTY]: values };
-    };
-    static linkPropertyToGenericValues = (araLink) => {
-        if (!araLink.isPropertyExist(this.GENERIC_VALUES_LINK_PROPERTY)) {
-            return [];
-        }
-        const genericValues = araLink.property(this.GENERIC_VALUES_LINK_PROPERTY);
-        if (genericValues === undefined) {
-            return [];
-        }
-        if (!Array.isArray(genericValues)) {
-            return [];
-        }
-        return genericValues;
     };
     static fromTsNode(tsNode) {
         if (!this.isTypeRef(tsNode)) {
@@ -89,7 +68,7 @@ export class TypeRef extends TsNode {
             }
             nodeValues.push(nodeValue.getValue());
         }
-        const genericValuesProperty = TypeRef.genericValuesToLinkProperty(nodeValues);
+        const genericValuesProperty = TypeLevel.genericValuesToLinkProperty(nodeValues);
         return Result.ok(typeLink.copyWithProperties(genericValuesProperty));
     };
     // TsNode is TypeReferenceNode>

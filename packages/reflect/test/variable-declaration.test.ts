@@ -2,16 +2,15 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/Code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { AraLink, ModuleLink } from "@ara-web/ts-enhancement";
 import { CodeLink } from "../src/code-level/CodeLink.js";
 import { Reflect } from "../src/Reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
 import type { TsNode } from "../src/code-level/ts-node.js";
-import { TypeRef } from "../src/code-level/type-level/type-ref.js";
-import { AstNodeContext } from "../src/memory/AstNodeContext.js";
-import { ValueLevel } from "../src/code-level/value-level.js";
-import { BuiltInIdentifiers } from "../src/reflect-nodejs-ext/BuiltInIdentifiers.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
+import { AstNodeContext } from "../src/code-level/AstNodeContext.js";
+import { ValueLevel } from "../src/code-level/value-level/index.js";
+import { BuiltInIdentifiers } from "../src/BuiltInIdentifiers.js";
+import { TypeLevel } from "../src/code-level/index.js";
 
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
@@ -163,8 +162,8 @@ test('Supports the the variable declaration with the generic value', async () =>
   // Node Data
   const data = astNode.dataType as AraLink<string>;
   expect(CodeLink.isIdentifierLink(data)).toBe(true)
-  expect(data.isPropertyExist(TypeRef.GENERIC_VALUES_LINK_PROPERTY)).toBe(true);
-  const genericProps = TypeRef.linkPropertyToGenericValues(data);
+  expect(data.isPropertyExist(TypeLevel.GENERIC_VALUES_LINK_PROPERTY)).toBe(true);
+  const genericProps = TypeLevel.linkPropertyToGenericValues(data);
   expect(genericProps).toHaveLength(1);
   expect(genericProps[0]).toEqual(ValueTypeString.string)
 });

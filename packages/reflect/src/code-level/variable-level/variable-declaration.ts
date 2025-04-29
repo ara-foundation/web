@@ -4,14 +4,18 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration } from "ts-morph";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
-import { AstNode, AstNodeType, type AstIdentifiers, type TypedData } from "../ast-node.js";
-import { TypeValueTraits } from "../type-level/type-value-traits.js";
-import { CodeLink } from "../CodeLink.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Identifier } from "../value-level/idenitifier.js";
+import { Debug, Result, AraLink } from "@ara-web/ts-enhancement";
+import {
+    AstNode, 
+    AstNodeType, 
+    type AstIdentifiers, 
+    type TypedData,
+    CodeLink,
+    Identifier,
+    TsNode, 
+    type TsNodeValidator,
+    TypeLevel
+} from "../index.js";
 
 export class VariableDeclaration extends TsNode {
     protected _tsNode: TsVariableDeclaration;
@@ -185,10 +189,10 @@ export class VariableDeclaration extends TsNode {
                 j++;
                 child = children[j];
                 
-                const dataType = await TypeValueTraits.identifyTypeValue(child);
+                const dataType = await TypeLevel.identifyType(child);
                 if (dataType.isFailure) {
                     const err = Debug.error(
-                        `TypeValueTraits.identifyTypeValue('${child.getText()}'): ${dataType.errorTitle}`,
+                        `TypeLevel.identifyType('${child.getText()}'): ${dataType.errorTitle}`,
                         dataType.errorDescription!,
                         child
                     )

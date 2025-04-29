@@ -32,14 +32,9 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
-import { TsNode } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
-import {} from "./value-level-interface.js";
-import { ValueLevel } from "../value-level.js";
-import { CodeLink } from "../CodeLink.js";
+import { ObjectTraits, Result } from "@ara-web/ts-enhancement";
+import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString, TsNode, AstNodeContext, ValueLevel, CodeLink } from "../index.js";
 /**
  * Literal class identifies the object literals
  */

@@ -21,37 +21,9 @@
       "types": "./src/reflect-nodejs-ext/index.ts",
       "default": "./dist/reflect-nodejs-ext/index.js"
     },
-    "./ara-link": {
-      "types": "./src/ara-link/ReflectAraLink.ts",
-      "default": "./dist/ara-link/ReflectAraLink.js"
-    },
-    "./module": {
-      "types": "./src/module.ts",
-      "default": "./dist/module.js"
-    },
-    "./memory": {
-      "types": "./src/memory/index.ts",
-      "default": "./dist/memory/index.js"
-    },
     "./code-level": {
-      "types": "./src/code-level/Code.ts",
-      "default": "./dist/code-level/Code.js"
-    },
-    "./code-level/ts-node": {
-      "types": "./src/code-level/ts-node.ts",
-      "default": "./dist/code-level/ts-node.js"
-    },
-    "./code-level/ast-node": {
-      "types": "./src/code-level/ast-node.ts",
-      "default": "./dist/code-level/ast-node.js"
-    },
-    "./code-level/ast-node@types": {
-      "types": "./src/code-level/ast-node-data.ts",
-      "default": "./dist/code-level/ast-node-data.js"
-    },
-    "./code-level/variable-level/variable-statement": {
-      "types": "./src/code-level/variable-level/variable-statement.ts",
-      "default": "./dist/code-level/variable-level/variable-statement.js"
+      "types": "./src/code-level/index.ts",
+      "default": "./dist/code-level/index.js"
     }
   },
   "dependencies": {

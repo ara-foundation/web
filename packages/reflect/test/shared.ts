@@ -1,12 +1,10 @@
-import  { type Result } from "@ara-web/ts-enhancement/result";
+import  { type Result, AraLink, ModuleLink } from "@ara-web/ts-enhancement";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { AstNodeContext } from "../src/memory/AstNodeContext.js";
-import { ProjectMemory } from "../src/memory/ProjectMemory.js";
-import { ModuleMemory } from "../src/memory/ModuleMemory.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
+import { AstNodeContext } from "../src/code-level/AstNodeContext.js";
+import { ProjectMemory } from "../src/ProjectMemory.js";
+import { ModuleMemory } from "../src/ModuleMemory.js";
 import { ExtensionInterface, ImportedRecords, MemoryOperations } from "../src/extension-interface.js";
 import { ModuleCategory } from "../src/reflect-nodejs-ext/module.js";
 import { FilePath } from "../src/module.js";

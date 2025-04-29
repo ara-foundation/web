@@ -4,9 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { VariableDeclaration as TsVariableDeclaration } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
-import { type AstIdentifiers } from "../ast-node.js";
+import { Result } from "@ara-web/ts-enhancement";
+import { type AstIdentifiers, TsNode, type TsNodeValidator } from "../index.js";
 export declare class VariableDeclaration extends TsNode {
     protected _tsNode: TsVariableDeclaration;
     private _publicFlag;

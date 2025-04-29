@@ -3,7 +3,7 @@
  * - Identifiers
  * - Expressions
  */
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+import { AraLink } from "@ara-web/ts-enhancement";
 import { TsNode } from "./ts-node.js";
 const ReflectProtocol = "reflect";
 const IdentifierSlugs = ["id"];

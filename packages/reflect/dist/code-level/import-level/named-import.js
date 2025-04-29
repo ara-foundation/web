@@ -4,13 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ImportSpecifier, NamedImports } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { AstNode, AstNodeType } from "../ast-node.js";
-import { CodeLink } from "../CodeLink.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import { TsNode } from "../ts-node.js";
-import { Identifier } from "../value-level/idenitifier.js";
+import { Result, Debug } from "@ara-web/ts-enhancement";
+import { AstNode, AstNodeType, CodeLink, TsNode, Identifier } from "../index.js";
 export class NamedImport extends TsNode {
     _tsNode;
     constructor(tsNode) {
@@ -58,7 +53,7 @@ export class NamedImport extends TsNode {
      * @param importPath
      * @returns
      */
-    static getIdentifiers = (nodeType, moduleLink, namedChildren) => {
+    static getIdentifiers = (nodeType, namedChildren) => {
         let identifiers = {};
         const namedImportChildCount = namedChildren.length;
         if (namedImportChildCount === 0) {
@@ -67,21 +62,21 @@ export class NamedImport extends TsNode {
         const identifiedNode = AstNode.fromTsNode(namedChildren[0]);
         identifiedNode.nodeType = nodeType;
         identifiedNode.data = {};
-        identifiedNode.importPath = moduleLink;
+        // identifiedNode.importPath = moduleLink;
         identifiedNode.constant = true;
         identifiedNode.public = false;
         identifiedNode.identifier = "";
         for (let i = 0; i < namedImportChildCount; i++) {
             if (NamedImport.isNamedImport(namedChildren[i])) {
                 var namedImport = NamedImport.fromTsNode(namedChildren[i]);
-                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, moduleLink, namedImport.getValue().getChildren());
+                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, namedImport.getValue().getChildren());
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }
                 identifiers = { ...identifiers, ...(namedIdentifiers.getValue()) };
             }
             else if (NamedImport.isImportSpecifier(namedChildren[i])) {
-                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, moduleLink, namedChildren[i].getChildren([], [TsNode.isNonImportant], [","]));
+                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, namedChildren[i].getChildren([], [TsNode.isNonImportant], [","]));
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }

@@ -32,16 +32,10 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode } from "../ts-node.js";
 import { Node, CallExpression } from "ts-morph";
-import {} from "./value-level-interface.js";
-import { ValueLevel } from "../value-level.js";
-import { ValueTypeString } from "../ast-node-data.js";
-import { Identifier } from "./idenitifier.js";
-import { PropertyAccess } from "./object-level/property-access.js";
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Debug, Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { TsNode, AstNodeContext, ValueLevel, ValueTypeString, Identifier } from "../index.js";
+import { PropertyAccess } from "./property-access.js";
 /**
  * Calls the function.
  */

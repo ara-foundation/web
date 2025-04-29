@@ -6,14 +6,9 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../ast-node-data.js";
-import { TsNode } from "../ts-node.js";
+import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
+import { Identifier, Literal, TsNode, TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../index.js";
 import { TypeRef } from "./type-ref.js";
-import { Literal } from "../value-level/literal.js";
-import { Identifier } from "../value-level/idenitifier.js";
 /**
  * TypeValueTraits parses the type's parameters.
  * Supports TypeLiterals, TypeUnions and ArrayTypes.

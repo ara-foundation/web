@@ -5,24 +5,31 @@
  * @todo fix the parsing of all pages
  * @todo somehow we need to show on PageModal the meta components
  */
-import { ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
 import { 
+    ArrayTypeNode, 
+    Expression, 
+    IntersectionTypeNode, 
+    LiteralTypeNode, 
+    ParenthesizedTypeNode, 
+    TypeLiteralNode, 
+    UnionTypeNode 
+} from "ts-morph";
+import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
+import {
+    Identifier, 
+    Literal, 
+    TsNode, 
+    type TsNodeValidator,
     TypeDeclaration, 
     ValueTypeString, 
     UnionTypeDeclaration, 
     IntersectedUnionType,
     type IdentifiedNodeDataType, 
     type LiteralType
-} from "../ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
+} from "../index.js";
 import { TypeRef } from "./type-ref.js";
-import { Literal } from "../value-level/literal.js";
-import { Identifier } from "../value-level/idenitifier.js";
 
-type PossibleTypeValue = 
+export type PossibleTypeValue = 
     ValueTypeString | 
     AraLink<string> | 
     TypeDeclaration | 

@@ -6,17 +6,11 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { TypeReferenceNode } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { CodeLink } from "../CodeLink.js";
-import { TsNode } from "../ts-node.js";
+import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
+import { Identifier, CodeLink, TsNode, type ValueType, TypeLevel } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
-import type { ValueType } from "../ast-node-data.js";
-import { Identifier } from "../value-level/idenitifier.js";
 
 export class TypeRef extends TsNode {
-    public static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
     protected _tsNode: TypeReferenceNode;
     
     private constructor (tsNode: TsNode) {
@@ -28,26 +22,6 @@ export class TypeRef extends TsNode {
     public static isTypeRef = (child: TsNode): boolean => {
         const node = child.getNode<Node>();
         return node instanceof TypeReferenceNode;
-    }
-
-    public static genericValuesToLinkProperty = (values: ValueType[]): object => {
-        return {[this.GENERIC_VALUES_LINK_PROPERTY]: values};
-    }
-
-    public static linkPropertyToGenericValues = (araLink: AraLink<string>): ValueType[] => {
-        if (!araLink.isPropertyExist(this.GENERIC_VALUES_LINK_PROPERTY)) {
-            return [];
-        }
-
-        const genericValues = araLink.property(this.GENERIC_VALUES_LINK_PROPERTY);
-        if (genericValues === undefined) {
-            return [];
-        }
-        if (!Array.isArray(genericValues)) {
-            return [];
-        }
-
-        return genericValues
     }
 
     public static fromTsNode(tsNode: TsNode): Result<TypeRef> {
@@ -109,7 +83,7 @@ export class TypeRef extends TsNode {
             nodeValues.push(nodeValue.getValue())
         }
 
-        const genericValuesProperty = TypeRef.genericValuesToLinkProperty(nodeValues);
+        const genericValuesProperty = TypeLevel.genericValuesToLinkProperty(nodeValues);
         return Result.ok(typeLink.copyWithProperties(genericValuesProperty))
     }
 

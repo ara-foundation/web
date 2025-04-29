@@ -1,13 +1,18 @@
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
-import type { TypedData } from "../ast-node.js";
-import { type ValueLevelInterface } from "./value-level-interface.js";
-import type { AstNodeContext } from "../../memory/AstNodeContext.js";
-import { ValueLevel } from "../value-level.js";
-import { CodeLink } from "../CodeLink.js";
+import { ObjectTraits, Result } from "@ara-web/ts-enhancement";
+import { 
+    TypeDeclaration, 
+    IntersectedUnionType, 
+    UnionTypeDeclaration, 
+    ValueTypeString,
+    TsNode,
+    type TsNodeValidator,
+    type TypedData,
+    AstNodeContext,
+    ValueLevel,
+    CodeLink,
+    type ValueLevelInterface
+} from "../index.js";
 
 /**
  * Literal class identifies the object literals

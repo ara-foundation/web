@@ -1,15 +1,17 @@
-import { Debug } from "@ara-web/ts-enhancement/debug";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, CallExpression } from "ts-morph";
-import type { TypedData } from "../ast-node.js";
-import { type ValueLevelInterface } from "./value-level-interface.js";
-import type { AstNodeContext } from "../../memory/AstNodeContext.js";
-import { ValueLevel } from "../value-level.js";
-import { ValueTypeString, type ValueType } from "../ast-node-data.js";
-import { Identifier } from "./idenitifier.js";
-import { PropertyAccess } from "./object-level/property-access.js";
-import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { Debug, Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { 
+    TsNode, 
+    type TsNodeValidator,
+    type TypedData,
+    AstNodeContext,
+    ValueLevel,
+    ValueTypeString, 
+    type ValueType,
+    Identifier,
+    type ValueLevelInterface
+} from "../index.js";
+import { PropertyAccess } from "./property-access.js";
 
 /**
  * Calls the function.

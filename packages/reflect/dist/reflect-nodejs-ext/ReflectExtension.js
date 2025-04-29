@@ -1,12 +1,7 @@
-import {} from "../extension-interface.js";
-import { EnumTraits } from "@ara-web/ts-enhancement/traits";
-import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { ModuleMemory, ProjectMemory } from "../memory/index.js";
-import { ModuleCategory } from "./module.js";
-import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
-import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
-import { FilePath } from "../module.js";
 import PathModule from "node:path";
+import { EnumTraits, OkResult, Result, ModuleLink, } from "@ara-web/ts-enhancement";
+import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
+import { ModuleCategory } from "./module.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
  */

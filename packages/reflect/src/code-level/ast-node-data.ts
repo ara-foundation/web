@@ -1,6 +1,5 @@
-import { Result } from "@ara-web/ts-enhancement/result";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { TypeLevel } from "./type-level.js";
+import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { TypeLevel } from "./type-level/index.js";
 import type { TypedData } from "./ast-node.js";
 
 export type LiteralType = string | number | boolean;
@@ -47,7 +46,9 @@ interface IntersectedUnionInterface extends TypeObjectInterface, UnionTypeInterf
     
 };
 
-// Types as objects
+/**
+ * The type declaration literal discovered in the source code represented as this class.
+ */
 export class TypeDeclaration implements TypeObjectInterface {
     protected _records: Record<string, IdentifiedNodeDataType> = {};
 

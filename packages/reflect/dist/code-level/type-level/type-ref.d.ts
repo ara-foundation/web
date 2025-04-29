@@ -6,17 +6,12 @@
  * @todo somehow we need to show on PageModal the meta components
  */
 import { TypeReferenceNode } from "ts-morph";
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { Result } from "@ara-web/ts-enhancement/result";
-import { TsNode } from "../ts-node.js";
-import type { ValueType } from "../ast-node-data.js";
+import { AraLink, Result } from "@ara-web/ts-enhancement";
+import { TsNode } from "../index.js";
 export declare class TypeRef extends TsNode {
-    static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
     protected _tsNode: TypeReferenceNode;
     private constructor();
     static isTypeRef: (child: TsNode) => boolean;
-    static genericValuesToLinkProperty: (values: ValueType[]) => object;
-    static linkPropertyToGenericValues: (araLink: AraLink<string>) => ValueType[];
     static fromTsNode(tsNode: TsNode): Result<TypeRef>;
     /**
      * Checks does the given node has '<SyntaxList>' generic declaration syntax
