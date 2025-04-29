@@ -4,11 +4,15 @@
  */
 
 import { expect, test } from "vitest";
-import { FileExtension, ModulePartitioner } from "#module";
+import { FileExtension, ModuleCategory, ModulePartitioner } from "#module";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { CodeLevel } from "../src/parts/code-level/CodeLevel";
+import { PageLevel } from "../src/parts/ui-level/page-level";
+import { Page } from "#ontology";
+import { ModuleMemory } from "@ara-web/reflect/memory";
+import { Debug } from "@ara-web/ts-enhancement/debug";
 
-test(`Make sure the that code is importing`, async () => {
+test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
       
     const reflectExtension = await getNewAstroReflect();
@@ -26,7 +30,16 @@ test(`Make sure the that code is importing`, async () => {
         if (moduleParts.getValue().fileExtension !== FileExtension.Astro) {
             continue;
         } 
-        const identifiedSourceCode = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
+        if (moduleMemory.moduleCategory !== ModuleCategory.Page) {
+            continue;
+        }
+        Debug.log(`Identify the '${moduleMemory.moduleLink.moduleURL}' of '${moduleMemory.moduleCategory}' category`)
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
+
+        const page = await PageLevel.identifyPage(moduleParts.getValue(), identifiedSourceCode.getValue());
+        expect(page.isSuccess).toBe(true);
+        Debug.log(`Identified page:`);
+        Debug.log(page.getValue().slots)
     }
 })

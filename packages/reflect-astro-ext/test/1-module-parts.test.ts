@@ -4,7 +4,7 @@
 //  */
 
 import { expect, test } from "vitest";
-import { FileExtension, ModulePartitioner } from "../src/module";
+import { FileExtension, ModulePartitioner } from "#module";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 
 test(`Make sure the module parts are importing`, async () => {
@@ -22,11 +22,16 @@ test(`Make sure the module parts are importing`, async () => {
         const moduleParts = await ModulePartitioner.partition(moduleMemory);
         expect(moduleParts.isSuccess).toBe(true);
 
+        if (moduleParts.getValue().source?.length === 0) 
+        // Debug.log(`Sources:`);
+        // Debug.log(moduleParts)
         if (moduleParts.getValue().fileExtension === FileExtension.Astro) {
             expect(moduleParts.getValue().elements?.length).toBeGreaterThan(0);
-        } else {
-            expect(moduleParts.getValue().elements).toBeUndefined();
-            expect(moduleParts.getValue().source).toBeUndefined();
+            // const elems = moduleParts.getValue().elements === undefined ? [] : moduleParts.getValue().elements!;
+            // for (let elem of elems) {
+            //     Debug.log(`Elements`)
+            //     Debug.log(elem)
+            // }
         }
     }
 

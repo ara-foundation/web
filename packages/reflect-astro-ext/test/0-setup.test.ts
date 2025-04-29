@@ -4,7 +4,7 @@
  */
 
 import { expect, test } from "vitest";
-import { ModuleCategory } from "../src/module";
+import { ModuleCategory } from "#module";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { ImportedRecords } from "@ara-web/reflect";
 
