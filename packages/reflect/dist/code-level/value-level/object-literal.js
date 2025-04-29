@@ -37,14 +37,14 @@ import { Result } from "@ara-web/ts-enhancement/result";
 import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString } from "../ast-node-data.js";
 import { TsNode } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
-import { staticImplements } from "./value-level-interface.js";
+import {} from "./value-level-interface.js";
 import { ValueLevel } from "../value-level.js";
 import { CodeLink } from "../CodeLink.js";
 /**
  * Literal class identifies the object literals
  */
 let ObjectLiteral = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

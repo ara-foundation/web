@@ -35,13 +35,14 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import { Node, ParenthesizedExpression } from "ts-morph";
-import { staticImplements } from "./value-level-interface.js";
+import {} from "./value-level-interface.js";
 import { ValueLevel } from "../value-level.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
 let Parenthesis = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

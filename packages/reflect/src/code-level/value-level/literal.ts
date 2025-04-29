@@ -1,17 +1,17 @@
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
-import { StringTraits } from "@ara-web/ts-enhancement/traits";
+import { ObjectTraits, StringTraits } from "@ara-web/ts-enhancement/traits";
 import { ValueTypeString } from "../ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node } from "ts-morph";
 import type { TypedData } from "../ast-node.js";
-import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
+import { type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
-@staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
+@ObjectTraits.staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
 export class Literal {
     public static get name(): string {
         return "Literal"

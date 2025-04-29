@@ -36,16 +36,17 @@ import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode } from "../ts-node.js";
 import { Node, CallExpression } from "ts-morph";
-import { staticImplements } from "./value-level-interface.js";
+import {} from "./value-level-interface.js";
 import { ValueLevel } from "../value-level.js";
 import { ValueTypeString } from "../ast-node-data.js";
 import { Identifier } from "./idenitifier.js";
 import { PropertyAccess } from "./object-level/property-access.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 /**
  * Calls the function.
  */
 let FunctionCall = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

@@ -37,15 +37,16 @@ import { Debug } from "@ara-web/ts-enhancement/debug";
 import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode } from "../../ts-node.js";
 import { Node, PropertyAssignment } from "ts-morph";
-import { staticImplements } from "../value-level-interface.js";
+import {} from "../value-level-interface.js";
 import { ValueLevel } from "../../value-level.js";
 import { Identifier } from "../idenitifier.js";
 import { Literal } from "../literal.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 /**
  * Property assignment such as Property: <expression> in the context of the object literals
  */
 let PropertyLiteral = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

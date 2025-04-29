@@ -34,16 +34,16 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
-import { StringTraits } from "@ara-web/ts-enhancement/traits";
+import { ObjectTraits, StringTraits } from "@ara-web/ts-enhancement/traits";
 import { ValueTypeString } from "../ast-node-data.js";
 import { TsNode } from "../ts-node.js";
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node } from "ts-morph";
-import { staticImplements } from "./value-level-interface.js";
+import {} from "./value-level-interface.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
 let Literal = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

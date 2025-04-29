@@ -36,14 +36,15 @@ import { Result } from "@ara-web/ts-enhancement/result";
 import { ValueTypeString } from "../../ast-node-data.js";
 import { TsNode } from "../../ts-node.js";
 import { Node, PropertyAccessExpression } from "ts-morph";
-import { staticImplements } from "../value-level-interface.js";
+import {} from "../value-level-interface.js";
 import { ValueLevel } from "../../value-level.js";
 import { Identifier } from "../idenitifier.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 /**
  * Property access such as Object.Property
  */
 let PropertyAccess = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

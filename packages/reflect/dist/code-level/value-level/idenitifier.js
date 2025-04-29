@@ -36,15 +36,16 @@ import { Result } from "@ara-web/ts-enhancement/result";
 import { ValueTypeString } from "../ast-node-data.js";
 import { TsNode } from "../ts-node.js";
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { staticImplements } from "./value-level-interface.js";
+import {} from "./value-level-interface.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { CodeLink } from "../CodeLink.js";
 import { ValueLevel } from "../value-level.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
 let Identifier = (() => {
-    let _classDecorators = [staticImplements()];
+    let _classDecorators = [ObjectTraits.staticImplements()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;

@@ -2,14 +2,15 @@ import { Result } from "@ara-web/ts-enhancement/result";
 import { TsNode, type TsNodeValidator } from "../../ts-node.js";
 import { Node, SpreadAssignment } from "ts-morph";
 import type { TypedData } from "../../ast-node.js";
-import { staticImplements, type ValueLevelInterface } from "../value-level-interface.js";
+import { type ValueLevelInterface } from "../value-level-interface.js";
 import type { AstNodeContext } from "../../../memory/AstNodeContext.js";
 import { ValueLevel } from "../../value-level.js";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
 
 /**
  * Property assignment such as {...obj} of the object literals
  */
-@staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
+@ObjectTraits.staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
 export class SpreadLiteral {
     public static get name(): string {
         return "object-level/SpreadLiteral"

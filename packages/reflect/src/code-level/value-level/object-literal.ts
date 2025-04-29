@@ -4,7 +4,7 @@ import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeS
 import { TsNode, type TsNodeValidator } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
 import type { TypedData } from "../ast-node.js";
-import { staticImplements, type ValueLevelInterface } from "./value-level-interface.js";
+import { type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "../../memory/AstNodeContext.js";
 import { ValueLevel } from "../value-level.js";
 import { CodeLink } from "../CodeLink.js";
@@ -12,7 +12,7 @@ import { CodeLink } from "../CodeLink.js";
 /**
  * Literal class identifies the object literals
  */
-@staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
+@ObjectTraits.staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
 export class ObjectLiteral {
     public static get name(): string {
         return "ObjectLiteral"
