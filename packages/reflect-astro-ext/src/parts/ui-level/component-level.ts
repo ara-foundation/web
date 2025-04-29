@@ -227,7 +227,7 @@ export class ComponentLevel {
         //         data: ComponentEngine.astroLayoutNodeToComponent(element, pathResult.importPath.toString())
         //     })
         // } else if (element.type === "component") {          
-        const componentData = this.astroNodeToComponent(element, astNode.data, memory.moduleLink.moduleURL); 
+        const componentData = this.astroNodeToComponent(element, astNode.data, astNode.importPath!.moduleURL!); 
         if (componentData.isFailure) {
             return Result.fail(
                 `astroNodeToComponent('${element.name}', '${memory.moduleLink.moduleURL}'): ${componentData.errorTitle}`,
