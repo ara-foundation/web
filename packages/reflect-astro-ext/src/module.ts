@@ -168,19 +168,18 @@ export class ModulePartitioner {
 
         for (let i = 0; i < ast.children.length; i++) {
             const child = ast.children[i];
-            if (child.type === "text") {
+            if (child.type === "text" || 
+                child.type === "comment" ||
+                child.type === "doctype") {
                 continue;
             }
 
             if (child.type === "frontmatter") {
                 frontmatterCode = child.value;
-            }
-            else if (child.type === "component") {
+            } else if (child.type === "component") {
                 componentNodes.push(child)
             } else if (child.type === "element") {
                 componentNodes.push(child);
-            } else if (child.type === "doctype") {
-                Debug.log(`The page has '${child.type}' that set the resource to '${child.value}'`)
             } else {
                 Debug.log(`The page has unsupported ${child.type} node, Update the MultiPartitioner.extractAstroComponents():`)
                 Debug.log(child)
