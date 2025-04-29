@@ -1,4 +1,4 @@
-import { AraLayoutColumnSlug, AraLayoutRowSlug } from "#ontology";
+import { AraLayoutColumnSlug, AraLayoutRowSlug } from "./ara-web-ontology/index.js";
 
 /**
  * Converts the Row and Column to the full slug of the page layout slug

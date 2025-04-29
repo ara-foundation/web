@@ -9,14 +9,6 @@
     "prepublishOnly": "pnpm test:lint && pnpm build",
     "_chore": "pnpm i"
   },
-  "imports": {
-    "#main": "./src/index.ts",
-    "#ara-link": "./src/ara-link/AraLink.ts",
-    "#ontology": "./src/ara-web-ontology/index.ts",
-    "#traits": "./src/traits/index.ts",
-    "#debug": "./src/debug.ts",
-    "#result": "./src/result.ts"
-  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

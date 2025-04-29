@@ -1,5 +1,4 @@
-import {} from "#main";
-import { ArrayTraits } from "#traits";
+import { ArrayTraits } from "../traits/index.js";
 export const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules

@@ -1,5 +1,6 @@
-import { type WithGetTextMethod } from "#main"
-import { ArrayTraits } from "#traits"
+import type { WithGetTextMethod } from "../method-specific-interfaces.js";
+import { ArrayTraits } from "../traits/index.js";
+
 export const NpmProtocol = "npm";
 
 /**

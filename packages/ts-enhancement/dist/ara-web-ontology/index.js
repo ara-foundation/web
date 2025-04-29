@@ -1,7 +1,7 @@
 /**
  * Global Shared Data Types of Ara
  */
-import { AraLink } from "#ara-link";
+import { AraLink } from "../index.js";
 /**
  * What kind of component it is?
  */

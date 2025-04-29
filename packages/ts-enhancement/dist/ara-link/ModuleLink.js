@@ -17,9 +17,9 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
-import { Result } from "#result";
 import { PackageURL } from "packageurl-js";
 import { fileURLToPath, pathToFileURL } from "url";
+import { Result } from "../index.js";
 const version = undefined;
 /**
  * ModuleLink
