@@ -38,7 +38,7 @@ test(`Make sure the that components are generated`, async () => {
         componentFound = true;
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Component>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Component>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await ComponentLevel.identifyComponent(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await ComponentLevel.identify<Component>(moduleParts.getValue(), identifiedSourceCode.getValue());
         Debug.log(`Identified source code of the component ${moduleMemory.moduleLink.moduleURL}`)
         Debug.log(identifiedModule)
         expect(identifiedModule.isSuccess).toBe(true);
@@ -71,10 +71,11 @@ test(`Make sure the that layouts are generated`, async () => {
         layoutFound = true;
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Layout>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Layout>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await ComponentLevel.identifyLayout(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await ComponentLevel.identify<Layout>(moduleParts.getValue(), identifiedSourceCode.getValue());
         Debug.log(`Identified source code of the layout ${moduleMemory.moduleLink.moduleURL}`)
         Debug.log(identifiedModule)
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(layoutFound).toBe(true);
 });
+

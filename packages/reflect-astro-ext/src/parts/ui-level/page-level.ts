@@ -1,24 +1,36 @@
 import { parse as commentParse} from "comment-parser";
 import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { FileExtension, type ModuleParts } from "#ontology";
+import { FileExtension, type ModuleParts, type OntologoicalIdentifier } from "#ontology";
 import type { ModuleMemory } from "@ara-web/reflect/memory";
 import { ComponentLevel } from "./component-level.js";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { DEFAULT_SLOT, type Page, type Meta, ElementType, type Slots } from "#ontology";
+import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { ModuleCategory } from "#module";
 
+/**
+ * Ontologically, `PageLevel` supports translation of modules into `Page` data
+ */
+@ObjectTraits.staticImplements<OntologoicalIdentifier>()
 export class PageLevel {
+    
     /**
-     * Generates the UI Element (Page, layout or component) from the module `parts` and `memory`.
+     * Generates the UI Page from the module `parts` and `memory`.
      * @param {Parts} parts 
      * @returns {Component}
      */
-    public static identifyPage = async (parts: ModuleParts, memory: ModuleMemory<Page>): Promise<Result<Page>> => {
+    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
+        if (rawMemory.moduleCategory !== ModuleCategory.Page) {
+            return Result.errorCode404(['UI Level', 'Page Level'], 'identify', `Instead '${rawMemory.moduleCategory}' memory pass memory of '${ModuleCategory.Page}' category`)
+        }
         const validated = this.validateModuleParts(parts);
         if (validated.isFailure) {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
         }
                 
         const meta = this.getMetaFromComment(parts.source!);
+
+        const memory = rawMemory as ModuleMemory<Page>
         const slots = await this.identifySlots(parts, memory);
         if (slots.isFailure) {
             return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
@@ -32,7 +44,7 @@ export class PageLevel {
             ...meta
         }
 
-        return Result.ok(page);
+        return Result.ok(page as T);
     }
 
     private static validateModuleParts = (parts: ModuleParts): OkResult => {

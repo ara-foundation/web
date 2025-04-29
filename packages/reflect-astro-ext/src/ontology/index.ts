@@ -14,7 +14,16 @@ export type ModuleParts = {
     source?: string,
 }
 
+export interface OntologicalNormalMethods {}
+
 export interface OntologoicalIdentifier {
+    new(): OntologicalNormalMethods;
+
+    /**
+     * Generates the JSON Ontological elements from the module `parts` and module `memory`.
+     * @param {Parts} parts 
+     * @returns {Component}
+     */
     identify: <T>(parts: ModuleParts, memory: ModuleMemory<T>) => Promise<Result<T>>;
 }
 

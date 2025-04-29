@@ -35,7 +35,7 @@ test(`Make sure the that pages JSON are generated`, async () => {
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
 
-        const page = await PageLevel.identifyPage(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
         expect(page.isSuccess).toBe(true);
     }
 })

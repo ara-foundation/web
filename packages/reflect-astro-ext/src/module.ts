@@ -4,8 +4,9 @@ import { FilePath } from "@ara-web/reflect/module";
 import { ModuleMemory } from "@ara-web/reflect/memory";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { Result } from "@ara-web/ts-enhancement/result";
-import { EnumTraits } from "@ara-web/ts-enhancement/traits";
-import { FileExtension, type Component, type AstroNode, type ModuleParts } from "#ontology";
+import { EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement/traits";
+import { FileExtension, type Component, type AstroNode, type ModuleParts, type OntologoicalIdentifier, ElementType, type Script, type Asset } from "#ontology";
+import { parse as commentParse} from "comment-parser";
 
 /**
  * Module Category to sort the modules.
@@ -193,7 +194,10 @@ export class ModulePartitioner {
 /**
  * If Module is Script or Asset, basically anything that is not UI Level, but also
  * doesn't require identifying code structure, therefore not in Code Level too.
+ * 
+ * Ontologically, `ModuleIdentifier` supports translation of modules into `Script` and `Asset` data
  */
+@ObjectTraits.staticImplements<OntologoicalIdentifier>()
 export class ModuleIdentifier {
     /**
      * Checks is the following a script, which are the files that ends with TS and JS.
@@ -209,4 +213,87 @@ export class ModuleIdentifier {
     public static isAsset = (fileExtension: FileExtension): boolean => {
         return (fileExtension !== FileExtension.Astro && !this.isScript(fileExtension));
     }
+
+    /**
+     * Converts the module `parts` and module `rawMemory` into `Script` or `Asset`.
+     * Detects the identification by the module link.
+     * @param parts 
+     * @param rawMemory 
+     * @returns 
+     */
+    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
+        const filePath = rawMemory.moduleLink.toFilePath;
+        const fileExtensionResult = FilePath.getFileExtension(filePath, EnumTraits.enumValues(FileExtension));
+        if (fileExtensionResult.isFailure) {
+            return Result.fail(
+                `FilePath.getFileExtension('${filePath}, [${EnumTraits.enumValues(FileExtension).join(", ")}]): ${fileExtensionResult.errorTitle}`,
+                fileExtensionResult.errorDescription!
+            )
+        }
+
+        const fileExtension = fileExtensionResult.getValue() as FileExtension;
+        const title = await FilePath.getFileName(filePath);
+        if (title.isFailure) {
+            return Result.fail(`FilePath.getFileName('${filePath}'): ${title.errorTitle}`, title.errorDescription!)
+        }
+        const description = this.getDescriptionFromComment(parts.source!);
+
+        if (this.isScript(fileExtension)) {
+            const data: Script = {
+                title: title.getValue(),
+                description,
+                moduleLink: rawMemory.moduleLink,
+                fileExtension: fileExtension,
+                glob: rawMemory.glob,
+                type: ElementType.Script,
+                source: parts.source!,             // Source code of the script as it is.
+            }
+            return Result.ok(data as T);
+        } else if (this.isAsset(fileExtension)) {
+            const data: Asset = {
+                title: title.getValue(),
+                description,
+                moduleLink: rawMemory.moduleLink,
+                fileExtension: fileExtension,
+                glob: rawMemory.glob,
+                type: ElementType.Asset,
+                source: parts.source ? parts.source : undefined,
+            }
+            return Result.ok(data as T);
+        }
+
+        return Result.errorCode404(['module', 'Module Identifier'], 'identify', `The '${filePath}' file extension is neither for assets nor for scripts`);
+    }
+
+/**
+     * Extracts the Description from the Component Meta.
+     * Returns an empty string if no comment.
+    */
+    private static getDescriptionFromComment = (source: string): string => {
+        let description = '';
+        const parsed = commentParse(source);
+        if (parsed.length === 0) {
+            return description;
+        }
+        
+        for (let block of parsed) {
+            description = block.description
+            for (let tag of block.tags) {
+                if (tag.tag === "param") {
+                    if (tag.type !== "string") {
+                        continue;
+                    }
+                        
+                    if (tag.name === "Description") {
+                        if (tag.description.length > 0) {
+                            return tag.description;
+                        }
+                    }
+                }
+            }
+        }
+    
+        return description;
+    }
+    
 }

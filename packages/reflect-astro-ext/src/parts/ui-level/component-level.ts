@@ -13,7 +13,7 @@
  */
 import type { ComponentNode, ExpressionNode } from "@astrojs/compiler/types";
 import { OkResult, Result } from "@ara-web/ts-enhancement/result";
-import { StringTraits } from "@ara-web/ts-enhancement/traits";
+import { ObjectTraits, StringTraits } from "@ara-web/ts-enhancement/traits";
 import type { ModuleMemory } from "@ara-web/reflect/memory";
 import { 
     FileExtension, 
@@ -24,7 +24,8 @@ import {
     type Layout, 
     type Slots,
     type ModuleParts,
-    type AstroNode
+    type AstroNode,
+    type OntologoicalIdentifier
 } from "#ontology";
 import { ModuleCategory } from "#module";
 import { AstroNodeTraits } from "#astro-node";
@@ -87,6 +88,10 @@ import { parse as commentParse} from "comment-parser";
 //     // return Result.ok(data.getValue());
 // }
 
+/**
+ * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
+ */
+@ObjectTraits.staticImplements<OntologoicalIdentifier>()
 export class ComponentLevel {
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
@@ -187,15 +192,41 @@ export class ComponentLevel {
     }
     
     /**
+     * Converts the module into a component or layout
+     * @param parts 
+     * @param memory 
+     * @returns 
+     */
+    public static identify = async<T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
+        if (rawMemory.moduleCategory === ModuleCategory.Component) {
+            const identified = await this._identifyComponent(parts, rawMemory as ModuleMemory<Component>);
+            if (identified.isFailure) {
+                return Result.fail(
+                    `this._identifyComponent(): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            }
+            return Result.ok(identified.getValue() as T)
+        } else if (rawMemory.moduleCategory === ModuleCategory.Layout) {
+            const identified = await this._identifyLayout(parts, rawMemory as ModuleMemory<Layout>);
+            if (identified.isFailure) {
+                return Result.fail(
+                    `this._identifyLayout(): ${identified.errorTitle}`,
+                    identified.errorDescription!
+                )
+            }
+            return Result.ok(identified.getValue() as T)
+        }
+        return Result.errorCode404(['UI Level', 'Component Level'], 'identify', `The '${rawMemory.moduleCategory}' expected to be either '${ModuleCategory.Component}' or '${ModuleCategory.Layout}'`);
+    }
+
+    /**
      * Converts the module into a component
      * @param parts 
      * @param memory 
      * @returns 
      */
-    public static identifyComponent = async(parts: ModuleParts, memory: ModuleMemory<Component>): Promise<Result<Component>> => {
-        if (memory.moduleCategory !== ModuleCategory.Component) {
-            return Result.fail(`The memory passed to identify component is not categorized as component category memory`, `This method expects '${ModuleCategory.Component}', not '${memory.moduleCategory}'`)
-        }
+    public static _identifyComponent = async (parts: ModuleParts, memory: ModuleMemory<Component>): Promise<Result<Component>> => {
         const validated = this.validateModuleParts(parts);
         if (validated.isFailure) {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
@@ -389,10 +420,7 @@ export class ComponentLevel {
      * @returns {Result<Page>}
      * @todo Include the nested components
     */
-    public static identifyLayout = async(parts: ModuleParts, memory: ModuleMemory<Layout>): Promise<Result<Layout>> => {
-        if (memory.moduleCategory !== ModuleCategory.Layout) {
-            return Result.fail(`The memory passed to identify layout is not categorized as layout category memory`, `This method expects '${ModuleCategory.Layout}', not '${memory.moduleCategory}'`)
-        }
+    private static _identifyLayout = async(parts: ModuleParts, memory: ModuleMemory<Layout>): Promise<Result<Layout>> => {
         const validated = this.validateModuleParts(parts);
         if (validated.isFailure) {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
