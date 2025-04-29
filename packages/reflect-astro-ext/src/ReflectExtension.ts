@@ -5,7 +5,7 @@ import { OkResult, Result } from "@ara-web/ts-enhancement/result";
 import { type AraPage, type AraComponent } from "@ara-web/ts-enhancement/ontology";
 import { ModuleMemory, ProjectMemory, type ModuleMemories } from "@ara-web/reflect/memory";
 import { extractModuleCategory, ModuleCategory, ModulePartitioner } from "./module.js";
-import { ModuleLink, type ModuleURL } from "@ara-web/reflect/module-link";
+import { ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement/module-link";
 import { CodeLevel } from "./parts/code-level/CodeLevel.js";
 import { FilePath } from "@ara-web/reflect/module";
 
