@@ -191,7 +191,6 @@ export class Code {
         }
 
         if (identifiedNode.nodeType === AstNodeType.Type) {
-            identifiedNode.importPath = undefined;
             identifiedNode.data = {};
             return Result.ok(identifiedNode);
         }
@@ -217,11 +216,9 @@ export class Code {
         // If the import is default import, then data is AraLink.
         if (identifiedNode.data instanceof ModuleLink) {
             identifiedNode.data = (glob as any).default;
-            identifiedNode.importPath = undefined;
         } else {
             let data = (glob as any)[identifiedNode.identifier]
             identifiedNode.data = data;
-            identifiedNode.importPath = undefined;
             identifiedNode.dataType = ((typeof data) as ValueTypeString);
             if (identifiedNode.dataType === ValueTypeString.number || 
                 identifiedNode.dataType === ValueTypeString.boolean ||
