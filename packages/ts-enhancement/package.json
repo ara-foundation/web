@@ -10,7 +10,7 @@
     "_chore": "pnpm i"
   },
   "imports": {
-    "#main":  "./src/index.ts",
+    "#main": "./src/index.ts",
     "#ara-link": "./src/ara-link/AraLink.ts",
     "#ontology": "./src/ara-web-ontology/index.ts",
     "#traits": "./src/traits/index.ts",
@@ -25,6 +25,10 @@
     "./ara-link": {
       "types": "./src/ara-link/AraLink.ts",
       "default": "./dist/ara-link/AraLink.js"
+    },
+    "./module-link": {
+      "types": "./src/ara-link/ModuleLink.ts",
+      "default": "./src/ara-link/ModuleLink.js"
     },
     "./ontology": {
       "types": "./src/ara-web-ontology/index.ts",
@@ -47,6 +51,7 @@
     "typescript": "~5.7.3"
   },
   "dependencies": {
+    "@types/node": "^20.10.5",
     "packageurl-js": "^2.0.1"
   }
 }
