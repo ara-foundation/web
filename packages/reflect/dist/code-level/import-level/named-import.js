@@ -7,7 +7,7 @@ import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNode, AstNodeType } from "../ast-node.js";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { CodeLink } from "../CodeLink.js";
 import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 import { TsNode } from "../ts-node.js";
 import { Identifier } from "../value-level/idenitifier.js";
@@ -106,7 +106,7 @@ export class NamedImport extends TsNode {
                 if (!Identifier.isA(alias)) {
                     return Result.fail(`The alias '${alias.getText()}' of the type must be identifier`, `Ara Web doesn't support the node`);
                 }
-                identifiers[alias.getText()] = ReflectAraLink.linkToIdentifier(identifiedNode.identifier);
+                identifiers[alias.getText()] = CodeLink.linkToIdentifier(identifiedNode.identifier);
                 i++;
                 continue;
             }

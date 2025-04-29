@@ -1,6 +1,5 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNode } from "../code-level/ast-node.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
 /**
@@ -81,9 +80,6 @@ export class AstNodeContext {
     getIdentifier = (data) => {
         let identifier;
         if (typeof data !== "string") {
-            if (!ReflectAraLink.isIdentifierLink(data)) {
-                return undefined;
-            }
             identifier = data.resource;
         }
         else {

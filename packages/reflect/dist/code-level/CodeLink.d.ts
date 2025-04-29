@@ -4,9 +4,9 @@
  * - Expressions
  */
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import type { ValueType } from "../code-level/ast-node-data.js";
-import { TsNode } from "../code-level/ts-node.js";
-export declare class ReflectAraLink {
+import type { ValueType } from "./ast-node-data.js";
+import { TsNode } from "./ts-node.js";
+export declare class CodeLink {
     static linkToIdentifier: (identifier: string, properties?: object) => AraLink<string>;
     static linkToExpression: (expression: TsNode) => AraLink<TsNode>;
     static isIdentifierLink: (araLink: ValueType | undefined) => boolean;

@@ -9,7 +9,7 @@ import { TypeReferenceNode } from "ts-morph";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Result } from "@ara-web/ts-enhancement/result";
 import { Debug } from "@ara-web/ts-enhancement/debug";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { CodeLink } from "../CodeLink.js";
 import { TsNode } from "../ts-node.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 import { Identifier } from "../value-level/idenitifier.js";
@@ -102,7 +102,7 @@ export class TypeRef extends TsNode {
             const err = Debug.error(`The property value type is a type reference, but the '${this.getText()}' doesn't support it`, `Ara Web supports Identifiers as type ref nodes, update getAraLink() to support it`, identifierNode);
             return Result.fail(err);
         }
-        const typeRefAraLink = ReflectAraLink.linkToIdentifier(identifierNode.getText());
+        const typeRefAraLink = CodeLink.linkToIdentifier(identifierNode.getText());
         if (this.isGenericRefType()) {
             const identifiedGenericValue = await this.identifyGenericRefValue(typeRefAraLink);
             if (identifiedGenericValue.isFailure) {

@@ -39,7 +39,7 @@ import { TsNode } from "../ts-node.js";
 import { Node, ObjectLiteralExpression } from "ts-morph";
 import { staticImplements } from "./value-level-interface.js";
 import { ValueLevel } from "../value-level.js";
-import { ReflectAraLink } from "../../ara-link/ReflectAraLink.js";
+import { CodeLink } from "../CodeLink.js";
 /**
  * Literal class identifies the object literals
  */
@@ -108,7 +108,7 @@ let ObjectLiteral = (() => {
                     typeof typedData.dataType !== "object") {
                     return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);
                 }
-                if (typedData.data === undefined || ReflectAraLink.isExpressionLink(typedData.data)) {
+                if (typedData.data === undefined || CodeLink.isExpressionLink(typedData.data)) {
                     typedData.data = {};
                 }
                 typedData.data = { ...typedData.data, ...identifiedObjectElement.getValue().data };

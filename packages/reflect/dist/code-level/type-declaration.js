@@ -14,7 +14,7 @@ import { ValueTypeString, UnionTypeDeclaration, IntersectedUnionType, TypeDeclar
 import { TsNode } from "./ts-node.js";
 import { TypeValueTraits } from "./type-level/type-value-traits.js";
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
+import { CodeLink } from "./CodeLink.js";
 import { TypeRef } from "./type-level/type-ref.js";
 import { Identifier } from "./value-level/idenitifier.js";
 export class TypeDeclaration extends TsNode {
@@ -205,7 +205,7 @@ export class TypeDeclaration extends TsNode {
     };
     // If the AstNode.data is AraLink
     static lintAraLinkData = (data, nodeContext) => {
-        if (!ReflectAraLink.isIdentifierLink(data)) {
+        if (!CodeLink.isIdentifierLink(data)) {
             return Result.fail(`isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`, `Only support the ara identifiers for now, update the lintTypeDeclarations()`);
         }
         const refIdentifier = data.resource;
@@ -409,7 +409,10 @@ export class TypeDeclaration extends TsNode {
     };
     static lintType = (node, parentNodeContext) => {
         if (node instanceof AraLink) {
-            // const refNode = memory.identifierByAraLink(node)
+            if (!CodeLink.isIdentifierLink(node)) {
+                return Result.fail(`The node is an ara link, but doesn't link to the identifier`, `Please pass correct link or update TypeDeclaration.lintType() to support '${node.toString()}'`);
+            }
+            // const refNode = memory.identifierByName(node.resource)
             // if (refNode === undefined) {
             //     return Result.fail(
             //         `'${identifier}' is alias, but it's referenced data not found`

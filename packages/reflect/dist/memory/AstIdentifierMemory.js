@@ -1,7 +1,6 @@
 import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { Debug } from "@ara-web/ts-enhancement/debug";
 import { AstNodeType, AstNode } from "../code-level/ast-node.js";
-import { ReflectAraLink } from "../ara-link/ReflectAraLink.js";
 export class AstIdentifierMemory {
     _identifiers = {};
     constructor() {
@@ -16,16 +15,6 @@ export class AstIdentifierMemory {
         }
         return Object.keys(this._identifiers).length;
     };
-    identifierByAraLink = (araLink) => {
-        if (!ReflectAraLink.isIdentifierLink(araLink)) {
-            return undefined;
-        }
-        if (araLink.isEmpty()) {
-            return undefined;
-        }
-        const node = this.identifierByName(ReflectAraLink.getIdentifierResource(araLink));
-        return node;
-    };
     /**Returns the AstNode from memory by given identifier.
      *
      Adviced to call this method, rather than directly fetching data identifier using this._identifiers.
@@ -39,7 +28,7 @@ export class AstIdentifierMemory {
         }
         // If this identifier is an alias, then as the AstNode return the referenced but with this name.
         if (this._identifiers[identifier] instanceof AraLink) {
-            return this.identifierByAraLink(this._identifiers[identifier]);
+            return this.identifierByName(this._identifiers[identifier].resource);
         }
         return this._identifiers[identifier];
     };

@@ -1,11 +1,9 @@
-import { AraLink } from "@ara-web/ts-enhancement/ara-link";
 import { AstNodeType, AstNode, type AstIdentifiers, type AstNodeValidator } from "../code-level/ast-node.js";
 export declare abstract class AstIdentifierMemory {
     private _identifiers;
     constructor();
     addIdentifiers: (identifiers: AstIdentifiers) => void;
     identifiersCount: () => number;
-    identifierByAraLink: (araLink: AraLink<string>) => AstNode | undefined;
     /**Returns the AstNode from memory by given identifier.
      *
      Adviced to call this method, rather than directly fetching data identifier using this._identifiers.

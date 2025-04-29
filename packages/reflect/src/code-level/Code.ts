@@ -23,6 +23,7 @@ import { VariableStatement } from "./variable-level/variable-statement.js";
 import { BuiltInIdentifiers } from "../reflect-nodejs-ext/BuiltInIdentifiers.js";
 import { AstNodeContext } from "../memory/AstNodeContext.js";
 import { ModuleLink } from "@ara-web/ts-enhancement/module-link";
+import { CodeLink } from "./CodeLink.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -139,7 +140,10 @@ export class Code {
             let node = identifiers[identifier];
 
             if (node instanceof AraLink) {
-                const refNode = moduleMemory.identifierByAraLink(node)
+                if (!CodeLink.isIdentifierLink(node)) {
+                    return Result.fail(`The '${identifier}' is a code link, but not linking to identifier`, `Please pass the correct link or update Code.getImportedIdentifiers() to support '${node.toString()}'`)
+                }
+                const refNode = moduleMemory.identifierByName(node.resource)
                 if (refNode === undefined) {
                     return Result.fail(
                         `'${identifier}' is alias, but it's referenced data not found`
