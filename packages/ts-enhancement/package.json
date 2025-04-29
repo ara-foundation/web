@@ -21,30 +21,6 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
-    },
-    "./ara-link": {
-      "types": "./src/ara-link/AraLink.ts",
-      "default": "./dist/ara-link/AraLink.js"
-    },
-    "./module-link": {
-      "types": "./src/ara-link/ModuleLink.ts",
-      "default": "./dist/ara-link/ModuleLink.js"
-    },
-    "./ontology": {
-      "types": "./src/ara-web-ontology/index.ts",
-      "default": "./dist/ara-web-ontology/index.js"
-    },
-    "./traits": {
-      "types": "./src/traits/index.ts",
-      "default": "./dist/traits/index.js"
-    },
-    "./debug": {
-      "types": "./src/debug.ts",
-      "default": "./dist/debug.js"
-    },
-    "./result": {
-      "types": "./src/result.ts",
-      "default": "./dist/result.js"
     }
   },
   "devDependencies": {
