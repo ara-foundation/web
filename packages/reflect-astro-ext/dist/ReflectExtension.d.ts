@@ -16,10 +16,10 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
      * const rootDir = FilePath.getAbsolutePath('./test-app', import.meta.filename);
      * const astroReflect = new ReflectAstroFramework(FilePath.getAbsolutePath())
      * ```
-     *
      * @param rootDir
      */
     constructor(rootDir?: ModuleLink);
+    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
     get operatorId(): ModuleLink;
     get moduleLink(): ModuleLink;
     get moduleMemories(): ModuleMemory<unknown>[];
@@ -43,7 +43,7 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
      * @param moduleLink absolute path or a path relative to the `this.rootDir`
      * @returns
      */
-    getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
+    getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>>;
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     getModuleContents<T>(moduleCategory?: string): T[];

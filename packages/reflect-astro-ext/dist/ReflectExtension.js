@@ -1,6 +1,7 @@
+import * as crypto from 'crypto';
 import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
 import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
-import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, ComponentLevel } from "./index.js";
+import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, ComponentLevel, FileExtension } from "./index.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
@@ -16,7 +17,6 @@ export class ReflectAstroFramework {
      * const rootDir = FilePath.getAbsolutePath('./test-app', import.meta.filename);
      * const astroReflect = new ReflectAstroFramework(FilePath.getAbsolutePath())
      * ```
-     *
      * @param rootDir
      */
     constructor(rootDir) {
@@ -32,6 +32,13 @@ export class ReflectAstroFramework {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink);
     }
+    getModuleWithFileExtensions(moduleLink) {
+        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
+            return [];
+        }
+        return EnumTraits.enumValues(FileExtension)
+            .map((ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext));
+    }
     get operatorId() {
         return this.moduleLink;
     }
@@ -42,7 +49,7 @@ export class ReflectAstroFramework {
         return Object.values(this._moduleMemories);
     }
     get description() {
-        return "Astro Framework's pages, components parser";
+        return "Astro Framework's pages, components reflection";
     }
     get moduleCategories() {
         return EnumTraits.enumValues(ModuleCategory);
@@ -65,8 +72,8 @@ export class ReflectAstroFramework {
     async putModules(importedRecords) {
         const moduleLinks = [];
         for (let filePath in importedRecords.records) {
-            const moduleLink = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(moduleLink))) {
+            const moduleLink = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(moduleLink))) {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`);
             }
             const category = extractModuleCategory(this.srcDir, moduleLink.toFilePath);

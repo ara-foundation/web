@@ -108,7 +108,7 @@ test(`Make sure the that scripts are generated`, async () => {
     expect(scriptFound).toBe(true);
 });
 
-test(`Make sure the that assets are generated`, async () => {
+test(`Make sure that the assets are generated`, async () => {
     const modules = getImportRecords()
           
     const reflectExtension = await getNewAstroReflect();
@@ -138,8 +138,6 @@ test(`Make sure the that assets are generated`, async () => {
 
 // TODO claude supports the explanation of the SVG, use it to generate the description of the asset
 // TODO, add AI to generate the description of the pages
-// TODO, imports in package.json are only point to the index.js and includes all directory path, remove it
-// so that we can check one layer between the module dependencies
-// TODO, test in ts-enhancement that there is no ../.. or parent/parent/
-// TODO, test in reflect that there is no ../.. or parent/parent/
-// TODO, test in reflect-astro-ext that there is no ../.. or parent/parent/
+
+// TODO, test reading info from other service.
+// Todo, start applying put() method.
