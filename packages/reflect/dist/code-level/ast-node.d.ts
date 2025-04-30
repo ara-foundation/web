@@ -1,4 +1,4 @@
-import { AraLink, ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, Result } from "@ara-web/ts-enhancement";
 import type { TsNode } from "./ts-node.js";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
 export declare enum AstNodeType {
@@ -17,7 +17,7 @@ export declare enum AstNodeType {
  * identity -> AraLink to another identity
  */
 export type AstIdentifiers = {
-    [key: string]: AstNode | AraLink<string>;
+    [key: string]: AstNode;
 };
 export type AstNodeValidator = (astNode: AstNode) => boolean;
 export type GenericHandler = (astNode: AstNode, values: ValueType[]) => Result<AstNode>;
@@ -47,7 +47,7 @@ export declare class AstNode {
     memoryDataLength(): number;
     getAllMemoryData(skippedIdentifiers?: string[]): AstNode[];
     getMemoryData(index: number): AstNode | undefined;
-    deleteMemoryData(): void;
+    deleteMemoryData(index?: number): boolean;
     static isDefinedInOtherModule: AstNodeValidator;
     static isDefinedInLocal: AstNodeValidator;
     static isDataNotEmpty: AstNodeValidator;

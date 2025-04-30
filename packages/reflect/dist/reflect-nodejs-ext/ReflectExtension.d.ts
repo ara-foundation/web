@@ -5,9 +5,14 @@ import { ModuleMemory, type AutoImporter, type ImportedRecords, type ExtensionIn
  */
 export declare class NodejsReflectExtension implements ExtensionInterface {
     private _moduleLink;
+    /**
+     * Link such as pkg:npm/lodash -> pkg:npm/lodash?absolutePath=file:///...
+     */
+    private _moduleFileSystemLinks;
     private _moduleMemories;
     private _autoImporter?;
     constructor();
+    getModuleWithFileExtensions(_: ModuleLink): ModuleLink[];
     get operatorId(): ModuleLink;
     get moduleLink(): ModuleLink;
     get moduleMemories(): ModuleMemory<unknown>[];

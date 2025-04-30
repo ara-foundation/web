@@ -15,7 +15,6 @@ import { AstNode, AstNodeType } from "./ast-node.js";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { AstNodeContext } from "./AstNodeContext.js";
-import { CodeLink } from "./CodeLink.js";
 export class Code {
     _ast;
     _moduleLink; // Module that this code belong to
@@ -83,7 +82,7 @@ export class Code {
             if (importClause.isFailure) {
                 return Result.fail(`ImportDeclaration.fromTsNode(tsNode: '${tsNode.getText()}'): ${importClause.errorTitle}`, importClause.errorDescription);
             }
-            const identifiedModuleLink = await this.importClauseToModuleLink(importClause.getValue(), this._moduleLink, projectMemory);
+            const identifiedModuleLink = this.importClauseToModuleLink(importClause.getValue(), this._moduleLink, projectMemory);
             if (identifiedModuleLink.isFailure) {
                 return Result.fail(`this.importClauseToModuleLink('${importClause.getValue()}', '${this._moduleLink.moduleURL}'): ${identifiedModuleLink.errorTitle}`, identifiedModuleLink.errorDescription);
             }
@@ -98,13 +97,31 @@ export class Code {
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
      */
-    importClauseToModuleLink = async (importClause, callingModulePath, projectMemory) => {
-        const absolueImportPath = await FilePath.getFileAbsolutePath(importClause, callingModulePath.toFilePath);
-        const moduleExists = projectMemory.isModuleExist(absolueImportPath);
-        if (!moduleExists) {
-            return Result.fail(`projectMemory.isModuleExist(): not found`, `The module '${absolueImportPath}' not found in the project memory, please add the module through the extension`);
+    importClauseToModuleLink = (importClause, callingModulePath, projectMemory) => {
+        // Not a module link, then package link?
+        const packageLink = ModuleLink.newPackageURLFromImportClause(importClause);
+        const packageExists = projectMemory.isModuleExist(packageLink);
+        if (packageExists) {
+            return Result.ok(packageLink);
         }
-        return Result.ok(absolueImportPath);
+        // First assuming the importClause is referencing to a file.
+        const absoluteImportPath = FilePath.getFileAbsolutePath(importClause, callingModulePath.toFilePath);
+        if (FilePath.isFileExist(absoluteImportPath)) {
+            const moduleExists = projectMemory.isModuleExist(absoluteImportPath);
+            if (moduleExists) {
+                return Result.ok(absoluteImportPath);
+            }
+        }
+        else {
+            const filePaths = projectMemory.getModuleWithFileExtensions(absoluteImportPath);
+            for (let filePath of filePaths) {
+                const moduleExists = projectMemory.isModuleExist(filePath);
+                if (moduleExists) {
+                    return Result.ok(filePath);
+                }
+            }
+        }
+        return Result.fail(`Not found`, `The '${importClause}' is not a file module at '${absoluteImportPath}'. It's also not a package at '${packageLink.moduleURL}' in the project memory`);
     };
     setImportPaths = (importModuleLink, defaultIdentifier, astIdentifiers) => {
         for (let ast in astIdentifiers) {
@@ -113,8 +130,15 @@ export class Code {
                 continue;
             }
             astNode.importPath = importModuleLink;
+            if (astNode.memoryDataLength() > 0) {
+                const memoryData = astNode.getAllMemoryData();
+                for (let memoryIndex = 0; memoryIndex < memoryData.length; memoryIndex++) {
+                    memoryData[memoryIndex].importPath = importModuleLink;
+                    astNode.postMemoryData(memoryIndex, memoryData[memoryIndex]);
+                }
+            }
             if (astNode.identifier === defaultIdentifier) {
-                astNode.data = importModuleLink;
+                astIdentifiers[ast].data = importModuleLink;
             }
         }
         return astIdentifiers;
@@ -122,34 +146,17 @@ export class Code {
     /**
      * Lint dependencies of the given module identified by type and path.
      *
-     * Fetches the import identifiers, and passes them into the lintImportedIdentifiers().
      * @param moduleMemory
      * @param projectMemory {Lint from all modules}
      * @returns
      */
     getLintedImportIdentifiers = async (moduleMemory, projectMemory) => {
         const identifiers = moduleMemory.getIdentifiers([AstNode.isDefinedInOtherModule]);
-        const importIdentifiersCount = Object.keys(identifiers).length;
-        if (importIdentifiersCount == 0) {
-            return Result.ok(identifiers);
-        }
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
-            if (node instanceof AraLink) {
-                if (!CodeLink.isIdentifierLink(node)) {
-                    return Result.fail(`The '${identifier}' is a code link, but not linking to identifier`, `Please pass the correct link or update Code.getImportedIdentifiers() to support '${node.toString()}'`);
-                }
-                const refNode = moduleMemory.identifierByName(node.resource);
-                if (refNode === undefined) {
-                    return Result.fail(`'${identifier}' is alias, but it's referenced data not found`);
-                }
-                node = refNode;
-            }
-            // Debug.push(`this.identifyImportedIdentifier()`, {'identifiedNode': node.identifier!})
             const identifiedValue = await this.identifyImportedIdentifier(node, projectMemory);
-            // Debug.pop();
             if (identifiedValue.isFailure) {
-                return Result.fail(`identifyImportedIdentifier(identifier='${identifier}'): ${identifiedValue.errorTitle}`, identifiedValue.errorDescription);
+                return Result.fail(`identifyImportedIdentifier('${identifier}'): ${identifiedValue.errorTitle}`, identifiedValue.errorDescription);
             }
             if (identifiedValue.getValue().data === undefined) {
                 const err = Debug.error(`The import identifier '${identifier}' of '${node.nodeType}' data is undefined`, `Update the lintImportedIndetifiers() to supported it, since the data returned as undefined`, { node, identifiedValue });
@@ -180,13 +187,25 @@ export class Code {
         if (identifiedNode.importPath === undefined) {
             return Result.fail(`getImportModulePath(): '${identifiedNode.identifier}' module path is not found`, `Make sure this node is import node, or fix AstNode.getImportModulePath()`);
         }
-        // Debug.push(`memory.identifyModuleByPath()`, {modulePath})
         const identifiedMemory = memory.getModule(identifiedNode.importPath);
-        // Debug.pop();
         if (identifiedMemory.isFailure) {
             return Result.fail(`memory.identifyModuleByPath(modulePath: '${identifiedNode.importPath.toString()}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription);
         }
         const glob = identifiedMemory.getValue().glob;
+        if (identifiedNode.memoryDataLength() > 0) {
+            const memoryNode = identifiedNode.getMemoryData(0);
+            const identifiedMemoryNode = await this.identifyImportedIdentifier(memoryNode, memory);
+            if (identifiedMemoryNode.isFailure) {
+                return Result.fail(`${identifiedNode.identifier}.getMemoryData(0): this.identifyImportedIdentifier('${memoryNode.identifier}'): ${identifiedMemoryNode.errorTitle}`, identifiedMemoryNode.errorDescription);
+            }
+            if (!identifiedNode.deleteMemoryData(0)) {
+                return Result.fail(`identifiedNode.deleteMemoryData(0): failed`, `Please update the ast node class`);
+            }
+            identifiedNode.data = identifiedMemoryNode.getValue().data;
+            identifiedNode.nodeType = identifiedMemoryNode.getValue().nodeType;
+            identifiedNode.dataType = identifiedMemoryNode.getValue().dataType;
+            return Result.ok(identifiedNode);
+        }
         // If the import is default import, then data is AraLink.
         if (identifiedNode.data instanceof ModuleLink) {
             identifiedNode.data = glob.default;
@@ -234,9 +253,7 @@ export class Code {
             }
             const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
             const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
-            // Debug.push(`TypeLevel.lintType()`, {node: identifier})
             const lintedNode = TypeLevel.lintType(node, memoryContext);
-            // Debug.pop()
             if (lintedNode.isFailure) {
                 return Result.fail(`TypeLevel.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
             }

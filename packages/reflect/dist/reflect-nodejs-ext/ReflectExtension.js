@@ -1,4 +1,3 @@
-import PathModule from "node:path";
 import { EnumTraits, OkResult, Result, ModuleLink, } from "@ara-web/ts-enhancement";
 import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
 import { ModuleCategory } from "./module.js";
@@ -7,11 +6,18 @@ import { ModuleCategory } from "./module.js";
  */
 export class NodejsReflectExtension {
     _moduleLink;
+    /**
+     * Link such as pkg:npm/lodash -> pkg:npm/lodash?absolutePath=file:///...
+     */
+    _moduleFileSystemLinks = {};
     _moduleMemories = {};
     _autoImporter;
     constructor() {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-nodejs-ext", fileModuleLink);
+    }
+    getModuleWithFileExtensions(_) {
+        return [];
     }
     get operatorId() {
         return this.moduleLink;
@@ -27,16 +33,14 @@ export class NodejsReflectExtension {
     }
     putPackage = async (importedRecords) => {
         for (let filePath in importedRecords.records) {
-            const absPath = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(absPath))) {
+            const absPath = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(absPath))) {
                 return Result.fail(`FilePath.isFileExist('${absPath.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`);
             }
-            let [possibleNamespaceOrName, name, ...subDirs] = importedRecords.importClause.split("/");
-            const subPath = subDirs.length === 0 ? undefined : PathModule.join(...subDirs);
-            name = name === undefined || name.length === 0 ? possibleNamespaceOrName : name;
-            const namespace = possibleNamespaceOrName === name ? undefined : possibleNamespaceOrName;
-            const moduleLink = ModuleLink.newPackageURL(namespace, name, absPath, subPath);
+            const moduleLink = ModuleLink.newPackageURLFromImportClause(importedRecords.importClause, absPath);
             this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
+            const simpleLink = ModuleLink.newPackageURLFromImportClause(importedRecords.importClause);
+            this._moduleFileSystemLinks[simpleLink.moduleURL] = moduleLink.moduleURL;
             return Result.ok(moduleLink);
         }
         return Result.fail(`No record to put in`, `Please pass the correct node`);
@@ -44,8 +48,8 @@ export class NodejsReflectExtension {
     putModules = async (importedRecords) => {
         const moduleLinks = [];
         for (let filePath in importedRecords.records) {
-            const moduleLink = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(moduleLink))) {
+            const moduleLink = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(moduleLink))) {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`);
             }
             this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
@@ -77,7 +81,11 @@ export class NodejsReflectExtension {
         if (!this.isModuleExist(moduleLink)) {
             return Result.errorCode404([this.moduleLink.moduleURL], `this.isModuleExist()`, `The link: ${moduleLink}`);
         }
-        return Result.ok(this._moduleMemories[moduleLink.moduleURL]);
+        let module = this._moduleMemories[moduleLink.moduleURL];
+        if (module === undefined) {
+            module = this._moduleMemories[this._moduleFileSystemLinks[moduleLink.moduleURL]];
+        }
+        return Result.ok(module);
     }
     getModules(moduleCategory) {
         const moduleMemories = [];
@@ -90,7 +98,13 @@ export class NodejsReflectExtension {
     }
     isModuleExist(moduleLink) {
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
-        return this._moduleMemories[url] !== undefined;
+        if (this._moduleMemories[url] !== undefined) {
+            return true;
+        }
+        if (this._moduleFileSystemLinks[url] !== undefined) {
+            return true;
+        }
+        return false;
     }
     get moduleCategories() {
         return EnumTraits.enumValues(ModuleCategory);

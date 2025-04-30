@@ -15,6 +15,7 @@ export declare class TsNode {
      * If this TsNode has a sibling in the Ast Tree, then return it
      */
     getNextSibling(): TsNode | undefined;
+    getPreviousSibling(): TsNode | undefined;
     isChildExist(index: number): boolean;
     getChild(index: number): TsNode | undefined;
     /**

@@ -124,8 +124,16 @@ export class AstNode {
         }
         return this._nodeMemory[index];
     }
-    deleteMemoryData() {
-        this._nodeMemory = undefined;
+    deleteMemoryData(index) {
+        if (index === undefined) {
+            this._nodeMemory = undefined;
+            return true;
+        }
+        if (index < 0 || index >= this.memoryDataLength()) {
+            return false;
+        }
+        this._nodeMemory = this._nodeMemory?.filter((_, nodeIndex) => (nodeIndex !== index));
+        return true;
     }
     //----------------------------------------------------------
     //

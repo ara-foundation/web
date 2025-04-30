@@ -7,23 +7,16 @@ import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 export class Reflect {
     // Category => Path => ModuleMemory Instance
     _memory;
-    _extensions;
+    _extensions = [];
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param reflectSetup
      */
     constructor(reflectSetup) {
         this._memory = new ProjectMemory();
-        const nodeJsExt = new NodejsReflectExtension();
-        this._extensions = [nodeJsExt];
-        if (reflectSetup?.extensions) {
-            for (let extension of reflectSetup.extensions) {
-                this._extensions.push(extension);
-            }
-        }
-        for (let extension of this._extensions) {
-            this._memory.putMemoryOperations(extension);
-        }
+        const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
+        this._extensions = [new NodejsReflectExtension(), ...exts];
+        this._memory.putMemoryOperations(...this._extensions);
     }
     get nodeJsExt() {
         return this._extensions[0];

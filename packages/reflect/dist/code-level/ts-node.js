@@ -23,11 +23,12 @@ export class TsNode {
      * If this TsNode has a sibling in the Ast Tree, then return it
      */
     getNextSibling() {
-        const nextNode = this._tsNode.getNextSibling();
-        if (nextNode === undefined) {
-            return nextNode;
-        }
-        return new TsNode(nextNode);
+        const node = this._tsNode.getNextSibling();
+        return node === undefined ? undefined : new TsNode(node);
+    }
+    getPreviousSibling() {
+        const node = this._tsNode.getPreviousSibling();
+        return node === undefined ? undefined : new TsNode(node);
     }
     isChildExist(index) {
         if (index < 0) {

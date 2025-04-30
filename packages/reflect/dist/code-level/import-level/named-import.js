@@ -5,7 +5,7 @@
  */
 import { ImportSpecifier, NamedImports } from "ts-morph";
 import { Result, Debug } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, CodeLink, TsNode, Identifier } from "../index.js";
+import { AstNode, AstNodeType, TsNode, Identifier } from "../index.js";
 export class NamedImport extends TsNode {
     _tsNode;
     constructor(tsNode) {
@@ -59,24 +59,19 @@ export class NamedImport extends TsNode {
         if (namedImportChildCount === 0) {
             return Result.ok(identifiers);
         }
-        const identifiedNode = AstNode.fromTsNode(namedChildren[0]);
-        identifiedNode.nodeType = nodeType;
-        identifiedNode.data = {};
-        // identifiedNode.importPath = moduleLink;
-        identifiedNode.constant = true;
-        identifiedNode.public = false;
-        identifiedNode.identifier = "";
+        // for example: funcBar as FuncBarAlias
+        // in this regard the node is funcBarAlias but references to funcBar in the ast memory.
         for (let i = 0; i < namedImportChildCount; i++) {
             if (NamedImport.isNamedImport(namedChildren[i])) {
                 var namedImport = NamedImport.fromTsNode(namedChildren[i]);
-                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, namedImport.getValue().getChildren());
+                const namedIdentifiers = NamedImport.getIdentifiers(nodeType, namedImport.getValue().getChildren());
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }
                 identifiers = { ...identifiers, ...(namedIdentifiers.getValue()) };
             }
             else if (NamedImport.isImportSpecifier(namedChildren[i])) {
-                const namedIdentifiers = NamedImport.getIdentifiers(identifiedNode.nodeType, namedChildren[i].getChildren([], [TsNode.isNonImportant], [","]));
+                const namedIdentifiers = NamedImport.getIdentifiers(nodeType, namedChildren[i].getChildren([], [TsNode.isNonImportant], [","]));
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }
@@ -84,25 +79,41 @@ export class NamedImport extends TsNode {
             }
             else if (Identifier.isA(namedChildren[i])) {
                 const identifier = namedChildren[i].getText();
-                identifiedNode.identifier = identifier;
-                identifiers[identifier] = identifiedNode;
+                const identifiedNode = AstNode.fromTsNode(namedChildren[0]);
+                identifiedNode.data = {};
+                identifiedNode.constant = true;
+                identifiedNode.public = false;
+                const previous = namedChildren[i].getPreviousSibling();
+                identifiedNode.nodeType = previous !== undefined && TsNode.isTypeKeyword(previous) ?
+                    identifiedNode.nodeType = AstNodeType.Type :
+                    identifiedNode.nodeType = nodeType;
+                const next = namedChildren[i].getNextSibling();
+                if (next !== undefined && TsNode.isAsKeyword(next)) {
+                    const alias = next.getNextSibling();
+                    if (alias === undefined) {
+                        return Result.fail(`The import clause has 'as' keyword, but no next keyword`, `Please pass the correct AST Tree`);
+                    }
+                    if (!Identifier.isA(alias)) {
+                        return Result.fail(`The alias '${alias.getText()}' of the type must be identifier`, `Ara Web doesn't support the node`);
+                    }
+                    const refNode = AstNode.fromTsNode(namedChildren[0]);
+                    refNode.data = {};
+                    refNode.constant = true;
+                    refNode.public = false;
+                    refNode.nodeType = identifiedNode.nodeType;
+                    refNode.identifier = identifier;
+                    identifiedNode.putMemoryData(refNode);
+                    identifiedNode.identifier = alias.getText();
+                    // In case of the alias, we identify the ast node as alias.
+                    identifiers[alias.getText()] = identifiedNode;
+                    i += 2;
+                }
+                else {
+                    identifiedNode.identifier = identifier;
+                    identifiers[identifier] = identifiedNode;
+                }
             }
             else if (TsNode.isTypeKeyword(namedChildren[i])) {
-                identifiedNode.nodeType = AstNodeType.Type;
-            }
-            else if (TsNode.isAsKeyword(namedChildren[i])) {
-                const alias = namedChildren[i].getNextSibling();
-                if (alias === undefined) {
-                    return Result.fail(`The import clause has 'as' keyword, but no next keyword`, `Please pass the correct AST Tree`);
-                }
-                if (identifiedNode.identifier === undefined) {
-                    return Result.fail(`The import clause has 'as' keyword, but previous element is not identifier`, `Please pass the correct AST Tree, to have a node before 'as' keyword`);
-                }
-                if (!Identifier.isA(alias)) {
-                    return Result.fail(`The alias '${alias.getText()}' of the type must be identifier`, `Ara Web doesn't support the node`);
-                }
-                identifiers[alias.getText()] = CodeLink.linkToIdentifier(identifiedNode.identifier);
-                i++;
                 continue;
             }
             else {

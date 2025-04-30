@@ -11,9 +11,27 @@ export declare class ProjectMemory implements MemoryOperations {
     private _memOps;
     private _moduleLink;
     constructor();
+    /**
+     * Return the module file paths from the link
+     * @param moduleLink
+     * @returns
+     */
+    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
+    /**
+     * My ID;
+     */
     get operatorId(): ModuleLink;
-    putMemoryOperations: (memOp: MemoryOperations) => void;
-    getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
+    /**
+     * Register extensions
+     * @param memOp
+     */
+    putMemoryOperations: (...memOp: MemoryOperations[]) => void;
+    /**
+     * Return the module memory by the module link.
+     * @param moduleLink
+     * @returns
+     */
+    getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>>;
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     /**

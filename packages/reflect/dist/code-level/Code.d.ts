@@ -51,7 +51,6 @@ export declare class Code {
     /**
      * Lint dependencies of the given module identified by type and path.
      *
-     * Fetches the import identifiers, and passes them into the lintImportedIdentifiers().
      * @param moduleMemory
      * @param projectMemory {Lint from all modules}
      * @returns

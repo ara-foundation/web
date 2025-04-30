@@ -26,7 +26,7 @@ export interface MemoryOperations {
      * Returns the Module Memory by the provided module link by the module link
      * @param moduleLink
      */
-    getModule: <T>(moduleLink: ModuleLink | string) => Result<ModuleMemory<T>>;
+    getModule: <T>(moduleLink: ModuleLink) => Result<ModuleMemory<T>>;
     /**
      * Returns all the modules that match to the category
      * @param moduleCategory?
@@ -40,6 +40,13 @@ export interface MemoryOperations {
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     getModuleContents<T>(moduleCategory?: string): T[];
     getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[];
+    /**
+     * If the module link is a file and doesn't have file extension, it will populate it.
+     *
+     * Used by {@link Code} when linting import clauses into module link. Import Clause might be without extension.
+     * @param moduleLink
+     */
+    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
 }
 /**
  * Extension Interface that all module handlers based on.

@@ -178,3 +178,29 @@ The layers of component extraction:
 * Component
 
 *TODO* Make sure to evaluate the component values.
+
+# Reflect itself.
+Let's say, I got a script that defines the Reflect instance.
+Then, in one of the components I call the `reflect.instance`.
+
+When a Reflect tries to reflect the page, it sees there is an import clause.
+Import refers to the script where it was defined. But limitation is such, that Import clause
+can not define itself.
+
+```typescript
+// src/scripts/reflect.ts
+import { Reflect } from "@ara-web/reflect";
+
+const reflect = new Reflect({import.meta.filename})
+export default reflect;
+```
+
+Then, we have a script:
+```typescript
+// src/pages/index.astro
+import reflect from "../scripts/reflect"
+
+console.log(reflect.get());
+```
+
+Let's test that it works.
