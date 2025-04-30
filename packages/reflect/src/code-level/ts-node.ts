@@ -43,12 +43,14 @@ export class TsNode {
      * If this TsNode has a sibling in the Ast Tree, then return it
      */
     public getNextSibling(): TsNode|undefined {
-        const nextNode = this._tsNode.getNextSibling();
-        if (nextNode === undefined) {
-            return nextNode;
-        }
+        const node = this._tsNode.getNextSibling();
+        return node === undefined ? undefined : new TsNode(node);
+    }
 
-        return new TsNode(nextNode);
+    public getPreviousSibling(): TsNode|undefined {
+        const node = this._tsNode.getPreviousSibling();
+        
+        return node === undefined ? undefined : new TsNode(node);
     }
 
     public isChildExist(index: number): boolean {
