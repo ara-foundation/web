@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { 
     type AutoImporter, 
     type ExtensionInterface, 
@@ -14,7 +15,8 @@ import {
     ModuleIdentifier, 
     ModulePartitioner,
     CodeLevel, PageLevel, ComponentLevel,
-    type Asset, type Component, type Layout, type Page, type Script
+    type Asset, type Component, type Layout, type Page, type Script,
+    FileExtension
  } from "./index.js";
 
 /**
@@ -33,7 +35,6 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * const rootDir = FilePath.getAbsolutePath('./test-app', import.meta.filename);
      * const astroReflect = new ReflectAstroFramework(FilePath.getAbsolutePath())
      * ```
-     * 
      * @param rootDir 
      */
     constructor(rootDir?: ModuleLink) {
@@ -47,6 +48,17 @@ export class ReflectAstroFramework implements ExtensionInterface {
         }
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink)
+    }
+
+    public getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[] {
+        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
+            return [];
+        }
+        
+        return EnumTraits.enumValues(FileExtension)
+            .map(
+                (ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext)
+            );
     }
     
     public get operatorId(): ModuleLink {
@@ -62,7 +74,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
 
     public get description(): string {
-        return "Astro Framework's pages, components parser";
+        return "Astro Framework's pages, components reflection";
     }
 
     public get moduleCategories(): string[] {
@@ -90,10 +102,11 @@ export class ReflectAstroFramework implements ExtensionInterface {
     public async putModules(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>> {
         const moduleLinks: ModuleLink[] = [];
         for (let filePath in importedRecords.records) {
-            const moduleLink = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(moduleLink))) {
+            const moduleLink = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(moduleLink))) {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`)
             }
+
             const category = extractModuleCategory(this.srcDir, moduleLink.toFilePath);
             if (category.isFailure) {
                 return Result.fail(
@@ -104,7 +117,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
             this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, importedRecords.records[filePath]);
             moduleLinks.push(moduleLink);
         }
-        
+
         if (moduleLinks.length === 0) {
             return Result.fail(`No record to put in`, `Please pass the correct node`);
         }
@@ -131,7 +144,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * @param moduleLink absolute path or a path relative to the `this.rootDir`
      * @returns 
      */
-    public getModule<T>(moduleLink: ModuleLink|string): Result<ModuleMemory<T>> {
+    public getModule<T>(moduleLink: ModuleLink): Result<ModuleMemory<T>> {
         if (typeof moduleLink === "string") {
             moduleLink = ModuleLink.newFileURL(FilePath.join([this.rootDir, moduleLink]));
         }
