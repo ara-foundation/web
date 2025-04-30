@@ -2,12 +2,17 @@ import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/ts-enhanc
 import type { ModuleMemory } from "./ModuleMemory.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
 
+export type Module = unknown;
+export type ModulePath = string;
+export type ModuleCategory = string;
+export type AbsoluteFilePath = string;
+
 /**
  * A type of imported records fetched by `import.meta.glob` if you use `vite` plugin.
  * The `importingFilePath` property is the module that records. You may set it using `import.meta.filename`
  */
-export type ImportedRecords = {records: Record<string, unknown>, importingFilePath: string};
-
+export type ImportedRecords = {records: Record<ModulePath, Module>, importMetaFilename?: AbsoluteFilePath};
+export type SingleRecord =  {module: Module, importModuleClause: ModulePath, importMetaFilename?: AbsoluteFilePath}
 /**
  * A function that imports the modules automatically before any `get` operation.
  */
@@ -33,15 +38,15 @@ export interface MemoryOperations {
      * @param moduleCategory? 
      * @returns 
      */
-    getModules: <T>(moduleCategory?: string) => ModuleMemory<T>[];
+    getModules: <T>(moduleCategory?: ModuleCategory) => ModuleMemory<T>[];
     /**
      * Checks does the module exist in the extension
      * @param moduleLink 
      */
     isModuleExist(moduleLink: ModuleLink|ModuleURL): boolean;
 
-    getModuleContents<T>(moduleCategory?: string): T[];
-    getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[];
+    getModuleContents<T>(moduleCategory?: ModuleCategory): T[];
+    getNoContentModules<T>(moduleCategory?: ModuleCategory): ModuleMemory<T>[];
 
     /**
      * If the module link is a file and doesn't have file extension, it will populate it.
@@ -63,13 +68,13 @@ export interface ExtensionInterface extends MemoryOperations {
     /**
      * Return the module categories that this extension adds
      */
-    moduleCategories: string[];
+    moduleCategories: ModuleCategory[];
     
     /**
-    //  * Whether the given string is one of the supported module categories or not
+    //  * Whether the given value is one of the supported module categories or not
     //  * @param moduleCategory 
     //  */
-    isSupportedModuleCategory(moduleCategory: string): boolean;
+    isSupportedModuleCategory(moduleCategory: ModuleCategory): boolean;
     
     /**************************************************************************
      * Setup
@@ -81,11 +86,11 @@ export interface ExtensionInterface extends MemoryOperations {
      * 
      * `ext.putPackge({records, importingFilePath: import.meta.fileName, importClause: 'npm-url'})`
      */
-    putPackage(importedRecords: ImportedRecords & {importClause: string}): Promise<Result<ModuleLink>>;
+    putPackage(importedRecords: SingleRecord): Promise<Result<ModuleLink>>;
     /**
      * Put the record as the module in the file system.
      */
-    putModules(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>>;
+    putModules(importedRecords: ImportedRecords|SingleRecord): Promise<Result<ModuleLink[]>>;
 
     /**
      * Auto Importer is to put the modules automatically using the auto importer.
@@ -96,6 +101,6 @@ export interface ExtensionInterface extends MemoryOperations {
     /**************************************************************************
      * HOOKS
      **************************************************************************/
-    beforeGet?: (moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>;
-    afterGet?: (moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>;
+    beforeGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
+    afterGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
 }

@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { 
     type AutoImporter, 
     type ExtensionInterface, 
@@ -6,7 +5,8 @@ import {
     ModuleMemory, 
     ProjectMemory, 
     type ModuleMemories,
-    FilePath
+    FilePath,
+    type SingleRecord
 } from "@ara-web/reflect";
 import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
 import { 
@@ -89,7 +89,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
         return FilePath.join([this._rootDir.toFilePath, 'src']);
     }
 
-    public async putPackage(_: ImportedRecords & { importClause: string; }): Promise<Result<ModuleLink>> {
+    public async putPackage(_: SingleRecord): Promise<Result<ModuleLink>> {
         return Result.errorCode501([this.moduleLink.moduleURL], 'putPackage');
     }
 
@@ -99,23 +99,46 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * @param importedRecords 
      * @returns 
      */
-    public async putModules(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>> {
+    public async putModules(params: ImportedRecords|SingleRecord): Promise<Result<ModuleLink[]>> {
+        const importingFilePath = params.importMetaFilename ? params.importMetaFilename : this.rootDir;
         const moduleLinks: ModuleLink[] = [];
-        for (let filePath in importedRecords.records) {
-            const moduleLink = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+        if ("records" in params) {
+            const importedRecords = params as ImportedRecords;
+            for (let filePath in importedRecords.records) {
+                const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
+                if (!(FilePath.isFileExist(moduleLink))) {
+                    return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`)
+                }
+
+                const category = extractModuleCategory(this.srcDir, moduleLink.toFilePath);
+                if (category.isFailure) {
+                    return Result.fail(
+                        `this.extractModuleCategory('${moduleLink.toFilePath}'): ${category.errorTitle}`,
+                        category.errorDescription!
+                    )
+                }
+                this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, importedRecords.records[filePath]);
+                moduleLinks.push(moduleLink);
+            }
+        } else if ("module" in params) {
+            const singleRecord = params as SingleRecord;
+            const moduleLink = FilePath.getFileAbsolutePath(singleRecord.importModuleClause, importingFilePath);
             if (!(FilePath.isFileExist(moduleLink))) {
-                return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`)
+                return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${singleRecord.importModuleClause}' relative to '${singleRecord.importMetaFilename}' locates to a file`)
             }
 
             const category = extractModuleCategory(this.srcDir, moduleLink.toFilePath);
-            if (category.isFailure) {
-                return Result.fail(
-                    `this.extractModuleCategory('${moduleLink.toFilePath}'): ${category.errorTitle}`,
-                    category.errorDescription!
+                if (category.isFailure) {
+                    return Result.fail(
+                        `this.extractModuleCategory('${moduleLink.toFilePath}'): ${category.errorTitle}`,
+                        category.errorDescription!
                 )
             }
-            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, importedRecords.records[filePath]);
+
+            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, singleRecord.module);
             moduleLinks.push(moduleLink);
+        } else {
+            return Result.fail(`Missing records and importModules properties`, `Pass the correct data`);
         }
 
         if (moduleLinks.length === 0) {
