@@ -1,5 +1,6 @@
 import { Result } from "@ara-web/ts-enhancement";
 import type { ExtensionInterface } from "./extension-interface.js";
+import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 export type ReflectSetup = {
     extensions?: ExtensionInterface[];
 };
@@ -14,7 +15,7 @@ export declare class Reflect {
      * @param reflectSetup
      */
     constructor(reflectSetup?: ReflectSetup);
-    get nodeJsExt(): ExtensionInterface;
+    get nodeJsExt(): NodejsReflectExtension;
     /**
      * Pre-reflection operation to reload all the modules.
      * Additionally, this operation adds all supported built-in identifiers provided by NodeJS.
