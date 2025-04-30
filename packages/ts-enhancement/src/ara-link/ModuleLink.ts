@@ -119,7 +119,7 @@ export class ModuleLink {
      * @param absPath 
      * @returns {ModuleLink} A PackageURL from the import clause
      */
-    public static fromImportClause = (importClause: string, absPath?: ModuleLink): ModuleLink => {
+    public static newPackageURLFromImportClause = (importClause: string, absPath?: ModuleLink): ModuleLink => {
         let [possibleNamespaceOrName, name, ...subDirs] = importClause.split(PathModule.sep);
 
         const subPath = subDirs.length === 0 ? undefined : subDirs.join(PathModule.sep);

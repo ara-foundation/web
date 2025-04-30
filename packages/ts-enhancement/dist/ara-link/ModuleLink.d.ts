@@ -25,5 +25,5 @@ export declare class ModuleLink {
      * @param absPath
      * @returns {ModuleLink} A PackageURL from the import clause
      */
-    static fromImportClause: (importClause: string, absPath?: ModuleLink) => ModuleLink;
+    static newPackageURLFromImportClause: (importClause: string, absPath?: ModuleLink) => ModuleLink;
 }
