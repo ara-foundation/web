@@ -4,7 +4,7 @@ import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 
 export type ReflectSetup = {
-    extensions?: ExtensionInterface[],
+    extensions?: ExtensionInterface[];
 }
 
 /**
@@ -13,7 +13,7 @@ export type ReflectSetup = {
 export class Reflect {
     // Category => Path => ModuleMemory Instance
     private _memory: ProjectMemory;
-    private _extensions: ExtensionInterface[];
+    private _extensions: ExtensionInterface[] = [];
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
@@ -22,18 +22,10 @@ export class Reflect {
     constructor(reflectSetup?: ReflectSetup) {
         this._memory = new ProjectMemory();
 
-        const nodeJsExt = new NodejsReflectExtension();
+        const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
 
-        this._extensions = [nodeJsExt];
-        if (reflectSetup?.extensions) {
-            for (let extension of reflectSetup.extensions) {
-                this._extensions.push(extension);
-            }
-        }
-
-        for (let extension of this._extensions) {
-            this._memory.putMemoryOperations(extension);
-        }
+        this._extensions = [new NodejsReflectExtension(), ...exts];
+        this._memory.putMemoryOperations(...this._extensions);
     }
 
     public get nodeJsExt(): ExtensionInterface {
