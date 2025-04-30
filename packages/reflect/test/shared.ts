@@ -90,7 +90,7 @@ export const getEmptyModule = (filePath: string = import.meta.filename): ModuleM
 
 export const putFuncModule = async (ext: ExtensionInterface, _modulePath: string = modulePath): Promise<ExtensionInterface> => {
   const glob = await import(_modulePath);
-  const importedRecords: ImportedRecords = {records: {[_modulePath]: glob}, importingFilePath: import.meta.filename};
+  const importedRecords: ImportedRecords = {records: {[_modulePath]: glob}, importMetaFilename: import.meta.filename};
 
   const putted = await ext.putModules(importedRecords)
   expect(putted.isSuccess).toBe(true);
@@ -112,7 +112,7 @@ export const getImportRecords = (): ImportedRecords => {
   categorizedModuleAmount = Object.keys(imported).length;
   return {
     records: imported,
-    importingFilePath: import.meta.filename,
+    importMetaFilename: import.meta.filename,
   }
 }
 
@@ -126,7 +126,7 @@ export const getSamplePackage = (): ImportedRecords & {importClause: string} => 
 
   return {
     records: imported,
-    importingFilePath: FilePath.getCurrentWorkingDir(),
+    importMetaFilename: FilePath.getCurrentWorkingDir(),
     importClause: 'packageurl-js'
   }
 }

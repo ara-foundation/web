@@ -119,6 +119,7 @@ export class Code {
 
             let importIdentifiers = (await ImportLevel.getIdentifiers(tsNode)).getValue();
             const defaultIdentifier = (await ImportLevel.getDefaultIdentifier(tsNode)).getValue();
+            
             importIdentifiers = this.setImportPaths(identifiedModuleLink.getValue(), defaultIdentifier, importIdentifiers)
             identifiers = {...identifiers, ...importIdentifiers};
         }

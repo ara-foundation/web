@@ -77,14 +77,11 @@ export class NamedImport extends TsNode {
     public static getIdentifiers = (nodeType: AstNodeType, namedChildren: TsNode[]): Result<AstIdentifiers> => {
         let identifiers: AstIdentifiers = {};
 
+
         const namedImportChildCount = namedChildren.length;
         if (namedImportChildCount === 0) {
             return Result.ok(identifiers);
         }
-
-        // for example: funcBar as FuncBarAlias
-        // in this regard the node is funcBarAlias but references to funcBar in the ast memory.
-
         
         for (let i = 0; i < namedImportChildCount; i++) {
             if (NamedImport.isNamedImport(namedChildren[i])) {
@@ -156,6 +153,7 @@ export class NamedImport extends TsNode {
                     identifiers[identifier] = identifiedNode;
                 }
             } else if (TsNode.isTypeKeyword(namedChildren[i])) {
+                nodeType = AstNodeType.Type;
                 continue;
             } else {
                 const err = Debug.error(

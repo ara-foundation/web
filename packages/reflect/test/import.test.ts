@@ -16,15 +16,30 @@ const sourceCode =
     + `fooBar("medet", "ahmetson")` 
     + `import CustomType from "./customType.ts"`
 ;
+
+const genericTypeCode = `import type { CustomType } from "./funcs.ts"`;
 const moduleLink = FilePath.getFileAbsolutePath("./code-level.test.ts", import.meta.filename);
 const reflect = new Reflect();
 const projectMemory = getProjectMemory(reflect.nodeJsExt);
 
-test('Simply creating a code', async () => {
+test('Import with "as" keyword', async () => {
     await putFuncModule(reflect.nodeJsExt);
     await putFuncModule(reflect.nodeJsExt, "./customType.ts");
     const testModule = getEmptyModule(moduleLink.toFilePath);
     const testCode = new TestCode(sourceCode, moduleLink);
+    const data = await testCode.getImportedIdentifiers(projectMemory);
+    expect(data.isSuccess).toBe(true);
+    testModule.addIdentifiers(data.getValue())
+
+    const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
+    expect(identifiers.isSuccess).toBe(true)
+});
+
+test('Import with type as first node', async () => {
+    await putFuncModule(reflect.nodeJsExt);
+    await putFuncModule(reflect.nodeJsExt, "./customType.ts");
+    const testModule = getEmptyModule(moduleLink.toFilePath);
+    const testCode = new TestCode(genericTypeCode, moduleLink);
     const data = await testCode.getImportedIdentifiers(projectMemory);
     expect(data.isSuccess).toBe(true);
     testModule.addIdentifiers(data.getValue())
