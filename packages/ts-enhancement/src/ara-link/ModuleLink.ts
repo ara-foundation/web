@@ -17,6 +17,7 @@
     modulePathToAraLinks = (modulePath): AraLink[]
 
  */
+import PathModule from "node:path"
 import { PackageURL } from "packageurl-js";
 import { fileURLToPath, pathToFileURL } from "url";
 import { Result } from "../index.js";
@@ -33,9 +34,10 @@ export class ModuleLink {
 
     private constructor() {}
 
-    public static newPackageURL(namespace: string | undefined, name: string, absolutePath: ModuleLink, subpath?: string): ModuleLink {
+    public static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string): ModuleLink {
         const moduleLink = new ModuleLink();
-        moduleLink._internal = new PackageURL("npm", namespace, name, version, {absolutePath: absolutePath.moduleURL}, subpath);
+        const qualifier = absolutePath === undefined ? undefined : {absolutePath: absolutePath.moduleURL};
+        moduleLink._internal = new PackageURL("npm", namespace, name, version, qualifier, subpath);
         return moduleLink;
     }
 
@@ -109,5 +111,24 @@ export class ModuleLink {
 
         return Result.fail(`Unsupported module URL, the schema is unsupported by ModuleLink`)
     }
+
+    /**
+     * Converts the import clauses, such as the last quoted string in `import {data} from 'import clause'`
+     * to the package url. Optionally, pass the absolute path as the package urls qualifier.
+     * @param importClause 
+     * @param absPath 
+     * @returns {ModuleLink} A PackageURL from the import clause
+     */
+    public static fromImportClause = (importClause: string, absPath?: ModuleLink): ModuleLink => {
+        let [possibleNamespaceOrName, name, ...subDirs] = importClause.split(PathModule.sep);
+
+        const subPath = subDirs.length === 0 ? undefined : subDirs.join(PathModule.sep);
+        name = name === undefined || name.length === 0 ? possibleNamespaceOrName : name;
+        const namespace = possibleNamespaceOrName === name ? undefined : possibleNamespaceOrName;
+            
+        const moduleLink = ModuleLink.newPackageURL(namespace, name, absPath, subPath);
+        return moduleLink;
+    }
+
 }
 
