@@ -1,0 +1,15 @@
+---
+import Welcome from '../components/Welcome.astro';
+import Layout from '../layouts/Layout.astro';
+
+import { type Page } from "@ara-web/reflect-astro-ext";
+import Reflect from "../scripts/setup-reflect";
+
+const pages = await Reflect.get<Page>("pages");
+console.log(`Reflected pages:`)
+console.log(pages)
+---
+
+<Layout>
+	<Welcome />
+</Layout>
