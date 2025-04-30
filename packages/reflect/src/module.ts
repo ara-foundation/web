@@ -1,6 +1,6 @@
 import PathModule from "node:path"
-import { readFile, stat } from "node:fs/promises";
-import { Result, ModuleLink } from "@ara-web/ts-enhancement";
+import { readFile, readFileSync, statSync, writeFileSync } from "node:fs";
+import { Result, ModuleLink, OkResult } from "@ara-web/ts-enhancement";
 
 /**
  * Defualt Module Categories
@@ -32,13 +32,21 @@ export class FilePath {
         return path.replace("../", "").replace("./", "").replace("@", "/src/")
     }
 
+    public static isFileExtensionExist = (filePath: string|undefined): boolean => {
+        if (filePath === undefined) {
+            return false;
+        }
+        let extension = PathModule.extname(filePath)
+        return (extension.length !== 0);
+    }
+
     /**
      * Detects the file type by the file extension, 
      * if not supported file then returns error.
      * @param filePath the full path to the file within the Ara Web
      * @returns {FileExtension}
      */
-    public static getFileExtension = (filePath: string|undefined, supportedExtensions: string[]): Result<string> => {
+    public static getFileExtension = (filePath: string|undefined, supportedExtensions?: string[]): Result<string> => {
         if (filePath === undefined) {
             return Result.fail(`The filepath is undefined`, `Are you sure your ModuleLink has the subpath?`)
         }
@@ -47,6 +55,9 @@ export class FilePath {
             return Result.fail(`The file path has no file extension`, `Pass the corrent name to support ${filePath}`)
         }
 
+        if (supportedExtensions === undefined) {
+            return Result.ok(extension);
+        }
         if (supportedExtensions.includes(extension)) {
             return Result.ok(extension);
         }
@@ -62,12 +73,12 @@ export class FilePath {
      * @param filePath 
      * @returns 
      */
-    public static getFileName = async (filePath: string|undefined, includeExt: boolean = false): Promise<Result<string>> => {
+    public static getFileName = (filePath: string|undefined, includeExt: boolean = false): Result<string> => {
         if (filePath === undefined) {
             return Result.fail(`File path is empty`, `Please pass the correct file name`);
         }
 
-        if (await this.isDirectory(filePath)) {
+        if (this.isDirectory(filePath)) {
             return Result.fail(`The path is directory`, `The '${filePath}' is directory in the file system, no file name there`)
         }
 
@@ -87,9 +98,9 @@ export class FilePath {
         return PathModule.isAbsolute(dirOrFilePath);
     }
 
-    public static isDirectory = async (filePath: string): Promise<boolean> => {
+    public static isDirectory = (filePath: string): boolean => {
         try {
-            const stats = await stat(filePath);
+            const stats = statSync(filePath);
             return stats.isDirectory();
         } catch (_) {
             return false;
@@ -101,16 +112,16 @@ export class FilePath {
      * Otherwise, return the file's .
      * @param dirOrfilePath 
      */
-    public static getDirectory = async (dirOrfilePath: string): Promise<string> => {
-        if (await this.isDirectory(dirOrfilePath)) {
+    public static getDirectory = (dirOrfilePath: string): string => {
+        if (this.isDirectory(dirOrfilePath)) {
             return dirOrfilePath;
         }
 
         return PathModule.dirname(dirOrfilePath);
     }
 
-    public static getFileAbsolutePath = async(filePath: string, filePathFrom: string): Promise<ModuleLink> => {
-        return ModuleLink.newFileURL(PathModule.resolve(await this.getDirectory(filePathFrom), filePath));
+    public static getFileAbsolutePath = (filePath: string, filePathFrom: string): ModuleLink => {
+        return ModuleLink.newFileURL(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
     }
 
     public static join = (segments: string[]): string => {
@@ -123,13 +134,13 @@ export class FilePath {
      * checks the file system. The file must not be a directory also.
      * @param moduleLink 
      */
-    public static isFileExist = async (moduleLink: ModuleLink): Promise<boolean> => {
+    public static isFileExist = (moduleLink: ModuleLink): boolean => {
         if (!moduleLink.isFileURL) {
             return false;
         }
 
         try {
-            const stats = await stat(moduleLink.toFilePath);
+            const stats = statSync(moduleLink.toFilePath);
             return stats.isFile();
         } catch (_) {
             return false;
@@ -137,12 +148,26 @@ export class FilePath {
     }
 
     /**
+     * Writes the file content, to a new file.
+     * @param filePath absolute file path.
+     * @param fileContent data to write.
+     */
+    public static postFileContent = (filePath: string, fileContent: string): OkResult => {
+        try {
+            writeFileSync(filePath, fileContent)
+            return OkResult.ok();
+        } catch (e) {
+            return OkResult.fail(`Failed to write file at '${filePath}'`, `${e}`)
+        }
+    }
+
+    /**
      * Reads the file content
      * @param filePath 
      */
-    public static getFileContent = async (filePath: string): Promise<Result<string>> => {
+    public static getFileContent = (filePath: string): Result<string> => {
         try {
-            const sourceBuffer = await readFile(filePath);
+            const sourceBuffer = readFileSync(filePath);
             const source = sourceBuffer.toString();
 
             return Result.ok(source);
