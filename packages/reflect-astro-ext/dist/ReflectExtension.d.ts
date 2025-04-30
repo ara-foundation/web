@@ -1,4 +1,4 @@
-import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory, type SingleRecord } from "@ara-web/reflect";
 import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
 import { type Page } from "./index.js";
 /**
@@ -27,16 +27,14 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
     get moduleCategories(): string[];
     get rootDir(): string;
     get srcDir(): string;
-    putPackage(_: ImportedRecords & {
-        importClause: string;
-    }): Promise<Result<ModuleLink>>;
+    putPackage(_: SingleRecord): Promise<Result<ModuleLink>>;
     /**
      * Put the modules, the Astro Framework's Reflect will require the modules
      * to be in the `this.srcDir`.
      * @param importedRecords
      * @returns
      */
-    putModules(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>>;
+    putModules(params: ImportedRecords | SingleRecord): Promise<Result<ModuleLink[]>>;
     watchModules: (autoImporter: AutoImporter) => Promise<void>;
     private _autoPut;
     /**

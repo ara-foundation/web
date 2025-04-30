@@ -5,6 +5,4 @@ export { CodeLevel } from "./code-level/index.js";
 export { PageLevel } from "./page-level/index.js";
 export { ComponentLevel } from "./component-level/index.js";
 export { ModuleLink } from "@ara-web/ts-enhancement";
-import { ReflectAstroFramework as ReflectExtension } from "./ReflectExtension.js";
-export declare const ReflectAstroFramework: typeof ReflectExtension;
-export default ReflectExtension;
+export { ReflectAstroFramework } from "./ReflectExtension.js";
