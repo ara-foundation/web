@@ -1,4 +1,3 @@
-import PathModule from "node:path"
 import { 
     EnumTraits,
     OkResult, 
@@ -23,12 +22,20 @@ import { ModuleCategory } from "./module.js";
  */
 export class NodejsReflectExtension implements ExtensionInterface {
     private _moduleLink: ModuleLink;
+    /**
+     * Link such as pkg:npm/lodash -> pkg:npm/lodash?absolutePath=file:///...
+     */
+    private _moduleFileSystemLinks: {[key: ModuleURL]: ModuleURL} = {}
     private _moduleMemories: ModuleMemories<unknown> = {};
     private _autoImporter?: AutoImporter;
 
     constructor() {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-nodejs-ext", fileModuleLink)
+    }
+
+    public getModuleWithFileExtensions(_: ModuleLink): ModuleLink[] {
+        return [];
     }
     
     public get operatorId(): ModuleLink {
@@ -49,20 +56,17 @@ export class NodejsReflectExtension implements ExtensionInterface {
 
     public putPackage = async(importedRecords: ImportedRecords & {importClause: string}): Promise<Result<ModuleLink>> => {
         for (let filePath in importedRecords.records) {
-            const absPath = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(absPath))) {
+            const absPath = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(absPath))) {
                 return Result.fail(`FilePath.isFileExist('${absPath.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`)
             }
 
-            let [possibleNamespaceOrName, name, ...subDirs] = importedRecords.importClause.split("/");
-
-            const subPath = subDirs.length === 0 ? undefined : PathModule.join(...subDirs);
-            name = name === undefined || name.length === 0 ? possibleNamespaceOrName : name;
-            const namespace = possibleNamespaceOrName === name ? undefined : possibleNamespaceOrName;
-            
-            const moduleLink = ModuleLink.newPackageURL(namespace, name, absPath, subPath);
+            const moduleLink = ModuleLink.newPackageURLFromImportClause(importedRecords.importClause, absPath);
             this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
             
+            const simpleLink = ModuleLink.newPackageURLFromImportClause(importedRecords.importClause);
+            this._moduleFileSystemLinks[simpleLink.moduleURL] = moduleLink.moduleURL
+
             return Result.ok(moduleLink);
         }
         return Result.fail(`No record to put in`, `Please pass the correct node`);
@@ -71,8 +75,8 @@ export class NodejsReflectExtension implements ExtensionInterface {
     public putModules = async(importedRecords: ImportedRecords): Promise<Result<ModuleLink[]>> => {
         const moduleLinks: ModuleLink[] = [];
         for (let filePath in importedRecords.records) {
-            const moduleLink = await FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
-            if (!(await FilePath.isFileExist(moduleLink))) {
+            const moduleLink = FilePath.getFileAbsolutePath(filePath, importedRecords.importingFilePath);
+            if (!(FilePath.isFileExist(moduleLink))) {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importingFilePath}' locates to a file`)
             }
 
@@ -109,7 +113,11 @@ export class NodejsReflectExtension implements ExtensionInterface {
         if (!this.isModuleExist(moduleLink)) {
             return Result.errorCode404([this.moduleLink.moduleURL], `this.isModuleExist()`, `The link: ${moduleLink}`)
         }
-        return Result.ok(this._moduleMemories[moduleLink.moduleURL] as ModuleMemory<T>);
+        let module = this._moduleMemories[moduleLink.moduleURL] as ModuleMemory<T>;
+        if (module === undefined) {
+            module = this._moduleMemories[this._moduleFileSystemLinks[moduleLink.moduleURL]] as ModuleMemory<T>;
+        }
+        return Result.ok(module)
     }
 
     public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
@@ -124,7 +132,13 @@ export class NodejsReflectExtension implements ExtensionInterface {
 
     public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
-        return this._moduleMemories[url] !== undefined;
+        if (this._moduleMemories[url] !== undefined) {
+            return true;
+        }
+        if (this._moduleFileSystemLinks[url] !== undefined) {
+            return true;
+        }
+        return false;
     }
 
     public get moduleCategories(): string[] {
