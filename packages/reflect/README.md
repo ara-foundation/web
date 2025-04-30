@@ -6,55 +6,167 @@ Reflect package turns the website into the ontological JSON and vice versa in th
 Testing from the reflect root:
 > pnpm test -r ./
 
-## Getting started
-Since, Reflect is a separated package, but aims to reflect another package,
-We need to let know reflect which package modules are available and which are not.
+## Tutorial
+For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks.
 
-In the project that you want to reflect:
+```bash
+pnpm create astro@latest ./sample-app
+cd ./sample-app
+```
+Pick the options you wish during the interactive installation. 
+Then, install *@ara-web/reflect* package:
+
+```bash
+pnpm add @ara-web/reflect @ara-web/reflect-astro-ext
+```
+
+The `Reflect` package knows how to reflect on typescript, javascript modules. Additionally we add `Astro Extension`, a reflect's plugin that
+allows understanding astro's file structure, as well as
+working with the `.astro` files. And for example we created the astro based sample website.
+
+Our installation process is ready. 
+Now, we need to setup Reflect, describing which modules
+in the file system to change.
+
+### Setup
+Create a script at `src/scripts/setup-reflect.ts`:
 
 ```typescript
-import { Reflect, ModuleType } from "@ara-web/reflect";
+import { Reflect } from "@ara-web/reflect"
+import { ReflectAstroFramework } from "@ara-web/reflect-astro-ext";
 
-const pageGlobs = import.meta.glob("../pages/**/*.{js|astro|jsx}");
-const componentGlobs = import.meta.glob("../components/**/*.{js|astro|jsx}")
-const layutGlobs = import.meta.glob("../layouts/**/*.{js|astro|jsx}")
-const nodeJsGlobs = import.meta.glob(["node_modules/package/index.cjs"])
+const astroReflect = new ReflectAstroFramework();
+const reflect = new Reflect({extensions: [atroReflect]});
 
-Reflect.putGlobs({
-    ModuleType.Nodejs: nodeJsGlobs,
-    // the remaining...
+```
+We create instance of `Reflect` class with the `ReflectAstroFramework` as it's extension. The extension will allow reflecting `.astro` files.
+It also exposes the Astro Ontology.
+
+Let's first packages that Reflect could analyze.
+
+```typescript
+// Letting know about NodeJS modules to digest by Reflect.
+let importModuleClause = "@ara-web/reflect";
+let module = await import(importModuleClause);
+let importLink = await reflect.nodeJsExt.putPackage({importModuleClause, module});
+console.log(`Reflect link:`)
+console.log(importLink);
+
+importModuleClause = "@ara-web/reflect-astro-ext";
+module = await import(importModuleClause);
+importLink = await reflect.nodeJsExt.putPackage({importModuleClause, module});
+console.log(`Astro Framework Reflect link:`)
+console.log(importLink);
+
+```
+Here, we only support "@ara-web/reflect". Reflect has the 
+built in `ReflectNodeJsExtension` extension. 
+This extension supports typescript and javascript modules.
+As well list of Nodejs features, modules that user could use.
+
+Using built in nodejs extension, we tell to Reflect that
+project uses the above packages. Otherwise, if Reflect during
+parsing sees `import { data } from "another module"`,
+then it will not know, what's that module, since you didn't tell him.
+
+> Without your permission, it will never goes to the filesystem.
+> So you need to give the permission explicitly.
+> It guarantees the security.
+
+Then, we need to know the Astro Reflecting extension about
+Astro's data in our filesystem, so let's continue adding the next piece of code into our setup script.
+
+```typescript
+// Support the Astro Modules
+const records = import.meta.glob("../**/*.{ts,astro,svg}", {eager: true});
+records["./setup-reflect.ts"] = await import("./setup-reflect")
+const importMetaFilename = import.meta.filename;
+const importedModules = await astroReflect.putModules({
+    records, importMetaFilename
 })
+console.log(`The imported modules:`)
+console.log(importedModules)
 
 ```
 
-The `Reflect.putGlobs()` static method registers all the files required for the Reflect package.
+For importing the bulk of data, we use Astro's built in feature, which 
+in itself provided by `vite` plugin. The `glob` will load
+modules that match the regular expression. We simply said
+give me a list of all typescript, astro and SVG files in the `src` directory
+recursively.
 
-You could update it multiple times, which is recommended during the development stage. Since, Memory cache will remove the glob if it removed
-in the directory. 
+> Vite can not import the module where `import.meta.glob` called.
+Therefore, we add it manually.
 
-To make it consisted, Memory has an adapter that you can inject it too
-which will update everytime whenever a necessary method is invoked.
+We then post the modules including the current file name. Reflect uses
+the file you privded and builds the absolute path of the imports.
+
+Finally, at the end of the script type: 
 
 ```typescript
-import { Memory, type ModuleGlobs } from "@ara-web/reflect";
-
-Memory.setAutoGlobRetreiver(globImporter);
-
-const globImporter = (): ModuleGlobs => {
-    const pageGlobs = import.meta.glob("../pages/**/*.{js|astro|jsx}");
-    const componentGlobs = import.meta.glob("../components/**/*.{js|astro|jsx}")
-    const layutGlobs = import.meta.glob("../layouts/**/*.{js|astro|jsx}")
-    const nodeJsGlobs = import.meta.glob(["node_modules/package/index.cjs"])
-
-    const allGlobs: ModuleGlobs = {
-        [ModuleType.Nodejs]: nodeJsGlobs,
-        // the remaining...
-    };
-
-    return allGlobs;
-}
+export default reflect;
 ```
 
+We can use our reflect in the page.
+
+### Usage
+> Test the entire tutorial by following the steps.
+
+Let's open the page at `src/pages/index.astro`, and
+add the following lines in the frontmatter's end.
+
+> Frontmatter is the Typescript code between `---` and `---`.
+
+```typescript
+// ... top of frontmatter
+import type { Page } from '@ara-web/reflect-astro-ext';
+import Reflect from "../scripts/setup-reflect"
+
+const pages = await Reflect.get<Page>("pages");
+console.log(`Loaded pages from reflect:`)
+console.log(pages);
+---
+<Layout>
+	<Welcome />
+</Layout>
+
+```
+
+The above example will print all the pages in your console as the JSON.
+
+Done. Congratulations. Now, let's continue on showing the JSON on the browser.
+
+### Auto Module Imports
+Sometimes, during the development, we need to update the data in live.
+For example, when we add a new component, we edited the page etc.
+
+But Reflect doesn't know about any new files since it already loaded what we asked for.
+
+To automatically update the Reflect's memory to match the filesystem,
+Reflect has a useful function: `Reflect.postAutoImporter()`:
+
+In the `src/scripts/reflect.ts` replace the following:
+
+```typescript
+const modules = import.meta.glob("src/**/*.{js|astro|jsx}");
+reflect.postModules(astroReflect.getCategorizedModuleData(modules));
+```
+
+With the auto importer:
+
+```typescript
+import { CategorizedModules } from "@ara-web/reflect"
+
+const astroImporter = (): Record<string, unknown> => {
+    return import.meta.glob("src/**/*.{js|astro|jsx}");
+}
+
+reflect.postAutoImporter({recordsGetter: astroImporter, categorizer: astroReflect});
+```
+
+Whenever you call `reflect.get()` the reflect will automatically update the memory by reloading everything from the file system.
+Including addition of the new files, removing deleted files, or updating
+the files if its updated.
 # Architecture or how it works?
 The primary reflection is exposed through `Reflect` class. 
 To reflect your app, use the instance of `Reflect`, by calling `reflect.getPages()` or `reflect.getComponents()`.
