@@ -1,0 +1,35 @@
+/**
+ * Testing the Reflect itself
+ */
+import { FilePath } from "../src/module.js";
+import { Reflect } from "../src/Reflect.js"
+import { expect, test } from "vitest";
+import { getEmptyModule, getProjectMemory, putFuncModule } from "./shared.js";
+import { Code } from "../src/code-level/Code.js";
+
+class TestCode extends Code {
+}
+
+const sourceCode = 
+    `import fooBar from "./funcs.ts"` 
+    + `import { fooBar as fooBarFunc, type CustomType as FooBarCustomType } from "./funcs.ts"` 
+    + `fooBar("medet", "ahmetson")` 
+    + `import CustomType from "./customType.ts"`
+;
+const moduleLink = FilePath.getFileAbsolutePath("./code-level.test.ts", import.meta.filename);
+const reflect = new Reflect();
+const projectMemory = getProjectMemory(reflect.nodeJsExt);
+
+test('Simply creating a code', async () => {
+    await putFuncModule(reflect.nodeJsExt);
+    await putFuncModule(reflect.nodeJsExt, "./customType.ts");
+    const testModule = getEmptyModule(moduleLink.toFilePath);
+    const testCode = new TestCode(sourceCode, moduleLink);
+    const data = await testCode.getImportedIdentifiers(projectMemory);
+    expect(data.isSuccess).toBe(true);
+    testModule.addIdentifiers(data.getValue())
+
+    const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
+    expect(identifiers.isSuccess).toBe(true)
+});
+

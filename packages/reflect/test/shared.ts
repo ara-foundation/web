@@ -82,15 +82,15 @@ export const getProjectMemory = (modOps: MemoryOperations): ProjectMemory => {
   return projectMemory;
 }
 
-export const getEmptyModule = (): ModuleMemory<unknown> => {
-  const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
+export const getEmptyModule = (filePath: string = import.meta.filename): ModuleMemory<unknown> => {
+  const fileModuleLink = ModuleLink.newFileURL(filePath);
   const moduleLink = ModuleLink.newPackageURL("reflect", "test", fileModuleLink, modulePath);
   return new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, undefined);
 }
 
-export const putFuncModule = async (ext: ExtensionInterface): Promise<ExtensionInterface> => {
-  const glob = await import(modulePath);
-  const importedRecords: ImportedRecords = {records: {[modulePath]: glob}, importingFilePath: import.meta.filename};
+export const putFuncModule = async (ext: ExtensionInterface, _modulePath: string = modulePath): Promise<ExtensionInterface> => {
+  const glob = await import(_modulePath);
+  const importedRecords: ImportedRecords = {records: {[_modulePath]: glob}, importingFilePath: import.meta.filename};
 
   const putted = await ext.putModules(importedRecords)
   expect(putted.isSuccess).toBe(true);

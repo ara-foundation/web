@@ -14,3 +14,5 @@ export enum Sex {
 export type CustomType = {
     name: string; sex: number;
 }
+
+export default fooBar;
