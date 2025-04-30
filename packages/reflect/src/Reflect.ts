@@ -28,8 +28,8 @@ export class Reflect {
         this._memory.putMemoryOperations(...this._extensions);
     }
 
-    public get nodeJsExt(): ExtensionInterface {
-        return this._extensions[0];
+    public get nodeJsExt(): NodejsReflectExtension {
+        return this._extensions[0] as NodejsReflectExtension;
     }
 
     //****************************************************************
