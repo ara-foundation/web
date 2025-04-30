@@ -30,6 +30,4 @@ export {
 
 export { ModuleLink } from "@ara-web/ts-enhancement";
 
-import { ReflectAstroFramework as ReflectExtension } from "./ReflectExtension.js"
-export const ReflectAstroFramework = ReflectExtension;
-export default ReflectExtension;
+export { ReflectAstroFramework } from "./ReflectExtension.js"
