@@ -18,7 +18,7 @@ export enum AstNodeType {
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
-export type AstIdentifiers = {[key: string]: AstNode|AraLink<string>};
+export type AstIdentifiers = {[key: string]: AstNode};
 
 export type AstNodeValidator = (astNode: AstNode) => boolean;
 
@@ -165,8 +165,18 @@ export class AstNode {
         return this._nodeMemory[index];
     }
 
-    public deleteMemoryData(): void {
-        this._nodeMemory = undefined;
+    public deleteMemoryData(index?: number): boolean {
+        if (index === undefined) {
+            this._nodeMemory = undefined;
+            return true;
+        }
+
+        if (index < 0 || index >= this.memoryDataLength()) {
+            return false;
+        }
+
+        this._nodeMemory = this._nodeMemory?.filter((_, nodeIndex) => (nodeIndex !== index));
+        return true;
     }
 
     //----------------------------------------------------------
