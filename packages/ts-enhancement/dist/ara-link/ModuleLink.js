@@ -28,10 +28,15 @@ const version = undefined;
 export class ModuleLink {
     _internal;
     constructor() { }
-    static newPackageURL(namespace, name, absolutePath, subpath) {
+    static newPackageURL(namespace, name, absolutePath, subpath, schema = "npm") {
         const moduleLink = new ModuleLink();
         const qualifier = absolutePath === undefined ? undefined : { absolutePath: absolutePath.moduleURL };
-        moduleLink._internal = new PackageURL("npm", namespace, name, version, qualifier, subpath);
+        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifier, subpath);
+        return moduleLink;
+    }
+    static newPackageURLWithQualifiers(namespace, name, qualifiers, subPath, schema = "npm") {
+        const moduleLink = new ModuleLink();
+        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifiers, subPath);
         return moduleLink;
     }
     static newFileURL(filePath) {
@@ -71,6 +76,9 @@ export class ModuleLink {
             }
         }
         return fileURLToPath(this.moduleURL);
+    }
+    get toPkgURL() {
+        return this._internal;
     }
     static fromModuleURL(moduleURL) {
         if (moduleURL.startsWith('pkg:')) {

@@ -18,11 +18,11 @@
 
  */
 import PathModule from "node:path"
-import { PackageURL } from "packageurl-js";
+import { PackageURL, type PurlQualifiers } from "packageurl-js";
 import { fileURLToPath, pathToFileURL } from "url";
 import { Result } from "../index.js";
 
-export type ModuleURL = `pkg:npm${string}` | `file://${string}`;
+export type ModuleURL = `pkg:${string}` | `file://${string}`;
 
 const version = undefined;
 
@@ -34,10 +34,16 @@ export class ModuleLink {
 
     private constructor() {}
 
-    public static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string): ModuleLink {
+    public static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string, schema: string = "npm"): ModuleLink {
         const moduleLink = new ModuleLink();
         const qualifier = absolutePath === undefined ? undefined : {absolutePath: absolutePath.moduleURL};
-        moduleLink._internal = new PackageURL("npm", namespace, name, version, qualifier, subpath);
+        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifier, subpath);
+        return moduleLink;
+    }
+
+    public static newPackageURLWithQualifiers(namespace: string, name: string, qualifiers: PurlQualifiers, subPath?: string, schema: string = "npm"): ModuleLink {
+        const moduleLink = new ModuleLink();
+        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifiers, subPath);
         return moduleLink;
     }
 
@@ -84,6 +90,10 @@ export class ModuleLink {
             }
         }
         return fileURLToPath(this.moduleURL);
+    }
+
+    public get toPkgURL(): PackageURL {
+        return this._internal as PackageURL;
     }
 
     public static fromModuleURL(moduleURL: ModuleURL): Result<ModuleLink> {

@@ -1,3 +1,4 @@
+import { ModuleLink } from "./ModuleLink.js";
 export declare const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules
@@ -9,7 +10,7 @@ export declare class AraLink<T> {
     private _slugs;
     private _resource;
     private _properties;
-    constructor(protocol: string, resource: string | T, slugsOrProperties?: string[] | object, properties?: object);
+    constructor(protocol: string, resource: string | T, slugs: string[], properties?: object);
     copyWithProperties: (properties: object) => AraLink<T>;
     isEmpty: () => boolean;
     get protocol(): string;
@@ -19,6 +20,8 @@ export declare class AraLink<T> {
     isPropertyExist(property: string): boolean;
     property: (property: string) => object | undefined;
     toString: () => string;
+    toModuleLink: () => ModuleLink;
+    static fromModuleLink: (moduleLink: ModuleLink) => AraLink<string>;
     lastSlug: () => string | undefined;
     /**
      * Returns true if the link is following the protocol and in the slugs path

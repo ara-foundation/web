@@ -1,4 +1,6 @@
 import { ArrayTraits } from "../traits/index.js";
+import { ModuleLink } from "./ModuleLink.js";
+import path from "path";
 export const NpmProtocol = "npm";
 /**
  * Ara Web protocol and Ara Web's Modules
@@ -10,12 +12,7 @@ export class AraLink {
     _slugs;
     _resource;
     _properties;
-    constructor(protocol, resource, slugsOrProperties, properties) {
-        const slugs = slugsOrProperties === undefined ? undefined :
-            Array.isArray(slugsOrProperties) ? slugsOrProperties : undefined;
-        properties = ((properties !== undefined) ? properties :
-            ((slugsOrProperties !== undefined) ? !Array.isArray(slugsOrProperties) ?
-                slugsOrProperties : undefined : undefined));
+    constructor(protocol, resource, slugs, properties) {
         this._protocol = protocol;
         this._resource = resource;
         if (slugs !== undefined) {
@@ -99,6 +96,43 @@ export class AraLink {
             properties = "?" + properties;
         }
         return url + properties;
+    };
+    toModuleLink = () => {
+        const schema = this._protocol;
+        const namespace = this._slugs.length === 0 ? "" : this._slugs[0];
+        const name = this._resource;
+        let subPath = "";
+        if (this._slugs !== undefined && this._slugs.length > 1) {
+            subPath = this.slugs.filter((_, index) => (index > 0)).join(path.sep);
+        }
+        const qualifiers = {
+            ...this._properties
+        };
+        const pkgUrl = ModuleLink.newPackageURLWithQualifiers(namespace, name, qualifiers, subPath, schema);
+        return pkgUrl;
+    };
+    static fromModuleLink = (moduleLink) => {
+        if (moduleLink.isFileURL) {
+            const filePath = moduleLink.toFilePath;
+            const resource = path.basename(filePath);
+            const slugs = path.dirname(filePath).split(path.sep);
+            return new AraLink("file", resource, slugs);
+        }
+        const pkgURL = moduleLink.toPkgURL;
+        const protocol = pkgURL.type;
+        const slugs = [];
+        if (pkgURL.namespace) {
+            slugs.push(pkgURL.namespace);
+        }
+        if (pkgURL.subpath) {
+            slugs.push(...pkgURL.subpath.split(path.sep));
+        }
+        const resource = pkgURL.name;
+        const araLink = new AraLink(protocol, resource, slugs);
+        if (pkgURL.qualifiers !== undefined) {
+            araLink._properties = pkgURL.qualifiers;
+        }
+        return araLink;
     };
     lastSlug = () => {
         if (this._slugs.length === 0) {
