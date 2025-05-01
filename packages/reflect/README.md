@@ -6,6 +6,31 @@ Reflect package turns the website into the ontological JSON and vice versa in th
 Testing from the reflect root:
 > pnpm test -r ./
 
+## Structure between Reflect, Ara Web and Ara.
+Reflect package is based on `SDS` architecutre.
+
+### SDS Architecture
+* Every file is called a script. (In reflect, we name it `module`, as it's Nodejs definition)
+* Every module can interact with it's siblings residing in the same directory.
+* Every module can interact with it's children. But not with the children of children.
+* Every module can interact with it's parents. But not with the parent of the parent.
+
+* Every group of modules are called a service. (In reflect, we name it 'package`, as it's Nodejs definition).
+* Every package can have extension packages. Extension may receive answer, but not reply.
+* Every package can have proxy packages. Proxy always return a reply.
+* Every package relationship (proxy, extension) are defined by the service interface that define proxy, and extension services. Any service that satisfy the service extension should be easily changeable.
+
+#### Reflect SDS
+Reflect package is the primary package. The reflect extension interface
+exposes the module parsing, module ontology, and module exposition.
+Between each other packages are interacting through `ModuleLink` links.
+
+Reflect proxy exposes the View, and injections.
+
+##### Reflect Extension interface, 
+The extensions's own extensions system allows for example (to use AI to generate description).
+Or to save the data outside.
+
 ## Tutorial
 For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks.
 
