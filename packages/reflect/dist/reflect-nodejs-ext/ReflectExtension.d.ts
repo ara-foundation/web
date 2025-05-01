@@ -19,7 +19,7 @@ export declare class NodejsReflectExtension implements ExtensionInterface {
     get description(): string;
     putPackage: ({ importModuleClause, module }: SingleRecord) => Promise<Result<ModuleLink>>;
     putModules: (params: ImportedRecords | SingleRecord) => Promise<Result<ModuleLink[]>>;
-    watchModules: (autoImporter: AutoImporter) => Promise<void>;
+    watchModules: (autoImporter: AutoImporter) => void;
     private _autoPut;
     getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];

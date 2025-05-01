@@ -96,7 +96,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
         return Result.ok(moduleLinks);
     }
 
-    public watchModules = async(autoImporter: AutoImporter) => {
+    public watchModules = (autoImporter: AutoImporter) => {
         this._autoImporter = autoImporter;
     }
 

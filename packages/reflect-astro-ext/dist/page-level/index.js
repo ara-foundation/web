@@ -135,6 +135,9 @@ let PageLevel = (() => {
                 [DEFAULT_SLOT]: []
             };
             for (let componentNode of uiContent.elements) {
+                if (componentNode.isText && componentNode.value.length === 0) {
+                    continue;
+                }
                 const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode);
                 if (identificationResult.isFailure) {
                     const err = Debug.error(`ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, identificationResult.errorDescription, componentNode);

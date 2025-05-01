@@ -145,6 +145,9 @@ export class ComponentLevel {
             return Result.ok(slots);
         }
         for (let child of element.children) {
+            if (child.isText && child.value.length === 0) {
+                continue;
+            }
             const astNode = child as AstroNode;
             const identifiedChild = await this.identifyAstroNode(moduleParts, memory, astNode)
             if (identifiedChild.isFailure) {

@@ -67,7 +67,7 @@ export class NodejsReflectExtension {
         }
         return Result.ok(moduleLinks);
     };
-    watchModules = async (autoImporter) => {
+    watchModules = (autoImporter) => {
         this._autoImporter = autoImporter;
     };
     _autoPut = async (_) => {

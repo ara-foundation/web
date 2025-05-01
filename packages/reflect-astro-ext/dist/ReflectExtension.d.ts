@@ -35,7 +35,7 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
      * @returns
      */
     putModules(params: ImportedRecords | SingleRecord): Promise<Result<ModuleLink[]>>;
-    watchModules: (autoImporter: AutoImporter) => Promise<void>;
+    watchModules: (autoImporter: AutoImporter) => void;
     private _autoPut;
     /**
      * @param moduleLink absolute path or a path relative to the `this.rootDir`

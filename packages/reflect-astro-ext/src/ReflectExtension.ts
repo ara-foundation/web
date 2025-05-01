@@ -8,7 +8,7 @@ import {
     FilePath,
     type SingleRecord
 } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL, Debug } from "@ara-web/ts-enhancement";
 import { 
     extractModuleCategory, 
     ModuleCategory, 
@@ -147,7 +147,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
         return Result.ok(moduleLinks);
     }
 
-    public watchModules = async(autoImporter: AutoImporter) => {
+    public watchModules = (autoImporter: AutoImporter) => {
         this._autoImporter = autoImporter;
     }
     
@@ -222,11 +222,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * @returns 
      */
     public beforeGet? = async (moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> => {
-        if (this._autoImporter !== undefined) {
-            const result = await this._autoPut(moduleCategory);
-            if (result.isFailure) {
-                return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription!);
-            }
+        const result = await this._autoPut(moduleCategory);
+        if (result.isFailure) {
+            return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription!);
         }
         
         if (moduleCategory === ModuleCategory.Page) {

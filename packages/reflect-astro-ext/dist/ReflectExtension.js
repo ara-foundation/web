@@ -1,5 +1,5 @@
 import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
+import { OkResult, Result, EnumTraits, ModuleLink, Debug } from "@ara-web/ts-enhancement";
 import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, FileExtension } from "./index.js";
 /**
  * ReflectExtension adds Astro Framework support.
@@ -107,7 +107,7 @@ export class ReflectAstroFramework {
         }
         return Result.ok(moduleLinks);
     }
-    watchModules = async (autoImporter) => {
+    watchModules = (autoImporter) => {
         this._autoImporter = autoImporter;
     };
     _autoPut = async (_) => {
@@ -172,11 +172,9 @@ export class ReflectAstroFramework {
      * @returns
      */
     beforeGet = async (moduleCategory, projectMemory) => {
-        if (this._autoImporter !== undefined) {
-            const result = await this._autoPut(moduleCategory);
-            if (result.isFailure) {
-                return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription);
-            }
+        const result = await this._autoPut(moduleCategory);
+        if (result.isFailure) {
+            return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription);
         }
         if (moduleCategory === ModuleCategory.Page) {
             const contents = await this.postPageContents(projectMemory);
