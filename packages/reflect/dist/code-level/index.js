@@ -1,5 +1,5 @@
 export { AstNode, AstNodeType } from "./ast-node.js";
-export { CodeLink } from "./CodeLink.js";
+export { ReflectLink } from "./ReflectLink.js";
 export { TsNode } from "./ts-node.js";
 export { Identifier } from "./idenitifier.js";
 export { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "./ast-node-data.js";

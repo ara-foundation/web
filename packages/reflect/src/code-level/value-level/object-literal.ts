@@ -10,7 +10,7 @@ import {
     type TypedData,
     AstNodeContext,
     ValueLevel,
-    CodeLink,
+    ReflectLink,
     type ValueLevelInterface
 } from "../index.js";
 
@@ -86,7 +86,7 @@ export class ObjectLiteral {
                 return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);
             }
 
-            if (typedData.data === undefined || CodeLink.isExpressionLink(typedData.data)) {
+            if (typedData.data === undefined || ReflectLink.isTsNodeLink(typedData.data)) {
                 typedData.data = {};
             }
 

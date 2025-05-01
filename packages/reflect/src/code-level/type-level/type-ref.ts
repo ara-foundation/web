@@ -7,7 +7,7 @@
  */
 import { TypeReferenceNode } from "ts-morph";
 import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
-import { Identifier, CodeLink, TsNode, type ValueType, TypeLevel } from "../index.js";
+import { Identifier, ReflectLink, TsNode, type ValueType, TypeLevel } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 
 export class TypeRef extends TsNode {
@@ -108,7 +108,7 @@ export class TypeRef extends TsNode {
             return Result.fail(err)
         }
 
-        const typeRefAraLink = CodeLink.linkToIdentifier(identifierNode.getText());
+        const typeRefAraLink = ReflectLink.linkToIdentifier(identifierNode.getText());
 
         if (this.isGenericRefType()) {
             const identifiedGenericValue = await this.identifyGenericRefValue(typeRefAraLink);

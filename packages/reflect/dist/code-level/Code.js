@@ -114,10 +114,8 @@ export class Code {
         }
         else {
             const filePaths = projectMemory.getModuleWithFileExtensions(absoluteImportPath);
-            Debug.log(`'${importClause}': doesn't exist in the file system as ${absoluteImportPath}.`);
             for (let filePath of filePaths) {
                 const moduleExists = projectMemory.isModuleExist(filePath);
-                Debug.log(`'${importClause}': as '${filePath}' with extension exist in the project memory? ${moduleExists}`);
                 if (moduleExists) {
                     return Result.ok(filePath);
                 }

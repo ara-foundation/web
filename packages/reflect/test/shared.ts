@@ -5,7 +5,7 @@ import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/
 import { AstNodeContext } from "../src/code-level/AstNodeContext.js";
 import { ProjectMemory } from "../src/ProjectMemory.js";
 import { ModuleMemory } from "../src/ModuleMemory.js";
-import { ExtensionInterface, ImportedRecords, MemoryOperations } from "../src/extension-interface.js";
+import { ExtensionInterface, ImportedRecords, MemoryOperations, SingleRecord } from "../src/extension-interface.js";
 import { ModuleCategory } from "../src/reflect-nodejs-ext/module.js";
 import { FilePath } from "../src/module.js";
 
@@ -121,12 +121,12 @@ export const getImportRecords = (): ImportedRecords => {
  * @param reflect 
  * @returns 
  */
-export const getSamplePackage = (): ImportedRecords & {importClause: string} => {
+export const getSamplePackage = (): SingleRecord => {
   const imported = import.meta.glob("packageurl-js", {eager: true});
 
   return {
-    records: imported,
+    module: Object.values(imported)[0],
     importMetaFilename: FilePath.getCurrentWorkingDir(),
-    importClause: 'packageurl-js'
+    importModuleClause: 'packageurl-js'
   }
 }

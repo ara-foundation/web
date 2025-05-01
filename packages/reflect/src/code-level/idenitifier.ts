@@ -5,7 +5,7 @@ import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";
 import { type ValueLevelInterface } from "./value-level-interface.js";
 import type { AstNodeContext } from "./AstNodeContext.js";
-import { CodeLink } from "./CodeLink.js";
+import { ReflectLink } from "./ReflectLink.js";
 import { ValueLevel } from "./value-level/index.js";
 
 /**
@@ -39,7 +39,7 @@ export class Identifier {
             return Result.ok({data: identifier.data, dataType: identifier.dataType})
         }
 
-        const exp = CodeLink.getExpressionResource(identifier.data);
+        const exp = ReflectLink.getResourceAsTsNode(identifier.data);
         
         const astNodeContext = parentNodeContext?.clone(identifier.getAllMemoryData(), [identifier.identifier!])
         const identifiedExp = await ValueLevel.identifyValue(exp!, {dataType: ValueTypeString.default}, astNodeContext!)

@@ -3,7 +3,7 @@ import { Code } from "../src/code-level/Code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
 import { AraLink, ModuleLink } from "@ara-web/ts-enhancement";
-import { CodeLink } from "../src/code-level/CodeLink.js";
+import { ReflectLink } from "../src/code-level/ReflectLink.js";
 import { Reflect } from "../src/Reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
 import type { TsNode } from "../src/code-level/ts-node.js";
@@ -75,13 +75,13 @@ test('Supports the variable declaration derived from the object decoupling', asy
   expectValidVariableNode(astNode, varName, expectedProps);
 
   // The Ast node's data must be a link to the identifier
-  expect(CodeLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
   expect((astNode.data as AraLink<string>).resource).toBe(varName)
 
   // The Ast node's binding should a property of the expression
   expect(astNode.memoryDataLength()).toEqual(1)
   expect(astNode.getMemoryData(0)?.identifier).toBe(varName)
-  expect(CodeLink.isExpressionLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
   expect(astNode.getMemoryData(0)?.nodeType).toBe(AstNodeType.Property)
   expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();  
 });
@@ -105,13 +105,13 @@ test('Supports the variable declaration by alias derived from the object decoupl
   expectValidVariableNode(astNode, varName, expectedProps);
 
   // The Ast node's data must be a link to the identifier
-  expect(CodeLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
   expect((astNode.data as AraLink<string>).resource).toBe(propertyName)
 
   // The Ast node's binding should a property of the expression
   expect(astNode.memoryDataLength()).toEqual(1)
   expect(astNode.getMemoryData(0)?.identifier).toBe(propertyName)
-  expect(CodeLink.isExpressionLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
   expect(astNode.getMemoryData(0)?.nodeType).toBe(AstNodeType.Property)
   expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
 });
@@ -136,7 +136,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   // Node Data
   const data = astNode.dataType as UnionTypeDeclaration;
   expect(data.unionLength).toEqual(2)
-  expect(CodeLink.isIdentifierLink(data.getUnion(0) as AraLink<string>)).toBe(true)
+  expect(ReflectLink.isIdentifierLink(data.getUnion(0) as AraLink<string>)).toBe(true)
   expect((data.getUnion(0) as AraLink<string>).resource).toEqual('Action')
   expect(data.getUnion(1)).toEqual(ValueTypeString.undefined)
 });
@@ -161,7 +161,7 @@ test('Supports the the variable declaration with the generic value', async () =>
   
   // Node Data
   const data = astNode.dataType as AraLink<string>;
-  expect(CodeLink.isIdentifierLink(data)).toBe(true)
+  expect(ReflectLink.isIdentifierLink(data)).toBe(true)
   expect(data.isPropertyExist(TypeLevel.GENERIC_VALUES_LINK_PROPERTY)).toBe(true);
   const genericProps = TypeLevel.linkPropertyToGenericValues(data);
   expect(genericProps).toHaveLength(1);
@@ -184,7 +184,7 @@ test('Supports the literal value assignment', async () => {
   // We don't check the result, as previous tests must ensure its passing
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   const context = getEmptyContext();
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -223,7 +223,7 @@ test('Supports the function call as variable value', async () => {
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined();
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -261,7 +261,7 @@ test('Supports the function call as variable value but mismatch the types', asyn
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.string)
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -295,7 +295,7 @@ test('Supports the function call without any argument', async () => {
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.string)
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -334,14 +334,14 @@ test('Supports the method call', async () => {
   let objAstNode = vars.getValue()[objName] as AstNode;
   expect(objAstNode.data).toBeInstanceOf(AraLink)
   expect(objAstNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(objAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(objAstNode.data)).toBe(true)
   moduleMemory.addIdentifiers({[objAstNode.identifier!]: objAstNode})
 
   // We don't check the result, as previous tests must ensure its passing
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.number)
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -380,7 +380,7 @@ test('Supports the spread assignment through enums', async () => {
   let profileAstNode = vars.getValue()[profileName] as AstNode;
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(profileAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -392,7 +392,7 @@ test('Supports the spread assignment through enums', async () => {
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   // Spread Assignment data lint
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -431,7 +431,7 @@ test('Supports the type from the imports', async () => {
   let profileAstNode = vars.getValue()[profileName] as AstNode;
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(profileAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -443,7 +443,7 @@ test('Supports the type from the imports', async () => {
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
   // Spread Assignment data lint
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
@@ -487,7 +487,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
   let profileAstNode = vars.getValue()[profileName] as AstNode;
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(profileAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -500,7 +500,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
   let astNode = vars.getValue()[varName] as AstNode;
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(astNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 });
 
 // Support with the UnionType
@@ -537,7 +537,7 @@ test('Supports the union types', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -581,7 +581,7 @@ test('Supports the intersected types', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -625,7 +625,7 @@ test('Supports the arrays through Array generic', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -671,7 +671,7 @@ test('Supports the arrays through Array literals', async () => {
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(Array.isArray(varAstNode.dataType)).toBe(true)
   expect((varAstNode.dataType as Array<any>)[0]).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -703,7 +703,7 @@ test('Supports the arrays with primitive types', async () => {
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(Array.isArray(varAstNode.dataType)).toBe(true)
   expect((varAstNode.dataType as Array<any>)[0]).toBe(ValueTypeString.string)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -750,7 +750,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -797,7 +797,7 @@ test('Supports the parenthesis', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   const context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -845,7 +845,7 @@ test('Supports the conditional expression', async () => {
   let varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   let context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);
@@ -886,7 +886,7 @@ test('Supports the conditional expression', async () => {
   varAstNode = vars.getValue()[varName] as AstNode;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeUndefined()
-  expect(CodeLink.isExpressionLink(varAstNode.data)).toBe(true)
+  expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
   context = new AstNodeContext([], moduleMemory.getIdentifiers(), projectMemory);

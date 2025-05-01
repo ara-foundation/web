@@ -1,5 +1,5 @@
 export { AstNode, AstNodeType, type AstIdentifiers, type TypedData, type AstNodeValidator, type GenericHandler } from "./ast-node.js";
-export { CodeLink } from "./CodeLink.js";
+export { ReflectLink } from "./ReflectLink.js";
 export { TsNode, type TsNodeValidator } from "./ts-node.js";
 export { Identifier } from "./idenitifier.js";
 export { type ValueType, TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType, type IdentifiedNodeDataType, type LiteralType } from "./ast-node-data.js";

@@ -1,5 +1,5 @@
 import { AraLink, Debug, Result } from "@ara-web/ts-enhancement";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, TsNode, AstNode, AstNodeContext, CodeLink } from "../index.js";
+import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, TsNode, AstNode, AstNodeContext, ReflectLink } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 import { TypeDeclaration as TypeDeclarationTraits } from "./type-declaration.js";
 export class TypeLevel {
@@ -148,7 +148,7 @@ export class TypeLevel {
      */
     static lintType = (node, parentNodeContext) => {
         if (node instanceof AraLink) {
-            if (!CodeLink.isIdentifierLink(node)) {
+            if (!ReflectLink.isIdentifierLink(node)) {
                 return Result.fail(`The node is an ara link, but doesn't link to the identifier`, `Please pass correct link or update TypeDeclaration.lintType() to support '${node.toString()}'`);
             }
             // const refNode = memory.identifierByName(node.resource)
@@ -370,7 +370,7 @@ export class TypeLevel {
     };
     // If the AstNode.data is AraLink
     static lintAraLinkData = (data, nodeContext) => {
-        if (!CodeLink.isIdentifierLink(data)) {
+        if (!ReflectLink.isIdentifierLink(data)) {
             return Result.fail(`isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`, `Only support the ara identifiers for now, update the lintTypeDeclarations()`);
         }
         const refIdentifier = data.resource;

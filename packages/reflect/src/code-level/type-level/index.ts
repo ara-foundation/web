@@ -8,7 +8,7 @@ import {
     TsNode,
     AstNode,
     AstNodeContext,
-    CodeLink,
+    ReflectLink,
     type IdentifiedNodeDataType,
     type ValueType,
     type AstIdentifiers
@@ -199,7 +199,7 @@ export class TypeLevel {
         parentNodeContext: AstNodeContext,
     ): Result<AstNode> => {
         if (node instanceof AraLink) {
-            if (!CodeLink.isIdentifierLink(node)) {
+            if (!ReflectLink.isIdentifierLink(node)) {
                 return Result.fail(`The node is an ara link, but doesn't link to the identifier`, `Please pass correct link or update TypeDeclaration.lintType() to support '${node.toString()}'`)
             }
             // const refNode = memory.identifierByName(node.resource)
@@ -504,7 +504,7 @@ export class TypeLevel {
         data: AraLink<string>,
         nodeContext: AstNodeContext,
     ): Result<TypedData> => {
-        if (!CodeLink.isIdentifierLink(data)) {
+        if (!ReflectLink.isIdentifierLink(data)) {
             return Result.fail(
                 `isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`,
                 `Only support the ara identifiers for now, update the lintTypeDeclarations()`

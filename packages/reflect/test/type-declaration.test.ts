@@ -5,7 +5,7 @@ import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeS
 import { ModuleMemory } from "../src/ModuleMemory.js";
 import { ProjectMemory } from "../src/ProjectMemory.js";
 import { AraLink, ModuleLink } from "@ara-web/ts-enhancement";
-import { CodeLink } from "../src/code-level/CodeLink.js";
+import { ReflectLink } from "../src/code-level/ReflectLink.js";
 import { BuiltInIdentifiers } from "../src/index.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
@@ -268,7 +268,7 @@ test('Support the generic types', async () => {
   expectValidTypeNode(astNode, varName, AraLink);
 
   // The Data
-  expect(CodeLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
   expect((astNode.data as AraLink<string>).resource).toEqual(genericName)
 
   // The generic data
@@ -489,7 +489,7 @@ test('Support the type that has another type in the reference defined later than
   expect(intersected.get("profession")).toEqual(ValueTypeString.string)
   expect(intersected.araLinks).toHaveLength(1)
 
-  expect(CodeLink.isIdentifierLink(intersected.araLinks[0])).toBe(true)
+  expect(ReflectLink.isIdentifierLink(intersected.araLinks[0])).toBe(true)
   expect((intersected.araLinks[0]).resource).toEqual(simpleVarName)
 
   // Lint

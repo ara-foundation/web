@@ -5,7 +5,7 @@
  */
 import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration } from "ts-morph";
 import { Debug, Result, AraLink } from "@ara-web/ts-enhancement";
-import { AstNode, AstNodeType, CodeLink, Identifier, TsNode, TypeLevel } from "../index.js";
+import { AstNode, AstNodeType, ReflectLink, Identifier, TsNode, TypeLevel } from "../index.js";
 export class VariableDeclaration extends TsNode {
     _tsNode;
     _publicFlag;
@@ -65,7 +65,7 @@ export class VariableDeclaration extends TsNode {
                 if (!(typedData.getValue().data instanceof AraLink)) {
                     return Result.fail(`When the variable declaration is an object binding pattern, it must have the assigned data`, `Please pass the variable assignment`);
                 }
-                if (!CodeLink.isExpressionLink(typedData.getValue().data)) {
+                if (!ReflectLink.isTsNodeLink(typedData.getValue().data)) {
                     return Result.fail(`When the variable declaration is an object bidning, the the AraLink must be link to the expression`, `Please pass the variable assignment to the expression`);
                 }
                 const data = typedData.getValue().data;
@@ -98,7 +98,7 @@ export class VariableDeclaration extends TsNode {
                     bindingNode.public = this._publicFlag;
                     bindingNode.constant = this._constantFlag;
                     bindingNode.putMemoryData(refNode);
-                    bindingNode.data = CodeLink.linkToIdentifier(refNode.identifier);
+                    bindingNode.data = ReflectLink.linkToIdentifier(refNode.identifier);
                     identifiers[bindingNode.identifier] = bindingNode;
                 }
                 return Result.ok(identifiers);
@@ -139,7 +139,7 @@ export class VariableDeclaration extends TsNode {
             else if (TsNode.isKeyword(child, "=")) {
                 j++;
                 child = children[j];
-                const expressionRefAraLink = CodeLink.linkToExpression(child);
+                const expressionRefAraLink = ReflectLink.linkToTsNode(child);
                 typedData.data = expressionRefAraLink;
             }
             else {

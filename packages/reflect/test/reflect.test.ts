@@ -6,6 +6,7 @@ import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-e
 import { Reflect } from "../src/Reflect.js"
 import { expect, test } from "vitest";
 import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage } from "./shared.js";
+import { Debug } from "@ara-web/ts-enhancement";
 
 test('Simply creating a reflect and trying to fetch data', async () => {
     const reflect = new Reflect();

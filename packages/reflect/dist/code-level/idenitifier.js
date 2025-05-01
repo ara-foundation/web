@@ -37,7 +37,7 @@ import { Result, ObjectTraits, AraLink } from "@ara-web/ts-enhancement";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import {} from "./value-level-interface.js";
-import { CodeLink } from "./CodeLink.js";
+import { ReflectLink } from "./ReflectLink.js";
 import { ValueLevel } from "./value-level/index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
@@ -76,7 +76,7 @@ let Identifier = (() => {
             if (!(identifier.data instanceof AraLink)) {
                 return Result.ok({ data: identifier.data, dataType: identifier.dataType });
             }
-            const exp = CodeLink.getExpressionResource(identifier.data);
+            const exp = ReflectLink.getResourceAsTsNode(identifier.data);
             const astNodeContext = parentNodeContext?.clone(identifier.getAllMemoryData(), [identifier.identifier]);
             const identifiedExp = await ValueLevel.identifyValue(exp, { dataType: ValueTypeString.default }, astNodeContext);
             if (identifiedExp.isFailure) {

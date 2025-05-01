@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, ObjectLiteralExpression } from "ts-morph";
 import { ObjectTraits, Result } from "@ara-web/ts-enhancement";
-import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString, TsNode, AstNodeContext, ValueLevel, CodeLink } from "../index.js";
+import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString, TsNode, AstNodeContext, ValueLevel, ReflectLink } from "../index.js";
 /**
  * Literal class identifies the object literals
  */
@@ -103,7 +103,7 @@ let ObjectLiteral = (() => {
                     typeof typedData.dataType !== "object") {
                     return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);
                 }
-                if (typedData.data === undefined || CodeLink.isExpressionLink(typedData.data)) {
+                if (typedData.data === undefined || ReflectLink.isTsNodeLink(typedData.data)) {
                     typedData.data = {};
                 }
                 typedData.data = { ...typedData.data, ...identifiedObjectElement.getValue().data };
