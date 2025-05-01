@@ -11,10 +11,9 @@
  *  - RPCs
  *  - Layouts
  */
-import type { ComponentNode, ExpressionNode } from "@astrojs/compiler/types";
 import { Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory } from "@ara-web/reflect";
-import { type Component, type Expression, type ModuleParts, type AstroNode } from "../index.js";
+import { type Component, type Expression, type ModuleParts, AstroNode, type Text, type Slots } from "../index.js";
 /**
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */
@@ -24,40 +23,22 @@ export declare class ComponentLevel {
      * @param {AstroNode} element
      * @returns {Component}
      */
-    static identifyHTMLElement: (element: AstroNode) => Component;
-    static identifyExpression: (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: ExpressionNode) => Promise<Result<Expression>>;
-    private static validateModuleParts;
+    static identifyHTMLElement: (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode) => Promise<Result<Component>>;
     /**
-     * Converts the module into a component or layout
-     * @param parts
-     * @param memory
-     * @returns
-     */
-    static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>) => Promise<Result<T>>;
-    /**
-     * Converts the module into a component
-     * @param parts
-     * @param memory
-     * @returns
-     */
-    static _identifyComponent: (parts: ModuleParts, memory: ModuleMemory<Component>) => Promise<Result<Component>>;
-    /**
-     * Extracts the Description from the Component Meta.
-     * Returns an empty string if no comment.
-    */
-    private static getDescriptionFromComment;
-    /**
-     * Identify each component within the page. All data of the page are represented as the components.
-     * @returns {Result<AraPage>}
-     */
-    private static identifySlots;
+ * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
+ * @param {AstroNode} element
+ * @returns {Component}
+ */
+    static identifyText: (element: AstroNode) => Text;
+    static identifyChildren: (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode) => Promise<Result<Slots>>;
+    static identifyExpression: (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode) => Promise<Result<Expression>>;
     /**
      * Converts the AstroNode into the Component
      * @param element Node that we need to identify
      * @returns {IdentifiedComponent}
      */
-    static identifyAstroNode: (uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode) => Promise<Result<Component | Expression>>;
-    static identifyAstroComponent: (memory: ModuleMemory<unknown>, element: ComponentNode) => Promise<Result<Component>>;
+    static identifyAstroNode: (uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode) => Promise<Result<Component | Expression | Text>>;
+    static identifyAstroComponent: (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode) => Promise<Result<Component>>;
     /**
      * Astro Framework's `ComponentNode` converted into ontological `Component`
      * @param node
@@ -65,13 +46,5 @@ export declare class ComponentLevel {
      * @param filePath
      * @returns
      */
-    static astroNodeToComponent: (node: ComponentNode, glob: unknown, filePath: string) => Result<Component>;
-    /**
-     * Converts the module into layout
-     * The identified components are pushed into the page's layout.
-     * Only the Components are supported, the nested layout or RPC calls inside the layout is prohibited.
-     * @returns {Result<Page>}
-     * @todo Include the nested components
-    */
-    private static _identifyLayout;
+    static astroNodeToComponent: (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, glob: unknown, filePath: string) => Promise<Result<Component>>;
 }

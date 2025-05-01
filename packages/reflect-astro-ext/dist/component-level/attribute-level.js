@@ -1,6 +1,44 @@
 import { Result, AraLink } from "@ara-web/ts-enhancement";
 import { TsNode } from "@ara-web/reflect/code-level";
 import {} from "../index.js";
+import { ReflectLink } from "@ara-web/reflect/code-level";
+export class AttributeLevel {
+    static getNodeAttributes(node) {
+        let attributes = {};
+        for (let attrNode of node.attributes) {
+            const identifiedAttr = this.identifyAttributeNode(attrNode);
+            if (identifiedAttr.isFailure) {
+                return Result.fail(`this.identifyAttributeNode('${attrNode.name}'): ${identifiedAttr.errorTitle}`, identifiedAttr.errorDescription);
+            }
+            attributes = { ...attributes, ...identifiedAttr.getValue() };
+        }
+        return Result.ok(attributes);
+    }
+    /**
+     * Find the page attribute's value of the component.
+     * Expected to be called by identifyComponent()
+     * @param {AttributeNode} attr expression in the attribute
+    */
+    static identifyAttributeNode = (attr, kind) => {
+        const identified = {};
+        const attrName = attr.name;
+        let attrValue = "";
+        if (kind !== undefined && attr.kind !== kind) {
+            return Result.fail(`Attribute kind mismatch`, `The '${attr.name}' attribute's is '${attr.kind}' of kind, when expected '${kind}' kind`);
+        }
+        if (attr.kind === "quoted") {
+            attrValue = attr.value;
+        }
+        else if (attr.kind === "expression") {
+            attrValue = ReflectLink.linkToExpression(attr.value, { identifier: attrName });
+        }
+        else {
+            return Result.fail(`Unsupported attribute kind '${attr.kind}'`, `Ara Web supports quoted and expression kind of attributes only`);
+        }
+        identified[attrName] = attrValue;
+        return Result.ok(identified);
+    };
+}
 /**
  * Look up and retreive the attribute by its name
  * @param {AstroNode} node that has the attributes of a sinle component
@@ -8,14 +46,12 @@ import {} from "../index.js";
  * @returns {AttributeNode}
 */
 export const attributeByName = (node, name) => {
-    if (node.type === "expression") {
-        return attributeByName(node.children[1]);
-    }
     for (let callAttr of node.attributes) {
         if (callAttr.name === name) {
             return callAttr;
         }
     }
+    return undefined;
 };
 /**
  * Find the page attribute's value of the component.

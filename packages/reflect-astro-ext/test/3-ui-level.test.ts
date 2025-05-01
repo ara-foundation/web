@@ -7,6 +7,7 @@ import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
 import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { Debug } from "@ara-web/ts-enhancement";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
@@ -33,6 +34,8 @@ test(`Make sure the that pages JSON are generated`, async () => {
         expect(identifiedSourceCode.isSuccess).toBe(true);
 
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
+        Debug.log(`Identified page:`)
+        Debug.log(page);
         expect(page.isSuccess).toBe(true);
     }
 })

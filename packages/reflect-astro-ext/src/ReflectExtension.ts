@@ -14,8 +14,8 @@ import {
     ModuleCategory, 
     ModuleIdentifier, 
     ModulePartitioner,
-    CodeLevel, PageLevel, ComponentLevel,
-    type Asset, type Component, type Layout, type Page, type Script,
+    CodeLevel, PageLevel,
+    type Asset, type Page, type Script,
     FileExtension
  } from "./index.js";
 
@@ -276,9 +276,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
      */
     private identifyComponentContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Component>(ModuleCategory.Component);
+        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Component);
         for (let moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition<Component>(moduleMemory);
+            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
             }
@@ -288,9 +288,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const data = await ComponentLevel.identify<Component>(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
             if (data.isFailure) {
-                return OkResult.fail(`ComponentLevel.identify<Component>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
             }
 
             moduleMemory.content = data.getValue();
@@ -303,9 +303,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
      */
     private postLayoutContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Layout>(ModuleCategory.Layout);
+        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Layout);
         for (let moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition<Layout>(moduleMemory);
+            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
             }
@@ -315,9 +315,9 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const data = await ComponentLevel.identify<Layout>(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
             if (data.isFailure) {
-                return OkResult.fail(`ComponentLevel.identify<Layout>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
             }
 
             moduleMemory.content = data.getValue();

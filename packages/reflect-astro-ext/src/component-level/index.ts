@@ -11,30 +11,23 @@
  *  - RPCs
  *  - Layouts
  */
-import type { ComponentNode, ExpressionNode } from "@astrojs/compiler/types";
-import { parse as commentParse} from "comment-parser";
 import { 
-    OkResult, 
     Result,
-    Debug,
-    ObjectTraits, 
-    StringTraits
+    ModuleLink,
 } from "@ara-web/ts-enhancement";
-import { ModuleMemory, FilePath } from "@ara-web/reflect";
+import { ModuleMemory } from "@ara-web/reflect";
+import { ReflectLink } from "@ara-web/reflect/code-level";
 import { 
-    FileExtension, 
     DEFAULT_SLOT, 
-    ElementType, 
     type Component, 
     type Expression, 
-    type Layout, 
-    type Slots,
     type ModuleParts,
-    type AstroNode,
-    type OntologoicalIdentifier,
-    ModuleCategory,
-    AstroNodeTraits
+    AstroNode,
+    type Text,
+    type Slots
 } from "../index.js";
+import { AttributeLevel } from "./attribute-level.js";
+import type { SlotElement } from "../ontology/index.js";
 
 // // TODO move to the app/interface/reflect to understand the RPCs
 // // The pages traits adds to the Page the following:
@@ -94,240 +87,136 @@ import {
 /**
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */
-@ObjectTraits.staticImplements<OntologoicalIdentifier>()
 export class ComponentLevel {
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
      * @param {AstroNode} element 
      * @returns {Component}
      */
-    public static identifyHTMLElement = (element: AstroNode): Component => {
+    public static identifyHTMLElement = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component>> => {
+        const attributes = AttributeLevel.getNodeAttributes(element);
+        if (attributes.isFailure) {
+            return Result.fail(`AttributeLevel.getNodeAttributes(): ${attributes.errorTitle}`, attributes.errorDescription!);
+        }
+        
         const component: Component = {
-            title: `<${StringTraits.capitalizeFirstLetter(element.type)}>`,
-            description: `The HTML Element`,
-            glob: element,
+            get: element,
             url: "",
-            type: ElementType.Component,
             slots: {
                 [DEFAULT_SLOT]: []
-            }
+            },
+            attributes: attributes.getValue(),
+            class: ModuleLink.newPackageURL("www", "html", undefined, element.name)
         }
 
-        return component;
+        const slots = await this.identifyChildren(moduleParts, memory, element);
+        if (slots.isFailure) {
+            return Result.fail(
+                `this.identifyChildren(): ${slots.errorTitle}`,
+                slots.errorDescription!
+            )
+        }
+        component.slots = slots.getValue();
+
+        return Result.ok(component);
     }
 
-    public static identifyExpression = async (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: ExpressionNode): Promise<Result<Expression>> => {
-        const elements: (Component|Expression)[] = [];
-        let prefix: string|undefined = undefined;
-        let suffix: string|undefined = undefined;
-        
+        /**
+     * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
+     * @param {AstroNode} element 
+     * @returns {Component}
+     */
+    public static identifyText = (element: AstroNode): Text => {
+        const text: Text = {
+            get: element,
+            url: "",
+            value: element.value
+        }
+
+        return text;
+    }
+
+
+    public static identifyChildren = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Slots>> => {
+        const slots: Slots = {
+            [DEFAULT_SLOT]: []
+        }
+        if (element.children.length === 0) {
+            return Result.ok(slots);
+        }
+        for (let child of element.children) {
+            const astNode = child as AstroNode;
+            const identifiedChild = await this.identifyAstroNode(moduleParts, memory, astNode)
+            if (identifiedChild.isFailure) {
+                return Result.fail(
+                    `this.identifyAstroNode(): ${identifiedChild.errorTitle}`,
+                    identifiedChild.errorDescription!
+                )
+            }
+
+            slots[DEFAULT_SLOT].push(identifiedChild.getValue())
+        }
+
+        return Result.ok(slots)
+    }
+
+    public static identifyExpression = async (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode): Promise<Result<Expression>> => {
+        const elements: SlotElement[] = [];
+        let prefix: string = "Expression {";
+        let suffix: string = "}";
+
         for (let i = 0; i< node.children.length; i++) {
             const child = node.children[i];
             if (prefix === undefined) {
-                if (child.type === "text") {
-                    prefix = child.value.trim();
+                if (child.isText) {
+                    prefix = child.value;
                     continue;
                 }
             }
             if (suffix === undefined) {
-                if (child.type === "text") {
-                    suffix = child.value.trim();
+                if (child.isText) {
+                    suffix = child.value;
                 }
             }
             
-            if (!AstroNodeTraits.isSupportedNode(child)) {
-                console.log(`The expression has a child which is not supported by Ara Web yet:`);
-                console.log(child);
-                continue;
-            }
-            const content = await this.identifyAstroNode(uiContent, memory, child as AstroNode);
+            const content = await this.identifyAstroNode(uiContent, memory, child);
             if (content.isFailure) {
                 return Result.fail(
-                    `Invalid first element of expression:(component(i='${i}')='${node.children[1].type}'): ${content.errorTitle}`,
-                    `Let the first element to be not something like comment or anything that is node NodeType: ${content.errorDescription}`,
+                    `expressionChild(${i}/${node.children.length-1}): this.identifyAstroNode(): ${content.errorTitle}`,
+                    content.errorDescription!,
                 )
             }
             elements.push(content.getValue());
         }
-        if (prefix === undefined) {
-            if (elements.length === 0) {
-                prefix = `Undefined syntax in the page, Ara Web doesn't support it`
-            } else {
-                prefix = elements[0].title
-            }
-        }
-        if (suffix === undefined) {
-            if (elements.length === 0) {
-                suffix = `Undefined syntax in the page, Ara Web doesn't support it`
-            } else if (elements.length > 1) {
-                suffix = elements[elements.length-1].title
-            } else {
-                suffix = ``
-            }
-        }
 
         const expression: Expression = {
-            type: ElementType.Expression,
-            description: ``,
             url: memory.moduleLink.moduleURL,
-            glob: node,
-            title: `<Expression>`,
+            get: node,
             prefix,
             suffix,
-            slots: {
-                [DEFAULT_SLOT]: elements,
-            }
+            slots: {[DEFAULT_SLOT]: elements},
         }
 
         return Result.ok(expression);
     }
 
-    private static validateModuleParts = (parts: ModuleParts): OkResult => {
-        if (parts.fileExtension !== FileExtension.Astro) {
-            return OkResult.fail("Unsupported page type", "Only .astro files should be in the pages")
-        }
-            
-        if (parts.elements === undefined) {
-            return OkResult.fail("Missing any component", "Please include the any component even if its empty");
-        }
-    
-        return OkResult.ok();
-    }
-    
-    /**
-     * Converts the module into a component or layout
-     * @param parts 
-     * @param memory 
-     * @returns 
-     */
-    public static identify = async<T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
-        if (rawMemory.moduleCategory === ModuleCategory.Component) {
-            const identified = await this._identifyComponent(parts, rawMemory as ModuleMemory<Component>);
-            if (identified.isFailure) {
-                return Result.fail(
-                    `this._identifyComponent(): ${identified.errorTitle}`,
-                    identified.errorDescription!
-                )
-            }
-            return Result.ok(identified.getValue() as T)
-        } else if (rawMemory.moduleCategory === ModuleCategory.Layout) {
-            const identified = await this._identifyLayout(parts, rawMemory as ModuleMemory<Layout>);
-            if (identified.isFailure) {
-                return Result.fail(
-                    `this._identifyLayout(): ${identified.errorTitle}`,
-                    identified.errorDescription!
-                )
-            }
-            return Result.ok(identified.getValue() as T)
-        }
-        return Result.errorCode404(['UI Level', 'Component Level'], 'identify', `The '${rawMemory.moduleCategory}' expected to be either '${ModuleCategory.Component}' or '${ModuleCategory.Layout}'`);
-    }
-
-    /**
-     * Converts the module into a component
-     * @param parts 
-     * @param memory 
-     * @returns 
-     */
-    public static _identifyComponent = async (parts: ModuleParts, memory: ModuleMemory<Component>): Promise<Result<Component>> => {
-        const validated = this.validateModuleParts(parts);
-        if (validated.isFailure) {
-            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
-        }
-           
-        const slots = await this.identifySlots<Component>(parts, memory);
-        if (slots.isFailure) {
-            return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
-        }
-    
-        const title = await FilePath.getFileName(memory.moduleLink.toFilePath);
-        if (title.isFailure) {
-            return Result.fail(`FilePath.getFileName('${memory.moduleLink.toFilePath}'): ${title.errorTitle}`, title.errorDescription!)
-        }
-        const description = this.getDescriptionFromComment(parts.source!);
-
-        const component: Component = {
-            title: title.getValue(), 
-            description,
-            url: memory.moduleLink.moduleURL,
-            glob: memory.glob,
-            slots: slots.getValue(),
-            type: ElementType.Component,
-        }
-        
-        return Result.ok(component);
-    }
-
-    /**
-     * Extracts the Description from the Component Meta.
-     * Returns an empty string if no comment.
-    */
-    private static getDescriptionFromComment = (source: string): string => {
-        let description = '';
-        const parsed = commentParse(source);
-        if (parsed.length === 0) {
-            return description;
-        }
-        
-        for (let block of parsed) {
-            description = block.description
-            for (let tag of block.tags) {
-                if (tag.tag === "param") {
-                    if (tag.type !== "string") {
-                        continue;
-                    }
-                        
-                    if (tag.name === "Description") {
-                        if (tag.description.length > 0) {
-                            return tag.description;
-                        }
-                    }
-                }
-            }
-        }
-    
-        return description;
-    }
-    
-
-    /**
-     * Identify each component within the page. All data of the page are represented as the components.
-     * @returns {Result<AraPage>}
-     */
-    private static identifySlots = async <T>(uiContent: ModuleParts, memory: ModuleMemory<T>): Promise<Result<Slots>> => {
-        const slots: Slots = {
-            [DEFAULT_SLOT]: []
-        };
-            
-        for (let componentNode of uiContent.elements!) {
-            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode)
-            if (identificationResult.isFailure) {
-                const err = Debug.error(
-                    `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
-                    identificationResult.errorDescription!,
-                    componentNode,
-                )    
-                    
-                return Result.fail(err)
-            }
-            
-            slots[DEFAULT_SLOT].push(identificationResult.getValue())
-        }
-        return Result.ok(slots)
-    }
 
     /**
      * Converts the AstroNode into the Component
      * @param element Node that we need to identify
      * @returns {IdentifiedComponent}
      */
-    public static identifyAstroNode = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component|Expression>> => {
-        if (element.type === "element") {
-            const component = this.identifyHTMLElement(element);
-            component.url = memory.moduleLink.moduleURL
-            return Result.ok(component)
-        } else if (element.type === "expression") {
-            const identificationResult = await this.identifyExpression(uiContent, memory, element as ExpressionNode)
+    public static identifyAstroNode = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component|Expression|Text>> => {
+        if (element.isHTMLElement) {
+            const component = await this.identifyHTMLElement(uiContent, memory, element);
+            if (component.isFailure) {
+                return Result.fail(`this.identifyHTMLElement() ${component.errorTitle}`, component.errorDescription!)
+            }
+            let val = component.getValue();
+            val.url = memory.moduleLink.moduleURL
+            return Result.ok(val)
+        } else if (element.isExpression) {
+            const identificationResult = await this.identifyExpression(uiContent, memory, element)
             if (identificationResult.isFailure) {
                 return Result.fail(
                     `this.identfyExpression: ${identificationResult.errorTitle}`,
@@ -336,8 +225,8 @@ export class ComponentLevel {
             }
                 
             return Result.ok(identificationResult.getValue())
-        } else if (element.type === "component") {
-            const identificationResult = await this.identifyAstroComponent(memory, element as ComponentNode)
+        } else if (element.isComponent) {
+            const identificationResult = await this.identifyAstroComponent(uiContent, memory, element)
             if (identificationResult.isFailure) {
                 return Result.fail(
                     `this.identifyAstroComponent(): ${identificationResult.errorTitle}`,
@@ -346,12 +235,15 @@ export class ComponentLevel {
             }
                 
             return Result.ok(identificationResult.getValue())
+        } else if (element.isText) {
+            const identifiedText = this.identifyText(element);
+            return Result.ok(identifiedText)
         }
 
-        return Result.errorCode501(['ComponentLevel'], 'identifyComponent');
+        return Result.errorCode404(['ComponentLevel'], 'identifyComponent', `The element '${element.name}' is not supported`);
     }
 
-    public static identifyAstroComponent = async(memory: ModuleMemory<unknown>, element: ComponentNode): Promise<Result<Component>> => {
+    public static identifyAstroComponent = async(moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode): Promise<Result<Component>> => {
         const astNode = memory.identifierByName(element.name);
         if (astNode === undefined) {
             return Result.fail(
@@ -383,7 +275,7 @@ export class ComponentLevel {
         //         data: ComponentEngine.astroLayoutNodeToComponent(element, pathResult.importPath.toString())
         //     })
         // } else if (element.type === "component") {          
-        const componentData = this.astroNodeToComponent(element, astNode.data, astNode.importPath!.moduleURL!); 
+        const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.data, astNode.importPath!.moduleURL!); 
         if (componentData.isFailure) {
             return Result.fail(
                 `astroNodeToComponent('${element.name}', '${memory.moduleLink.moduleURL}'): ${componentData.errorTitle}`,
@@ -401,65 +293,26 @@ export class ComponentLevel {
      * @param filePath 
      * @returns 
      */
-    public static astroNodeToComponent = (node: ComponentNode, glob: unknown, filePath: string): Result<Component> => {
+    public static astroNodeToComponent = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, glob: unknown, filePath: string): Promise<Result<Component>> => {
+        const attributes = AttributeLevel.getNodeAttributes(node);
+        if (attributes.isFailure) {
+            return Result.fail(`AttributeLevel.getNodeAttributes(): ${attributes.errorTitle}`, attributes.errorDescription!);
+        }
+
+        const identifyChildren = await this.identifyChildren(moduleParts, memory, node)
+        if (identifyChildren.isFailure) {
+            return Result.fail(`this.identifyChildren(): ${identifyChildren.errorTitle}`, identifyChildren.errorDescription!);
+        }
+
         const component: Component = {
-            title: node.name,
-            description: "",
             url: filePath,
-            glob: glob,
-            slots: {
-                [DEFAULT_SLOT]: []
-            },
-            type: ElementType.Component
+            get: glob,
+            slots: identifyChildren.getValue(),
+            attributes: attributes.getValue(),
+            class: ReflectLink.linkToIdentifier(node.name, {absolutePath: filePath}).toModuleLink()
         }
 
         return Result.ok(component);
-    }
-
-    /**
-     * Converts the module into layout 
-     * The identified components are pushed into the page's layout.
-     * Only the Components are supported, the nested layout or RPC calls inside the layout is prohibited.
-     * @returns {Result<Page>}
-     * @todo Include the nested components
-    */
-    private static _identifyLayout = async(parts: ModuleParts, memory: ModuleMemory<Layout>): Promise<Result<Layout>> => {
-        const validated = this.validateModuleParts(parts);
-        if (validated.isFailure) {
-            return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
-        }
-        
-        // TODO in the identifySlots add the following
-        // const layoutSlugsResult = await detectComponentLayoutSlug(page, uiContent, child)
-        // if (layoutSlugsResult.isFailure) {
-        //     return Result.fail(
-        //         `this.detectComponentLayoutSlug(child=${componentName(child)}): ${layoutSlugsResult.errorTitle}`, 
-        //         layoutSlugsResult.errorDescription!,
-        //     )
-        // }
-        // pushComponentAtLayoutSlugs(page, identificationResult.getValue(), layoutSlugsResult.getValue());
-        const slots = await this.identifySlots<Layout>(parts, memory);
-        if (slots.isFailure) {
-            return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
-        }
-    
-        const title = await FilePath.getFileName(memory.moduleLink.toFilePath);
-        if (title.isFailure) {
-            return Result.fail(`FilePath.getFileName('${memory.moduleLink.toFilePath}'): ${title.errorTitle}`, title.errorDescription!)
-        }
-        const description = this.getDescriptionFromComment(parts.source!);
-
-        const layout: Layout = {
-            title: title.getValue(), 
-            description,
-            url: memory.moduleLink.moduleURL,
-            glob: memory.glob,
-            slots: slots.getValue(),
-            type: ElementType.Layout,
-        }
-        
-        
-        return Result.ok(layout);
     }
 
 }

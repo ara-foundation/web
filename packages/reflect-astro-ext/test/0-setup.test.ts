@@ -4,9 +4,10 @@
  */
 
 import { expect, test } from "vitest";
-import { ImportedRecords } from "@ara-web/reflect";
-import { ModuleCategory } from "../src";
+import { FilePath, ImportedRecords } from "@ara-web/reflect";
+import { ModuleCategory, ModuleLink } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { Debug } from "@ara-web/ts-enhancement";
 
 test('Simply creating a reflect extension', async () => {
     const reflectExtension = await getNewAstroReflect();
@@ -25,7 +26,7 @@ test(`Simply testing that path is identified as the category data`, async () => 
         records: {
             [faviconModulePath]: undefined
         },
-        importingFilePath: import.meta.dirname
+        importMetaFilename: import.meta.dirname
     };
     const invalidated = await reflectExtension.putModules(invalidRecords);
     expect(invalidated.isSuccess).toBe(false);
@@ -35,7 +36,7 @@ test(`Simply testing that path is identified as the category data`, async () => 
         records: {
             [indexAstroPath]: undefined
         },
-        importingFilePath: import.meta.dirname
+        importMetaFilename: import.meta.dirname
     };
     const validated = await reflectExtension.putModules(validRecords);
     expect(validated.isSuccess).toBe(true);
@@ -51,6 +52,9 @@ test(`Test the categorization of the import.meta.glob`, async () => {
     // Make sure they are all no content moduled
     const projectMemory = getNewProjectMemory(reflectExtension);
 
-    let welcomeComponent = projectMemory.getModule<unknown>('src/components/Welcome.astro');
+    const welcomeComponentPath = FilePath.getFileAbsolutePath("./src/components/Welcome.astro", reflectExtension.rootDir);
+    let welcomeComponent = projectMemory.getModule<unknown>(welcomeComponentPath);
+    Debug.log(`The welcome:`)
+    Debug.log(welcomeComponent)
     expect(welcomeComponent.isSuccess).toBe(true);
 })

@@ -5,11 +5,9 @@ import {
     FileExtension, 
     type ModuleParts, 
     type OntologoicalIdentifier,
-    ModuleCategory,
     DEFAULT_SLOT, 
     type Page, 
     type Meta, 
-    ElementType, 
     type Slots
 } from "../index.js";
 import { ComponentLevel } from "../component-level/index.js";
@@ -26,9 +24,6 @@ export class PageLevel {
      * @returns {Component}
      */
     public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
-        if (rawMemory.moduleCategory !== ModuleCategory.Page) {
-            return Result.errorCode404(['UI Level', 'Page Level'], 'identify', `Instead '${rawMemory.moduleCategory}' memory pass memory of '${ModuleCategory.Page}' category`)
-        }
         const validated = this.validateModuleParts(parts);
         if (validated.isFailure) {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
@@ -43,10 +38,11 @@ export class PageLevel {
         }
         
         const page: Page = {
-            url: memory.moduleLink.moduleURL,
-            glob: memory.glob,
+            moduleLink: memory.moduleLink,
+            get: memory.glob,
             slots: slots.getValue(),
-            type: ElementType.Page,
+            fileExtension: parts.fileExtension,
+            source: parts.source,
             ...meta
         }
 
@@ -122,7 +118,7 @@ export class PageLevel {
             const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode)
             if (identificationResult.isFailure) {
                 const err = Debug.error(
-                    `this.identifyComponent(): ${identificationResult.errorTitle}`, 
+                    `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
                      identificationResult.errorDescription!,
                     componentNode,
                 )    
@@ -131,7 +127,6 @@ export class PageLevel {
             }
             Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`)
             slots[DEFAULT_SLOT].push(identificationResult.getValue())
-        //     const identifiedComponent = identificationResult.getValue();
                 
         //         // Let's detect the ComponentType
         //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {

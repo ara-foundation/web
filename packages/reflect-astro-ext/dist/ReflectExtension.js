@@ -1,6 +1,6 @@
 import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
 import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
-import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, ComponentLevel, FileExtension } from "./index.js";
+import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, FileExtension } from "./index.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
@@ -232,9 +232,9 @@ export class ReflectAstroFramework {
             if (identifiedMemory.isFailure) {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription);
             }
-            const data = await ComponentLevel.identify(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify(moduleParts.getValue(), identifiedMemory.getValue());
             if (data.isFailure) {
-                return OkResult.fail(`ComponentLevel.identify<Component>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
+                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
             }
             moduleMemory.content = data.getValue();
         }
@@ -255,9 +255,9 @@ export class ReflectAstroFramework {
             if (identifiedMemory.isFailure) {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription);
             }
-            const data = await ComponentLevel.identify(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify(moduleParts.getValue(), identifiedMemory.getValue());
             if (data.isFailure) {
-                return OkResult.fail(`ComponentLevel.identify<Layout>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
+                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
             }
             moduleMemory.content = data.getValue();
         }

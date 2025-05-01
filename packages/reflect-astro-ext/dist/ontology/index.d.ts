@@ -1,7 +1,29 @@
-import type { ComponentNode as AstroComponentNode, ElementNode, ExpressionNode } from "@astrojs/compiler/types";
+import type { Node, AttributeNode } from "@astrojs/compiler/types";
 import { type ModuleLink, Result } from "@ara-web/ts-enhancement";
 import { ModuleMemory } from "@ara-web/reflect";
-export type AstroNode = ElementNode | ExpressionNode | AstroComponentNode;
+import type { ReflectLink } from "@ara-web/reflect/code-level";
+export declare class AstroNode {
+    private _node;
+    private constructor();
+    get name(): string;
+    get value(): string;
+    /**
+     * Returns child nodes if they are supported by Astro Reflect.
+     * Unsupported nodes will be omitted.
+     */
+    get children(): AstroNode[];
+    get attributes(): AttributeNode[];
+    get isComponent(): boolean;
+    get isHTMLElement(): boolean;
+    get isExpression(): boolean;
+    get isText(): boolean;
+    static isSupportedNode: (node: Node) => boolean;
+    static nodeValue: (node: Node) => string;
+    static nodeChildren: (node: Node) => Node[];
+    static nodeName: (node: Node) => string;
+    static newFromNode(node: Node): Result<AstroNode>;
+    static nodeAttributes: (node: Node) => AttributeNode[];
+}
 /**
  * Any UI Content is composed of the HTML Elements and the source code
  */
@@ -46,18 +68,19 @@ export type Meta = {
     title: string;
     description: string;
 };
+export type SlotElement = Component | Expression | Text;
 export type Slots = {
-    [key: string]: (Component | Expression | Layout)[];
+    [key: string]: SlotElement[];
 };
 /**
  * Script
  */
-export type Script = Meta & {
+export type Module = Meta & {
     moduleLink: ModuleLink;
     fileExtension: FileExtension;
-    glob: unknown;
+    get: unknown;
     type: ElementType.Script;
-    source: string;
+    source?: string;
 };
 /**
  * Asset is anything but ModuleCategory. Intended to keep data that were not parsable.
@@ -65,24 +88,23 @@ export type Script = Meta & {
  *
  * Optionally, if the asset data is in text format, then holds the data in the source.
  */
-export type Asset = Omit<Script, "type" | "source"> & {
+export type Asset = Omit<Module, "type" | "source"> & {
     type: ElementType.Asset;
     source?: string;
 };
-export type Component = Meta & {
-    type: ElementType.Component;
+export type Attributes = Record<string, ReflectLink | string>;
+export type Component = {
+    class: ModuleLink;
     url: string;
     slots: Slots;
-    glob: unknown;
+    get: unknown;
+    attributes: Attributes;
 };
-export type Page = Omit<Component, "type"> & {
-    type: ElementType.Page;
-};
-export type Layout = Omit<Component, "type"> & {
-    type: ElementType.Layout;
-};
-export type Expression = Omit<Component, "type"> & {
-    type: ElementType.Expression;
+export type Expression = Omit<Component, "attributes" | "class"> & {
     prefix: string;
     suffix: string;
 };
+export type Text = Omit<Component, "attributes" | "class" | "slots"> & {
+    value: string;
+};
+export type Page = Omit<Component, "class" | "url" | "get" | "attributes"> & Omit<Module, "type"> & {};

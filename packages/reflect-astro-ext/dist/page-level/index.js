@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { parse as commentParse } from "comment-parser";
 import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/ts-enhancement";
-import { FileExtension, ModuleCategory, DEFAULT_SLOT, ElementType } from "../index.js";
+import { FileExtension, DEFAULT_SLOT } from "../index.js";
 import { ComponentLevel } from "../component-level/index.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
@@ -58,9 +58,6 @@ let PageLevel = (() => {
          * @returns {Component}
          */
         static identify = async (parts, rawMemory) => {
-            if (rawMemory.moduleCategory !== ModuleCategory.Page) {
-                return Result.errorCode404(['UI Level', 'Page Level'], 'identify', `Instead '${rawMemory.moduleCategory}' memory pass memory of '${ModuleCategory.Page}' category`);
-            }
             const validated = _classThis.validateModuleParts(parts);
             if (validated.isFailure) {
                 return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription);
@@ -72,10 +69,11 @@ let PageLevel = (() => {
                 return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
             }
             const page = {
-                url: memory.moduleLink.moduleURL,
-                glob: memory.glob,
+                moduleLink: memory.moduleLink,
+                get: memory.glob,
                 slots: slots.getValue(),
-                type: ElementType.Page,
+                fileExtension: parts.fileExtension,
+                source: parts.source,
                 ...meta
             };
             return Result.ok(page);
@@ -139,12 +137,11 @@ let PageLevel = (() => {
             for (let componentNode of uiContent.elements) {
                 const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode);
                 if (identificationResult.isFailure) {
-                    const err = Debug.error(`this.identifyComponent(): ${identificationResult.errorTitle}`, identificationResult.errorDescription, componentNode);
+                    const err = Debug.error(`ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, identificationResult.errorDescription, componentNode);
                     return Result.fail(err);
                 }
                 Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`);
                 slots[DEFAULT_SLOT].push(identificationResult.getValue());
-                //     const identifiedComponent = identificationResult.getValue();
                 //         // Let's detect the ComponentType
                 //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
                 //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')

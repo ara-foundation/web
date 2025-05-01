@@ -36,7 +36,7 @@ import { parse as AstroParse } from "@astrojs/compiler";
 import { parse as commentParse } from "comment-parser";
 import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement";
 import { FilePath, ModuleMemory } from "@ara-web/reflect";
-import { FileExtension, ElementType } from "./ontology/index.js";
+import { AstroNode, FileExtension, ElementType } from "./ontology/index.js";
 /**
  * Module Category to sort the modules.
  * By design module categories supposed to match the directory in the file system.
@@ -115,14 +115,13 @@ export class ModulePartitioner {
      * @returns
      */
     static getModuleParts = async (moduleMemory) => {
-        // const absoluteModulePath = absolutePath(modulePath, glob);
         const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, EnumTraits.enumValues(FileExtension));
         if (fileExtensionResult.isFailure) {
             return Result.fail(`getFileExtension('${moduleMemory.moduleLink.toFilePath}'): ${fileExtensionResult.errorTitle}`, fileExtensionResult.errorDescription);
         }
         const fileExtension = fileExtensionResult.getValue();
         const absolutePath = moduleMemory.moduleLink.toFilePath;
-        const readResult = await FilePath.getFileContent(absolutePath);
+        const readResult = FilePath.getFileContent(absolutePath);
         if (readResult.isFailure) {
             return Result.fail(`getFileContent(${absolutePath}): ${readResult.errorTitle}`, readResult.errorDescription);
         }
@@ -167,23 +166,24 @@ export class ModulePartitioner {
         let frontmatterCode = "";
         for (let i = 0; i < ast.children.length; i++) {
             const child = ast.children[i];
-            if (child.type === "text" ||
-                child.type === "comment" ||
-                child.type === "doctype") {
+            if (child.type === "comment" || child.type === "doctype") {
                 continue;
             }
             if (child.type === "frontmatter") {
                 frontmatterCode = child.value;
             }
-            else if (child.type === "component") {
-                componentNodes.push(child);
-            }
-            else if (child.type === "element") {
-                componentNodes.push(child);
-            }
-            else {
+            else if (!AstroNode.isSupportedNode(child)) {
                 Debug.log(`The page has unsupported ${child.type} node, Update the MultiPartitioner.extractAstroComponents():`);
                 Debug.log(child);
+            }
+            else {
+                const astroNode = AstroNode.newFromNode(child);
+                if (astroNode.isFailure) {
+                    Debug.error(`AstroNode.newFromNode(): ${astroNode.errorTitle}`, astroNode.errorDescription, child);
+                }
+                else {
+                    componentNodes.push(astroNode.getValue());
+                }
             }
         }
         return { componentNodes, frontmatterCode };
@@ -246,7 +246,7 @@ let ModuleIdentifier = (() => {
                     description,
                     moduleLink: rawMemory.moduleLink,
                     fileExtension: fileExtension,
-                    glob: rawMemory.glob,
+                    get: rawMemory.glob,
                     type: ElementType.Script,
                     source: parts.source, // Source code of the script as it is.
                 };
@@ -258,7 +258,7 @@ let ModuleIdentifier = (() => {
                     description,
                     moduleLink: rawMemory.moduleLink,
                     fileExtension: fileExtension,
-                    glob: rawMemory.glob,
+                    get: rawMemory.glob,
                     type: ElementType.Asset,
                     source: parts.source ? parts.source : undefined,
                 };

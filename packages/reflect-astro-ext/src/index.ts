@@ -1,23 +1,20 @@
 export { ModuleCategory, ModulePartitioner, extractModuleCategory, ModuleIdentifier } from "./module.js"
 export { 
     FileExtension,
-    type AstroNode, 
+    AstroNode, 
     type ModuleParts,
     DEFAULT_SLOT, 
     ElementType,
     type Page,
     type Meta, 
     type Component, 
-    type Expression, 
-    type Layout, 
+    type Expression,
+    type Text, 
     type Slots,
     type Asset,
-    type Script,
+    type Module as Script,
     type OntologoicalIdentifier
 } from "./ontology/index.js"
-export {
-    AstroNodeTraits
-} from "./astro-node.js"
 export {
     CodeLevel
 } from "./code-level/index.js"

@@ -6,15 +6,15 @@
 import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
 import { 
-    Component, 
-    Layout, CodeLevel, 
+    CodeLevel, 
     Asset, 
     FileExtension, 
     Script, 
     ModuleCategory, 
     ModuleIdentifier, 
     ModulePartitioner,
-    ComponentLevel
+    Page,
+    PageLevel
 } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 
@@ -41,9 +41,9 @@ test(`Make sure the that components are generated`, async () => {
             continue;
         }
         componentFound = true;
-        const identifiedSourceCode = await CodeLevel.identifySourceCode<Component>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Component>, projectMemory);
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await ComponentLevel.identify<Component>(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(componentFound).toBe(true);
@@ -72,9 +72,9 @@ test(`Make sure the that layouts are generated`, async () => {
             continue;
         }
         layoutFound = true;
-        const identifiedSourceCode = await CodeLevel.identifySourceCode<Layout>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Layout>, projectMemory);
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await ComponentLevel.identify<Layout>(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(layoutFound).toBe(true);

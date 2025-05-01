@@ -1,14 +1,4 @@
-export class AstroNodeTraits {
-    static componentName = (astNode) => {
-        if (astNode.type === "expression") {
-            return `Expression with ${astNode.children[0].type}`;
-        }
-        return astNode.name;
-    };
-    static isSupportedNode = (node) => {
-        return node.type === "component" || node.type === "element" || node.type === "expression";
-    };
-}
+export {};
 // export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
 //     const componentId = modulePathToCategoryFileName(modulePath);
 //     if (componentId.isFailure) {
