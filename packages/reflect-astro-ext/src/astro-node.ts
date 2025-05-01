@@ -1,26 +1,10 @@
-import type { Node } from "@astrojs/compiler/types";
 import type { Props } from "astro";
-import type { AstroNode } from "./ontology/index.js";
-
 
 // WARNING: Every time whenever a new extension added, add support here.
 type AstroImport = ((_props: Props) => any);
 type TsxImport = (({ children }: Props) => React.JSX.Element);
 type JsxImport = (() => React.JSX.Element);
 export type AstroNodeType = AstroImport | TsxImport | JsxImport;
-
-export class AstroNodeTraits {
-    public static componentName = (astNode: AstroNode): string => {
-        if (astNode.type === "expression") {
-            return `Expression with ${astNode.children[0].type}`
-        }
-        return astNode.name;
-    }
-
-    public static isSupportedNode = (node: Node): boolean => {
-        return node.type === "component" || node.type === "element" || node.type === "expression"
-    }
-}
 
 // export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
 //     const componentId = modulePathToCategoryFileName(modulePath);
