@@ -1,0 +1,40 @@
+{
+  "name": "@ara-web/eslint-sds-linter",
+  "version": "0.0.1",
+  "description": "An eslint plugin that forces simplified nodeJS import within your package. Provided as a Reflect's proxy, so using another package as ESLint plugin",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "pnpm build && pnpm start",
+    "test": "vitest -r ./"
+  },
+  "exports": {
+    ".": {
+      "type": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.1",
+  "dependencies": {
+    "@ara-web/reflect": "workspace:*",
+    "@ara-web/ts-enhancement": "workspace:*",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@typescript-eslint/utils": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "~5.7.3",
+    "typescript-eslint": "^8.31.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/rule-tester": "^8.31.1",
+    "vitest": "2.1.6"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0"
+  }
+}
