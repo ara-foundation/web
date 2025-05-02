@@ -5,7 +5,7 @@ import { ReflectLink } from "@ara-web/reflect/code-level";
 export class AttributeLevel {
     static getNodeAttributes(node) {
         let attributes = {};
-        for (let attrNode of node.attributes) {
+        for (const attrNode of node.attributes) {
             const identifiedAttr = this.identifyAttributeNode(attrNode);
             if (identifiedAttr.isFailure) {
                 return Result.fail(`this.identifyAttributeNode('${attrNode.name}'): ${identifiedAttr.errorTitle}`, identifiedAttr.errorDescription);
@@ -46,7 +46,7 @@ export class AttributeLevel {
  * @returns {AttributeNode}
 */
 export const attributeByName = (node, name) => {
-    for (let callAttr of node.attributes) {
+    for (const callAttr of node.attributes) {
         if (callAttr.name === name) {
             return callAttr;
         }

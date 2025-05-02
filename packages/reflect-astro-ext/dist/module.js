@@ -59,7 +59,7 @@ export const extractModuleCategory = (srcDir, modulePath) => {
         return Result.fail(`The Astro Framework records must be in the 'src' of the root directory`, `Please pass a module in '${srcDir}', not as '${modulePath}'`);
     }
     // Could be one of the pre-defined categories such as 'pages', 'components' etc.
-    for (let moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
+    for (const moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
         if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory]))) {
             return Result.ok(moduleCategory);
         }
@@ -276,9 +276,9 @@ let ModuleIdentifier = (() => {
             if (parsed.length === 0) {
                 return description;
             }
-            for (let block of parsed) {
+            for (const block of parsed) {
                 description = block.description;
-                for (let tag of block.tags) {
+                for (const tag of block.tags) {
                     if (tag.tag === "param") {
                         if (tag.type !== "string") {
                             continue;

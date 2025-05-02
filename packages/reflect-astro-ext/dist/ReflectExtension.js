@@ -1,6 +1,9 @@
 import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink, Debug } from "@ara-web/ts-enhancement";
-import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, CodeLevel, PageLevel, FileExtension } from "./index.js";
+import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
+import { FileExtension } from "./ontology/index.js";
+import { CodeLevel } from "./code-level/index.js";
+import { PageLevel } from "./page-level/index.js";
+import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, } from "./module.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
@@ -59,6 +62,7 @@ export class ReflectAstroFramework {
     get srcDir() {
         return FilePath.join([this._rootDir.toFilePath, 'src']);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async putPackage(_) {
         return Result.errorCode501([this.moduleLink.moduleURL], 'putPackage');
     }
@@ -73,7 +77,7 @@ export class ReflectAstroFramework {
         const moduleLinks = [];
         if ("records" in params) {
             const importedRecords = params;
-            for (let filePath in importedRecords.records) {
+            for (const filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
                 if (!(FilePath.isFileExist(moduleLink))) {
                     return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`);
@@ -110,6 +114,7 @@ export class ReflectAstroFramework {
     watchModules = (autoImporter) => {
         this._autoImporter = autoImporter;
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _autoPut = async (_) => {
         if (this._autoImporter === undefined) {
             return Result.ok([]);
@@ -136,7 +141,7 @@ export class ReflectAstroFramework {
     }
     getModules(moduleCategory) {
         const moduleMemories = [];
-        for (let moduleMemory of this.moduleMemories) {
+        for (const moduleMemory of this.moduleMemories) {
             if (moduleCategory === undefined || moduleMemory.moduleCategory === moduleCategory) {
                 moduleMemories.push(moduleMemory);
             }
@@ -144,7 +149,7 @@ export class ReflectAstroFramework {
         return moduleMemories;
     }
     isModuleExist(moduleLink) {
-        let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
+        const url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         return this._moduleMemories[url] !== undefined;
     }
     getModuleContents(moduleCategory) {
@@ -221,7 +226,7 @@ export class ReflectAstroFramework {
      */
     identifyComponentContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Component);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -244,7 +249,7 @@ export class ReflectAstroFramework {
      */
     postLayoutContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Layout);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -269,7 +274,7 @@ export class ReflectAstroFramework {
      */
     postPageContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Page);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -293,7 +298,7 @@ export class ReflectAstroFramework {
      */
     postScripts = async () => {
         const noContentModules = this.getNoContentModules();
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -317,7 +322,7 @@ export class ReflectAstroFramework {
      */
     postAssets = async () => {
         const noContentModules = this.getNoContentModules();
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);

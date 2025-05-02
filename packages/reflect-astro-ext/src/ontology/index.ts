@@ -40,7 +40,7 @@ export class AstroNode {
             return [];
         }
 
-        for (let rawNode of rawNodes) {
+        for (const rawNode of rawNodes) {
             const astroNode = AstroNode.newFromNode(rawNode);
             if (astroNode.isFailure) {
                 continue;
@@ -127,6 +127,7 @@ export type ModuleParts = {
     source?: string,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface OntologicalNormalMethods {}
 
 export interface OntologoicalIdentifier {

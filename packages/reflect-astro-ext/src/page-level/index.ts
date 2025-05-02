@@ -5,12 +5,12 @@ import {
     FileExtension, 
     type ModuleParts, 
     type OntologoicalIdentifier,
-    DEFAULT_SLOT, 
+    DEFAULT_SLOT,
     type Page, 
     type Meta, 
-    type Slots
+    type Slots,
+    ComponentLevel
 } from "../index.js";
-import { ComponentLevel } from "../component-level/index.js";
 
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
@@ -82,8 +82,8 @@ export class PageLevel {
             return componentMeta;
         }
         
-        for (let block of parsed) {
-            for (let tag of block.tags) {
+        for (const block of parsed) {
+            for (const tag of block.tags) {
                 if (tag.tag === "param") {
                     if (tag.type !== "string") {
                         continue;
@@ -114,7 +114,7 @@ export class PageLevel {
         const slots: Slots = {
             [DEFAULT_SLOT]: []
         };
-        for (let componentNode of uiContent.elements!) {
+        for (const componentNode of uiContent.elements!) {
             if (componentNode.isText && componentNode.value.length === 0) {
                 continue;
             }

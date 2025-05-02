@@ -27,7 +27,7 @@ export class AstroNode {
         if (rawNodes.length === 0) {
             return [];
         }
-        for (let rawNode of rawNodes) {
+        for (const rawNode of rawNodes) {
             const astroNode = AstroNode.newFromNode(rawNode);
             if (astroNode.isFailure) {
                 continue;

@@ -1,10 +1,10 @@
 import { FilePath, ModuleLink, ReflectProxy } from "@ara-web/reflect";
 import { getRule as getSdsModuleImportsRule } from "./rules/sds-module-imports.js";
-const name = "eslint-sds-linter";
+const name = "reflect-eslint-proxy";
 const namespace = "@ara-web";
 const version = process.env.node_package_version || "0.0.1";
 const desc = "If you don't want to have a nightmare trying to understand module dependencies. This linter forces you to build simple and easy to navigate imports";
-export class EslintSDSLinterProxy extends ReflectProxy {
+export class ReflectEslintProxy extends ReflectProxy {
     _version;
     _cwd;
     _packageJsonFileName;
@@ -46,4 +46,4 @@ export class EslintSDSLinterProxy extends ReflectProxy {
         return plugin;
     }
 }
-export default EslintSDSLinterProxy;
+export default ReflectEslintProxy;

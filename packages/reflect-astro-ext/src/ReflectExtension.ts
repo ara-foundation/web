@@ -8,16 +8,23 @@ import {
     FilePath,
     type SingleRecord
 } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL, Debug } from "@ara-web/ts-enhancement";
-import { 
-    extractModuleCategory, 
+import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import {
+    type Asset, type Page, type Module,
+    FileExtension
+} from "./ontology/index.js"
+import {
+    CodeLevel
+} from "./code-level/index.js"
+import {
+    PageLevel
+} from "./page-level/index.js"
+import {
+    extractModuleCategory,
     ModuleCategory, 
     ModuleIdentifier, 
     ModulePartitioner,
-    CodeLevel, PageLevel,
-    type Asset, type Page, type Script,
-    FileExtension
- } from "./index.js";
+} from "./module.js"
 
 /**
  * ReflectExtension adds Astro Framework support.
@@ -89,6 +96,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
         return FilePath.join([this._rootDir.toFilePath, 'src']);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async putPackage(_: SingleRecord): Promise<Result<ModuleLink>> {
         return Result.errorCode501([this.moduleLink.moduleURL], 'putPackage');
     }
@@ -104,7 +112,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
         const moduleLinks: ModuleLink[] = [];
         if ("records" in params) {
             const importedRecords = params as ImportedRecords;
-            for (let filePath in importedRecords.records) {
+            for (const filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
                 if (!(FilePath.isFileExist(moduleLink))) {
                     return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`)
@@ -151,6 +159,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
         this._autoImporter = autoImporter;
     }
     
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private _autoPut = async(_: string): Promise<Result<ModuleLink[]>> => {
         if (this._autoImporter === undefined) {
             return Result.ok([]);
@@ -179,7 +188,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     
     public getModules<T>(moduleCategory?: string): ModuleMemory<T>[] {
         const moduleMemories: ModuleMemory<T>[] = [];
-        for (let moduleMemory of this.moduleMemories) {
+        for (const moduleMemory of this.moduleMemories) {
             if (moduleCategory === undefined || moduleMemory.moduleCategory === moduleCategory) {
                 moduleMemories.push(moduleMemory as ModuleMemory<T>);
             }
@@ -188,7 +197,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
     
     public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
-        let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
+        const url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         return this._moduleMemories[url] !== undefined;
     }
     
@@ -275,7 +284,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      */
     private identifyComponentContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Component);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -302,7 +311,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      */
     private postLayoutContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Layout);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -331,7 +340,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      */
     private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -359,7 +368,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      */
     private postScripts = async (): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules();
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -370,7 +379,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 continue;
             }
 
-            const data = await ModuleIdentifier.identify<Script>(moduleParts.getValue(), moduleMemory as ModuleMemory<Script>);
+            const data = await ModuleIdentifier.identify<Module>(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>);
 
             if (data.isFailure) {
                 return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
@@ -388,7 +397,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      */
     private postAssets = async (): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules();
-        for (let moduleMemory of noContentModules) {
+        for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);

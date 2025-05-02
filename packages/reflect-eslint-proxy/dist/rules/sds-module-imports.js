@@ -1,7 +1,7 @@
 import { FilePath, ModulePath } from '@ara-web/reflect';
 import { ESLintUtils } from '@typescript-eslint/utils';
 import { builtinModules } from 'node:module';
-const createRule = ESLintUtils.RuleCreator(name => `https://github.com/ara-foundation/web/tree/main/packages/eslint-sds-linter/docs/${name}.md`);
+const createRule = ESLintUtils.RuleCreator(name => `https://github.com/ara-foundation/web/tree/main/packages/reflect-eslint-proxy/docs/${name}.md`);
 const messages = {
     notFamily: `This module is neither a sibling, a parent or a kid`,
     grandParent: `Please consider moving a code that calls this grandparent, to the the file in parent module.`,

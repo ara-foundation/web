@@ -41,7 +41,7 @@ export const extractModuleCategory = (srcDir: string, modulePath: string): Resul
     }
 
     // Could be one of the pre-defined categories such as 'pages', 'components' etc.
-    for (let moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
+    for (const moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
         if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory]))) {
             return Result.ok(moduleCategory as ModuleCategory);
         }
@@ -279,9 +279,9 @@ export class ModuleIdentifier {
             return description;
         }
         
-        for (let block of parsed) {
+        for (const block of parsed) {
             description = block.description
-            for (let tag of block.tags) {
+            for (const tag of block.tags) {
                 if (tag.tag === "param") {
                     if (tag.type !== "string") {
                         continue;

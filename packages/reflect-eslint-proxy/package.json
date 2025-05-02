@@ -1,5 +1,5 @@
 {
-  "name": "@ara-web/eslint-sds-linter",
+  "name": "@ara-web/reflect-eslint-proxy",
   "version": "0.0.1",
   "description": "An eslint plugin that forces simplified nodeJS import within your package. Provided as a Reflect's proxy, so using another package as ESLint plugin",
   "main": "dist/index.js",

@@ -339,40 +339,6 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
-  packages/eslint-sds-linter:
-    dependencies:
-      '@ara-web/reflect':
-        specifier: workspace:*
-        version: link:../reflect
-      '@ara-web/ts-enhancement':
-        specifier: workspace:*
-        version: link:../ts-enhancement
-      '@typescript-eslint/parser':
-        specifier: ^8.31.1
-        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
-      '@typescript-eslint/utils':
-        specifier: ^8.31.1
-        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
-      eslint:
-        specifier: ^9.25.1
-        version: 9.25.1(jiti@2.4.2)
-      typescript:
-        specifier: ~5.7.3
-        version: 5.7.3
-      typescript-eslint:
-        specifier: ^8.31.1
-        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
-    devDependencies:
-      '@types/node':
-        specifier: ^20.10.5
-        version: 20.17.24
-      '@typescript-eslint/rule-tester':
-        specifier: ^8.31.1
-        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
-      vitest:
-        specifier: 2.1.6
-        version: 2.1.6(@types/node@20.17.24)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
-
   packages/reflect:
     dependencies:
       '@ara-web/ts-enhancement':
@@ -440,9 +406,9 @@ importers:
         specifier: 2.1.6
         version: 2.1.6(@types/node@20.17.24)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
     devDependencies:
-      '@ara-web/eslint-sds-linter':
+      '@ara-web/reflect-eslint-proxy':
         specifier: workspace:*
-        version: link:../eslint-sds-linter
+        version: link:../reflect-eslint-proxy
       '@eslint/js':
         specifier: ^9.25.1
         version: 9.25.1
@@ -464,6 +430,40 @@ importers:
       typescript-eslint:
         specifier: ^8.31.1
         version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+
+  packages/reflect-eslint-proxy:
+    dependencies:
+      '@ara-web/reflect':
+        specifier: workspace:*
+        version: link:../reflect
+      '@ara-web/ts-enhancement':
+        specifier: workspace:*
+        version: link:../ts-enhancement
+      '@typescript-eslint/parser':
+        specifier: ^8.31.1
+        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+      '@typescript-eslint/utils':
+        specifier: ^8.31.1
+        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+      eslint:
+        specifier: ^9.25.1
+        version: 9.25.1(jiti@2.4.2)
+      typescript:
+        specifier: ~5.7.3
+        version: 5.7.3
+      typescript-eslint:
+        specifier: ^8.31.1
+        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.10.5
+        version: 20.17.24
+      '@typescript-eslint/rule-tester':
+        specifier: ^8.31.1
+        version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+      vitest:
+        specifier: 2.1.6
+        version: 2.1.6(@types/node@20.17.24)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
 
   packages/rpc-engine:
     dependencies:

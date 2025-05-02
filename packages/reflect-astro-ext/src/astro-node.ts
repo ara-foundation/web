@@ -1,7 +1,7 @@
 import type { Props } from "astro";
 
 // WARNING: Every time whenever a new extension added, add support here.
-type AstroImport = ((_props: Props) => any);
+type AstroImport = ((_props: Props) => unknown);
 type TsxImport = (({ children }: Props) => React.JSX.Element);
 type JsxImport = (() => React.JSX.Element);
 export type AstroNodeType = AstroImport | TsxImport | JsxImport;

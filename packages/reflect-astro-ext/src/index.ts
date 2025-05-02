@@ -12,8 +12,10 @@ export {
     type Text, 
     type Slots,
     type Asset,
-    type Module as Script,
-    type OntologoicalIdentifier
+    type Module,
+    type OntologoicalIdentifier,
+    type Attributes,
+    type SlotElement,
 } from "./ontology/index.js"
 export {
     CodeLevel

@@ -1,5 +1,5 @@
 import { ReflectProxy } from "@ara-web/reflect";
-export declare class EslintSDSLinterProxy extends ReflectProxy {
+export declare class ReflectEslintProxy extends ReflectProxy {
     private _version;
     private _cwd?;
     private _packageJsonFileName?;
@@ -28,4 +28,4 @@ export declare class EslintSDSLinterProxy extends ReflectProxy {
         };
     }>;
 }
-export default EslintSDSLinterProxy;
+export default ReflectEslintProxy;

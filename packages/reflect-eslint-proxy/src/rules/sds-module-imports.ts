@@ -10,7 +10,7 @@ export interface SDSLinterEsPluginDocs {
 
 const createRule = ESLintUtils.RuleCreator<SDSLinterEsPluginDocs>(
   name =>
-    `https://github.com/ara-foundation/web/tree/main/packages/eslint-sds-linter/docs/${name}.md`,
+    `https://github.com/ara-foundation/web/tree/main/packages/reflect-eslint-proxy/docs/${name}.md`,
 );
 
 const messages: Record<string, string> = {

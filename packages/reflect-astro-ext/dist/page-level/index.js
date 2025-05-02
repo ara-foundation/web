@@ -34,8 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { parse as commentParse } from "comment-parser";
 import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/ts-enhancement";
-import { FileExtension, DEFAULT_SLOT } from "../index.js";
-import { ComponentLevel } from "../component-level/index.js";
+import { FileExtension, DEFAULT_SLOT, ComponentLevel } from "../index.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */
@@ -105,8 +104,8 @@ let PageLevel = (() => {
             if (parsed.length === 0) {
                 return componentMeta;
             }
-            for (let block of parsed) {
-                for (let tag of block.tags) {
+            for (const block of parsed) {
+                for (const tag of block.tags) {
                     if (tag.tag === "param") {
                         if (tag.type !== "string") {
                             continue;
@@ -134,7 +133,7 @@ let PageLevel = (() => {
             const slots = {
                 [DEFAULT_SLOT]: []
             };
-            for (let componentNode of uiContent.elements) {
+            for (const componentNode of uiContent.elements) {
                 if (componentNode.isText && componentNode.value.length === 0) {
                     continue;
                 }

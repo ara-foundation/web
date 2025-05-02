@@ -24,10 +24,10 @@ import {
     type ModuleParts,
     AstroNode,
     type Text,
-    type Slots
+    type Slots,
+    type SlotElement
 } from "../index.js";
 import { AttributeLevel } from "./attribute-level.js";
-import type { SlotElement } from "../ontology/index.js";
 
 // // TODO move to the app/interface/reflect to understand the RPCs
 // // The pages traits adds to the Page the following:
@@ -144,7 +144,7 @@ export class ComponentLevel {
         if (element.children.length === 0) {
             return Result.ok(slots);
         }
-        for (let child of element.children) {
+        for (const child of element.children) {
             if (child.isText && child.value.length === 0) {
                 continue;
             }
@@ -215,7 +215,7 @@ export class ComponentLevel {
             if (component.isFailure) {
                 return Result.fail(`this.identifyHTMLElement() ${component.errorTitle}`, component.errorDescription!)
             }
-            let val = component.getValue();
+            const val = component.getValue();
             val.url = memory.moduleLink.moduleURL
             return Result.ok(val)
         } else if (element.isExpression) {

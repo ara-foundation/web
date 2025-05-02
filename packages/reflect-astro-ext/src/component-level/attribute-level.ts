@@ -1,14 +1,13 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
 import { Result, AraLink } from "@ara-web/ts-enhancement";
 import { TsNode } from "@ara-web/reflect/code-level";
-import { type AstroNode, type ModuleParts } from "../index.js";
-import type { Attributes } from "../ontology/index.js";
+import { type AstroNode, type ModuleParts, type Attributes } from "../index.js";
 import { ReflectLink } from "@ara-web/reflect/code-level";
 
 export class AttributeLevel {
     public static getNodeAttributes(node: AstroNode): Result<Attributes> {
         let attributes: Attributes = {}
-        for (let attrNode of node.attributes) {
+        for (const attrNode of node.attributes) {
             const identifiedAttr = this.identifyAttributeNode(attrNode);
             if (identifiedAttr.isFailure) {
                 return Result.fail(`this.identifyAttributeNode('${attrNode.name}'): ${identifiedAttr.errorTitle}`, identifiedAttr.errorDescription!)
@@ -60,7 +59,7 @@ export class AttributeLevel {
  * @returns {AttributeNode}
 */
 export const attributeByName = (node: AstroNode, name?: string): AttributeNode|undefined => {
-    for (let callAttr of node.attributes) {
+    for (const callAttr of node.attributes) {
         if (callAttr.name === name) {
             return callAttr;
         }
