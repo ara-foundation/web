@@ -25,7 +25,6 @@ export class ProjectMemory implements MemoryOperations {
         const absPath = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL(`@ara-web`, `reflect`, absPath, 'memory/ProjectMemory')
     }
-
     
     /**
      * Return the module file paths from the link

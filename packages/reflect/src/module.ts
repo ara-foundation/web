@@ -1,6 +1,6 @@
 import PathModule from "node:path"
-import { readFile, readFileSync, statSync, writeFileSync } from "node:fs";
-import { Result, ModuleLink, OkResult } from "@ara-web/ts-enhancement";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
+import { Result, ModuleLink, OkResult, Debug } from "@ara-web/ts-enhancement";
 
 /**
  * Defualt Module Categories
@@ -15,6 +15,63 @@ export enum ModuleCategory {
 export enum FileExtension {
     Typescript = ".ts",
     Javascript = ".js",
+}
+
+export class ModulePath {
+    private static getParentLevel = (callerSegments: string[], importSegments: string[]): number|undefined => {
+        for (let segmentIndex = 0; segmentIndex < callerSegments.length; segmentIndex++) {
+            const segment = callerSegments[segmentIndex];
+            const lvlsUntilCaller = callerSegments.length - segmentIndex;
+            if (segmentIndex >= importSegments.length) {
+                return -1 * lvlsUntilCaller;
+            }
+            if (segment === importSegments[segmentIndex]) {
+                continue;
+            }
+    
+            const lvlsUntilImport = importSegments.length - segmentIndex;
+            return -1 * (lvlsUntilCaller + lvlsUntilImport)
+        }
+    
+        return undefined;
+    }
+    
+    public static getFilenameOrIndex = (filePath: string, ext?: string) => {
+        let importFilename = "index";
+        if (!FilePath.isDirectory(filePath)) {
+            importFilename = FilePath.getFileName(filePath).getValue();
+        }
+        if (ext !== undefined) {
+            return importFilename + ext;
+        }
+        return importFilename;
+    }
+
+    public static getLevel = (callerFilePath: string, importFilePath: string): number|undefined => {
+        const importDirectory = FilePath.getDirectory(importFilePath);
+        const callerDirectory = FilePath.getDirectory(callerFilePath);
+        
+        const callerSegments = FilePath.getDirSegments(callerDirectory);
+        const importSegments = FilePath.getDirSegments(importDirectory);
+    
+        // We are dealing with the child:
+        // "./child/sub-child/index".subChild("./index") -> true
+        if (importDirectory.startsWith(callerDirectory)) {
+            return importSegments.length - callerSegments.length;
+        }
+        
+        const parentLvl = this.getParentLevel(callerSegments, importSegments);
+        if (parentLvl !== undefined) {
+            return parentLvl;
+        }
+    
+        if (importDirectory !== callerDirectory) {
+            return undefined;
+        }
+    
+        return 0;
+    }
+
 }
 
 /**
@@ -71,6 +128,7 @@ export class FilePath {
     /**
      * Returns the file name
      * @param filePath 
+     * @param includeExt? optinally set include the extension or not. By default set to false.
      * @returns 
      */
     public static getFileName = (filePath: string|undefined, includeExt: boolean = false): Result<string> => {
@@ -85,7 +143,9 @@ export class FilePath {
         const segments = filePath.split(PathModule.sep);
         let fileName = segments[segments.length - 1];
         if (!includeExt) {
-            fileName = fileName.substring(0, fileName.lastIndexOf("."))
+            if (fileName.lastIndexOf(".") > -1) {
+                fileName = fileName.substring(0, fileName.lastIndexOf("."))
+            }
         }
         return Result.ok(fileName);
     }
@@ -122,6 +182,14 @@ export class FilePath {
 
     public static getFileAbsolutePath = (filePath: string, filePathFrom: string): ModuleLink => {
         return ModuleLink.newFileURL(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
+    }
+
+    /**
+     * @param dirPath Directory without the file path
+     * @returns 
+     */
+    public static getDirSegments = (dirPath: string): string[] => {
+        return dirPath.split(PathModule.sep);
     }
 
     public static join = (segments: string[]): string => {
@@ -173,6 +241,38 @@ export class FilePath {
             return Result.ok(source);
         } catch (e) {
             return Result.fail(`fs.readFile('${filePath}'): thrown exception`, `${e}`)
+        }
+    }
+
+    public static getPackageJsonDependencies = (cwd: string = this.getCurrentWorkingDir(), fileName = 'package.json'): string[] => {
+        try {
+            const packageJsonFilePath = this.join([cwd, fileName]);
+            const rawPackageSettings = this.getFileContent(packageJsonFilePath)
+            if (rawPackageSettings.isFailure) {
+                Debug.log(`Get Package JSON: ${rawPackageSettings.errorTitle}: ${rawPackageSettings.errorDescription}`);
+                return [];
+            }
+            const packageJson = JSON.parse(rawPackageSettings.getValue()) as {
+                dependencies?: Record<string, string>,
+                devDependencies?: Record<string, string>,
+                peerDependencies?: Record<string, string>,
+            }
+
+            const dependencies: string[] = [];
+
+            if (packageJson.dependencies !== undefined) {
+                dependencies.push(...Object.keys(packageJson.dependencies))
+            }
+            if (packageJson.devDependencies) {
+                dependencies.push(...Object.keys(packageJson.devDependencies))
+            }
+            if (packageJson.peerDependencies) {
+                dependencies.push(...Object.keys(packageJson.peerDependencies))
+            }
+
+            return dependencies;
+        } catch (_) {
+            return [];
         }
     }
 }
