@@ -1,8 +1,8 @@
-import { type OkResult, Result, type ModuleLink, type ModuleURL, Debug } from "@ara-web/ts-enhancement";
-import type { ModuleMemory } from "./ModuleMemory.js";
-import type { ProjectMemory } from "./ProjectMemory.js";
-import type { ReflectProxyInterface, ServiceMetaInterface } from "./reflect-interface.js";
-import type { Reflect } from "./Reflect.js";
+import { Result, type ModuleLink } from "@ara-web/ts-enhancement";
+import { 
+    type ReflectProxyInterface, 
+    type ServiceMetaInterface
+} from "./reflect-interface.js";
 
 export type Module = unknown;
 export type ModulePath = string;
@@ -95,8 +95,6 @@ export abstract class ReflectProxy implements ServiceMetaInterface, ReflectProxy
         for(let pubKey of behindProxy.publicMethods) {
             (this._hidedMethods as any)[pubKey] = (behindProxy as any)[pubKey as keyof this];
             (behindProxy as any)[pubKey as keyof this] = undefined;
-            Debug.log(`Hided proxy key '${pubKey}'`)
-            Debug.log(this._hidedMethods);
         }
     }
 }

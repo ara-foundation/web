@@ -6,31 +6,6 @@ Reflect package turns the website into the ontological JSON and vice versa in th
 Testing from the reflect root:
 > pnpm test -r ./
 
-## Structure between Reflect, Ara Web and Ara.
-Reflect package is based on `SDS` architecutre.
-
-### SDS Architecture
-* Every file is called a script. (In reflect, we name it `module`, as it's Nodejs definition)
-* Every module can interact with it's siblings residing in the same directory.
-* Every module can interact with it's children. But not with the children of children.
-* Every module can interact with it's parents. But not with the parent of the parent.
-
-* Every group of modules are called a service. (In reflect, we name it 'package`, as it's Nodejs definition).
-* Every package can have extension packages. Extension may receive answer, but not reply.
-* Every package can have proxy packages. Proxy always return a reply.
-* Every package relationship (proxy, extension) are defined by the service interface that define proxy, and extension services. Any service that satisfy the service extension should be easily changeable.
-
-#### Reflect SDS
-Reflect package is the primary package. The reflect extension interface
-exposes the module parsing, module ontology, and module exposition.
-Between each other packages are interacting through `ModuleLink` links.
-
-Reflect proxy exposes the View, and injections.
-
-##### Reflect Extension interface, 
-The extensions's own extensions system allows for example (to use AI to generate description).
-Or to save the data outside.
-
 ## Tutorial
 For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks.
 
@@ -192,152 +167,111 @@ reflect.postAutoImporter({recordsGetter: astroImporter, categorizer: astroReflec
 Whenever you call `reflect.get()` the reflect will automatically update the memory by reloading everything from the file system.
 Including addition of the new files, removing deleted files, or updating
 the files if its updated.
+
+---
 # Architecture or how it works?
 The primary reflection is exposed through `Reflect` class. 
-To reflect your app, use the instance of `Reflect`, by calling `reflect.getPages()` or `reflect.getComponents()`.
+To reflect your app, use the instance of `Reflect`, then by calling `reflect.get()` or `reflect.put()`.
 
-## Globs
+## Structure between Reflect, Ara Web and Ara.
+Reflect package is based on `SDS` architecture modelling.
 
-But globs are the raw files and their paths in the Vite's format. We need to convert them
-into the apps code structure.
+### SDS Architecture
+Modules such as scripting files has three rules. A module can:
+* Import it's siblings in the same directory.
+* Import it's children index.
+* Importing child module other than index is prohibited.
+* Importing sub children not allowed.
+* Import it's parent index.
+* Importing named parent module is prohibited.
+* Importing grand parent is prohibited.
 
-In order to reflect, pass to the Reflect the globs. 
-Globs are the files retrieved by the Vite's file import's `import.meta.glob()` function.
+Group of modules is a package. A package interaction:
+* If package is called by any module, then define it as NPM Package.
+* Other packages must be either an extension or a proxy.
 
-> Requires Vite, or Vite dependent modules to use Reflect.
+# Extending
 
+## Adding an extension
+Create a package that extends `ExtensionInterface` from `@ara-web/reflect`.
+The example of built in reflect extension is in the `src/reflect-nodejs-ext`.
+
+The extensions's could add support of new modules, to use AI to generate description.
+Or to save the data outside.
+
+## Proxy
+Create a proxy by extending `ReflectProxy` class from `@ara-web/reflect`.
+
+Proxies, are similar to midldeware, but proxies hide the Reflect behind proxy interface.
+Reflect proxies may add new methods, over-write the Reflect's own methods, or return absolutely new data. For example, through the proxy,
+reflect could be converted into a middleware of another program, into a CLI project, into an HTTP Endpoints etc.
+
+Once you published your own Reflect proxy on NPM,
+or found another proxy made by other internet peeps, you need to
+add it as the proxy of Reflect and then proxify the Reflect itself:
+
+```typescript
+import { Reflect } from "@ara-web/reflect";
+import { YourOwnProxy } from "@org.com/your-own-proxy";
+
+const yourOwnProxy = new YourOwnProxy();
+const reflect = new Reflect({proxies: [yourOwnProxy]});
+```
+
+*Trying to call `reflect.get` will fail, since proxy hided it*.
+Instead, we need to call `reflect.proxifyMe`:
+
+```typescript
+const proxifiedReflect = reflect.proxifyMe<YourOwnProxy>();
+```
+Now, we can interact with our Proxy instance that internally may access into Reflect.
+
+Follow the tutorial to create your proxy: [Create Reflect Proxy Tutorial](./PROXY.md)
+
+----
+# Terminology
 
 ## Modules 
-Generally, a code base is organized into the directories and source code files.
-Optionally a code could include scripts, configurations and assets such as Audio, Graphical etc.
-
-The Reflect uses the Javascript's convention to structurize the app code base.
-In Javascript, a source code is treated as a single module.
+The Reflect uses the Javascript's convention to structurize the app code base. In Javascript, a source code is treated as a single module.
 So, Reflect also works with the modules instead of the source code files.
 
-Instead of the directories, reflect uses the module types.
+> Module = a single file.
 
-Modules are consisted of the 
-- ModuleType (type of the module: 'Components', 'Page', etc.), 
-- modulePath (path within the system), 
-- loaded glob.
+In the file system, files are grouped by directories. In
+Reflect instead directories we use `module category`.
 
-The Modules followed by the globs are the top level.
-
-> If you want to support different directories, for example `Animation`, `Card` module types,
-> Then, edit the `@src/module.ts`.
-> If you want to support new forms of the modules, then update the module level.
+The types of modules, which also means types of files are defined by the reflect extensions. For example `reflect-svelte` will allow `.svelte` module interaction, `reflect-react` will support React components.
 
 ## Memory
 In the reflect, the modules are stored internally, since Reflect must know entire structure of the code upfront.
 
-Therefore, before using the Reflect, set the Globs of all app code base that it could understand.
+Therefore, before using the Reflect, set the modules that reflect must know
+by calling `reflectExtension.putModules`.
+
 Optionally, you can set Reflect to automatically
-update the modules by setting
+update the modules by setting.
 
-`reflect.putAutoGlobsImport(() => ModuleGlobs)`
-
-The Reflect will make sure if the file is deleted,
+> The Reflect will make sure if the file is deleted,
 after the update, then it's cleaned in the cache.
+> Not available yet. :( I forgot to add it.
 
 If file isn't updated, then it's skipped. If file is updated or doesn't exist,
 then, it will be recreated in the cache.
+> Not available yet. :(
 
-> Whenever you call the Reflect exposed methods such as `getComponents()`, `getPages()`,
-> It will expose them from the Memory.
+## Module Parts
+Module data added into Reflect internally converted into module parts
+that differentiate various parts, primarily the scripting part, and
+Web elements.
 
-## UI Content
-Some data, such as Scripts, or Components are simply provided by the Vite.
-Those are not necessary to parse.
-But for web pages, we need to structurize the code.
+Reflect will first create the `Code` from the module's scripting part
+and identify all declared values, all imported modules and update the
+module's memory with the result of script.
 
-So it means, we need to decode the web page into the scripts, and the Page Elements.
-Usually web pages are dynamic, and some data is received through the scripts.
-That's why we need to decode the page into the scripts and Page Elements.
+After the code, Reflect will parse the module as the JSON using the `UI-level` modules.
+For example, in astro, it first converts all modules into `Page`.
+Then pages are converting `Component`, while component itself 
+converts the `Attribute`.
 
-### Page Element
-So, if the module has the web elements to show, then it's treated as the page elements. 
-Since, we use the Astro as the only engine for now, then the page nodes are the Astro Nodes.
-
-# Content retreival
-Whenever you retreive data by `Reflect`, if it's the anything except the page,
-then, reflect retreives the data automatically without anaylizing the internal structure.
-
-But it's different for the pages modules.
-
-## Page retreival
-If Reflect is asked to retreive the page from the module,
-Then it will create a `ui-content`.
-And then, will try to convert each content's data into components.
-
-### Page level
-This is going in the `page-level.ts` module.
-The UI level will analyze each element and convert them into the components,
-if necessary, will parse it's dynamic data of the elements as well.
-
-Once the elements converted into the recpetive parts, then 
-UI level will put them in the page.
-
-The UI goes in two stages. First it analyzes the components.
-Then it if the components have a link to the javascript expression, then page level will evaluate them.
-
-#### Element level 
-The `page-level.ts` receiving the content, calls the `element-level` for each of it's element
-by passing the Element. Elements match the components always, otherwise it won't work.
-Therefore, the element's will return Components, RPC calls or layouts.
-
-The `element-level` also parses the attributes of the element as well.
-
-##### Attribute level
-The `attribute-level` is analyzed the component's name, as well as the module of the component.
-If the component has the attributes, then the parameters are passed to the component.
-
-If the component has the dynamic data in the attributes, then it's called by the Ast from `code-level`.
-
-#### Code Level
-The code level evaluates the given piece of code from the source code and all modules that reflect has.
-> Requires access to the memory for the Code Level.
-> Pass through all elements.
-The code level works with the AST. If it doesn't exist, then the AST will be generated.
-It first, analyzes the imports such as dependency on other modules from list of registered modules.
-Identifiers, etc.
-
-Then, evaluates the code using.
-
----
-# Components
-The component is the basic UI web component that composes the web pages.
-
-The layers of component extraction:
-
-* Glob
-* FileLevel
-* Component
-
-*TODO* Make sure to evaluate the component values.
-
-# Reflect itself.
-Let's say, I got a script that defines the Reflect instance.
-Then, in one of the components I call the `reflect.instance`.
-
-When a Reflect tries to reflect the page, it sees there is an import clause.
-Import refers to the script where it was defined. But limitation is such, that Import clause
-can not define itself.
-
-```typescript
-// src/scripts/reflect.ts
-import { Reflect } from "@ara-web/reflect";
-
-const reflect = new Reflect({import.meta.filename})
-export default reflect;
-```
-
-Then, we have a script:
-```typescript
-// src/pages/index.astro
-import reflect from "../scripts/reflect"
-
-console.log(reflect.get());
-```
-
-Let's test that it works.
+At the end, when all data is pre-defined, the module will make sure
+to lint the data between modules.
