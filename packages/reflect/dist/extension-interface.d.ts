@@ -1,6 +1,7 @@
 import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/ts-enhancement";
 import type { ModuleMemory } from "./ModuleMemory.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
+import type { ServiceMetaInterface } from "./reflect-interface.js";
 export type Module = unknown;
 export type ModulePath = string;
 export type ModuleCategory = string;
@@ -60,9 +61,7 @@ export interface MemoryOperations {
 /**
  * Extension Interface that all module handlers based on.
  */
-export interface ExtensionInterface extends MemoryOperations {
-    description: string;
-    moduleLink: ModuleLink;
+export interface ExtensionInterface extends MemoryOperations, ServiceMetaInterface {
     moduleMemories: ModuleMemory<unknown>[];
     /**
      * Return the module categories that this extension adds

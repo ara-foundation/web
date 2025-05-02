@@ -1,22 +1,35 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, OkResult, Result } from "@ara-web/ts-enhancement";
 import { ProjectMemory } from "./ProjectMemory.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
+import { ReflectProxy } from "./ReflectProxy.js";
+const desc = "Ara Web Reflect";
+const link = ModuleLink.newPackageURL("@ara-web", "reflect");
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
-export class Reflect {
+export class Reflect extends ReflectProxy {
     // Category => Path => ModuleMemory Instance
     _memory;
-    _extensions = [];
+    _extensions;
+    _pubMethods = ["get"];
+    get publicMethods() {
+        return this._pubMethods;
+    }
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param reflectSetup
      */
     constructor(reflectSetup) {
+        super(desc, link);
         this._memory = new ProjectMemory();
         const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
         this._extensions = [new NodejsReflectExtension(), ...exts];
         this._memory.putMemoryOperations(...this._extensions);
+        // In case if it's proxified:
+        if (reflectSetup?.proxies !== undefined) {
+            this.postProxies(reflectSetup.proxies.reverse());
+            this.hideByProxy(this);
+        }
     }
     get nodeJsExt() {
         return this._extensions[0];

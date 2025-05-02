@@ -1,31 +1,48 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, OkResult, Result } from "@ara-web/ts-enhancement";
 import { ProjectMemory } from "./ProjectMemory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
+import { ReflectProxy } from "./ReflectProxy.js";
+import type { ReflectInterface } from "./reflect-interface.js";
 
 export type ReflectSetup = {
+    proxies?: ReflectProxy[];
     extensions?: ExtensionInterface[];
 }
+
+const desc = "Ara Web Reflect";
+const link = ModuleLink.newPackageURL("@ara-web", "reflect");
 
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
-export class Reflect {
+export class Reflect extends ReflectProxy implements ReflectInterface  {    
     // Category => Path => ModuleMemory Instance
     private _memory: ProjectMemory;
-    private _extensions: ExtensionInterface[] = [];
+    private _extensions: ExtensionInterface[];
+    private _pubMethods = ["get"];
+
+    public get publicMethods(): string[] {
+        return this._pubMethods;
+    }
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param reflectSetup 
      */
     constructor(reflectSetup?: ReflectSetup) {
+        super(desc, link);
         this._memory = new ProjectMemory();
-
         const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
 
         this._extensions = [new NodejsReflectExtension(), ...exts];
         this._memory.putMemoryOperations(...this._extensions);
+
+        // In case if it's proxified:
+        if (reflectSetup?.proxies !== undefined) {
+            this.postProxies(reflectSetup.proxies.reverse());
+            this.hideByProxy(this);
+        }
     }
 
     public get nodeJsExt(): NodejsReflectExtension {
@@ -69,7 +86,7 @@ export class Reflect {
      * Get the content by the module category
      * @param moduleCategory 
      */
-    public get = async <T>(moduleCategory: string): Promise<Result<T[]>> => {
+    public get? = async <T>(moduleCategory: string): Promise<Result<T[]>> => {
         const preparationResult = await this.beforeGet(moduleCategory);
         if (preparationResult.isFailure) {
             return Result.fail(
