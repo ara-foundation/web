@@ -12,6 +12,11 @@ export declare enum FileExtension {
     Typescript = ".ts",
     Javascript = ".js"
 }
+export declare class ModulePath {
+    private static getParentLevel;
+    static getFilenameOrIndex: (filePath: string, ext?: string) => string;
+    static getLevel: (callerFilePath: string, importFilePath: string) => number | undefined;
+}
 /**
  * Works with the file path. Anything related to your OS file system is going through here.
  */
@@ -35,6 +40,7 @@ export declare class FilePath {
     /**
      * Returns the file name
      * @param filePath
+     * @param includeExt? optinally set include the extension or not. By default set to false.
      * @returns
      */
     static getFileName: (filePath: string | undefined, includeExt?: boolean) => Result<string>;
@@ -48,6 +54,11 @@ export declare class FilePath {
      */
     static getDirectory: (dirOrfilePath: string) => string;
     static getFileAbsolutePath: (filePath: string, filePathFrom: string) => ModuleLink;
+    /**
+     * @param dirPath Directory without the file path
+     * @returns
+     */
+    static getDirSegments: (dirPath: string) => string[];
     static join: (segments: string[]) => string;
     /**
      * Returns true if the file exists by given `moduleLink`.
@@ -67,4 +78,5 @@ export declare class FilePath {
      * @param filePath
      */
     static getFileContent: (filePath: string) => Result<string>;
+    static getPackageJsonDependencies: (cwd?: string, fileName?: string) => string[];
 }

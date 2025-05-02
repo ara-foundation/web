@@ -1,5 +1,5 @@
 import { Result, type ModuleLink } from "@ara-web/ts-enhancement";
-import type { ReflectProxyInterface, ServiceMetaInterface } from "./reflect-interface.js";
+import { type ReflectProxyInterface, type ServiceMetaInterface } from "./reflect-interface.js";
 export type Module = unknown;
 export type ModulePath = string;
 export type ModuleCategory = string;

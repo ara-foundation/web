@@ -1,4 +1,5 @@
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/ts-enhancement";
+import {} from "./reflect-interface.js";
 /**
  * Extension Interface that all module handlers based on.
  */
@@ -64,8 +65,6 @@ export class ReflectProxy {
         for (let pubKey of behindProxy.publicMethods) {
             this._hidedMethods[pubKey] = behindProxy[pubKey];
             behindProxy[pubKey] = undefined;
-            Debug.log(`Hided proxy key '${pubKey}'`);
-            Debug.log(this._hidedMethods);
         }
     }
 }
