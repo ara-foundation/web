@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",
-    "prepublishOnly": "pnpm test:lint && pnpm build",
-    "_chore": "pnpm i"
+    "prepublishOnly": "pnpm test && pnpm build",
+    "_chore": "pnpm i",
+    "test": "vitest -r ./"
   },
   "exports": {
     ".": {
@@ -17,7 +18,8 @@
     }
   },
   "devDependencies": {
-    "typescript": "~5.7.3"
+    "typescript": "~5.7.3",
+    "vitest": "2.1.6"
   },
   "dependencies": {
     "@types/node": "^20.10.5",
