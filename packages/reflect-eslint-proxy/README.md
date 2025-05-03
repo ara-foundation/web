@@ -1,9 +1,11 @@
-Todo:
-* Add a rule `sds-module-imports-order.ts`
-* Add a rule `sds-proxify-me-called.ts` that ensures if a module has passed proxies into the Proxy receiver, then proxy receiver has call `proxifyMe`.
-* Add a rule `sds-behind-proxy.ts` that ensures that if object recieved a user is not calling proxified methods nor arguments that is in the proxified object property from `proxified.publicMethods` list.
+# Reflect Eslint Proxy
+An eslint plugin for large codebases ensuring you avoid module dependency mess.
 
-# Getting started
+Adds the rules that makes sure your module will not import from non-familiar modules...
+
+It's largely based on the SDS Architecture.
+
+## Getting started
 In the `eslint.config.mjs` add the following:
 
 ```javascript
@@ -26,4 +28,12 @@ export default defineConfig([
   }
 ```
 
+# Roadmap
+Files
+* Make sure to import all the files including `.astro`.
+* Make sure that file extension is supported by the extensions.
 
+Rules
+* Add a rule `sds-module-imports-order.ts`
+* Add a rule `sds-proxify-me-called.ts` that ensures if a module has passed proxies into the Proxy receiver, then proxy receiver has call `proxifyMe`.
+* Add a rule `sds-behind-proxy.ts` that ensures that if object recieved a user is not calling proxified methods nor arguments that is in the proxified object property from `proxified.publicMethods` list.
