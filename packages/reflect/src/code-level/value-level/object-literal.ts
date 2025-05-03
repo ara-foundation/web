@@ -1,5 +1,5 @@
 import { Node, ObjectLiteralExpression } from "ts-morph";
-import { ObjectTraits, Result } from "@ara-web/ts-enhancement";
+import { ObjectTraits, Result } from "@ara-web/p-hintjens";
 import { 
     TypeDeclaration, 
     IntersectedUnionType, 

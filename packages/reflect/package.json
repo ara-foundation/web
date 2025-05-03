@@ -27,7 +27,7 @@
     }
   },
   "dependencies": {
-    "@ara-web/ts-enhancement": "workspace:*",
+    "@ara-web/p-hintjens": "workspace:*",
     "packageurl-js": "^2.0.1",
     "ts-morph": "^25.0.1"
   },

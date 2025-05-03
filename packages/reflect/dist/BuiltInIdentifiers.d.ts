@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { AstNode, type AstIdentifiers, type AstNodeValidator } from "./code-level/index.js";
 export declare class BuiltInIdentifiers {
     private static prefix;

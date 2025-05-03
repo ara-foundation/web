@@ -1,9 +1,6 @@
 /**
  * The script that works with the code by turning it into the 
  * AST (Abstract Syntax Tree)
- * @todo Make the components nested to each other
- * @todo fix the parsing of all pages
- * @todo somehow we need to show on PageModal the meta components
  */
 import { 
     ArrayTypeNode, 
@@ -14,7 +11,7 @@ import {
     TypeLiteralNode, 
     UnionTypeNode 
 } from "ts-morph";
-import { AraLink, Result, Debug } from "@ara-web/ts-enhancement";
+import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
 import {
     Identifier, 
     Literal, 
@@ -41,8 +38,6 @@ export type PossibleTypeValue =
 /**
  * TypeValueTraits parses the type's parameters.
  * Supports TypeLiterals, TypeUnions and ArrayTypes.
- * 
- * TODO: Move the parts of linting here too.
  */
 export class TypeValueTraits {
     public static readonly ERR_INVALID_INTERSECTION = `TypeValueTraits.Invalid_intersection`

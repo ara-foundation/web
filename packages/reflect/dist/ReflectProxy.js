@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import {} from "./reflect-interface.js";
 /**
  * Extension Interface that all module handlers based on.

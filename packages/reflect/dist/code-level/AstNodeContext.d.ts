@@ -1,4 +1,4 @@
-import { Result, AraLink, ModuleLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import type { MemoryOperations } from "../index.js";
 import { AstNode, type AstIdentifiers } from "./ast-node.js";
 /**

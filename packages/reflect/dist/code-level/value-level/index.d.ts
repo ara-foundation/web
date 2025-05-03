@@ -1,7 +1,7 @@
 /**
  * Handles the AST Node's values
  */
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { ValueTypeString, type ValueType, TsNode, AstNode, type TypedData, AstNodeContext } from "../index.js";
 export declare class ValueLevel {
     static emptyValueByType: (identifier: string, val: ValueTypeString | ValueType | undefined) => Result<ValueType>;

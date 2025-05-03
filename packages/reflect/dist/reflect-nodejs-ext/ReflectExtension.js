@@ -1,4 +1,4 @@
-import { EnumTraits, OkResult, Result, ModuleLink, } from "@ara-web/ts-enhancement";
+import { EnumTraits, OkResult, Result, ModuleLink, } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
 import { ModuleCategory } from "./module.js";
 /**

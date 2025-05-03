@@ -1,4 +1,4 @@
-import { ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, Result } from "@ara-web/p-hintjens";
 import { AstNode, AstNodeType, ValueTypeString, Code, TsNode, VariableLevel } from "./code-level/index.js";
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler = (astNode, values) => {

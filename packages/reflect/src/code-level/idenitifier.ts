@@ -1,5 +1,5 @@
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { Result, ObjectTraits, AraLink } from "@ara-web/ts-enhancement";
+import { Result, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";

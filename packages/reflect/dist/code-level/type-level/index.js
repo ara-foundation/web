@@ -1,4 +1,4 @@
-import { AraLink, Debug, Result } from "@ara-web/ts-enhancement";
+import { AraLink, Debug, Result } from "@ara-web/p-hintjens";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, TsNode, AstNode, AstNodeContext, ReflectLink } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 import { TypeDeclaration as TypeDeclarationTraits } from "./type-declaration.js";

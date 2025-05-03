@@ -3,7 +3,7 @@
  */
 import { Reflect } from "../src/Reflect.js"
 import { expect, test } from "vitest";
-import { ModuleLink } from "@ara-web/ts-enhancement";
+import { ModuleLink } from "@ara-web/p-hintjens";
 import { ReflectProxy } from "../src/ReflectProxy.js";
 
 class SampleProxy extends ReflectProxy {

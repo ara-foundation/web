@@ -1,4 +1,4 @@
-import { Result, AraLink, ModuleLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import { AstNode } from "./ast-node.js";
 /**
  * Collection of the variables, functions that are available for the Ast Node.

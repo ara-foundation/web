@@ -3,11 +3,8 @@ Reflect package turns the website into the ontological JSON and vice versa in th
 
 > In computer science, reflective programming or reflection is the ability of a process to examine, introspect, and modify its own structure and behavior. [Wikipedia Article](https://en.wikipedia.org/wiki/Reflective_programming)
 
-Testing from the reflect root:
-> pnpm test -r ./
-
 ## Tutorial
-For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks.
+For our tutorial, let's create a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks. After completing the tutorial, you would know how to apply Reflect for other frameworks as well.
 
 ```bash
 pnpm create astro@latest ./sample-app
@@ -17,19 +14,16 @@ Pick the options you wish during the interactive installation.
 Then, install *@ara-web/reflect* package:
 
 ```bash
-pnpm add @ara-web/reflect @ara-web/reflect-astro-ext
+pnpm add @ara-web/reflect 
+pnpm add @ara-web/reflect-astro-ext
 ```
 
-The `Reflect` package knows how to reflect on typescript, javascript modules. Additionally we add `Astro Extension`, a reflect's plugin that
-allows understanding astro's file structure, as well as
-working with the `.astro` files. And for example we created the astro based sample website.
+The `Reflect` package only works with the typescript, javascript modules. We also install the `Astro Extension`, that extends the Reflect to support `.astro` files and framework's file structure. 
 
-Our installation process is ready. 
-Now, we need to setup Reflect, describing which modules
-in the file system to change.
+We set the basic website and installed necessary packages. To start to use Reflect, we need to setup the server in our website.
 
 ### Setup
-Create a script at `src/scripts/setup-reflect.ts`:
+Create the `src/scripts/setup-reflect.ts` script. Here is the code too add:
 
 ```typescript
 import { Reflect } from "@ara-web/reflect"
@@ -39,10 +33,14 @@ const astroReflect = new ReflectAstroFramework();
 const reflect = new Reflect({extensions: [atroReflect]});
 
 ```
-We create instance of `Reflect` class with the `ReflectAstroFramework` as it's extension. The extension will allow reflecting `.astro` files.
-It also exposes the Astro Ontology.
+We create instance of `Reflect` class with the `ReflectAstroFramework` as it's extension. 
 
-Let's first packages that Reflect could analyze.
+Now, we need to permit Reflect to work with the packages and modules. Because Reflect itself due to security reasons doesn't access to the files.
+We have to put them manually.
+
+And firstly, let's grant permission to recognize some node.js packages that we use in our website.
+
+Reflect has the built in extension that extends it to support Nodejs environment. To support custom files or packages, we have to use the built in extension which is available as `reflect.nodeJsExt`:
 
 ```typescript
 // Letting know about NodeJS modules to digest by Reflect.
@@ -59,19 +57,13 @@ console.log(`Astro Framework Reflect link:`)
 console.log(importLink);
 
 ```
-Here, we only support "@ara-web/reflect". Reflect has the 
-built in `ReflectNodeJsExtension` extension. 
-This extension supports typescript and javascript modules.
-As well list of Nodejs features, modules that user could use.
 
 Using built in nodejs extension, we tell to Reflect that
 project uses the above packages. Otherwise, if Reflect during
 parsing sees `import { data } from "another module"`,
 then it will not know, what's that module, since you didn't tell him.
 
-> Without your permission, it will never goes to the filesystem.
-> So you need to give the permission explicitly.
-> It guarantees the security.
+> And without your permission, Reflect will not dare to look in the filesystem.
 
 Then, we need to know the Astro Reflecting extension about
 Astro's data in our filesystem, so let's continue adding the next piece of code into our setup script.
@@ -89,17 +81,16 @@ console.log(importedModules)
 
 ```
 
-For importing the bulk of data, we use Astro's built in feature, which 
-in itself provided by `vite` plugin. The `glob` will load
-modules that match the regular expression. We simply said
+For importing the bulk of modules, we use Astro's built in `import.meta.glob`, which 
+in itself provided by `vite` plugin. It uses the  `glob` pattern to find all files that match the regular expression.
 give me a list of all typescript, astro and SVG files in the `src` directory
 recursively.
 
+Note, after `import.meta.glob` we also import the reflect-setup script itself, since Vite's glob pattern doesn't recognize the script where import function is called. We add it manually as well.
 > Vite can not import the module where `import.meta.glob` called.
 Therefore, we add it manually.
 
-We then post the modules including the current file name. Reflect uses
-the file you privded and builds the absolute path of the imports.
+We then post the modules as relative to the `setup-reflect.ts` script into the Astro Extension. Astro Extension will handle it and expose necessary information to the `Reflect`.
 
 Finally, at the end of the script type: 
 
@@ -110,10 +101,8 @@ export default reflect;
 We can use our reflect in the page.
 
 ### Usage
-> Test the entire tutorial by following the steps.
-
 Let's open the page at `src/pages/index.astro`, and
-add the following lines in the frontmatter's end.
+add the following lines in the end of frontmatter.
 
 > Frontmatter is the Typescript code between `---` and `---`.
 
@@ -132,9 +121,9 @@ console.log(pages);
 
 ```
 
-The above example will print all the pages in your console as the JSON.
+The above example will print all the pages in your console as the JSON. You see your website's data.
 
-Done. Congratulations. Now, let's continue on showing the JSON on the browser.
+Now, let's continue on showing the JSON on the browser.
 
 ### Auto Module Imports
 Sometimes, during the development, we need to update the data in live.
@@ -275,3 +264,10 @@ converts the `Attribute`.
 
 At the end, when all data is pre-defined, the module will make sure
 to lint the data between modules.
+
+# Roadmap
+For variable declarations
+* Check the variable updates
+* Check the functions that update the variable?
+
+* **BUG** cancelSlug when identifying !cancelSlug is not working. As its the infinite recursive loop `(!cancelSlug -> cancelSlug -> !cancelSlug` by `updateFunction`. Therefore, identify the variables in the module, then, identify their assignment.

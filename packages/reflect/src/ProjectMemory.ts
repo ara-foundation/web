@@ -7,7 +7,7 @@ import {
     Result,
     ModuleLink, 
     type ModuleURL
- } from "@ara-web/ts-enhancement";
+ } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "./ModuleMemory.js";
 import type { MemoryOperations } from "./extension-interface.js";
 

@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/Code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { AraLink, ModuleLink } from "@ara-web/ts-enhancement";
+import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import { ReflectLink } from "../src/code-level/ReflectLink.js";
 import { Reflect } from "../src/Reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
@@ -897,29 +897,4 @@ test('Supports the conditional expression', async () => {
   expect(varAstNode.dataType).toEqual(ValueTypeString.string)
   context.post([varAstNode])
 
-});
-
-
-// TODO #1
-// cancelSlug when identifying !cancelSlug is not working.
-// As its the infinite recursive loop (!cancelSlug -> cancelSlug -> !canSlug by updateFunction)
-// Therefore, identify the variables in the module.
-// identify their assignment.
-            
-// First identify the variables then update the variables by the given identifier.
-// And the update variable is accesses the memory.
-            
-// TODO #2
-// Identify the imports in the memory.
-// Identify the imports as newName,
-// identify the type imports,
-// identify the type { name, name },
-// identify the default, and in the skobes,
-// Then, change recursiveValue by the value.
-
-
-//
-// Check the variable updates
-//
-
-// Check the functions that update the variable?
+});       

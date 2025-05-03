@@ -1,11 +1,9 @@
-import { AraLink, Result } from "@ara-web/ts-enhancement";
+import { AraLink, Result } from "@ara-web/p-hintjens";
 import { TsNode, type TsNodeValidator, TypeDeclaration, ValueTypeString, UnionTypeDeclaration, type IdentifiedNodeDataType, type LiteralType } from "../index.js";
 export type PossibleTypeValue = ValueTypeString | AraLink<string> | TypeDeclaration | Array<IdentifiedNodeDataType> | LiteralType | UnionTypeDeclaration;
 /**
  * TypeValueTraits parses the type's parameters.
  * Supports TypeLiterals, TypeUnions and ArrayTypes.
- *
- * TODO: Move the parts of linting here too.
  */
 export declare class TypeValueTraits {
     static readonly ERR_INVALID_INTERSECTION = "TypeValueTraits.Invalid_intersection";

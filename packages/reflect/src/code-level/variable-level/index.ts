@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import type { AstIdentifiers, TsNode } from "../index.js";
 import { VariableStatement } from "./variable-statement.js";
 

@@ -1,5 +1,5 @@
 import { ArrayLiteralExpression, Node } from "ts-morph";
-import { Result, Debug, ObjectTraits } from "@ara-web/ts-enhancement";
+import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     TsNode, 
     type TsNodeValidator,

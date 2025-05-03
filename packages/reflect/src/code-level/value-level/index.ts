@@ -2,7 +2,7 @@
  * Handles the AST Node's values
  */
 
-import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/ts-enhancement";
+import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString, 
     type IdentifiedNodeDataType, 

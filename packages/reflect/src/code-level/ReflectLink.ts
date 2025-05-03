@@ -4,7 +4,7 @@
  * - Ts Nodes (to parse or connect between ts node tree)
  * - Expressions
  */
-import { AraLink } from "@ara-web/ts-enhancement";
+import { AraLink } from "@ara-web/p-hintjens";
 import type { ValueType } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 

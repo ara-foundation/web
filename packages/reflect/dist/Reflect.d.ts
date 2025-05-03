@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import { ReflectProxy } from "./ReflectProxy.js";

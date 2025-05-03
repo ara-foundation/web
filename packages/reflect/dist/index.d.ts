@@ -6,4 +6,4 @@ export { ModuleMemory } from "./ModuleMemory.js";
 export { ProjectMemory, type ModuleMemories } from "./ProjectMemory.js";
 export { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
 export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module.js";
-export { ModuleLink, AraLink } from "@ara-web/ts-enhancement";
+export { ModuleLink, AraLink } from "@ara-web/p-hintjens";

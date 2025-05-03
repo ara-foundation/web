@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { VariableStatement } from "./variable-statement.js";
 export class VariableLevel {
     static getVariableIdentifiers = async (tsNodes) => {

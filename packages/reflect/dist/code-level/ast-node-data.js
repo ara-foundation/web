@@ -1,4 +1,4 @@
-import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink } from "@ara-web/p-hintjens";
 import { TypeLevel } from "./type-level/index.js";
 export var ValueTypeString;
 (function (ValueTypeString) {

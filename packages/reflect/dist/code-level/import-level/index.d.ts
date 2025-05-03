@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { TsNode, type AstIdentifiers, type TsNodeValidator } from "../index.js";
 export declare class ImportLevel {
     private static _lastImportedTsNode;

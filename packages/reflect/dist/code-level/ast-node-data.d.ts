@@ -1,4 +1,4 @@
-import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink } from "@ara-web/p-hintjens";
 import type { TypedData } from "./ast-node.js";
 export type LiteralType = string | number | boolean;
 export type EnumMembers = {

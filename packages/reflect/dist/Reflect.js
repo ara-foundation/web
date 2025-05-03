@@ -1,4 +1,4 @@
-import { ModuleLink, OkResult, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, OkResult, Result } from "@ara-web/p-hintjens";
 import { ProjectMemory } from "./ProjectMemory.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import { ReflectProxy } from "./ReflectProxy.js";

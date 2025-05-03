@@ -4,7 +4,7 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { NamedImports } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { AstNodeType, type AstIdentifiers, TsNode, type TsNodeValidator } from "../index.js";
 export declare class NamedImport extends TsNode {
     protected _tsNode: NamedImports;

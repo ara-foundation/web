@@ -1,4 +1,4 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { TsNode } from "../index.js";
 import { ImportDeclaration } from "./import-declaration.js";
 export class ImportLevel {

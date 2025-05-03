@@ -4,7 +4,7 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ImportSpecifier, NamedImports } from "ts-morph";
-import { Result, Debug } from "@ara-web/ts-enhancement";
+import { Result, Debug } from "@ara-web/p-hintjens";
 import { 
     AstNode, 
     AstNodeType, 

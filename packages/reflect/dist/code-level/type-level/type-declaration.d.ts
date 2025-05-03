@@ -1,12 +1,9 @@
 /**
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
- * @todo Make the components nested to each other
- * @todo fix the parsing of all pages
- * @todo somehow we need to show on PageModal the meta components
  */
 import { TypeAliasDeclaration } from "ts-morph";
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { AstNode, TsNode, type TsNodeValidator } from "../index.js";
 export declare class TypeDeclaration extends TsNode {
     protected _tsNode: TypeAliasDeclaration;

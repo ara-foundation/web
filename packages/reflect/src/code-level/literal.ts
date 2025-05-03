@@ -1,5 +1,5 @@
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node } from "ts-morph";
-import { Debug, Result, ObjectTraits, StringTraits } from "@ara-web/ts-enhancement";
+import { Debug, Result, ObjectTraits, StringTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";

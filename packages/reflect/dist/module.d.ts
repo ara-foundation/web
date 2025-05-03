@@ -1,4 +1,4 @@
-import { Result, ModuleLink, OkResult } from "@ara-web/ts-enhancement";
+import { Result, ModuleLink, OkResult } from "@ara-web/p-hintjens";
 /**
  * Defualt Module Categories
  */

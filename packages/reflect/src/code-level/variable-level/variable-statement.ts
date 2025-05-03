@@ -8,7 +8,7 @@ import {
     VariableDeclarationList,
     Node
 } from "ts-morph";
-import { Debug, Result } from "@ara-web/ts-enhancement";
+import { Debug, Result } from "@ara-web/p-hintjens";
 import { TsNode, type TsNodeValidator, type AstIdentifiers } from "../index.js";
 import { VariableDeclaration } from "./variable-declaration.js";
 

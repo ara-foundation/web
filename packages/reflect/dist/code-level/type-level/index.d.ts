@@ -1,4 +1,4 @@
-import { AraLink, Result } from "@ara-web/ts-enhancement";
+import { AraLink, Result } from "@ara-web/p-hintjens";
 import { type TypedData, TsNode, AstNode, AstNodeContext, type ValueType, type AstIdentifiers } from "../index.js";
 import { type PossibleTypeValue } from "./type-value-traits.js";
 export declare class TypeLevel {

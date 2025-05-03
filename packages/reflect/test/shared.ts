@@ -1,4 +1,4 @@
-import  { type Result, AraLink, ModuleLink } from "@ara-web/ts-enhancement";
+import  { type Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";

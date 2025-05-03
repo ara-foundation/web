@@ -1,4 +1,4 @@
-import { AraLink, Debug } from "@ara-web/ts-enhancement";
+import { AraLink, Debug } from "@ara-web/p-hintjens";
 import { AstNodeType, AstNode } from "./code-level/index.js";
 export class AstIdentifierMemory {
     _identifiers = {};

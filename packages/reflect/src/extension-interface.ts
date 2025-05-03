@@ -1,4 +1,4 @@
-import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/ts-enhancement";
+import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "./ModuleMemory.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
 import type { ServiceMetaInterface } from "./reflect-interface.js";

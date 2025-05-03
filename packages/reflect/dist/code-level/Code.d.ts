@@ -1,12 +1,9 @@
 /**
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
- * @todo Make the components nested to each other
- * @todo fix the parsing of all pages
- * @todo somehow we need to show on PageModal the meta components
  */
 import { Project } from "ts-morph";
-import { Result, ModuleLink } from "@ara-web/ts-enhancement";
+import { Result, ModuleLink } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "../index.js";
 import { type AstIdentifiers } from "./ast-node.js";
 import { type ValueType } from "./ast-node-data.js";

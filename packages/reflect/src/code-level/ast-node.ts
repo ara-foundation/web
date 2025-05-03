@@ -1,4 +1,4 @@
-import { AraLink, ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { AraLink, ModuleLink, Result } from "@ara-web/p-hintjens";
 import type { TsNode } from "./ts-node.js";
 import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
 

@@ -1,4 +1,4 @@
-import type { ModuleLink, Result } from "@ara-web/ts-enhancement";
+import type { ModuleLink, Result } from "@ara-web/p-hintjens";
 
 export interface ServiceMetaInterface {
     description: string;

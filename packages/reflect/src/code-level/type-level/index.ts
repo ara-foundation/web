@@ -1,4 +1,4 @@
-import { AraLink, Debug, Result } from "@ara-web/ts-enhancement";
+import { AraLink, Debug, Result } from "@ara-web/p-hintjens";
 import {
     type TypedData,
     IntersectedUnionType, 

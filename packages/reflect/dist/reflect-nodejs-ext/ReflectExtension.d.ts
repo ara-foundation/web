@@ -1,4 +1,4 @@
-import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
 import { ModuleMemory, type AutoImporter, type ImportedRecords, type ExtensionInterface, ProjectMemory } from "../index.js";
 import type { SingleRecord } from "../extension-interface.js";
 /**

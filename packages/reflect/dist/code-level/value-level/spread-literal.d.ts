@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { TsNode, type TsNodeValidator, type TypedData, AstNodeContext } from "../index.js";
 /**
  * Property assignment such as {...obj} of the object literals

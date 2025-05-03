@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { Node, PropertyAssignment } from "ts-morph";
-import { ObjectTraits, Result, Debug } from "@ara-web/ts-enhancement";
+import { ObjectTraits, Result, Debug } from "@ara-web/p-hintjens";
 import { ValueTypeString, TsNode, AstNodeContext, ValueLevel, Identifier, Literal } from "../index.js";
 /**
  * Property assignment such as Property: <expression> in the context of the object literals

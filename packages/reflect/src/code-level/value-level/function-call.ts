@@ -1,5 +1,5 @@
 import { Node, CallExpression } from "ts-morph";
-import { Debug, Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { Debug, Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     TsNode, 
     type TsNodeValidator,

@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node } from "ts-morph";
-import { Debug, Result, ObjectTraits, StringTraits } from "@ara-web/ts-enhancement";
+import { Debug, Result, ObjectTraits, StringTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import {} from "./value-level-interface.js";

@@ -1,5 +1,5 @@
 import { Node, PropertyAssignment } from "ts-morph";
-import { ObjectTraits, Result, Debug } from "@ara-web/ts-enhancement";
+import { ObjectTraits, Result, Debug } from "@ara-web/p-hintjens";
 import  { 
     type TypedData,
     ValueTypeString,

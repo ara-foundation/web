@@ -1,5 +1,5 @@
 import { ConditionalExpression, Node } from "ts-morph";
-import { Result, ObjectTraits } from "@ara-web/ts-enhancement";
+import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     TsNode, 
     type TsNodeValidator,

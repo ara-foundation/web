@@ -1,4 +1,4 @@
-import { ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { ModuleLink, Result } from "@ara-web/p-hintjens";
 import { 
     AstNode, 
     AstNodeType, 

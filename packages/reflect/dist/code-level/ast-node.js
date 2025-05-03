@@ -1,4 +1,4 @@
-import { AraLink, ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { AraLink, ModuleLink, Result } from "@ara-web/p-hintjens";
 export var AstNodeType;
 (function (AstNodeType) {
     AstNodeType["Variable"] = "variable";

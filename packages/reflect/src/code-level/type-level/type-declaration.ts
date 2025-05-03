@@ -1,16 +1,13 @@
 /**
  * The script that works with the code by turning it into the 
  * AST (Abstract Syntax Tree)
- * @todo Make the components nested to each other
- * @todo fix the parsing of all pages
- * @todo somehow we need to show on PageModal the meta components
  */
 import { 
     Node,
     TypeAliasDeclaration,
     TypeParameterDeclaration,
 } from "ts-morph";
-import { Result, Debug, StringTraits } from "@ara-web/ts-enhancement";
+import { Result, Debug, StringTraits } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString, 
     AstNode, 

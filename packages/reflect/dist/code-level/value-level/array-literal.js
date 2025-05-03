@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { ArrayLiteralExpression, Node } from "ts-morph";
-import { Result, Debug, ObjectTraits } from "@ara-web/ts-enhancement";
+import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
 import { TsNode, AstNodeContext, ValueLevel } from "../index.js";
 /**
  * Literal class identifies the object literals

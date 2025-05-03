@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { TsNode, type TsNodeValidator, AstNodeContext, type TypedData } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.

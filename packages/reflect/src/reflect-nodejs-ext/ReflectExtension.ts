@@ -4,7 +4,7 @@ import {
     Result,
     ModuleLink, 
     type ModuleURL,
- } from "@ara-web/ts-enhancement";
+ } from "@ara-web/p-hintjens";
 import { 
     ModuleMemory,
     type AutoImporter, 

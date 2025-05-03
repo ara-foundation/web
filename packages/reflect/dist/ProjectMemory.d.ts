@@ -1,4 +1,4 @@
-import { Result, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "./ModuleMemory.js";
 import type { MemoryOperations } from "./extension-interface.js";
 export type ModuleMemories<T> = {

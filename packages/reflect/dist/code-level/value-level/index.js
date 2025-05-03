@@ -1,7 +1,7 @@
 /**
  * Handles the AST Node's values
  */
-import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/ts-enhancement";
+import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
 import { ValueTypeString, TsNode, AstNodeType, AstNode, AstNodeContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
 import { FunctionCall } from "./function-call.js";
 import { ObjectLiteral } from "./object-literal.js";

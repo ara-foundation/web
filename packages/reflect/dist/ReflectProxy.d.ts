@@ -1,4 +1,4 @@
-import { Result, type ModuleLink } from "@ara-web/ts-enhancement";
+import { Result, type ModuleLink } from "@ara-web/p-hintjens";
 import { type ReflectProxyInterface, type ServiceMetaInterface } from "./reflect-interface.js";
 export type Module = unknown;
 export type ModulePath = string;
