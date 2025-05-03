@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { parse as AstroParse } from "@astrojs/compiler";
 import { parse as commentParse } from "comment-parser";
-import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/ts-enhancement";
+import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/p-hintjens";
 import { FilePath, ModuleMemory } from "@ara-web/reflect";
 import { AstroNode, FileExtension, ElementType } from "./ontology/index.js";
 /**
@@ -157,7 +157,6 @@ export class ModulePartitioner {
      *  - Component
      *  - Element types.
      * The pure text components in the web pages are not considered.
-     * @todo make sure to parse the components to the respected areas
      * @param ast A RootNode of the Astro Web Page
      * @returns Components and Frontmatter
      */

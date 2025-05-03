@@ -7,7 +7,7 @@ import { expect, test } from "vitest";
 import { FilePath, ImportedRecords } from "@ara-web/reflect";
 import { ModuleCategory } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/p-hintjens";
 
 test('Simply creating a reflect extension', async () => {
     const reflectExtension = await getNewAstroReflect();

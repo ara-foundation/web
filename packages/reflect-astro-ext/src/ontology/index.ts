@@ -1,5 +1,5 @@
 import type { ComponentNode, ElementNode, ExpressionNode, TextNode, Node, AttributeNode } from "@astrojs/compiler/types";
-import { type ModuleLink, Result, StringTraits } from "@ara-web/ts-enhancement";
+import { type ModuleLink, Result, StringTraits } from "@ara-web/p-hintjens";
 import { 
     FileExtension as BaseExtension, 
     ModuleMemory 

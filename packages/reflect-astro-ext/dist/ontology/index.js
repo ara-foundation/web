@@ -1,4 +1,4 @@
-import { Result, StringTraits } from "@ara-web/ts-enhancement";
+import { Result, StringTraits } from "@ara-web/p-hintjens";
 import { FileExtension as BaseExtension, ModuleMemory } from "@ara-web/reflect";
 const isSupportedAstroNode = (node) => {
     return node.type === "component" ||

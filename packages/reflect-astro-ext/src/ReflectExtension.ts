@@ -8,7 +8,7 @@ import {
     FilePath,
     type SingleRecord
 } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/ts-enhancement";
+import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
 import {
     type Asset, type Page, type Module,
     FileExtension

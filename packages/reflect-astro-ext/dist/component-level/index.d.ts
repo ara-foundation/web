@@ -11,7 +11,7 @@
  *  - RPCs
  *  - Layouts
  */
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { type Component, type Expression, type ModuleParts, AstroNode, type Text, type Slots } from "../index.js";
 /**

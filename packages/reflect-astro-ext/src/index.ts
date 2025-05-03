@@ -27,6 +27,6 @@ export {
     ComponentLevel
 } from "./component-level/index.js"
 
-export { ModuleLink } from "@ara-web/ts-enhancement";
+export { ModuleLink } from "@ara-web/p-hintjens";
 
 export { ReflectAstroFramework } from "./ReflectExtension.js"

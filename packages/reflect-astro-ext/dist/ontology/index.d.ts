@@ -1,5 +1,5 @@
 import type { Node, AttributeNode } from "@astrojs/compiler/types";
-import { type ModuleLink, Result } from "@ara-web/ts-enhancement";
+import { type ModuleLink, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
 export declare class AstroNode {

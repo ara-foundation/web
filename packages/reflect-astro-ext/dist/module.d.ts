@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { FileExtension, type Component, type ModuleParts } from "./ontology/index.js";
 /**
@@ -53,7 +53,6 @@ export declare class ModulePartitioner {
      *  - Component
      *  - Element types.
      * The pure text components in the web pages are not considered.
-     * @todo make sure to parse the components to the respected areas
      * @param ast A RootNode of the Astro Web Page
      * @returns Components and Frontmatter
      */

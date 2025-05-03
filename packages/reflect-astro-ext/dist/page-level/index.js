@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { parse as commentParse } from "comment-parser";
-import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/ts-enhancement";
+import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
 import { FileExtension, DEFAULT_SLOT, ComponentLevel } from "../index.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data

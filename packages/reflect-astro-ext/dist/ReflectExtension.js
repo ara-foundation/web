@@ -1,5 +1,5 @@
 import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/ts-enhancement";
+import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/p-hintjens";
 import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
 import { PageLevel } from "./page-level/index.js";

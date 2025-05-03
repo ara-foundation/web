@@ -29,8 +29,7 @@
     "@ara-web/reflect-eslint-proxy": "workspace:*"
   },
   "dependencies": {
-    "@ara-web/reflect": "workspace:*",
-    "@ara-web/ts-enhancement": "workspace:*",
+    "@ara-web/p-hintjens": "workspace:*",
     "@astrojs/check": "^0.9.4",
     "@astrojs/compiler": "^2.11.0",
     "@astrojs/react": "^4.2.0",
@@ -41,5 +40,8 @@
     "react-dom": "^19.0.0",
     "vite": "^5.2.11",
     "vitest": "2.1.6"
+  },
+  "peerDependencies": {
+    "@ara-web/reflect": "workspace:*"
   }
 }

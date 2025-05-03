@@ -1,4 +1,4 @@
-import { OkResult, Result } from "@ara-web/ts-enhancement";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code, type AstIdentifiers } from "@ara-web/reflect/code-level";
 

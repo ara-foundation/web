@@ -7,7 +7,7 @@ import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
 import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, Component, ModuleIdentifier, Asset, Script } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { Debug } from "@ara-web/ts-enhancement";
+import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
@@ -47,7 +47,6 @@ test(`Make sure the that pages JSON are generated`, async () => {
     }
 })
 
-// TODO make sure that page content is updated in the reflect.beforeGet() before fetching.
 test(`Make sure the that pages JSON are automatically updated`, async () => {
     const reflectExtension = await getNewAstroReflect();
     reflectExtension.watchModules(getImportRecords);

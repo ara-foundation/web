@@ -1,4 +1,4 @@
-import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink } from "@ara-web/p-hintjens";
 import { TsNode } from "@ara-web/reflect/code-level";
 import {} from "../index.js";
 import { ReflectLink } from "@ara-web/reflect/code-level";

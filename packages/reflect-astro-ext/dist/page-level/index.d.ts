@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/ts-enhancement";
+import { Result } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
 import { type ModuleParts } from "../index.js";
 /**

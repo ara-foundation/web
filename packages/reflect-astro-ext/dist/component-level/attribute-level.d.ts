@@ -1,5 +1,5 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
-import { Result, AraLink } from "@ara-web/ts-enhancement";
+import { Result, AraLink } from "@ara-web/p-hintjens";
 import { TsNode } from "@ara-web/reflect/code-level";
 import { type AstroNode, type ModuleParts, type Attributes } from "../index.js";
 export declare class AttributeLevel {

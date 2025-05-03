@@ -1,5 +1,5 @@
 import { parse as commentParse} from "comment-parser";
-import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/ts-enhancement";
+import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
 import {
     FileExtension, 

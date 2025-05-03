@@ -14,7 +14,7 @@
 import { 
     Result,
     ModuleLink,
-} from "@ara-web/ts-enhancement";
+} from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { ReflectLink } from "@ara-web/reflect/code-level";
 import { 
@@ -29,7 +29,6 @@ import {
 } from "../index.js";
 import { AttributeLevel } from "./attribute-level.js";
 
-// // TODO move to the app/interface/reflect to understand the RPCs
 // // The pages traits adds to the Page the following:
 // // -- RPCs and refer to RPC types
 // // -- File Content
@@ -40,7 +39,7 @@ import { AttributeLevel } from "./attribute-level.js";
 // // Make sure that we move the component
 // // import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
 // import { attributeByName, identifyAttribute } from "./attribute-level.js";
-// import { AraLink } from "@ara-web/ts-enhancement/ara-link";
+// import { AraLink } from "@ara-web/p-hintjens/ara-link";
 // import type { ModuleMemory } from "@ara-web/reflect/memory";
 // import type { AstroNode } from "../component.js";
 
