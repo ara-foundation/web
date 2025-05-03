@@ -1,9 +1,17 @@
 import type { PurlQualifiers } from "packageurl-js";
 import { ArrayTraits, type WithGetTextMethod } from "../index.js";
-import { ModuleLink } from "./ModuleLink.js";
+import { ModuleLink, type ModuleURL } from "./module-link.js";
 import path from "path";
 
 export const NpmProtocol = "npm";
+export type AraURL = 
+    `ara:` | 
+    `sever:` | 
+    `reflect:` | 
+    `http://${string}` |
+    `https://${string}` |
+    `ws://${string}` | ModuleURL | 
+`this`;
 
 /**
  * Ara Web protocol and Ara Web's Modules
