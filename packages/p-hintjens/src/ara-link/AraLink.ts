@@ -1,61 +1,71 @@
-import { ArrayTraits } from "../traits/index.js";
+import type { PurlQualifiers } from "packageurl-js";
+import { ArrayTraits, type WithGetTextMethod } from "../index.js";
 import { ModuleLink } from "./ModuleLink.js";
 import path from "path";
+
 export const NpmProtocol = "npm";
+
 /**
  * Ara Web protocol and Ara Web's Modules
  */
-export const AraWebProtocol = "ara-web";
-export const AraWebModuleSlugs = ["ara-web", "module"];
-export class AraLink {
-    _protocol;
-    _slugs;
-    _resource;
-    _properties;
-    constructor(protocol, resource, slugs, properties) {
+export const AraWebProtocol: string = "ara-web";
+export const AraWebModuleSlugs: string[] = ["ara-web", "module"]
+
+export class AraLink<T> {
+    private _protocol: string;
+    private _slugs: string[];
+    private _resource: string|T;
+    private _properties: object;
+
+    constructor (protocol: string, resource: string|T, slugs: string[], properties?: object) {
         this._protocol = protocol;
         this._resource = resource;
         if (slugs !== undefined) {
             this._slugs = slugs;
-        }
-        else {
+        } else {
             this._slugs = [];
         }
         if (properties !== undefined) {
             this._properties = properties;
-        }
-        else {
-            this._properties = {};
+        } else {
+            this._properties = {}
         }
         return this;
     }
-    copyWithProperties = (properties) => {
+
+    public copyWithProperties = (properties: object): AraLink<T> => {
         const araLink = new AraLink(this._protocol, this._resource, this._slugs, properties);
         return araLink;
-    };
-    isEmpty = () => {
+    }
+
+    public isEmpty = (): boolean => {
         if (this._resource === undefined || this._resource === null) {
             return true;
-        }
+        } 
         let resourceStr = this._resource.toString();
         if (resourceStr.length === 0) {
             return true;
-        }
+        } 
         return false;
-    };
-    get protocol() {
+    }
+
+    public get protocol(): string {
         return this._protocol;
     }
-    get slugs() {
+
+    public get slugs(): string[] {
         return this._slugs;
     }
-    get resource() {
+
+    public get resource(): (typeof this._resource) {
         return this._resource;
     }
-    get properties() {
+
+    public get properties(): object {
         return this._properties;
     }
-    isPropertyExist(property) {
+
+    public isPropertyExist(property: string): boolean {
         if (this._properties === undefined) {
             return false;
         }
@@ -64,98 +74,119 @@ export class AraLink {
         }
         return false;
     }
-    property = (property) => {
+
+    public property = (property: string): object|undefined => {
         if (!this.isPropertyExist(property)) {
             return undefined;
         }
-        return this._properties[property];
-    };
-    toString = () => {
-        let resourceUrl = "";
+
+        return (this._properties as any)[property]
+    }
+
+    public toString = () : string => {
+        let resourceUrl: string = "";
         if (typeof this.resource === "string") {
             resourceUrl = this.resource.toString();
-        }
-        else {
-            if (this.resource["getText"] !== undefined &&
-                this.resource["getText"] !== null) {
-                resourceUrl = this.resource.getText();
-            }
-            else {
-                resourceUrl = this.resource.toString();
+        } else {
+            if ((this.resource as WithGetTextMethod)["getText"] !== undefined &&
+                (this.resource as WithGetTextMethod)["getText"] !== null) {
+                resourceUrl = (this.resource as WithGetTextMethod).getText();
+            } else {
+                resourceUrl = (this.resource as any).toString();
             }
         }
-        let url = `${this._protocol}:${this.slugs.join('/')}/${resourceUrl}`;
-        let properties = "";
+        let url = `${this._protocol}:${this.slugs.join('/')}/${resourceUrl}`
+        let properties: string = "";
         for (let key in this._properties) {
             if (properties.length > 0 && properties[properties.length - 1] !== "&") {
-                properties += "&";
+                properties += "&"
             }
-            properties += `${key}=${this._properties[key]}`;
+            properties += `${key}=${(this._properties as any)[key]}`
         }
         if (properties.length > 0) {
             properties = "?" + properties;
         }
+
         return url + properties;
-    };
-    toModuleLink = () => {
+    }
+
+    public toModuleLink = (): ModuleLink => {
         const schema = this._protocol;
-        const namespace = this._slugs.length === 0 ? "" : this._slugs[0];
-        const name = this._resource;
-        let subPath = "";
+        const namespace = this._slugs.length === 0 ? "" : this._slugs[0]
+        const name: string = this._resource as string;
+        let subPath: string = "";
         if (this._slugs !== undefined && this._slugs.length > 1) {
-            subPath = this.slugs.filter((_, index) => (index > 0)).join(path.sep);
+            subPath = this.slugs.filter((_, index) => (index > 0)).join(path.sep)
         }
-        const qualifiers = {
+        const qualifiers: PurlQualifiers = {
             ...this._properties
-        };
-        const pkgUrl = ModuleLink.newPackageURLWithQualifiers(namespace, name, qualifiers, subPath, schema);
+        }
+        const pkgUrl = ModuleLink.newPackageURLWithQualifiers(
+            namespace,
+            name,
+            qualifiers,
+            subPath,
+            schema
+        );
+
         return pkgUrl;
-    };
-    static fromModuleLink = (moduleLink) => {
+    }
+
+    public static fromModuleLink = (moduleLink: ModuleLink): AraLink<string> => {
         if (moduleLink.isFileURL) {
             const filePath = moduleLink.toFilePath;
             const resource = path.basename(filePath);
             const slugs = path.dirname(filePath).split(path.sep);
-            return new AraLink("file", resource, slugs);
+            return new AraLink<string>("file", resource, slugs);
         }
+
         const pkgURL = moduleLink.toPkgURL;
+
         const protocol = pkgURL.type;
-        const slugs = [];
+        const slugs: string[] = [];
         if (pkgURL.namespace) {
             slugs.push(pkgURL.namespace);
         }
         if (pkgURL.subpath) {
-            slugs.push(...pkgURL.subpath.split(path.sep));
+            slugs.push(...pkgURL.subpath.split(path.sep))
         }
         const resource = pkgURL.name;
-        const araLink = new AraLink(protocol, resource, slugs);
+        const araLink = new AraLink<string>(protocol, resource, slugs);
         if (pkgURL.qualifiers !== undefined) {
             araLink._properties = pkgURL.qualifiers;
         }
+
         return araLink;
-    };
-    lastSlug = () => {
+    }
+
+    public lastSlug = (): string|undefined => {
         if (this._slugs.length === 0) {
             return undefined;
         }
+
         return this._slugs[this._slugs.length - 1];
-    };
+    }
+
     /**
      * Returns true if the link is following the protocol and in the slugs path
-     * @param protocol
-     * @param slugs
-     * @returns
+     * @param protocol 
+     * @param slugs 
+     * @returns 
      */
-    isCorrectPath = (protocol, slugs) => {
+    public isCorrectPath = (protocol: string, slugs: string[]): boolean => {
         if (this.protocol !== protocol) {
             return false;
         }
+
         if (this.slugs.length === 0) {
             return false;
         }
+
         if (!ArrayTraits.isEqualArray(this.slugs, slugs)) {
             return false;
         }
+
         return true;
-    };
+    }
 }
+

@@ -33,6 +33,9 @@ importers:
       '@ara-web/component-engine':
         specifier: workspace:*
         version: link:../../packages/component-engine
+      '@ara-web/p-hintjens':
+        specifier: workspace:^
+        version: link:../../packages/p-hintjens
       '@ara-web/reflect':
         specifier: workspace:*
         version: link:../../packages/reflect
@@ -42,9 +45,6 @@ importers:
       '@ara-web/rpc-engine':
         specifier: workspace:*
         version: link:../../packages/rpc-engine
-      '@ara-web/ts-enhancement':
-        specifier: workspace:^
-        version: link:../../packages/ts-enhancement
       '@astrojs/compiler':
         specifier: ^2.11.0
         version: 2.11.0
@@ -217,9 +217,9 @@ importers:
 
   packages/component-engine:
     dependencies:
-      '@ara-web/ts-enhancement':
+      '@ara-web/p-hintjens':
         specifier: workspace:*
-        version: link:../ts-enhancement
+        version: link:../p-hintjens
       '@astrojs/compiler':
         specifier: ^2.11.0
         version: 2.11.0
@@ -339,11 +339,24 @@ importers:
         specifier: ^3.24.2
         version: 3.24.2
 
+  packages/p-hintjens:
+    dependencies:
+      '@types/node':
+        specifier: ^20.10.5
+        version: 20.17.24
+      packageurl-js:
+        specifier: ^2.0.1
+        version: 2.0.1
+    devDependencies:
+      typescript:
+        specifier: ~5.7.3
+        version: 5.7.3
+
   packages/reflect:
     dependencies:
-      '@ara-web/ts-enhancement':
+      '@ara-web/p-hintjens':
         specifier: workspace:*
-        version: link:../ts-enhancement
+        version: link:../p-hintjens
       packageurl-js:
         specifier: ^2.0.1
         version: 2.0.1
@@ -369,12 +382,12 @@ importers:
 
   packages/reflect-astro-ext:
     dependencies:
+      '@ara-web/p-hintjens':
+        specifier: workspace:*
+        version: link:../p-hintjens
       '@ara-web/reflect':
         specifier: workspace:*
         version: link:../reflect
-      '@ara-web/ts-enhancement':
-        specifier: workspace:*
-        version: link:../ts-enhancement
       '@astrojs/check':
         specifier: ^0.9.4
         version: 0.9.4(prettier@3.5.3)(typescript@5.7.3)
@@ -433,12 +446,12 @@ importers:
 
   packages/reflect-eslint-proxy:
     dependencies:
+      '@ara-web/p-hintjens':
+        specifier: workspace:*
+        version: link:../p-hintjens
       '@ara-web/reflect':
         specifier: workspace:*
         version: link:../reflect
-      '@ara-web/ts-enhancement':
-        specifier: workspace:*
-        version: link:../ts-enhancement
       '@typescript-eslint/parser':
         specifier: ^8.31.1
         version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
@@ -467,9 +480,9 @@ importers:
 
   packages/rpc-engine:
     dependencies:
-      '@ara-web/ts-enhancement':
+      '@ara-web/p-hintjens':
         specifier: workspace:*
-        version: link:../ts-enhancement
+        version: link:../p-hintjens
     devDependencies:
       '@types/react':
         specifier: ^19.0.10
@@ -532,19 +545,6 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.5.3
-      typescript:
-        specifier: ~5.7.3
-        version: 5.7.3
-
-  packages/ts-enhancement:
-    dependencies:
-      '@types/node':
-        specifier: ^20.10.5
-        version: 20.17.24
-      packageurl-js:
-        specifier: ^2.0.1
-        version: 2.0.1
-    devDependencies:
       typescript:
         specifier: ~5.7.3
         version: 5.7.3

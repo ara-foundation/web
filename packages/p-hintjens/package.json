@@ -1,8 +1,9 @@
 {
-  "name": "@ara-web/ts-enhancement",
+  "name": "@ara-web/p-hintjens",
   "type": "module",
   "author": "Medet Ahmetson",
   "license": "ISC",
+  "description": "A package named in Pieter Hintjens honor. Another name that indicates its purpose is `Typescript enhancement`.",
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",

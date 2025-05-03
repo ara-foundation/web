@@ -4,19 +4,14 @@ Inspirational?
 If the terminology is specific, write the definitions in my own words
 for eli5.
 
-More creative freedom in the software,
-But also, more accessible technical know-hows common man.
-
-Main goal: Collaborate with the help of others, or with
-the resources of others.
-
 Ara Web's goal is to decentralize software ownership.
-It's a collaboration tool that exposes its own source code to the user.
+It's a project management tool that exposes itself to the user.
+
 But instead of manual source code management,
 Ara Provides various AI assistants to boost the efficiency of your project development.
 
-Projects made in Ara, as well as website customizations are then stored on the blockchain as interlinked graph data. Whenever, you charge for the software,
-Ara Blockchain distributes the funds to all contributors. Which means,
+As a backend, Ara could connect to the blockchain, where it stores all the code changes, code data. We also want to create specific blockchain on our roadmap that will include a hyperpayment protocol.
+This allows a fee distribution across all packages and changes made by users on your project. This blockchain distributes the funds to all contributors. Which means,
 building a thriving open source economy on a global scale
 
 To run the sample server that will us atomic data:
@@ -31,49 +26,44 @@ To run the development mode:
 docker-compose up -d
 ```
 
-## Features
+## Goals
 
 - 🤖 End user made custom AI agents
-- 📝 Ara Web is Open Source
-- 🛠️ Blockchain based transparency
+- 📝 All code dependencies stored on the blockchain.
+- 🛠️ Hyperpayment protocol
 - 🔌 Community: contributors, freelancers or monetization
 - 🔒 Secure by default
 
 ### Features of the Web
 
 - Responsive design
-- Scores A or A+ (depending on hosting and your images) on [Accessify](https://www.accessify.com/) and [Ecograder](https://ecograder.com/)
-- Clean and minimal
 - Fluid typography
-- Dark and light mode (chosen by user's system preference)
-- About page
-- Now page (inspired by [nownownow.com](https://nownownow.com))
-- Microblog for found links (Today I Found...)
-- Blog for personal projects
-
 
 ## Getting Started
 
 First, install the packages:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Then, run the development server:
 
 ```bash
-npm run dev
+turbo dev --filter "@ara-web/interface"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:4321](http://localhost:4321) with your browser to see the result.
 
-# Guide
+# RPC Guide
+
 Using RPCs within the pages.
 In order to use RPCs in the web pages, simply import the component.
 The inputs to the components must be passed as the data
 
 # Contribution
+Ara Web is based on the `Reflect` package along with the `Reflect Astro Proxy`. Additionally to support the ara specific data, Ara Web Proxy is connected by the extensions. The RPC Engine that detects the RPCs components. The component engine that exposes the component categories.
+The action engine that exposes the actions.
 
 ## Architecture
 Let's first explain the components that made up the Ara Web.
@@ -201,12 +191,7 @@ npm run build
 ```
 
 ## Customization
-
-- Add your own avatar in the `public/` directory
 - Edit `src/config.ts` to use your website, name, and description
-- Edit pages in `src/pages/`
-- Modify the layout in `src/layouts/Layout.astro`
-- Update styles in the respective component files
 - Make your own favicons with https://realfavicongenerator.net/
 
 ## Colors
@@ -218,14 +203,15 @@ The colors were chosen using several tools to insure accessibility and contrast.
 - https://colorffy.com/mesh-gradient-generator (for the background gradient)
 
 ---
-## Credits
-
-Built by Tim Eaton - [timeaton.dev](https://timeaton.dev).
-
-Anonymous Avatar by <a href="/photographer/maniskis12-68558">maniskis12</a> on <a href="/">Freeimages.com</a>
-
-All dummy text and posts generated with Claude AI.
-
 ## License
 
 MIT
+
+# Roadmap
+* Use the SDS Linter proxy in all packages.
+* Publish the Reflect.
+* Setup the CI/CD pipeline that pushes the tag to the github using `package.json` version and name properties. The pipeline also increments the version.
+* Announce to the users about Reflect.
+* Announce the SDS framework.
+* *Make SDS as it's own package to extend and use by others that makes sure to turn any package into SDS*. The title of the package would be, "A package that allows creating plugins, middlewares for your app. If you wanted to allow community to build plugins, use SDS". And, we need to use it to turn Proxy into an SDS.
+* Move out anything related to the Ara Web from `ts-enhancement`.

@@ -4,7 +4,7 @@ export declare class ObjectTraits {
      *
      * @example
      * ```
-     * import { ObjectTraits } from "@ara-web/ts-enhancement/traits";
+     * import { ObjectTraits } from "@ara-web/p-hintjens/traits";
      *
      * // First create interface with non-static methods, it can be empty
      * interface NonStatic {
