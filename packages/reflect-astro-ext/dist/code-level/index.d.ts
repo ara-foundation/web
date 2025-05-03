@@ -1,10 +1,12 @@
 import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import type { Meta } from "../index.js";
 /**
  * Code analyzing
  */
 export declare class CodeLevel {
     constructor();
+    static identifyMeta: (source: string | undefined) => Meta;
     /**
      * Identifies all the types, variables that were defined in the source code.
      * @returns {Result<AraPage[]>}

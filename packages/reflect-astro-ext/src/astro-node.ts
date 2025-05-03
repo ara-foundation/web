@@ -1,93 +1,121 @@
-import type { Props } from "astro";
+import type { 
+    ComponentNode, 
+    ElementNode, 
+    ExpressionNode, 
+    TextNode, 
+    Node, 
+    AttributeNode 
+} from "@astrojs/compiler/types";
+import { Result, StringTraits } from "@ara-web/p-hintjens";
 
-// WARNING: Every time whenever a new extension added, add support here.
-type AstroImport = ((_props: Props) => unknown);
-type TsxImport = (({ children }: Props) => React.JSX.Element);
-type JsxImport = (() => React.JSX.Element);
-export type AstroNodeType = AstroImport | TsxImport | JsxImport;
+type SupportedAstroNode = ElementNode | ExpressionNode | ComponentNode | TextNode;
+const isSupportedAstroNode = (node: Node): boolean => {
+    return node.type === "component" || 
+    node.type === "element" || 
+    node.type === "expression" || 
+    node.type === "text"
+}
 
-// export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
-//     const componentId = modulePathToCategoryFileName(modulePath);
-//     if (componentId.isFailure) {
-//         return Result.fail(
-//             `modulePathToCategory(modulePath: '${modulePath}'): ${componentId.errorTitle}`,
-//             componentId.errorDescription!
-//         )
-//     }
-//     const {fileName, category} = componentId.getValue()!
+export class AstroNode {
+    private _node: SupportedAstroNode;
 
-//     const components = await getComponents(moduleType)
-//     if (components.length === 0) {
-//         return Result.fail(`No components were found`, `Make sure src/scripts/component.ts is working properly`)
-//     }
+    private constructor(node: SupportedAstroNode) {
+        this._node = node;
+    }
 
-//     for (let i = 0; i < components.length; i++) {
-//         const component = components[i];
-//         if (component.category.slug === category.slug && 
-//             component.fileName === fileName) {
-//                 return Result.ok(component);
-//             }
-//     }
+    public get name(): string {
+        return AstroNode.nodeName(this._node);
+    }
 
-//     return Result.fail(
-//         `The module path not found in the components list`,
-//         `The module path turned into '${fileName}' of '${category.name}' category not found in the components list`
-//     )
-// }
+    public get value(): string {
+        return AstroNode.nodeValue(this._node);
+    }
 
-// export const componentFileContent = async (modulePath: string, moduleType?: ModuleType): Promise<Result<FileContent>> => {
-//     const componentId = modulePathToCategoryFileName(modulePath);
-//     if (componentId.isFailure) {
-//         return Result.fail(
-//             `modulePathToCategory(modulePath: '${modulePath}'): ${componentId.errorTitle}`,
-//             componentId.errorDescription!
-//         )
-//     }
-    
-//     const fileContents = await getFileContents(moduleType)
-//     for (let fileContent of fileContents) {
-//         if (fileContent.error) {
-//             console.error(`File Error(${fileContent.filePath}): ${fileContent.error}`)
-//             continue;
-//         }
+    /**
+     * Returns child nodes if they are supported by Astro Reflect.
+     * Unsupported nodes will be omitted.
+     */
+    public get children(): AstroNode[] {
+        const nodes: AstroNode[] = [];
+        const rawNodes = AstroNode.nodeChildren(this._node);
+        if (rawNodes.length === 0) {
+            return [];
+        }
 
-//         const fileContentId = modulePathToCategoryFileName(fileContent.filePath);
-//         if (fileContentId.isFailure) {
-//             continue;
-//         }
+        for (const rawNode of rawNodes) {
+            const astroNode = AstroNode.newFromNode(rawNode);
+            if (astroNode.isFailure) {
+                continue;
+            }
 
-//         if (fileContentId.getValue().category.slug === componentId.getValue().category.slug &&
-//             fileContentId.getValue().fileName === componentId.getValue().fileName) {
-//             return Result.ok(fileContent)
-//         }
-//     }
+            nodes.push(astroNode.getValue());
+        }
 
-//     return Result.fail(
-//         `File content of the component not found`,
-//         `The '${componentId.getValue().fileName}' component of '${componentId.getValue().category.name}' category as ${modulePath} module path optionally of ${moduleType} module type not found`
-//     )
-// }
+        return nodes;
+    }
 
-// export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<AraComponent>> => {
-    // return Result.errorCode501(["component"], "fileContentToComponent")
-    // const component: Component = {
-    //     label: "",
-    //     description: "",
-    //     modulePath: "",
-    //     category: componentCategories[0],
-    //     glob: memory.glob,
-    // }
+    public get attributes(): AttributeNode[] {
+        return AstroNode.nodeAttributes(this._node);
+    }
 
-    // const componentId = ComponentEngine.modulePathToCategoryFileName(memory.modulePath);
-    // if (componentId.isFailure) {
-    //     return Result.fail(
-    //         `modulePathToCategory(modulePath: '${memory.modulePath}'): ${componentId.errorTitle}`,
-    //         componentId.errorDescription!
-    //     )
-    // }
-    // const {fileName, category} = componentId.getValue()!
-    // component.category = category;
-    // component.modulePath = fileName;
+    public get isComponent (): boolean {
+        return this._node.type === "component";
+    }
 
-    // return Result.ok(component);
-// }
+    public get isHTMLElement (): boolean {
+        return this._node.type === "element";
+    }
+
+    public get isExpression (): boolean {
+        return this._node.type === "expression";
+    }
+
+    public get isText (): boolean {
+        return this._node.type === "text";
+    }
+
+    public static isSupportedNode = (node: Node): boolean => {
+        return isSupportedAstroNode(node);
+    }
+
+    public static nodeValue = (node: Node): string => {
+        if ("value" in node) {
+            return node.value.trim();
+        }
+
+        return "";
+    }
+
+    public static nodeChildren = (node: Node): Node[] => {
+        if ("children" in node) {
+            return node.children;
+        }
+
+        return [];
+    }
+
+    public static nodeName = (node: Node): string => {
+        if ("name" in node) {
+            return node.name;
+        }
+
+        return StringTraits.capitalizeFirstLetter(node.type);
+    }
+
+    public static newFromNode(node: Node): Result<AstroNode> {
+        if (!this.isSupportedNode(node)) {
+            return Result.fail(`this.isSupportedNode(): not supported`, `The ${this.nodeName(node)} not supported yet, update Ontology`)
+        }
+
+        const astroNode = new AstroNode(node as SupportedAstroNode);
+        return Result.ok(astroNode)
+    }
+
+    public static nodeAttributes = (node: Node): AttributeNode[] => {
+        if ("attributes" in node) {
+            return node.attributes;
+        }
+
+        return [];
+    }
+}

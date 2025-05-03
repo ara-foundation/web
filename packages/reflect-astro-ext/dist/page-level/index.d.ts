@@ -13,12 +13,6 @@ export declare class PageLevel {
     static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>) => Promise<Result<T>>;
     private static validateModuleParts;
     /**
-     * Extracts the Title, Description from the Page Meta.
-     * Returns true if extraction was successful. Otherwise returns false and
-     * the error message will be set in the page.title and page.description
-     */
-    private static getMetaFromComment;
-    /**
      * Identify each component within the page. All data of the page are represented as the components.
      * @returns {Result<AraPage>}
      */

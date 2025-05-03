@@ -1,10 +1,8 @@
 import type { RootNode } from "@astrojs/compiler/types";
 import { parse as AstroParse } from "@astrojs/compiler";
-import { parse as commentParse} from "comment-parser";
 import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/p-hintjens";
 import { FilePath, ModuleMemory } from "@ara-web/reflect";
 import { 
-    AstroNode,
     FileExtension, 
     type Component, 
     type ModuleParts, 
@@ -13,6 +11,8 @@ import {
     type Module, 
     type Asset 
 } from "./ontology/index.js";
+import { AstroNode } from "./astro-node.js";
+import { CodeLevel } from "./code-level/index.js";
 
 /**
  * Module Category to sort the modules.
@@ -238,7 +238,7 @@ export class ModuleIdentifier {
         if (title.isFailure) {
             return Result.fail(`FilePath.getFileName('${filePath}'): ${title.errorTitle}`, title.errorDescription!)
         }
-        const description = this.getDescriptionFromComment(parts.source!);
+        const { description } = CodeLevel.identifyMeta(parts.source!);
 
         if (this.isScript(fileExtension)) {
             const data: Module = {
@@ -267,35 +267,4 @@ export class ModuleIdentifier {
         return Result.errorCode404(['module', 'Module Identifier'], 'identify', `The '${filePath}' file extension is neither for assets nor for scripts`);
     }
 
-/**
-     * Extracts the Description from the Component Meta.
-     * Returns an empty string if no comment.
-    */
-    private static getDescriptionFromComment = (source: string): string => {
-        let description = '';
-        const parsed = commentParse(source);
-        if (parsed.length === 0) {
-            return description;
-        }
-        
-        for (const block of parsed) {
-            description = block.description
-            for (const tag of block.tags) {
-                if (tag.tag === "param") {
-                    if (tag.type !== "string") {
-                        continue;
-                    }
-                        
-                    if (tag.name === "Description") {
-                        if (tag.description.length > 0) {
-                            return tag.description;
-                        }
-                    }
-                }
-            }
-        }
-    
-        return description;
-    }
-    
 }

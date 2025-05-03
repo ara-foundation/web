@@ -1,4 +1,3 @@
-import { parse as commentParse} from "comment-parser";
 import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
 import {
@@ -7,9 +6,9 @@ import {
     type OntologoicalIdentifier,
     DEFAULT_SLOT,
     type Page, 
-    type Meta, 
     type Slots,
-    ComponentLevel
+    ComponentLevel,
+    CodeLevel
 } from "../index.js";
 
 /**
@@ -29,7 +28,7 @@ export class PageLevel {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
         }
                 
-        const meta = this.getMetaFromComment(parts.source!);
+        const meta = CodeLevel.identifyMeta(parts.source!);
 
         const memory = rawMemory as ModuleMemory<Page>
         const slots = await this.identifySlots(parts, memory);
@@ -66,44 +65,6 @@ export class PageLevel {
         return OkResult.ok();
     }
 
-    /**
-     * Extracts the Title, Description from the Page Meta.
-     * Returns true if extraction was successful. Otherwise returns false and
-     * the error message will be set in the page.title and page.description
-     */
-    private static getMetaFromComment = (source: string): Meta => {
-        const componentMeta: Meta = {
-            title: "",
-            description: "",
-        }
-
-        const parsed = commentParse(source);
-        if (parsed.length === 0) {
-            return componentMeta;
-        }
-        
-        for (const block of parsed) {
-            for (const tag of block.tags) {
-                if (tag.tag === "param") {
-                    if (tag.type !== "string") {
-                        continue;
-                    }
-                    
-                    if (tag.name === "Title") {
-                        if (tag.description.length > 0) {
-                            componentMeta.title = tag.description;
-                        }
-                    } else if (tag.name === "Description") {
-                        if (tag.description.length > 0) {
-                            componentMeta.description = tag.description;
-                        }
-                    }
-                }
-            }
-        }
-
-        return componentMeta;
-    }
 
 
     /**

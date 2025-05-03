@@ -32,9 +32,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { parse as commentParse } from "comment-parser";
 import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
-import { FileExtension, DEFAULT_SLOT, ComponentLevel } from "../index.js";
+import { FileExtension, DEFAULT_SLOT, ComponentLevel, CodeLevel } from "../index.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */
@@ -61,7 +60,7 @@ let PageLevel = (() => {
             if (validated.isFailure) {
                 return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription);
             }
-            const meta = _classThis.getMetaFromComment(parts.source);
+            const meta = CodeLevel.identifyMeta(parts.source);
             const memory = rawMemory;
             const slots = await _classThis.identifySlots(parts, memory);
             if (slots.isFailure) {
@@ -89,41 +88,6 @@ let PageLevel = (() => {
                 return OkResult.fail("Missing any component", "Please include the any component even if its empty");
             }
             return OkResult.ok();
-        };
-        /**
-         * Extracts the Title, Description from the Page Meta.
-         * Returns true if extraction was successful. Otherwise returns false and
-         * the error message will be set in the page.title and page.description
-         */
-        static getMetaFromComment = (source) => {
-            const componentMeta = {
-                title: "",
-                description: "",
-            };
-            const parsed = commentParse(source);
-            if (parsed.length === 0) {
-                return componentMeta;
-            }
-            for (const block of parsed) {
-                for (const tag of block.tags) {
-                    if (tag.tag === "param") {
-                        if (tag.type !== "string") {
-                            continue;
-                        }
-                        if (tag.name === "Title") {
-                            if (tag.description.length > 0) {
-                                componentMeta.title = tag.description;
-                            }
-                        }
-                        else if (tag.name === "Description") {
-                            if (tag.description.length > 0) {
-                                componentMeta.description = tag.description;
-                            }
-                        }
-                    }
-                }
-            }
-            return componentMeta;
         };
         /**
          * Identify each component within the page. All data of the page are represented as the components.

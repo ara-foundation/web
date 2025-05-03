@@ -1,12 +1,18 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code, type AstIdentifiers } from "@ara-web/reflect/code-level";
+import { Comment } from "./comment.js";
+import type { Meta } from "../index.js";
 
 /**
  * Code analyzing
  */
 export class CodeLevel {
     constructor() {}
+
+    public static identifyMeta = (source: string|undefined): Meta => {
+        return Comment.getMetaFromComment(source);
+    }
     
     /**
      * Identifies all the types, variables that were defined in the source code.

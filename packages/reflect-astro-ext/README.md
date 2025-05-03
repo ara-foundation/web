@@ -11,6 +11,7 @@ Possible use case:
 # Roadmap
 
 Components
+* Make sure to work with the attributes linting.
 * Make sure to parse the components to the respected areas in the slots.
 * Add Ara Web extension to detect the Ara Web Component description
 * Add Ara Web extension to detect the RPC components.

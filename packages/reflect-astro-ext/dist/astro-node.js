@@ -1,75 +1,87 @@
-export {};
-// export const getComponentByPath = async (modulePath: string, moduleType?: ModuleType): Promise<Result<Component>> => {
-//     const componentId = modulePathToCategoryFileName(modulePath);
-//     if (componentId.isFailure) {
-//         return Result.fail(
-//             `modulePathToCategory(modulePath: '${modulePath}'): ${componentId.errorTitle}`,
-//             componentId.errorDescription!
-//         )
-//     }
-//     const {fileName, category} = componentId.getValue()!
-//     const components = await getComponents(moduleType)
-//     if (components.length === 0) {
-//         return Result.fail(`No components were found`, `Make sure src/scripts/component.ts is working properly`)
-//     }
-//     for (let i = 0; i < components.length; i++) {
-//         const component = components[i];
-//         if (component.category.slug === category.slug && 
-//             component.fileName === fileName) {
-//                 return Result.ok(component);
-//             }
-//     }
-//     return Result.fail(
-//         `The module path not found in the components list`,
-//         `The module path turned into '${fileName}' of '${category.name}' category not found in the components list`
-//     )
-// }
-// export const componentFileContent = async (modulePath: string, moduleType?: ModuleType): Promise<Result<FileContent>> => {
-//     const componentId = modulePathToCategoryFileName(modulePath);
-//     if (componentId.isFailure) {
-//         return Result.fail(
-//             `modulePathToCategory(modulePath: '${modulePath}'): ${componentId.errorTitle}`,
-//             componentId.errorDescription!
-//         )
-//     }
-//     const fileContents = await getFileContents(moduleType)
-//     for (let fileContent of fileContents) {
-//         if (fileContent.error) {
-//             console.error(`File Error(${fileContent.filePath}): ${fileContent.error}`)
-//             continue;
-//         }
-//         const fileContentId = modulePathToCategoryFileName(fileContent.filePath);
-//         if (fileContentId.isFailure) {
-//             continue;
-//         }
-//         if (fileContentId.getValue().category.slug === componentId.getValue().category.slug &&
-//             fileContentId.getValue().fileName === componentId.getValue().fileName) {
-//             return Result.ok(fileContent)
-//         }
-//     }
-//     return Result.fail(
-//         `File content of the component not found`,
-//         `The '${componentId.getValue().fileName}' component of '${componentId.getValue().category.name}' category as ${modulePath} module path optionally of ${moduleType} module type not found`
-//     )
-// }
-// export const fileContentToComponent = async (_: ModuleMemory<unknown>): Promise<Result<AraComponent>> => {
-// return Result.errorCode501(["component"], "fileContentToComponent")
-// const component: Component = {
-//     label: "",
-//     description: "",
-//     modulePath: "",
-//     category: componentCategories[0],
-//     glob: memory.glob,
-// }
-// const componentId = ComponentEngine.modulePathToCategoryFileName(memory.modulePath);
-// if (componentId.isFailure) {
-//     return Result.fail(
-//         `modulePathToCategory(modulePath: '${memory.modulePath}'): ${componentId.errorTitle}`,
-//         componentId.errorDescription!
-//     )
-// }
-// const {fileName, category} = componentId.getValue()!
-// component.category = category;
-// component.modulePath = fileName;
-// return Result.ok(component);
-// }
+import { Result, StringTraits } from "@ara-web/p-hintjens";
+const isSupportedAstroNode = (node) => {
+    return node.type === "component" ||
+        node.type === "element" ||
+        node.type === "expression" ||
+        node.type === "text";
+};
+export class AstroNode {
+    _node;
+    constructor(node) {
+        this._node = node;
+    }
+    get name() {
+        return AstroNode.nodeName(this._node);
+    }
+    get value() {
+        return AstroNode.nodeValue(this._node);
+    }
+    /**
+     * Returns child nodes if they are supported by Astro Reflect.
+     * Unsupported nodes will be omitted.
+     */
+    get children() {
+        const nodes = [];
+        const rawNodes = AstroNode.nodeChildren(this._node);
+        if (rawNodes.length === 0) {
+            return [];
+        }
+        for (const rawNode of rawNodes) {
+            const astroNode = AstroNode.newFromNode(rawNode);
+            if (astroNode.isFailure) {
+                continue;
+            }
+            nodes.push(astroNode.getValue());
+        }
+        return nodes;
+    }
+    get attributes() {
+        return AstroNode.nodeAttributes(this._node);
+    }
+    get isComponent() {
+        return this._node.type === "component";
+    }
+    get isHTMLElement() {
+        return this._node.type === "element";
+    }
+    get isExpression() {
+        return this._node.type === "expression";
+    }
+    get isText() {
+        return this._node.type === "text";
+    }
+    static isSupportedNode = (node) => {
+        return isSupportedAstroNode(node);
+    };
+    static nodeValue = (node) => {
+        if ("value" in node) {
+            return node.value.trim();
+        }
+        return "";
+    };
+    static nodeChildren = (node) => {
+        if ("children" in node) {
+            return node.children;
+        }
+        return [];
+    };
+    static nodeName = (node) => {
+        if ("name" in node) {
+            return node.name;
+        }
+        return StringTraits.capitalizeFirstLetter(node.type);
+    };
+    static newFromNode(node) {
+        if (!this.isSupportedNode(node)) {
+            return Result.fail(`this.isSupportedNode(): not supported`, `The ${this.nodeName(node)} not supported yet, update Ontology`);
+        }
+        const astroNode = new AstroNode(node);
+        return Result.ok(astroNode);
+    }
+    static nodeAttributes = (node) => {
+        if ("attributes" in node) {
+            return node.attributes;
+        }
+        return [];
+    };
+}

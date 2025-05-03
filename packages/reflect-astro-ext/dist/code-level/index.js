@@ -1,11 +1,15 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code } from "@ara-web/reflect/code-level";
+import { Comment } from "./comment.js";
 /**
  * Code analyzing
  */
 export class CodeLevel {
     constructor() { }
+    static identifyMeta = (source) => {
+        return Comment.getMetaFromComment(source);
+    };
     /**
      * Identifies all the types, variables that were defined in the source code.
      * @returns {Result<AraPage[]>}

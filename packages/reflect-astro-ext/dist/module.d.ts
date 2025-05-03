@@ -79,9 +79,4 @@ export declare class ModuleIdentifier {
      * @returns
      */
     static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>) => Promise<Result<T>>;
-    /**
-         * Extracts the Description from the Component Meta.
-         * Returns an empty string if no comment.
-        */
-    private static getDescriptionFromComment;
 }

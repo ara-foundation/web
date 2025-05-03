@@ -1,29 +1,7 @@
-import type { Node, AttributeNode } from "@astrojs/compiler/types";
 import { type ModuleLink, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
-export declare class AstroNode {
-    private _node;
-    private constructor();
-    get name(): string;
-    get value(): string;
-    /**
-     * Returns child nodes if they are supported by Astro Reflect.
-     * Unsupported nodes will be omitted.
-     */
-    get children(): AstroNode[];
-    get attributes(): AttributeNode[];
-    get isComponent(): boolean;
-    get isHTMLElement(): boolean;
-    get isExpression(): boolean;
-    get isText(): boolean;
-    static isSupportedNode: (node: Node) => boolean;
-    static nodeValue: (node: Node) => string;
-    static nodeChildren: (node: Node) => Node[];
-    static nodeName: (node: Node) => string;
-    static newFromNode(node: Node): Result<AstroNode>;
-    static nodeAttributes: (node: Node) => AttributeNode[];
-}
+import { AstroNode } from "../index.js";
 /**
  * Any UI Content is composed of the HTML Elements and the source code
  */
@@ -92,6 +70,9 @@ export type Asset = Omit<Module, "type" | "source"> & {
     type: ElementType.Asset;
     source?: string;
 };
+/**
+ * Attribute name => Attribute value or a link to the code expression.
+ */
 export type Attributes = Record<string, ReflectLink | string>;
 export type Component = {
     class: ModuleLink;
