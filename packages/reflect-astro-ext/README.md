@@ -8,9 +8,13 @@ Possible use case:
 
 > Requires `@ara-web/reflect`
 
+# Module Meta data
+To add *title* and *description*
+
 # Roadmap
 
 Components
+* Make sure components include a URL.
 * Make sure to work with the attributes linting.
 * Make sure to parse the components to the respected areas in the slots.
 * Add Ara Web extension to detect the Ara Web Component description

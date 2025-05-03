@@ -1,4 +1,4 @@
-import { type ModuleLink, Result } from "@ara-web/p-hintjens";
+import { type ModuleLink, ObjectLink, Result } from "@ara-web/p-hintjens";
 import { 
     FileExtension as BaseExtension, 
     ModuleMemory 
@@ -93,19 +93,19 @@ export type Attributes = Record<string, ReflectLink|string>;
 
 export type Component = {
     class: ModuleLink;
-    url: string;
+    link: ObjectLink;
     slots: Slots;
     get: unknown;
     attributes: Attributes;
 }
 
 export type Expression = Omit<Component, "attributes" | "class"> & {
-    prefix: string;
-    suffix: string;
+    description?: string;   // description of the expression
+    type: ElementType.Expression;
 }
 
 export type Text = Omit<Component, "attributes" | "class" | "slots"> & {
     value: string;
 }
 
-export type Page = Omit<Component, "class" | "url" | "get" | "attributes"> & Omit<Module, "type" > & {};
+export type Page = Omit<Component, "class" | "link" | "get" | "attributes"> & Omit<Module, "type" > & {};

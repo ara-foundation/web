@@ -3,20 +3,6 @@ import astroLogo from '../assets/astro.svg';
 import background from '../assets/background.svg';
 ---
 
-<!-- div#container/img#background
-div#container/main/section#hero/a/img
-
-file:///home/mnt/c/packages/reflect-astro-ext/test/test-app/src/components/Welcome.astro?schema=url //?html=div/
-html://div#container/main/seciont#hero/section#links/a.button:nth-child(0)
-
-if you have a dynamic data in the link, for example:
-html://div#container/img#background?src=[0]&alty=""&fetchpriority="high"
-then, it also means, the page will run the Module().executeExpression() in the component's class.
-
-Some elements might have expressions. That generates the elements. The most common way is
-the loop. the [] marks the component.module.expression://
-html://ul/[0] -->
-
 <div id="container">
 	<img id="background" src={background.src} alt="" fetchpriority="high" />
 	<main>

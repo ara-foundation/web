@@ -1,4 +1,4 @@
-import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
+import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
 import {
     FileExtension, 
@@ -75,11 +75,12 @@ export class PageLevel {
         const slots: Slots = {
             [DEFAULT_SLOT]: []
         };
+        const emptyObjLink = new ObjectLink(memory.moduleLink);
         for (const componentNode of uiContent.elements!) {
             if (componentNode.isText && componentNode.value.length === 0) {
                 continue;
             }
-            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode)
+            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode, emptyObjLink)
             if (identificationResult.isFailure) {
                 const err = Debug.error(
                     `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
