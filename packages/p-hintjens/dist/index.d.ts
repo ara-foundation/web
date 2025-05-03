@@ -1,6 +1,5 @@
 export * from "./interfaces/index.js";
-export * from "./ara-link/AraLink.js";
-export * from "./ara-link/ModuleLink.js";
+export * from "./links/index.js";
 export * from "./traits/index.js";
 export * from "./result.js";
 export * from "./debug.js";

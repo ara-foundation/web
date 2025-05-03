@@ -1,5 +1,5 @@
 import { ArrayTraits } from "../index.js";
-import { ModuleLink } from "./ModuleLink.js";
+import { ModuleLink } from "./module-link.js";
 import path from "path";
 export const NpmProtocol = "npm";
 /**

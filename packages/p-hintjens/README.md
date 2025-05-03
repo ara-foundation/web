@@ -25,3 +25,20 @@ URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-
 
 # Roadmap
 * Create another decorator called @todo() allowing to print a todo in the logs using `Debug`.
+
+* Create Web Element URL based on CSS:
+    - element:div#container/img#background
+    - element:div#container/main/section#hero/a/img
+    - element:img#src={0}?moduleURL=pkg:|file://
+    - element:div#container/main/seciont#hero/section#links/a.button:nth-child(0)?moduleURL=''
+
+If element has the dynamic data, then pass in the body
+a qualifier.
+
+if you have a dynamic data in the link, for example:
+html://div#container/img#background?src=[0]&alty=""&fetchpriority="high"
+then, it also means, the page will run the Module().executeExpression() in the component's class.
+
+Some elements might have expressions. That generates the elements. The most common way is
+the loop. the [] marks the component.module.expression://
+html:ul/[0]
