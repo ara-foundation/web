@@ -170,4 +170,7 @@ export class AstNode {
     static isTypeDeclaration = (child) => {
         return (child.nodeType === AstNodeType.Type);
     };
+    static isVariableDeclaration = (child) => {
+        return (child.nodeType === AstNodeType.Variable);
+    };
 }

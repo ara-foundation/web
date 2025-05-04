@@ -53,4 +53,5 @@ export declare class AstNode {
     static isDataNotEmpty: AstNodeValidator;
     static isDataLink: AstNodeValidator;
     static isTypeDeclaration: AstNodeValidator;
+    static isVariableDeclaration: AstNodeValidator;
 }

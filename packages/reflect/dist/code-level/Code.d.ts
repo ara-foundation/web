@@ -5,7 +5,7 @@
 import { Project } from "ts-morph";
 import { Result, ModuleLink } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "../index.js";
-import { type AstIdentifiers } from "./ast-node.js";
+import { type AstIdentifiers, type TypedData } from "./ast-node.js";
 import { type ValueType } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 export type Object = {
@@ -72,10 +72,11 @@ export declare class Code {
      */
     getTypeIdentifiers: () => Promise<Result<AstIdentifiers>>;
     getVariableIdentifiers: () => Promise<Result<AstIdentifiers>>;
+    getLintedVariableIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
     /**
      * Find the result of the expression, by setting it as a variable declaration.
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    identifyCodePiece: <T>(_exp: string) => Promise<Result<T>>;
+    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory) => Promise<Result<TypedData>>;
 }

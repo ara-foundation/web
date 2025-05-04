@@ -12,6 +12,8 @@ import { AstNode, AstNodeType } from "./ast-node.js";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { AstNodeContext } from "./AstNodeContext.js";
+import { Identifier } from "./idenitifier.js";
+import { ValueLevel } from "./value-level/index.js";
 export class Code {
     _ast;
     _moduleLink; // Module that this code belong to
@@ -244,7 +246,7 @@ export class Code {
         ];
         for (let identifier in typesToLint) {
             let node = typesToLint[identifier];
-            if (!(node instanceof AraLink) && typeof node.data === "string") {
+            if (typeof node.data === "string") {
                 node.dataType = node.data;
                 continue;
             }
@@ -283,47 +285,76 @@ export class Code {
         }
         return Result.ok(identifiers.getValue());
     };
+    getLintedVariableIdentifiers = async (memory, projectMemory) => {
+        const localTypeFilters = [
+            AstNode.isDefinedInLocal,
+            AstNode.isVariableDeclaration,
+            BuiltInIdentifiers.isNonBuiltInIdentifier,
+        ];
+        const varsToLint = memory.getIdentifiers(localTypeFilters);
+        const typesCount = Object.keys(varsToLint).length;
+        if (typesCount == 0) {
+            return Result.ok(memory.getIdentifiers());
+        }
+        const moduleTypeFilters = [
+            AstNode.isDefinedInLocal,
+            AstNode.isVariableDeclaration,
+        ];
+        for (let identifier in varsToLint) {
+            let node = varsToLint[identifier];
+            if (typeof node.data === "string") {
+                node.dataType = node.data;
+                continue;
+            }
+            const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
+            const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
+            const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
+            if (lintedVariable.isFailure) {
+                return Result.fail(`ValueLevel.identifyAstNodeData(node: '${identifier}'): ${lintedVariable.errorTitle}`, lintedVariable.errorDescription);
+            }
+            else {
+                if (lintedVariable.getValue().data === undefined) {
+                    const err = Debug.error(`The variable '${identifier}' of '${node.nodeType}' data is undefined`, `Update the lintVariableIdentifiers() to supported it, since the data returned as undefined`, { node, lintedVariable });
+                    return Result.fail(err);
+                }
+                varsToLint[identifier].data = lintedVariable.getValue().data;
+                varsToLint[identifier].dataType = lintedVariable.getValue().dataType;
+            }
+        }
+        return Result.ok(varsToLint);
+    };
     /**
      * Find the result of the expression, by setting it as a variable declaration.
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    identifyCodePiece = async (_exp) => {
-        // this.tempCodeAmount++;
-        // const varName = `__temp_var_${this.tempCodeAmount}`;
-        // let cloned = this.clone();
-        // const varStatement = cloned._ast.addVariableStatement({
-        //     declarationKind: VariableDeclarationKind.Const, // defaults to "let"
-        //     declarations: [{
-        //       name: varName,
-        //       type: "string",
-        //       initializer: exp,
-        //     }],
-        // });
-        //         // If Attribute name is an identifier, get variable statements that define them:
-        // // For example `const v: number = 1`
-        // const varDeclaration = this.identifyVariableDeclaration(varName);
-        // if (varDeclaration.isFailure) {
-        //     return Result.fail(
-        //         `this.identifyVariableDeclaration(identifier='${varName}'): ${varDeclaration.errorTitle}`,
-        //         varDeclaration.errorDescription!
-        //     );
-        // }
-        return Result.errorCode501(['Code'], 'identifyCodePiece');
-        // Debug.push(`identifyVariable(varName='${varName}', update=false)`)
-        // // It may be not only identifier so clone and put it in the ast
-        // var variable = await cloned.identifyVariable<T>(varName, false);
-        // Debug.pop()
-        // Debug.log(`${varName} identified value = ${JSON.stringify(variable)}.`)
-        // // Once the _ara_web_exp is turned into the statement, get it's value.
-        // Debug.pop();
-        // Debug.reset();
-        // if (variable.isFailure) {
-        //     return Result.fail(
-        //         `cloned.identifyVariable(varName=${varName}): ${variable.errorTitle}`,
-        //         variable.errorDescription!
-        //     )
-        // }
-        // return Result.ok(variable.getValue() as T)
+    static identifyCodePiece = async (expression, projectMemory) => {
+        const builtInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
+        if (builtInIdentifiers.isFailure) {
+            return Result.fail(`BuiltInIdentifiers.getBuiltInIdentifiers(): ${builtInIdentifiers.errorTitle}`, builtInIdentifiers.errorDescription);
+        }
+        const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
+        tempMemory.addIdentifiers(builtInIdentifiers.getValue());
+        const tempVarName = "__temp_var_";
+        const code = new Code(`const ${tempVarName} = ${expression}`, tempMemory.moduleLink);
+        const vars = await code.getVariableIdentifiers();
+        if (vars.isFailure) {
+            return Result.fail(`code.getVariableIdentifiers(): ${vars.errorTitle}`, vars.errorDescription);
+        }
+        else {
+            tempMemory.addIdentifiers(vars.getValue());
+            if (vars.getValue()[tempVarName] === undefined) {
+                return Result.fail(`Failed to retreive temporary variable name`, `The expression '${expression}' is not a valid JS code`);
+            }
+        }
+        const expressionIdentified = await code.getLintedVariableIdentifiers(tempMemory, projectMemory);
+        if (expressionIdentified.isFailure) {
+            return Result.fail(`code.getLintedVariableIdentifiers(): ${expressionIdentified.errorTitle}`, expressionIdentified.errorDescription);
+        }
+        if (expressionIdentified.getValue()[tempVarName] === undefined) {
+            return Result.fail(`Failed to retreive temporary variable name`, `The expression '${expression}' is not a valid JS code`);
+        }
+        const tempVar = expressionIdentified.getValue()[tempVarName];
+        return Result.ok({ data: tempVar.data, dataType: tempVar.dataType });
     };
 }
