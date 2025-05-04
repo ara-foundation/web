@@ -25,7 +25,7 @@ export type ObjectURL = `obj://${Selector}` | `obj://${Selector}?` |
  `obj://${Selector}?module-link=${ModuleURL}&resource-link=${ResourceURL}` |
  `obj://${Selector}?resource-link=${ModuleURL}` |
  `obj://${Selector}?resource-link=${ModuleURL}&module-link=${ResourceURL}`;
-type Tagged = {tag: string, id: string|number};
+type Tagged = {tag?: string, id?: string|number, classes?: string[]};
 const ALL_LINK = "*";
 
 // First component when defined
@@ -65,11 +65,22 @@ export class ObjectLink {
         if (this._selectors.length === 0) {
             return ALL_LINK;
         }
-        return this._selectors.map((selector): string => {
-            if (typeof selector.id === "number") {
-                return `${selector.tag}:nth-child(${selector.id.toString()})`;
+        return this._selectors.map((taggedSelector): string => {
+            let url = ``;
+            if (taggedSelector.tag) {
+                url += taggedSelector.tag;
             }
-            return `${selector.tag}#${selector.id}`;
+            if (taggedSelector.classes !== undefined && taggedSelector.classes.length > 0) {
+                url += `.${taggedSelector.classes.join(".")}`;
+            }
+            if (taggedSelector.id !== undefined) {
+                if (typeof taggedSelector.id === "number") {
+                    url += `:nth-child(${taggedSelector.id})`;
+                } else {
+                    url += `#${taggedSelector.id}`;
+                }
+            }
+            return url;
         }).join(">");
     }
 
@@ -87,18 +98,53 @@ export class ObjectLink {
      * It gets the last selector as the current object. If it's tagged, then it returns the id.
      * Otherwise, it returns undefined.
      */
-    public getId(): string|number {
+    public getId(): string|number|undefined {
         if (this._selectors.length === 0) {
-            return ALL_LINK;
+            return undefined;
         }
+        
         return this._selectors[this._selectors.length - 1].id;
     }
 
-    public getTag(): string {
+    /**
+     * Puts the id of the last selector.
+     * If id already exists, then it returns false.
+     * Otherwise, it sets the id and returns true.
+     * @param id 
+     * @returns 
+     */
+    public putId(id: string|number): boolean {
         if (this._selectors.length === 0) {
-            return ALL_LINK;
+            return false;
+        }
+        const lastSelector = this._selectors[this._selectors.length - 1];
+        if (lastSelector.id !== undefined) {
+            return false;
+        }
+        this._selectors[this._selectors.length - 1].id = id;
+
+        return true;
+    }
+
+    public getTag(): string|undefined {
+        if (this._selectors.length === 0) {
+            return undefined;
         }
         return this._selectors[this._selectors.length - 1].tag;
+    }
+
+    /**
+     * The getClass method returns the object's first class.
+     */
+    public getClass(): string|undefined {
+        if (this._selectors.length === 0) {
+            return undefined;
+        }
+        const lastSelector = this._selectors[this._selectors.length - 1];
+        if (lastSelector.classes === undefined || lastSelector.classes.length === 0) {
+            return undefined;
+        }
+        return lastSelector.classes[0];
     }
 
     /**
@@ -115,9 +161,9 @@ export class ObjectLink {
      * @param tag The tag of the child element.
      * @returns 
      */
-    public getEnumuratedChild(tag: string): ObjectLink {
+    public getEnumuratedChild(tag?: string, classes?: string[]): ObjectLink {
         const childLink = new ObjectLink(this._moduleLink, this._resourceLink);
-        childLink._selectors = [...this._selectors, {tag, id: this._enumeratedCount++}];
+        childLink._selectors = [...this._selectors, {tag, id: this._enumeratedCount++, classes}];
         return childLink;
     }
 
@@ -134,9 +180,9 @@ export class ObjectLink {
      * @param id The id of the child element.
      * @returns 
      */
-    public getTaggedChild(tag: string, id: string): ObjectLink {
+    public getTaggedChild(tag: string, id?: string, classes?: string[]): ObjectLink {
         const childLink = new ObjectLink(this._moduleLink, this._resourceLink);
-        childLink._selectors = [...this._selectors, {tag, id}];
+        childLink._selectors = [...this._selectors, {tag, id, classes}];
         return childLink;
     }
 

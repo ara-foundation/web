@@ -24,13 +24,10 @@ The `staticImplements` allows creating interfaces with the static methods.
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
 
 # Roadmap
-* Create another decorator called @todo() allowing to print a todo in the logs using `Debug`.
+* Change ObjectURL: `obj://htme#div` -> `obj://div.htme#component`.
+* The object url `obj://astro#Welcome` -> `obj//Welcome.astro#id`
 
-* Create Web Element URL based on CSS:
-    - element:div#container/img#background
-    - element:div#container/main/section#hero/a/img
-    - element:img#src={0}?moduleURL=pkg:|file://
-    - element:div#container/main/seciont#hero/section#links/a.button:nth-child(0)?moduleURL=''
+* Create another decorator called @todo() allowing to print a todo in the logs using `Debug`.
 
 If element has the dynamic data, then pass in the body
 a qualifier.

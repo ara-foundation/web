@@ -9,7 +9,7 @@ test('Simply creating an empty object', async () => {
     expect(emptyObjectLink.selector).toBe("*");
     expect(emptyObjectLink.moduleLink).toBe(moduleLink);
     expect(emptyObjectLink.resourceLink).toBeUndefined();
-    expect(emptyObjectLink.getId()).toBe("*");
+    expect(emptyObjectLink.getId()).toBeUndefined();
     expect(emptyObjectLink.toString().startsWith("obj://*?module-link=")).toBe(true);
     expect(emptyObjectLink.toString().endsWith("/test-app/src/components/Welcome.astro")).toBe(true);
 });

@@ -40,8 +40,20 @@ export declare class ObjectLink {
      * It gets the last selector as the current object. If it's tagged, then it returns the id.
      * Otherwise, it returns undefined.
      */
-    getId(): string | number;
-    getTag(): string;
+    getId(): string | number | undefined;
+    /**
+     * Puts the id of the last selector.
+     * If id already exists, then it returns false.
+     * Otherwise, it sets the id and returns true.
+     * @param id
+     * @returns
+     */
+    putId(id: string | number): boolean;
+    getTag(): string | undefined;
+    /**
+     * The getClass method returns the object's first class.
+     */
+    getClass(): string | undefined;
     /**
      * The getAsChildLink method creates and returns
      * a new ObjectLink instance that copies the current instance's module and resource links
@@ -56,7 +68,7 @@ export declare class ObjectLink {
      * @param tag The tag of the child element.
      * @returns
      */
-    getEnumuratedChild(tag: string): ObjectLink;
+    getEnumuratedChild(tag?: string, classes?: string[]): ObjectLink;
     /**
      * The getTaggedChild method creates and returns
      * a new ObjectLink instance that copies the current instance's module and resource links
@@ -70,6 +82,6 @@ export declare class ObjectLink {
      * @param id The id of the child element.
      * @returns
      */
-    getTaggedChild(tag: string, id: string): ObjectLink;
+    getTaggedChild(tag: string, id?: string, classes?: string[]): ObjectLink;
     toString(): ObjectURL;
 }

@@ -33,11 +33,23 @@ export class ObjectLink {
         if (this._selectors.length === 0) {
             return ALL_LINK;
         }
-        return this._selectors.map((selector) => {
-            if (typeof selector.id === "number") {
-                return `${selector.tag}:nth-child(${selector.id.toString()})`;
+        return this._selectors.map((taggedSelector) => {
+            let url = ``;
+            if (taggedSelector.tag) {
+                url += taggedSelector.tag;
             }
-            return `${selector.tag}#${selector.id}`;
+            if (taggedSelector.classes !== undefined && taggedSelector.classes.length > 0) {
+                url += `.${taggedSelector.classes.join(".")}`;
+            }
+            if (taggedSelector.id !== undefined) {
+                if (typeof taggedSelector.id === "number") {
+                    url += `:nth-child(${taggedSelector.id})`;
+                }
+                else {
+                    url += `#${taggedSelector.id}`;
+                }
+            }
+            return url;
         }).join(">");
     }
     get moduleLink() {
@@ -54,15 +66,46 @@ export class ObjectLink {
      */
     getId() {
         if (this._selectors.length === 0) {
-            return ALL_LINK;
+            return undefined;
         }
         return this._selectors[this._selectors.length - 1].id;
     }
+    /**
+     * Puts the id of the last selector.
+     * If id already exists, then it returns false.
+     * Otherwise, it sets the id and returns true.
+     * @param id
+     * @returns
+     */
+    putId(id) {
+        if (this._selectors.length === 0) {
+            return false;
+        }
+        const lastSelector = this._selectors[this._selectors.length - 1];
+        if (lastSelector.id !== undefined) {
+            return false;
+        }
+        this._selectors[this._selectors.length - 1].id = id;
+        return true;
+    }
     getTag() {
         if (this._selectors.length === 0) {
-            return ALL_LINK;
+            return undefined;
         }
         return this._selectors[this._selectors.length - 1].tag;
+    }
+    /**
+     * The getClass method returns the object's first class.
+     */
+    getClass() {
+        if (this._selectors.length === 0) {
+            return undefined;
+        }
+        const lastSelector = this._selectors[this._selectors.length - 1];
+        if (lastSelector.classes === undefined || lastSelector.classes.length === 0) {
+            return undefined;
+        }
+        return lastSelector.classes[0];
     }
     /**
      * The getAsChildLink method creates and returns
@@ -78,9 +121,9 @@ export class ObjectLink {
      * @param tag The tag of the child element.
      * @returns
      */
-    getEnumuratedChild(tag) {
+    getEnumuratedChild(tag, classes) {
         const childLink = new ObjectLink(this._moduleLink, this._resourceLink);
-        childLink._selectors = [...this._selectors, { tag, id: this._enumeratedCount++ }];
+        childLink._selectors = [...this._selectors, { tag, id: this._enumeratedCount++, classes }];
         return childLink;
     }
     /**
@@ -96,9 +139,9 @@ export class ObjectLink {
      * @param id The id of the child element.
      * @returns
      */
-    getTaggedChild(tag, id) {
+    getTaggedChild(tag, id, classes) {
         const childLink = new ObjectLink(this._moduleLink, this._resourceLink);
-        childLink._selectors = [...this._selectors, { tag, id }];
+        childLink._selectors = [...this._selectors, { tag, id, classes }];
         return childLink;
     }
     toString() {
