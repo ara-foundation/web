@@ -24,18 +24,7 @@ The `staticImplements` allows creating interfaces with the static methods.
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
 
 # Roadmap
-* Change ObjectURL: `obj://htme#div` -> `obj://div.htme#component`.
-* The object url `obj://astro#Welcome` -> `obj//Welcome.astro#id`
-
-* Create another decorator called @todo() allowing to print a todo in the logs using `Debug`.
-
-If element has the dynamic data, then pass in the body
-a qualifier.
-
-if you have a dynamic data in the link, for example:
+* If element has the dynamic data, then pass in the body a qualifier.
+* If you have a dynamic data in the link, for example:
 html://div#container/img#background?src=[0]&alty=""&fetchpriority="high"
 then, it also means, the page will run the Module().executeExpression() in the component's class.
-
-Some elements might have expressions. That generates the elements. The most common way is
-the loop. the [] marks the component.module.expression://
-html:ul/[0]
