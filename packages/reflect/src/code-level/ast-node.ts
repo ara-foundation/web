@@ -222,4 +222,8 @@ export class AstNode {
     public static isTypeDeclaration: AstNodeValidator = (child: AstNode): boolean => {
         return (child.nodeType === AstNodeType.Type);
     }
+
+    public static isVariableDeclaration: AstNodeValidator = (child: AstNode): boolean => {
+        return (child.nodeType === AstNodeType.Variable);
+    }
 }
