@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { Result, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
+import { Result, ObjectTraits, AraLink, Debug } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import {} from "./value-level-interface.js";
@@ -74,7 +74,7 @@ let Identifier = (() => {
                 return Result.fail(`The identifier data is undefined`, `The make sure that AST Node parsed correctly`);
             }
             if (!(identifier.data instanceof AraLink)) {
-                return Result.ok({ data: identifier.data, dataType: identifier.dataType });
+                return Result.ok({ data: identifier.data, dataType: identifier.dataType || ValueTypeString.default });
             }
             const exp = ReflectLink.getResourceAsTsNode(identifier.data);
             const astNodeContext = parentNodeContext?.clone(identifier.getAllMemoryData(), [identifier.identifier]);

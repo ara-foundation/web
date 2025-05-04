@@ -282,9 +282,7 @@ export class ValueLevel {
         if (typedData.isFailure) {
             return Result.fail(`this.identifyExpressionLinkData(): ${typedData.errorTitle}`, typedData.errorDescription);
         }
-        // Debug.push(`TypeLevel.identifyDataType()`)
         const identifiedDataType = TypeLevel.matchDataToType(typedData.getValue());
-        // Debug.pop();
         if (identifiedDataType.isFailure) {
             return Result.fail(`TypeLevel.identifyDataType(): ${identifiedDataType.errorTitle}`, identifiedDataType.errorDescription);
         }

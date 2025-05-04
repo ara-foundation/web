@@ -3,7 +3,7 @@
  * AST (Abstract Syntax Tree)
  */
 import { Project, SourceFile as TsSourceFile } from "ts-morph";
-import { AraLink, Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
+import { Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
 import { VariableLevel } from "./variable-level/index.js";
 import { ImportLevel } from "./import-level/index.js";
@@ -12,7 +12,6 @@ import { AstNode, AstNodeType } from "./ast-node.js";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import { AstNodeContext } from "./AstNodeContext.js";
-import { Identifier } from "./idenitifier.js";
 import { ValueLevel } from "./value-level/index.js";
 export class Code {
     _ast;
@@ -241,7 +240,6 @@ export class Code {
             return Result.ok(memory.getIdentifiers());
         }
         const moduleTypeFilters = [
-            AstNode.isDefinedInLocal,
             AstNode.isTypeDeclaration,
         ];
         for (let identifier in typesToLint) {
@@ -296,17 +294,13 @@ export class Code {
         if (typesCount == 0) {
             return Result.ok(memory.getIdentifiers());
         }
-        const moduleTypeFilters = [
-            AstNode.isDefinedInLocal,
-            AstNode.isVariableDeclaration,
-        ];
         for (let identifier in varsToLint) {
             let node = varsToLint[identifier];
             if (typeof node.data === "string") {
                 node.dataType = node.data;
                 continue;
             }
-            const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
+            const moduleIdentifiers = memory.getIdentifiers([], [identifier]);
             const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
             const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
             if (lintedVariable.isFailure) {
