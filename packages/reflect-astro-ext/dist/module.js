@@ -228,14 +228,15 @@ let ModuleIdentifier = (() => {
          * @param rawMemory
          * @returns
          */
-        static identify = async (parts, rawMemory) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        static identify = async (parts, rawMemory, _) => {
             const filePath = rawMemory.moduleLink.toFilePath;
             const fileExtensionResult = FilePath.getFileExtension(filePath, EnumTraits.enumValues(FileExtension));
             if (fileExtensionResult.isFailure) {
                 return Result.fail(`FilePath.getFileExtension('${filePath}, [${EnumTraits.enumValues(FileExtension).join(", ")}]): ${fileExtensionResult.errorTitle}`, fileExtensionResult.errorDescription);
             }
             const fileExtension = fileExtensionResult.getValue();
-            const title = await FilePath.getFileName(filePath);
+            const title = FilePath.getFileName(filePath);
             if (title.isFailure) {
                 return Result.fail(`FilePath.getFileName('${filePath}'): ${title.errorTitle}`, title.errorDescription);
             }

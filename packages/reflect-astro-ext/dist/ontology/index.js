@@ -1,5 +1,5 @@
-import { Result } from "@ara-web/p-hintjens";
-import { FileExtension as BaseExtension, ModuleMemory } from "@ara-web/reflect";
+import { ObjectLink, Result } from "@ara-web/p-hintjens";
+import { FileExtension as BaseExtension, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { AstroNode } from "../index.js";
 /**
  * List of file extensions Astro Framework Reflection could reflect.

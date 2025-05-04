@@ -32,8 +32,9 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
+import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
 import { FileExtension, DEFAULT_SLOT, ComponentLevel, CodeLevel } from "../index.js";
+import { ProjectMemory } from "@ara-web/reflect";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */
@@ -55,14 +56,14 @@ let PageLevel = (() => {
          * @param {Parts} parts
          * @returns {Component}
          */
-        static identify = async (parts, rawMemory) => {
+        static identify = async (parts, rawMemory, projectMemory) => {
             const validated = _classThis.validateModuleParts(parts);
             if (validated.isFailure) {
                 return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription);
             }
             const meta = CodeLevel.identifyMeta(parts.source);
             const memory = rawMemory;
-            const slots = await _classThis.identifySlots(parts, memory);
+            const slots = await _classThis.identifySlots(parts, memory, projectMemory);
             if (slots.isFailure) {
                 return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
             }
@@ -93,21 +94,25 @@ let PageLevel = (() => {
          * Identify each component within the page. All data of the page are represented as the components.
          * @returns {Result<AraPage>}
          */
-        static identifySlots = async (uiContent, memory) => {
+        static identifySlots = async (uiContent, memory, projectMemory) => {
             const slots = {
                 [DEFAULT_SLOT]: []
             };
+            const emptyObjLink = new ObjectLink(memory.moduleLink);
             for (const componentNode of uiContent.elements) {
                 if (componentNode.isText && componentNode.value.length === 0) {
                     continue;
                 }
-                const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode);
+                const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode, emptyObjLink, projectMemory);
                 if (identificationResult.isFailure) {
                     const err = Debug.error(`ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, identificationResult.errorDescription, componentNode);
                     return Result.fail(err);
                 }
-                Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`);
-                slots[DEFAULT_SLOT].push(identificationResult.getValue());
+                const linted = await ComponentLevel.lintAttributes(identificationResult.getValue(), memory, projectMemory);
+                if (linted.isFailure) {
+                    return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
+                }
+                slots[DEFAULT_SLOT].push(linted.getValue());
                 //         // Let's detect the ComponentType
                 //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
                 //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')

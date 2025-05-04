@@ -1,7 +1,8 @@
-import { type ModuleLink, Result } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "@ara-web/reflect";
+import { type ModuleLink, ObjectLink, Result } from "@ara-web/p-hintjens";
+import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
 import { AstroNode } from "../index.js";
+import type { ValueType } from "@ara-web/reflect/code-level";
 /**
  * Any UI Content is composed of the HTML Elements and the source code
  */
@@ -19,7 +20,7 @@ export interface OntologoicalIdentifier {
      * @param {Parts} parts
      * @returns {Component}
      */
-    identify: <T>(parts: ModuleParts, memory: ModuleMemory<T>) => Promise<Result<T>>;
+    identify: <T>(parts: ModuleParts, memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<T>>;
 }
 /**
  * List of file extensions Astro Framework Reflection could reflect.
@@ -73,19 +74,19 @@ export type Asset = Omit<Module, "type" | "source"> & {
 /**
  * Attribute name => Attribute value or a link to the code expression.
  */
-export type Attributes = Record<string, ReflectLink | string>;
+export type Attributes = Record<string, ReflectLink | ValueType>;
 export type Component = {
     class: ModuleLink;
-    url: string;
+    link: ObjectLink;
     slots: Slots;
     get: unknown;
     attributes: Attributes;
 };
 export type Expression = Omit<Component, "attributes" | "class"> & {
-    prefix: string;
-    suffix: string;
+    description?: string;
+    type: ElementType.Expression;
 };
 export type Text = Omit<Component, "attributes" | "class" | "slots"> & {
     value: string;
 };
-export type Page = Omit<Component, "class" | "url" | "get" | "attributes"> & Omit<Module, "type"> & {};
+export type Page = Omit<Component, "class" | "link" | "get" | "attributes"> & Omit<Module, "type"> & {};

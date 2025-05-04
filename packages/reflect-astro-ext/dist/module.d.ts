@@ -1,6 +1,7 @@
 import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { FileExtension, type Component, type ModuleParts } from "./ontology/index.js";
+import type { ProjectMemory } from "@ara-web/reflect";
 /**
  * Module Category to sort the modules.
  * By design module categories supposed to match the directory in the file system.
@@ -78,5 +79,5 @@ export declare class ModuleIdentifier {
      * @param rawMemory
      * @returns
      */
-    static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>) => Promise<Result<T>>;
+    static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>, _: ProjectMemory) => Promise<Result<T>>;
 }

@@ -1,6 +1,9 @@
 import { Result } from "@ara-web/p-hintjens";
 import { type AstroNode, type Attributes } from "../index.js";
+import type { ModuleMemory } from "@ara-web/reflect";
+import type { ProjectMemory } from "@ara-web/reflect";
 export declare class AttributeLevel {
+    static lintAttributes: (attributes: Attributes, moduleMemory: ModuleMemory<unknown>, projectMemory: ProjectMemory) => Promise<Result<Attributes>>;
     /**
      * Extracts and identifies attributes from an AstroNode.
      *

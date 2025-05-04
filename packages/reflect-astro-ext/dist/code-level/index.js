@@ -32,6 +32,9 @@ export class CodeLevel {
         if (identifiedTypes.isFailure) {
             return Result.fail(`this.identifyTypes(): ${identifiedTypes.errorTitle}`, identifiedTypes.errorDescription);
         }
+        else {
+            moduleMemory.addIdentifiers(identifiedTypes.getValue());
+        }
         // The Linted import identifiers
         const importsLinted = await this.lintImports(code, moduleMemory, projectMemory);
         if (importsLinted.isFailure) {
@@ -42,8 +45,29 @@ export class CodeLevel {
         if (typesLinted.isFailure) {
             return Result.fail(`this.typesLinted(): ${typesLinted.errorTitle}`, typesLinted.errorDescription);
         }
+        const identifiedVariables = await code.getVariableIdentifiers();
+        if (identifiedVariables.isFailure) {
+            return Result.fail(`code.getVariableIdentifiers(): ${identifiedVariables.errorTitle}`, identifiedVariables.errorDescription);
+        }
+        else {
+            moduleMemory.addIdentifiers(identifiedVariables.getValue());
+        }
+        const lintVariables = await this.lintVariables(code, moduleMemory, projectMemory);
+        if (lintVariables.isFailure) {
+            return Result.fail(`this.lintVariables(): ${lintVariables.errorTitle}`, lintVariables.errorDescription);
+        }
         return Result.ok(moduleMemory);
     };
+    static async identifyCodePiece(expression, moduleMemory, projectMemory) {
+        const identifiedResult = await Code.identifyCodePiece(expression, projectMemory, moduleMemory.getIdentifiers());
+        if (identifiedResult.isFailure) {
+            return Result.fail(`Code.identifyCodePiece(): ${identifiedResult.errorTitle}`, identifiedResult.errorDescription);
+        }
+        if (identifiedResult.getValue() === undefined || identifiedResult.getValue().data === undefined) {
+            return Result.fail(`Code.identifyCodePeice(): data is undefined`, `The expression '${expression}' is not a valid expression`);
+        }
+        return Result.ok(identifiedResult.getValue().data);
+    }
     //************************************************************** */
     //
     // Private methods of the pages
@@ -67,6 +91,17 @@ export class CodeLevel {
         const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
         if (importIdentifiersCount > 0) {
             memory.addIdentifiers(depsIdentified.getValue());
+        }
+        return OkResult.ok();
+    };
+    static lintVariables = async (code, memory, projectMemory) => {
+        const vars = await code.getLintedVariableIdentifiers(memory, projectMemory);
+        if (vars.isFailure) {
+            return OkResult.fail(`code.getLintedVariableIdentifiers(): ${vars.errorTitle}`, vars.errorDescription);
+        }
+        const identified = Object.keys(vars.getValue()).length;
+        if (identified > 0) {
+            memory.addIdentifiers(vars.getValue());
         }
         return OkResult.ok();
     };

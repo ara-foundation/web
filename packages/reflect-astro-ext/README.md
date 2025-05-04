@@ -14,6 +14,7 @@ To add *title* and *description*
 # Roadmap
 
 Components
+* Make sure that Astro built in is included.
 * Make sure components include a URL.
 * Make sure to work with the attributes linting.
 * Make sure to parse the components to the respected areas in the slots.
