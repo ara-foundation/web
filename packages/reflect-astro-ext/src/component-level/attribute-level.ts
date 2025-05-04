@@ -1,9 +1,39 @@
 import type { AttributeNode } from "@astrojs/compiler/types";
 import { Result } from "@ara-web/p-hintjens";
-import { type AstroNode, type Attributes } from "../index.js";
+import { CodeLevel, type AstroNode, type Attributes } from "../index.js";
 import { ReflectLink } from "@ara-web/reflect/code-level";
+import type { ModuleMemory } from "@ara-web/reflect";
+import type { ProjectMemory } from "@ara-web/reflect";
 
 export class AttributeLevel {
+    public static lintAttributes = async (attributes: Attributes, moduleMemory: ModuleMemory<unknown>, projectMemory: ProjectMemory): Promise<Result<Attributes>> => {
+        for (const attrName in attributes) {
+            const attr = attributes[attrName];
+            if (!ReflectLink.isExpressionLink(attr)) {
+                continue;
+            }
+
+            const exp = ReflectLink.getResourceAsExpression(attr);
+            if (exp === undefined) {
+                return Result.fail(
+                    `this.lintAttributes(): ${attrName} is not a valid expression`,
+                    `The attribute '${attrName}' is not a valid expression`
+                )
+            }
+
+        
+            const identifiedResult = await CodeLevel.identifyCodePiece(exp, moduleMemory, projectMemory);
+            if (identifiedResult.isFailure) {
+                return Result.fail(
+                    `CodeLevel.identifyCodePeice('${exp}'): ${identifiedResult.errorTitle}`,
+                    identifiedResult.errorDescription!
+                )
+            }
+            attributes[attrName] = identifiedResult.getValue();
+        }
+        return Result.ok(attributes);
+    }
+
     /**
      * Extracts and identifies attributes from an AstroNode.
      * 

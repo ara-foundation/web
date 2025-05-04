@@ -7,8 +7,9 @@ import { expect, test } from "vitest";
 // import { ModuleMemory } from "@ara-web/reflect";
 // import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, Component, ModuleIdentifier, Asset, Script } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { CodeLevel, FileExtension, ModuleCategory, ModulePartitioner, Page } from "../src";
-// import { Debug } from "@ara-web/p-hintjens";
+import { CodeLevel, Component, FileExtension, ModuleCategory, ModulePartitioner, Page, PageLevel } from "../src";
+import { Debug } from "@ara-web/p-hintjens";
+import { ModuleMemory } from "@ara-web/reflect";
 
 test(`Make sure the that object links are correct`, async () => {
     const modules = getImportRecords()
@@ -22,9 +23,11 @@ test(`Make sure the that object links are correct`, async () => {
     const moduleMemories = projectMemory.getModules();
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
     for (let moduleMemory of moduleMemories) {
-        if (moduleMemory.moduleCategory !== ModuleCategory.Component &&
-            moduleMemory.moduleCategory !== ModuleCategory.Layout &&
-            moduleMemory.moduleCategory !== ModuleCategory.Page) {
+        if (!([
+                ModuleCategory.Component, 
+                ModuleCategory.Layout,
+                ModuleCategory.Page
+            ].includes(moduleMemory.moduleCategory as ModuleCategory))) {
             continue;
         }
         const moduleParts = await ModulePartitioner.partition(moduleMemory);
@@ -33,26 +36,30 @@ test(`Make sure the that object links are correct`, async () => {
         if (moduleParts.getValue().fileExtension !== FileExtension.Astro) {
             continue;
         } 
-        if (moduleMemory.moduleCategory !== ModuleCategory.Page) {
+        // Only Component
+        if (moduleMemory.moduleCategory !== ModuleCategory.Component) {
             continue;
         }
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
+        // Test by using ObjectLinkSelector.
         // Uncomment to see the object links.
-    //     const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
-    //     Debug.log(`Identified ${moduleMemory.moduleLink}: (in future use p-hintjens/ObjectLink.selectorParse(memory))`)
-    //     Debug.log(page);
-    //     expect(page.isSuccess).toBe(true);
-    //     Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
-    //     Debug.log(page.getValue().slots["default"])
-    //     const child = page.getValue().slots["default"][0] as Component;
-    //     for (let subChild of child.slots["default"]) {
-    //         Debug.log(`The sub child:`)
-    //         Debug.log(subChild.link.toString())
-    //         if ("slots" in subChild && subChild.slots["default"].length > 0) {
-    //             Debug.log(`The sub child has ${subChild.slots["default"].length} children:`)
-    //             Debug.log(subChild.slots["default"].map((child) => child.link.toString()))
-    //         }
-    //     }
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
+        expect(page.isSuccess).toBe(true);
+        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
+        const child = page.getValue().slots["default"][0] as Component;
+        expect(child.link.getId()).toBe("container");
+        for (let subChild of child.slots["default"]) {
+            Debug.log(`The child ${child.link.selector} with id '${child.link.getId()}' > sub ${subChild.link.selector} as ${subChild.link.getId() === "container"}`)
+            if (subChild.link.getId() === 'background') {
+                Debug.log(`\tsubchild ${subChild.link.getId()} as ${subChild.link.selector}`)
+                Debug.log(`\t\tThe background child entered`)
+                const img = subChild as Component;
+                expect(img.attributes["src"]).toBeDefined();
+                Debug.log(`\t\tThe image ${img.attributes["src"]} is defined ${img.attributes["src"]}:`)
+                Debug.log(img.attributes["src"])
+                break;
+            }
+        }
     }
 })

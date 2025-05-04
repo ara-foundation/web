@@ -20,6 +20,7 @@ import {
     ElementType
 } from "../index.js";
 import { AttributeLevel } from "./attribute-level.js";
+import { ProjectMemory } from "@ara-web/reflect";
 
 const htmlPackageURL = ModuleLink.newPackageURL("www", "html")
 enum ComponentType {
@@ -87,17 +88,43 @@ enum ComponentType {
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */
 export class ComponentLevel {
+    public static async lintAttributes(component: SlotElement, memory: ModuleMemory<unknown>, projectMemory: ProjectMemory): Promise<Result<SlotElement>> {
+        if ("attributes" in component) {
+            const lintedAttributes = await AttributeLevel.lintAttributes(component.attributes, memory, projectMemory);
+            if (lintedAttributes.isFailure) {
+                return Result.fail(
+                    `AttributeLevel.lintAttributes(): ${lintedAttributes.errorTitle}`,
+                    lintedAttributes.errorDescription!
+                )
+            }
+            component.attributes = lintedAttributes.getValue();
+            if (component.attributes.id !== undefined && 
+                (typeof component.attributes.id === "string") || (typeof component.attributes.id === "number")) {
+                    const idPutted = component.link.putId(component.attributes.id! as string|number);
+                    if (!idPutted) {
+                        return Result.fail(
+                            `component.link.putId(id='${component.attributes.id}'): failed to put`,
+                            `Perhaps somewhere earlier the id was already put`
+                        )
+                    }
+            }
+        }
+        
+        return Result.ok(component);
+    }
+        
+
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
      * @param {AstroNode} element 
      * @returns {Component}
      */
-    public static identifyHTMLElement = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink): Promise<Result<Component>> => {
+    public static identifyHTMLElement = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Component>> => {
         const attributes = AttributeLevel.getNodeAttributes(element);
         if (attributes.isFailure) {
             return Result.fail(`AttributeLevel.getNodeAttributes(): ${attributes.errorTitle}`, attributes.errorDescription!);
         }
-        
+
         const component: Component = {
             get: element,
             link: elementLink,
@@ -108,7 +135,8 @@ export class ComponentLevel {
             class: htmlPackageURL,
         }
 
-        const slots = await this.identifyChildren(moduleParts, memory, element, elementLink);
+        
+        const slots = await this.identifyChildren(moduleParts, memory, element, elementLink, projectMemory);
         if (slots.isFailure) {
             return Result.fail(
                 `this.identifyChildren(): ${slots.errorTitle}`,
@@ -140,19 +168,18 @@ export class ComponentLevel {
      * @param {AstroNode} element 
      * @returns {Component}
      */
-    public static identifyChildren = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink): Promise<Result<Slots>> => {
+    public static identifyChildren = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Slots>> => {
         const slots: Slots = {
             [DEFAULT_SLOT]: []
         }
         if (element.children.length === 0) {
             return Result.ok(slots);
         }
-        for (const child of element.children) {
-            if (child.isText && child.value.length === 0) {
+        for (const astNode of element.children) {
+            if (astNode.isText && astNode.value.length === 0) {
                 continue;
             }
-            const astNode = child as AstroNode;
-            const identifiedChild = await this.identifyAstroNode(moduleParts, memory, astNode, elementLink);
+            const identifiedChild = await this.identifyAstroNode(moduleParts, memory, astNode, elementLink, projectMemory);
             if (identifiedChild.isFailure) {
                 return Result.fail(
                     `this.identifyAstroNode(): ${identifiedChild.errorTitle}`,
@@ -160,7 +187,16 @@ export class ComponentLevel {
                 )
             }
 
-            slots[DEFAULT_SLOT].push(identifiedChild.getValue())
+            
+            const linted = await ComponentLevel.lintAttributes(identifiedChild.getValue(), memory, projectMemory);
+            if (linted.isFailure) {
+                return Result.fail(
+                    `ComponentLevel.lintAttributes(): ${linted.errorTitle}`,
+                    linted.errorDescription!
+                )
+            }
+
+            slots[DEFAULT_SLOT].push(linted.getValue())
         }
 
         return Result.ok(slots)
@@ -178,7 +214,7 @@ export class ComponentLevel {
      * @returns {Promise<Result<Expression>>} A Promise that resolves to a Result object containing
      *                                           the identified Expression or an error if identification fails.
      */
-    public static identifyExpression = async (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, nodeLink: ObjectLink): Promise<Result<Expression>> => {
+    public static identifyExpression = async (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, nodeLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Expression>> => {
         const elements: SlotElement[] = [];
         let prefix: string = "Expression {";
         let suffix: string = "}";
@@ -197,14 +233,22 @@ export class ComponentLevel {
                 }
             }
             
-            const content = await this.identifyAstroNode(uiContent, memory, child, nodeLink);
+            const content = await this.identifyAstroNode(uiContent, memory, child, nodeLink, projectMemory);
             if (content.isFailure) {
                 return Result.fail(
                     `expressionChild(${i}/${node.children.length-1}): this.identifyAstroNode(): ${content.errorTitle}`,
                     content.errorDescription!,
                 )
             }
-            elements.push(content.getValue());
+
+            const linted = await this.lintAttributes(content.getValue(), memory, projectMemory);
+            if (linted.isFailure) {
+                return Result.fail(
+                    `expressionChild(${i}/${node.children.length-1}): this.lintAttributes(): ${linted.errorTitle}`,
+                    linted.errorDescription!
+                )
+            }
+            elements.push(linted.getValue());
         }
 
         const expression: Expression = {
@@ -224,10 +268,11 @@ export class ComponentLevel {
      * @param element Node that we need to identify
      * @returns {IdentifiedComponent}
      */
-    public static identifyAstroNode = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink): Promise<Result<Component|Expression|Text>> => {
+    public static identifyAstroNode = async(uiContent: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<SlotElement>> => {
         if (element.isHTMLElement) {
-            const htmlElementLink = elementLink.getTaggedChild(ComponentType.HtmlElement, element.name);
-            const component = await this.identifyHTMLElement(uiContent, memory, element, htmlElementLink);
+            const htmlElementLink = elementLink.getTaggedChild(element.name, undefined, [ComponentType.HtmlElement]);
+            
+            const component = await this.identifyHTMLElement(uiContent, memory, element, htmlElementLink, projectMemory);
             if (component.isFailure) {
                 return Result.fail(`this.identifyHTMLElement() ${component.errorTitle}`, component.errorDescription!)
             }
@@ -235,7 +280,7 @@ export class ComponentLevel {
             return Result.ok(val)
         } else if (element.isExpression) {
             const expressionLink = elementLink.getEnumuratedChild(ComponentType.Expression);
-            const identificationResult = await this.identifyExpression(uiContent, memory, element, expressionLink)
+            const identificationResult = await this.identifyExpression(uiContent, memory, element, expressionLink, projectMemory)
             if (identificationResult.isFailure) {
                 return Result.fail(
                     `this.identfyExpression: ${identificationResult.errorTitle}`,
@@ -245,8 +290,8 @@ export class ComponentLevel {
                 
             return Result.ok(identificationResult.getValue())
         } else if (element.isComponent) {
-            const componentLink = elementLink.getTaggedChild(ComponentType.Astro, element.name);
-            const identificationResult = await this.identifyAstroComponent(uiContent, memory, element, componentLink)
+            const componentLink = elementLink.getTaggedChild(element.name, undefined, [ComponentType.Astro]);
+            const identificationResult = await this.identifyAstroComponent(uiContent, memory, element, componentLink, projectMemory)
             if (identificationResult.isFailure) {
                 return Result.fail(
                     `this.identifyAstroComponent(): ${identificationResult.errorTitle}`,
@@ -264,7 +309,7 @@ export class ComponentLevel {
         return Result.errorCode404(['ComponentLevel'], 'identifyComponent', `The element '${element.name}' is not supported`);
     }
 
-    public static identifyAstroComponent = async(moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink): Promise<Result<Component>> => {
+    public static identifyAstroComponent = async(moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Component>> => {
         const astNode = memory.identifierByName(element.name);
         if (astNode === undefined) {
             return Result.fail(
@@ -296,7 +341,7 @@ export class ComponentLevel {
         //         data: ComponentEngine.astroLayoutNodeToComponent(element, pathResult.importPath.toString())
         //     })
         // } else if (element.type === "component") {          
-        const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.data, elementLink!); 
+        const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.data, elementLink!, projectMemory); 
         if (componentData.isFailure) {
             return Result.fail(
                 `astroNodeToComponent('${element.name}', '${memory.moduleLink.moduleURL}'): ${componentData.errorTitle}`,
@@ -314,13 +359,13 @@ export class ComponentLevel {
      * @param filePath 
      * @returns 
      */
-    public static astroNodeToComponent = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, glob: unknown, nodeLink: ObjectLink): Promise<Result<Component>> => {
+    public static astroNodeToComponent = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, glob: unknown, nodeLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Component>> => {
         const attributes = AttributeLevel.getNodeAttributes(node);
         if (attributes.isFailure) {
             return Result.fail(`AttributeLevel.getNodeAttributes(): ${attributes.errorTitle}`, attributes.errorDescription!);
         }
 
-        const children = await this.identifyChildren(moduleParts, memory, node, nodeLink);
+        const children = await this.identifyChildren(moduleParts, memory, node, nodeLink, projectMemory);
         if (children.isFailure) {
             return Result.fail(`this.identifyChildren(): ${children.errorTitle}`, children.errorDescription!);
         }

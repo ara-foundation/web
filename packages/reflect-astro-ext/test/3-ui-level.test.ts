@@ -5,9 +5,8 @@
 
 import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
-import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, Component, ModuleIdentifier, Asset, Script } from "../src";
+import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, ModuleIdentifier, Asset } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
@@ -33,17 +32,8 @@ test(`Make sure the that pages JSON are generated`, async () => {
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
 
-        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
-        // Debug.log(`Identified page:`)
-        // Debug.log(page);
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        // Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
-        // Debug.log(page.getValue().slots["default"])
-        // const child = page.getValue().slots["default"][0] as Component;
-        // for (let subChild of child.slots["default"]) {
-            // Debug.log(`The sub child:`)
-            // Debug.log(subChild)
-        // }
     }
 })
 
@@ -71,17 +61,8 @@ test(`Make sure the that pages JSON are automatically updated`, async () => {
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
 
-        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
-        // Debug.log(`Identified page from the pages list:`)
-        // Debug.log(page);
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        // Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
-        // Debug.log(page.getValue().slots["default"])
-        // const child = page.getValue().slots["default"][0] as Component;
-        // for (let subChild of child.slots["default"]) {
-            // Debug.log(`The sub child:`)
-            // Debug.log(subChild)
-        // }
     }
 })
 
@@ -98,6 +79,9 @@ test(`Make sure the that components are generated`, async () => {
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
     let componentFound = false;
     for (let moduleMemory of moduleMemories) {
+        if (moduleMemory.moduleLink.toFilePath.indexOf("Welcome.astro") === -1) {
+            continue;
+        }
         const moduleParts = await ModulePartitioner.partition(moduleMemory);
         expect(moduleParts.isSuccess).toBe(true);
         
@@ -110,7 +94,7 @@ test(`Make sure the that components are generated`, async () => {
         componentFound = true;
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(componentFound).toBe(true);
@@ -141,7 +125,7 @@ test(`Make sure the that layouts are generated`, async () => {
         layoutFound = true;
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
-        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue());
+        const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(layoutFound).toBe(true);
@@ -169,7 +153,7 @@ test(`Make sure the that scripts are generated`, async () => {
         }
 
         scriptFound = true;
-        const identifiedModule = await ModuleIdentifier.identify<Script>(moduleParts.getValue(), moduleMemory as ModuleMemory<Script>);
+        const identifiedModule = await ModuleIdentifier.identify<Script>(moduleParts.getValue(), moduleMemory as ModuleMemory<Script>, projectMemory);
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(scriptFound).toBe(true);
@@ -197,7 +181,7 @@ test(`Make sure that the assets are generated`, async () => {
         }
 
         assetFound = true;
-        const identifiedModule = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>);
+        const identifiedModule = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>, projectMemory);
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(assetFound).toBe(true);

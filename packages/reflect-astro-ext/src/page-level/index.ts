@@ -90,9 +90,17 @@ export class PageLevel {
                 return Result.fail(err)
             }
 
+            const linted = await ComponentLevel.lintAttributes(identificationResult.getValue(), memory, projectMemory);
+            if (linted.isFailure) {
+                return Result.fail(
+                    `ComponentLevel.lintAttributes(): ${linted.errorTitle}`,
+                    linted.errorDescription!
+                )
+            }
+
             Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`)
-            slots[DEFAULT_SLOT].push(identificationResult.getValue())
-                
+            slots[DEFAULT_SLOT].push(linted.getValue())
+
         //         // Let's detect the ComponentType
         //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
         //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')

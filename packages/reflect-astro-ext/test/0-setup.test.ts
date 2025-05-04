@@ -54,7 +54,5 @@ test(`Test the categorization of the import.meta.glob`, async () => {
 
     const welcomeComponentPath = FilePath.getFileAbsolutePath("./src/components/Welcome.astro", reflectExtension.rootDir);
     const welcomeComponent = projectMemory.getModule<unknown>(welcomeComponentPath);
-    Debug.log(`The welcome:`)
-    Debug.log(welcomeComponent)
     expect(welcomeComponent.isSuccess).toBe(true);
 })
