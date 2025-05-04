@@ -328,13 +328,11 @@ export class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    static identifyCodePiece = async (expression, projectMemory) => {
-        const builtInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
-        if (builtInIdentifiers.isFailure) {
-            return Result.fail(`BuiltInIdentifiers.getBuiltInIdentifiers(): ${builtInIdentifiers.errorTitle}`, builtInIdentifiers.errorDescription);
-        }
+    static identifyCodePiece = async (expression, projectMemory, optionalIdentifiers) => {
         const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
-        tempMemory.addIdentifiers(builtInIdentifiers.getValue());
+        if (optionalIdentifiers !== undefined) {
+            tempMemory.addIdentifiers(optionalIdentifiers);
+        }
         const tempVarName = "__temp_var_";
         const code = new Code(`const ${tempVarName} = ${expression}`, tempMemory.moduleLink);
         const vars = await code.getVariableIdentifiers();

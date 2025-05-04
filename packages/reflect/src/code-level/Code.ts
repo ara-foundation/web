@@ -436,16 +436,11 @@ export class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    public static identifyCodePiece = async (expression: string, projectMemory: ProjectMemory): Promise<Result<TypedData>> => {
-        const builtInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
-        if (builtInIdentifiers.isFailure) {
-            return Result.fail(
-                `BuiltInIdentifiers.getBuiltInIdentifiers(): ${builtInIdentifiers.errorTitle}`,
-                builtInIdentifiers.errorDescription!
-            )
-        }
+    public static identifyCodePiece = async (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: AstIdentifiers): Promise<Result<TypedData>> => {
         const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
-        tempMemory.addIdentifiers(builtInIdentifiers.getValue());
+        if (optionalIdentifiers !== undefined) {
+            tempMemory.addIdentifiers(optionalIdentifiers);
+        }
         
         const tempVarName = "__temp_var_";
         const code = new Code(`const ${tempVarName} = ${expression}`, tempMemory.moduleLink);

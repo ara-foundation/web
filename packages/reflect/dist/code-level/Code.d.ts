@@ -78,5 +78,5 @@ export declare class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory) => Promise<Result<TypedData>>;
+    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: AstIdentifiers) => Promise<Result<TypedData>>;
 }
