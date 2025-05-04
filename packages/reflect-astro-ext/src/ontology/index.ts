@@ -1,10 +1,12 @@
 import { type ModuleLink, ObjectLink, Result } from "@ara-web/p-hintjens";
 import { 
     FileExtension as BaseExtension, 
-    ModuleMemory 
+    ModuleMemory, 
+    ProjectMemory
 } from "@ara-web/reflect";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
 import { AstroNode } from "../index.js";
+import type { ValueType } from "@ara-web/reflect/code-level";
 
 /**
  * Any UI Content is composed of the HTML Elements and the source code
@@ -26,7 +28,7 @@ export interface OntologoicalIdentifier {
      * @param {Parts} parts 
      * @returns {Component}
      */
-    identify: <T>(parts: ModuleParts, memory: ModuleMemory<T>) => Promise<Result<T>>;
+    identify: <T>(parts: ModuleParts, memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<T>>;
 }
 
 /**
@@ -89,7 +91,7 @@ export type Asset = Omit<Module, "type" | "source"> & {
 /**
  * Attribute name => Attribute value or a link to the code expression.
  */
-export type Attributes = Record<string, ReflectLink|string>;
+export type Attributes = Record<string, ReflectLink|ValueType>;
 
 export type Component = {
     class: ModuleLink;

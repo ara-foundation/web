@@ -13,6 +13,7 @@ import {
 } from "./ontology/index.js";
 import { AstroNode } from "./astro-node.js";
 import { CodeLevel } from "./code-level/index.js";
+import type { ProjectMemory } from "@ara-web/reflect";
 
 /**
  * Module Category to sort the modules.
@@ -223,7 +224,8 @@ export class ModuleIdentifier {
      * @param rawMemory 
      * @returns 
      */
-    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>, _: ProjectMemory): Promise<Result<T>> => {
         const filePath = rawMemory.moduleLink.toFilePath;
         const fileExtensionResult = FilePath.getFileExtension(filePath, EnumTraits.enumValues(FileExtension));
         if (fileExtensionResult.isFailure) {
@@ -234,7 +236,7 @@ export class ModuleIdentifier {
         }
 
         const fileExtension = fileExtensionResult.getValue() as FileExtension;
-        const title = await FilePath.getFileName(filePath);
+        const title = FilePath.getFileName(filePath);
         if (title.isFailure) {
             return Result.fail(`FilePath.getFileName('${filePath}'): ${title.errorTitle}`, title.errorDescription!)
         }

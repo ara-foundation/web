@@ -257,12 +257,12 @@ export class ReflectAstroFramework implements ExtensionInterface {
 
             return OkResult.ok()
         } else {
-            const scriptsPosted = await this.postScripts();
+            const scriptsPosted = await this.postScripts(projectMemory);
             if (scriptsPosted.isFailure) {
                 return Result.fail(`this.postScripts(): ${scriptsPosted.errorTitle}`, scriptsPosted.errorDescription!)
             }
 
-            const assetsPosted = await this.postAssets();
+            const assetsPosted = await this.postAssets(projectMemory);
             if (assetsPosted.isFailure) {
                 return Result.fail(`this.postAssets(): ${assetsPosted.errorTitle}`, assetsPosted.errorDescription!)
             }
@@ -295,13 +295,14 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
             if (data.isFailure) {
                 return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
             }
 
             moduleMemory.content = data.getValue();
         }
+        
         return OkResult.ok();
     }
 
@@ -322,7 +323,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
+            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
             if (data.isFailure) {
                 return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
             }
@@ -351,7 +352,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue());
+            const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
             if (page.isFailure) {
                 return OkResult.fail(`PageLevel.identify('${moduleMemory.moduleLink.moduleURL}'): ${page.errorTitle}`, page.errorDescription!)
             }
@@ -366,7 +367,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * into the `Script` ontological data.
      * @returns 
      */
-    private postScripts = async (): Promise<OkResult> => {
+    private postScripts = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules();
         for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
@@ -379,7 +380,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 continue;
             }
 
-            const data = await ModuleIdentifier.identify<Module>(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>);
+            const data = await ModuleIdentifier.identify<Module>(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>, projectMemory);
 
             if (data.isFailure) {
                 return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
@@ -395,7 +396,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
      * into the `Asset` ontological data.
      * @returns 
      */
-    private postAssets = async (): Promise<OkResult> => {
+    private postAssets = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules();
         for (const moduleMemory of noContentModules) {
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
@@ -408,7 +409,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
                 continue;
             }
 
-            const data = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>);
+            const data = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>, projectMemory);
 
             if (data.isFailure) {
                 return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)

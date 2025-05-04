@@ -10,6 +10,7 @@ import {
     ComponentLevel,
     CodeLevel
 } from "../index.js";
+import { ProjectMemory } from "@ara-web/reflect";
 
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
@@ -22,7 +23,7 @@ export class PageLevel {
      * @param {Parts} parts 
      * @returns {Component}
      */
-    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>): Promise<Result<T>> => {
+    public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<T>> => {
         const validated = this.validateModuleParts(parts);
         if (validated.isFailure) {
             return Result.fail(`this.validateParts(): ${validated.errorTitle}`, validated.errorDescription!)
@@ -31,7 +32,7 @@ export class PageLevel {
         const meta = CodeLevel.identifyMeta(parts.source!);
 
         const memory = rawMemory as ModuleMemory<Page>
-        const slots = await this.identifySlots(parts, memory);
+        const slots = await this.identifySlots(parts, memory, projectMemory);
         if (slots.isFailure) {
             return Result.fail(`this.identifySlots(): ${slots.errorTitle}`, slots.errorDescription);
         }
@@ -65,13 +66,11 @@ export class PageLevel {
         return OkResult.ok();
     }
 
-
-
     /**
      * Identify each component within the page. All data of the page are represented as the components.
      * @returns {Result<AraPage>}
      */
-    private static identifySlots = async (uiContent: ModuleParts, memory: ModuleMemory<Page>): Promise<Result<Slots>> => {
+    private static identifySlots = async (uiContent: ModuleParts, memory: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<Slots>> => {
         const slots: Slots = {
             [DEFAULT_SLOT]: []
         };
@@ -80,7 +79,7 @@ export class PageLevel {
             if (componentNode.isText && componentNode.value.length === 0) {
                 continue;
             }
-            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode, emptyObjLink)
+            const identificationResult = await ComponentLevel.identifyAstroNode(uiContent, memory, componentNode, emptyObjLink, projectMemory)
             if (identificationResult.isFailure) {
                 const err = Debug.error(
                     `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
@@ -90,6 +89,7 @@ export class PageLevel {
                 
                 return Result.fail(err)
             }
+
             Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`)
             slots[DEFAULT_SLOT].push(identificationResult.getValue())
                 
