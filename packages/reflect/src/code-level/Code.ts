@@ -3,7 +3,7 @@
  * AST (Abstract Syntax Tree)
  */
 import { Project, SourceFile as TsSourceFile } from "ts-morph";
-import { AraLink, Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
+import { Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
 
 import { 
     ModuleMemory, 
@@ -20,7 +20,6 @@ import { AstNode, type AstIdentifiers, AstNodeType, type TypedData } from "./ast
 import { ValueTypeString, type ValueType } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import { AstNodeContext } from "./AstNodeContext.js";
-import { Identifier } from "./idenitifier.js";
 import { ValueLevel } from "./value-level/index.js";
 
 export type Object = {[key: string]: ValueType};
@@ -321,7 +320,6 @@ export class Code {
         }
         
         const moduleTypeFilters = [
-            AstNode.isDefinedInLocal,
             AstNode.isTypeDeclaration,
         ]
 
@@ -394,19 +392,15 @@ export class Code {
             return Result.ok(memory.getIdentifiers());
         }
         
-        const moduleTypeFilters = [
-            AstNode.isDefinedInLocal,
-            AstNode.isVariableDeclaration,
-        ]
-
         for (let identifier in varsToLint) {
             let node = varsToLint[identifier];
             if (typeof (node as AstNode).data === "string") {
                 node.dataType = (node as AstNode).data as ValueTypeString;
                 continue;
             }
-            const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier])
+            const moduleIdentifiers = memory.getIdentifiers([], [identifier])
             const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
+
             const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
             if (lintedVariable.isFailure) {
                 return Result.fail(
