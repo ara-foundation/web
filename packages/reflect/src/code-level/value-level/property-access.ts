@@ -1,5 +1,5 @@
 import { Node, PropertyAccessExpression } from "ts-morph";
-import { Result, ObjectTraits } from "@ara-web/p-hintjens";
+import { Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString,
     TsNode, 
@@ -42,13 +42,18 @@ export class PropertyAccess {
         const obj = await ValueLevel.identifyValue(objIdentifier, {dataType: ValueTypeString.default}, astNodeContext!);
         if (obj.isFailure) {
             return Result.fail(
-                `ValueLevel.identifyValue('${objIdentifier.getText()}'): ${obj.errorTitle}`,
+                `objectId: ValueLevel.identifyValue('${objIdentifier.getText()}'): ${obj.errorTitle}`,
                 obj.errorDescription!
             )
         }
-        
-        if (obj.getValue().dataType !== ValueTypeString.object) {
-            return Result.fail(`The method data type is not an object`, `Did not expect '${obj.getValue().dataType}', please update ObjectLiteral.identifyValue to return correct data`);
+
+        if (obj.getValue().dataType !== ValueTypeString.object && obj.getValue().dataType !== ValueTypeString.default) {
+            const err = Debug.error(
+                `The method data type is not an object and not default`, 
+                `Did not expect '${obj.getValue().dataType}', please update ObjectLiteral.identifyValue to return correct data`,
+                {obj: obj, tsNode: objIdentifier}
+            );
+            return Result.fail(err);
         }
         
         const propertyType = typeof ((obj.getValue().data as any)[property.getText()]);
@@ -57,47 +62,5 @@ export class PropertyAccess {
         }        
         let data = ((obj.getValue().data as any)[property.getText()]);
         return Result.ok({data: data, dataType: propertyType});
-        // const varIdentifier = exp.getChildAtIndex(0);
-        //         const propertyIdentifier = exp.getChildAtIndex(2);
-        //         Debug.push(`exp as PropertyAccess()`, {var: varIdentifier.getText(), property: propertyIdentifier.getText()})
-        //         Debug.push(`this.identifyIdentifierRecursively()`, {identifier: varIdentifier.getText()})
-        //         // Attempt to find the variable's value within this script            
-        //         const identified = await this.identifyIdentifierRecursively(varIdentifier.getText(), memory);
-        //         Debug.pop();
-        //         if (identified.isFailure) {
-        //             Debug.pop();
-        //             return Result.fail(
-        //                 `propertyAccessExpression('${exp.getText()}')/this.identifyIdentifierRecursively(varIdentifier='${varIdentifier.getText()}'): ${identified.errorTitle}`,
-        //                 identified.errorDescription!
-        //             )
-        //         }
-               
-        //         if (identified.getValue().nodeType === AstNodeType.Enum) {
-        //             let identifiedData = identified.getValue().data as EnumMembers;
-        //             Debug.pop();
-        //             if (propertyIdentifier.getText() in identifiedData) {
-        //                 return Result.ok(identifiedData[propertyIdentifier.getText()] as ValueType)
-        //             } else {
-        //                 return Result.fail(
-        //                     `Invalid enum`,
-        //                     `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-        //                 )
-        //             }
-        //         } else if (identified.getValue().nodeType === AstNodeType.Object) {
-        //             let identifiedData = identified.getValue().data as Object;
-        //             Debug.pop();
-        //             if (propertyIdentifier.getText() in identifiedData) {
-        //                 return Result.ok(identifiedData[propertyIdentifier.getText()] as ValueType)
-        //             } else {
-        //                 return Result.fail(
-        //                     `Invalid enum`,
-        //                     `The '${identifier}' is identified as property access to the Enum ${varIdentifier}. But this enum doesn't have '${propertyIdentifier.getText()}' member`
-        //                 )
-        //             }
-        //         } else {
-        //             Debug.log(`The identified data is not an enum nor a variable with object, then how to use it:`);
-        //             Debug.log(identified)
-        //             Debug.pop();
-        //         }
     }
 }
