@@ -1,12 +1,5 @@
-import type { ModuleLink, Result } from "@ara-web/p-hintjens";
-export interface ServiceMetaInterface {
-    description: string;
-    moduleLink: ModuleLink;
-}
-export interface ReflectProxyInterface {
-    putBehindData?: <BehindProxy>(behindData: BehindProxy) => void;
-    publicMethods: string[];
-}
-export interface ReflectInterface {
+import type { Result } from "@ara-web/p-hintjens";
+import type { SDSServiceInterface } from "@ara-web/p-hintjens/sds";
+export interface ReflectInterface extends SDSServiceInterface {
     get?<T>(moduleCategory: string): Promise<Result<T[]>>;
 }

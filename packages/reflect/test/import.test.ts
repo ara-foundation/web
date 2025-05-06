@@ -19,7 +19,7 @@ const sourceCode =
 
 const genericTypeCode = `import type { CustomType } from "./funcs.ts"`;
 const moduleLink = FilePath.getFileAbsolutePath("./code-level.test.ts", import.meta.filename);
-const reflect = new Reflect();
+const reflect = new Reflect({packageLink: moduleLink});
 const projectMemory = getProjectMemory(reflect.nodeJsExt);
 
 test('Import with "as" keyword', async () => {

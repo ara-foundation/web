@@ -13,7 +13,8 @@ export declare class NodejsReflectExtension implements ExtensionInterface {
     private _autoImporter?;
     constructor();
     getModuleWithFileExtensions(_: ModuleLink): ModuleLink[];
-    get operatorId(): ModuleLink;
+    get memoryOperatorId(): ModuleLink;
+    get packageLink(): ModuleLink;
     get moduleLink(): ModuleLink;
     get moduleMemories(): ModuleMemory<unknown>[];
     get description(): string;

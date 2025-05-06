@@ -47,7 +47,7 @@ export class ProjectMemory implements MemoryOperations {
     /**
      * My ID;
      */
-    public get operatorId(): ModuleLink {
+    public get memoryOperatorId(): ModuleLink {
         return this._moduleLink;
     }
 

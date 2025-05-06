@@ -12,6 +12,8 @@ import { ValueLevel } from "../src/code-level/value-level/index.js";
 import { BuiltInIdentifiers } from "../src/BuiltInIdentifiers.js";
 import { TypeLevel } from "../src/code-level/index.js";
 
+const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
+
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
@@ -198,7 +200,7 @@ test('Supports the literal value assignment', async () => {
 // To work with function result, we need to create a function declaration.
 // function call as a result.
 test('Supports the function call as variable value', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -236,7 +238,7 @@ test('Supports the function call as variable value', async () => {
 // function call, but variable has defined type such as string
 // but function returns another type.
 test('Supports the function call as variable value but mismatch the types', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -270,7 +272,7 @@ test('Supports the function call as variable value but mismatch the types', asyn
 
 // function call without any argument
 test('Supports the function call without any argument', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -307,7 +309,7 @@ test('Supports the function call without any argument', async () => {
 
 // method call as a result
 test('Supports the method call', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -352,7 +354,7 @@ test('Supports the method call', async () => {
 });
 
 test('Supports the spread assignment through enums', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -403,7 +405,7 @@ test('Supports the spread assignment through enums', async () => {
 });
 
 test('Supports the type from the imports', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
   await putFuncModule(reflect.nodeJsExt);
@@ -460,7 +462,7 @@ AS Keyword but with local
    ` const ${varName} = {...profile} as CustomType`;
 */
 test('Supports the type from the local type with `as` keyword', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -505,7 +507,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
 
 // Support with the UnionType
 test('Supports the union types', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -549,7 +551,7 @@ test('Supports the union types', async () => {
 
 // Support with the Intersected
 test('Supports the intersected types', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -592,7 +594,7 @@ test('Supports the intersected types', async () => {
 });
 
 test('Supports the arrays through Array generic', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -637,7 +639,7 @@ test('Supports the arrays through Array generic', async () => {
 
 // Support of the arrays through the Array literals instead Generic Array
 test('Supports the arrays through Array literals', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -683,7 +685,7 @@ test('Supports the arrays through Array literals', async () => {
 
 // Support array with the primitive types
 test('Supports the arrays with primitive types', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -715,7 +717,7 @@ test('Supports the arrays with primitive types', async () => {
 
 // Support array with the primitive types
 test('Supports the shorthand project assign with primitive types', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -762,7 +764,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
 
 // Support array with the primitive types
 test('Supports the parenthesis', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 
@@ -808,7 +810,7 @@ test('Supports the parenthesis', async () => {
 });
 
 test('Supports the conditional expression', async () => {
-  const reflect = new Reflect();
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
 

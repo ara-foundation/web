@@ -6,9 +6,12 @@ import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-e
 import { Reflect } from "../src/Reflect.js"
 import { expect, test } from "vitest";
 import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage } from "./shared.js";
+import { ModuleLink } from "@ara-web/p-hintjens";
+
+const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
 test('Simply creating a reflect and trying to fetch data', async () => {
-    const reflect = new Reflect();
+    const reflect = new Reflect({packageLink: reflectingPkgUrl})
     const data = await reflect.get!(ModuleCategory.Untracked);
     expect(data.isSuccess).toBe(true);
     expect(data.getValue()).toHaveLength(0);
@@ -28,7 +31,7 @@ test('Simply creating a reflect and trying to fetch data', async () => {
 test('Post modules into the Nodejs Reflect Extension', async () => {
     const categorizedModules = getSampleModuleData();
 
-    const reflect = new Reflect();
+    const reflect = new Reflect({packageLink: reflectingPkgUrl})
     let builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);
     expect(builtIn.isSuccess).toBe(true);
     expect(builtIn.getValue()).toHaveLength(0);
@@ -45,7 +48,7 @@ test('Post modules into the Nodejs Reflect Extension', async () => {
 test('Post packages into the Nodejs Reflect Extension', async () => {
     const samplePackage = getSamplePackage();
 
-    const reflect = new Reflect();
+    const reflect = new Reflect({packageLink: reflectingPkgUrl})
     let builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);
     expect(builtIn.isSuccess).toBe(true);
     expect(builtIn.getValue()).toHaveLength(0);
@@ -61,7 +64,7 @@ test('Post packages into the Nodejs Reflect Extension', async () => {
 
 
 test('Setup auto import and make sure its automatically imported', async () => {
-    const reflect = new Reflect();
+    const reflect = new Reflect({packageLink: reflectingPkgUrl})
     // Has no data yet, so empty
     let builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);
     expect(builtIn.isSuccess).toBe(true);

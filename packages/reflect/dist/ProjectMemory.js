@@ -33,7 +33,7 @@ export class ProjectMemory {
     /**
      * My ID;
      */
-    get operatorId() {
+    get memoryOperatorId() {
         return this._moduleLink;
     }
     /**

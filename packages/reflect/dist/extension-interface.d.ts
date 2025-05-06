@@ -1,7 +1,7 @@
 import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "./ModuleMemory.js";
 import type { ProjectMemory } from "./ProjectMemory.js";
-import type { ServiceMetaInterface } from "./reflect-interface.js";
+import type { SDSExtensionInterface } from "@ara-web/p-hintjens/sds";
 export type Module = unknown;
 export type ModulePath = string;
 export type ModuleCategory = string;
@@ -31,7 +31,7 @@ export interface MemoryOperations {
     /**
      * To identify the extension that provides the memory operations
      */
-    operatorId: ModuleLink;
+    memoryOperatorId: ModuleLink;
     /**
      * Returns the Module Memory by the provided module link by the module link
      * @param moduleLink
@@ -61,7 +61,7 @@ export interface MemoryOperations {
 /**
  * Extension Interface that all module handlers based on.
  */
-export interface ExtensionInterface extends MemoryOperations, ServiceMetaInterface {
+export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterface {
     moduleMemories: ModuleMemory<unknown>[];
     /**
      * Return the module categories that this extension adds

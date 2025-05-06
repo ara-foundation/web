@@ -37,8 +37,12 @@ export class NodejsReflectExtension implements ExtensionInterface {
     public getModuleWithFileExtensions(_: ModuleLink): ModuleLink[] {
         return [];
     }
+
+    public get memoryOperatorId(): ModuleLink {
+        return this._moduleLink;
+    }
     
-    public get operatorId(): ModuleLink {
+    public get packageLink(): ModuleLink {
         return this.moduleLink;
     }
     

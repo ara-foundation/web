@@ -18,7 +18,10 @@ export class NodejsReflectExtension {
     getModuleWithFileExtensions(_) {
         return [];
     }
-    get operatorId() {
+    get memoryOperatorId() {
+        return this._moduleLink;
+    }
+    get packageLink() {
         return this.moduleLink;
     }
     get moduleLink() {

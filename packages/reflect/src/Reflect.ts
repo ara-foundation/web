@@ -1,48 +1,36 @@
-import { ModuleLink, OkResult, Result } from "@ara-web/p-hintjens";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ProjectMemory } from "./ProjectMemory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import { ReflectProxy } from "./ReflectProxy.js";
 import type { ReflectInterface } from "./reflect-interface.js";
+import { SDSService, type SDSSetup } from "@ara-web/p-hintjens/sds";
 
-export type ReflectSetup = {
-    proxies?: ReflectProxy[];
-    extensions?: ExtensionInterface[];
+export type ReflectSetup = SDSSetup<ExtensionInterface>;
+
+const setupWithNodeJsExt = (reflectSetup: ReflectSetup): ReflectSetup => {
+    if (reflectSetup.extensions === undefined) {
+        reflectSetup.extensions = [new NodejsReflectExtension()]
+    } else {
+        reflectSetup.extensions.unshift(new NodejsReflectExtension())
+    }
+    return reflectSetup;
 }
-
-const desc = "Ara Web Reflect";
-const link = ModuleLink.newPackageURL("@ara-web", "reflect");
 
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
-export class Reflect extends ReflectProxy implements ReflectInterface  {    
+export class Reflect extends SDSService<Reflect, ExtensionInterface> implements ReflectInterface  {    
     // Category => Path => ModuleMemory Instance
     private _memory: ProjectMemory;
-    private _extensions: ExtensionInterface[];
-    private _pubMethods = ["get"];
-
-    public get publicMethods(): string[] {
-        return this._pubMethods;
-    }
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param reflectSetup 
      */
-    constructor(reflectSetup?: ReflectSetup) {
-        super(desc, link);
+    constructor(reflectSetup: ReflectSetup) {
+        super(setupWithNodeJsExt(reflectSetup), ["get"]);
         this._memory = new ProjectMemory();
-        const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
-
-        this._extensions = [new NodejsReflectExtension(), ...exts];
         this._memory.putMemoryOperations(...this._extensions);
-
-        // In case if it's proxified:
-        if (reflectSetup?.proxies !== undefined) {
-            this.postProxies(reflectSetup.proxies.reverse());
-            this.hideByProxy(this);
-        }
     }
 
     public get nodeJsExt(): NodejsReflectExtension {
@@ -68,7 +56,7 @@ export class Reflect extends ReflectProxy implements ReflectInterface  {
             if (extension.beforeGet !== undefined) {
                 const hooked = await extension.beforeGet(moduleCategory, this._memory);
                 if (hooked.isFailure) {
-                    return OkResult.fail(`extension('${extension.moduleLink}'): beforeGet(): ${hooked.errorTitle}`, hooked.errorDescription!)
+                    return OkResult.fail(`extension('${extension.packageLink}'): beforeGet(): ${hooked.errorTitle}`, hooked.errorDescription!)
                 }
             }
         }
@@ -86,7 +74,7 @@ export class Reflect extends ReflectProxy implements ReflectInterface  {
      * Get the content by the module category
      * @param moduleCategory 
      */
-    public get? = async <T>(moduleCategory: string): Promise<Result<T[]>> => {
+    public async get? <T>(moduleCategory: string): Promise<Result<T[]>> {
         const preparationResult = await this.beforeGet(moduleCategory);
         if (preparationResult.isFailure) {
             return Result.fail(

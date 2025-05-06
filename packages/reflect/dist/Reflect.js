@@ -1,35 +1,30 @@
-import { ModuleLink, OkResult, Result } from "@ara-web/p-hintjens";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ProjectMemory } from "./ProjectMemory.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import { ReflectProxy } from "./ReflectProxy.js";
-const desc = "Ara Web Reflect";
-const link = ModuleLink.newPackageURL("@ara-web", "reflect");
+import { SDSService } from "@ara-web/p-hintjens/sds";
+const setupWithNodeJsExt = (reflectSetup) => {
+    if (reflectSetup.extensions === undefined) {
+        reflectSetup.extensions = [new NodejsReflectExtension()];
+    }
+    else {
+        reflectSetup.extensions.unshift(new NodejsReflectExtension());
+    }
+    return reflectSetup;
+};
 /**
  * Reflect is the main source to Reflect on the website itself.
  */
-export class Reflect extends ReflectProxy {
+export class Reflect extends SDSService {
     // Category => Path => ModuleMemory Instance
     _memory;
-    _extensions;
-    _pubMethods = ["get"];
-    get publicMethods() {
-        return this._pubMethods;
-    }
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param reflectSetup
      */
     constructor(reflectSetup) {
-        super(desc, link);
+        super(setupWithNodeJsExt(reflectSetup), ["get"]);
         this._memory = new ProjectMemory();
-        const exts = reflectSetup?.extensions === undefined ? [] : reflectSetup.extensions;
-        this._extensions = [new NodejsReflectExtension(), ...exts];
         this._memory.putMemoryOperations(...this._extensions);
-        // In case if it's proxified:
-        if (reflectSetup?.proxies !== undefined) {
-            this.postProxies(reflectSetup.proxies.reverse());
-            this.hideByProxy(this);
-        }
     }
     get nodeJsExt() {
         return this._extensions[0];
@@ -52,7 +47,7 @@ export class Reflect extends ReflectProxy {
             if (extension.beforeGet !== undefined) {
                 const hooked = await extension.beforeGet(moduleCategory, this._memory);
                 if (hooked.isFailure) {
-                    return OkResult.fail(`extension('${extension.moduleLink}'): beforeGet(): ${hooked.errorTitle}`, hooked.errorDescription);
+                    return OkResult.fail(`extension('${extension.packageLink}'): beforeGet(): ${hooked.errorTitle}`, hooked.errorDescription);
                 }
             }
         }
@@ -67,12 +62,12 @@ export class Reflect extends ReflectProxy {
      * Get the content by the module category
      * @param moduleCategory
      */
-    get = async (moduleCategory) => {
+    async get(moduleCategory) {
         const preparationResult = await this.beforeGet(moduleCategory);
         if (preparationResult.isFailure) {
             return Result.fail(`this.beforeGet(): ${preparationResult.errorTitle}`, preparationResult.errorDescription);
         }
         const moduleMemories = this._memory.getModuleContents(moduleCategory);
         return Result.ok(moduleMemories);
-    };
+    }
 }

@@ -20,7 +20,7 @@ export declare class ProjectMemory implements MemoryOperations {
     /**
      * My ID;
      */
-    get operatorId(): ModuleLink;
+    get memoryOperatorId(): ModuleLink;
     /**
      * Register extensions
      * @param memOp

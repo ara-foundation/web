@@ -9,12 +9,6 @@ export type {
     AutoImporter, 
     MemoryOperations
 } from "./extension-interface.js"
-export {
-    ReflectProxy
-} from "./ReflectProxy.js"
-export type {
-    ReflectProxyInterface
-} from "./reflect-interface.js"
 
 export { ModuleMemory } from "./ModuleMemory.js";
 export { ProjectMemory, type ModuleMemories } from "./ProjectMemory.js";
