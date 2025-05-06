@@ -32,7 +32,7 @@ const version = undefined;
 export class ModuleLink {
     private _internal?: URL | PackageURL;
 
-    private constructor() {}
+    protected constructor() {}
 
     public static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string, schema: string = "npm"): ModuleLink {
         const moduleLink = new ModuleLink();
@@ -141,4 +141,3 @@ export class ModuleLink {
     }
 
 }
-

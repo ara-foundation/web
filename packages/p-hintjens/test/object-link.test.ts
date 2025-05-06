@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { Debug, ModuleLink, ObjectLink } from "../src";
+import { ModuleLink, ObjectLink } from "../src";
 
 const moduleLink = ModuleLink.newFileURL("./test-app/src/components/Welcome.astro");
 

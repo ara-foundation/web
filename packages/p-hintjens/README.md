@@ -17,6 +17,7 @@ Useful scripts you can take from this package:
 - 🔌 **Interfaces** various interfaces to cast object into this interface.
     * get-text &ndash; cast object into an interface with `getText() => string` method.
 - 🔒 **Result** return `Result<ReturnType>` from function, and if the result is error, don't throw exceptions.
+- And **SDS**, an NPM module that converts your app into a plugin-driven architecture. More info: [SDS.md](./SDS.md) 
 
 ## The decorators
 The `staticImplements` allows creating interfaces with the static methods.

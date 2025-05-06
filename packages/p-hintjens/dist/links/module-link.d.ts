@@ -6,7 +6,7 @@ export type ModuleURL = `pkg:${string}` | `file://${string}`;
  */
 export declare class ModuleLink {
     private _internal?;
-    private constructor();
+    protected constructor();
     static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string, schema?: string): ModuleLink;
     static newPackageURLWithQualifiers(namespace: string, name: string, qualifiers: PurlQualifiers, subPath?: string, schema?: string): ModuleLink;
     static newFileURL(filePath: string | URL): ModuleLink;
