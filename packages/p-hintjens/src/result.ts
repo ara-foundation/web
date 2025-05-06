@@ -72,11 +72,11 @@ export class Result<T> {
       return new Result<U>(false, "Error Code 404 (Not found)", errorDescription);
     }
 
-    public static combine (results: Result<any>[]) : Result<any> {
+    public static combine (results: Result<unknown>[]) : Result<unknown> {
       for (let result of results) {
         if (result.isFailure) return result;
       }
-      return Result.ok<any>();
+      return Result.ok<unknown>();
     }
 }
 

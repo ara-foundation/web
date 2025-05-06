@@ -29,7 +29,7 @@ export declare class Result<T> {
      * @returns
      */
     static errorCode404<U>(slugs: string[], functionPath: string, data: string): Result<U>;
-    static combine(results: Result<any>[]): Result<any>;
+    static combine(results: Result<unknown>[]): Result<unknown>;
 }
 /**
  * Simple version of Result that provides error message.

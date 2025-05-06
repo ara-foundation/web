@@ -4,13 +4,13 @@ export declare class Debug {
     private stack;
     private constructor();
     private static get instance();
-    static log: (msg: any) => void;
+    static log: (msg: unknown) => void;
     static push: (title: string, parameters?: {
         [key: string]: string;
     }) => void;
     static pop: () => void;
     static reset: () => void;
-    static error: (errorTitle: string, errorDescription: string, additionalData: any) => {
+    static error: (errorTitle: string, errorDescription: string, additionalData: unknown) => {
         errorTitle: string;
         errorDescription: string;
     };

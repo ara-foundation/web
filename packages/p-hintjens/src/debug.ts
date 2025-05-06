@@ -22,7 +22,7 @@ export class Debug {
     // public functions
     //
     /////////////////////////////////////////
-    public static log = (msg: any) => {
+    public static log = (msg: unknown) => {
         Debug.instance._log(msg);
     }
 
@@ -62,7 +62,7 @@ export class Debug {
         }
     }
 
-    public static error = (errorTitle: string, errorDescription: string, additionalData: any): {errorTitle: string, errorDescription: string} => {
+    public static error = (errorTitle: string, errorDescription: string, additionalData: unknown): {errorTitle: string, errorDescription: string} => {
         Debug.instance._error(errorTitle, errorDescription, additionalData)
         return {errorTitle, errorDescription}
     }
@@ -73,7 +73,7 @@ export class Debug {
     //
     ////////////////////////////////////////////
 
-    private _error = (title: string, description: string, additionalData: any): void => {
+    private _error = (title: string, description: string, additionalData: unknown): void => {
         console.log(`ERROR at ${this.lineCounter})`)
         console.log(title);
         console.log(description)
@@ -87,7 +87,7 @@ export class Debug {
         console.log(this.stack.join("\t->") + "\n\n")
     }
 
-    private _log = (msg: any) => {
+    private _log = (msg: unknown) => {
         let nodeTree = this.stackNodeTree();
         if (nodeTree.length > 0) {
             nodeTree += ":"
