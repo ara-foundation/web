@@ -4,8 +4,9 @@
 //  */
 
 import { expect, test } from "vitest";
-import { FileExtension, ModulePartitioner } from "../src";
+import { FileExtension, ModulePartitioner, Page } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { FilePath } from "@ara-web/reflect";
 
 test(`Make sure the module parts are importing`, async () => {
     const modules = getImportRecords()
@@ -28,6 +29,7 @@ test(`Make sure the module parts are importing`, async () => {
         }
     }
 
-    let welcomeComponent = projectMemory.getModule<unknown>('src/components/Welcome.astro');
+    const welcomeLink = FilePath.getFileAbsolutePath('./components/Welcome.astro', reflectExtension.srcDir);
+    let welcomeComponent = projectMemory.getModule<Page>(welcomeLink);
     expect(welcomeComponent.isSuccess).toBe(true);
 })

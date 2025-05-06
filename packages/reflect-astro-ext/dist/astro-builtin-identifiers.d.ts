@@ -1,6 +1,10 @@
 import { Result } from "@ara-web/p-hintjens";
 import { type AstIdentifiers, type AstNodeValidator } from "@ara-web/reflect/code-level";
-export declare class BuiltInIdentifiers {
+/**
+ * Adds the global variables available in Astro framework, such
+ * as `Astro` variable.
+ */
+export declare class AstroBuiltInIdentifiers {
     private static prefix;
     private static identifiers;
     private static builtInSrc;

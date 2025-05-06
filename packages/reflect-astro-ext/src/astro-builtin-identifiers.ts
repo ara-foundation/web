@@ -122,7 +122,11 @@ const astroGenericHandler: GenericHandler = (_: AstNode, values: ValueType[]): R
     return Result.errorCode501(['BuiltInIdentifiers'], 'astroGenericHandler');
 }
 
-export class BuiltInIdentifiers {
+/**
+ * Adds the global variables available in Astro framework, such
+ * as `Astro` variable.
+ */
+export class AstroBuiltInIdentifiers {
     private static prefix = '_';
     private static identifiers = ['Astro'];
     private static builtInSrc = `

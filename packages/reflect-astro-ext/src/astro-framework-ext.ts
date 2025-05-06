@@ -25,12 +25,12 @@ import {
     ModuleIdentifier, 
     ModulePartitioner,
 } from "./module.js"
-import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
+import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
 
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export class ReflectAstroFramework implements ExtensionInterface {
+export class AstroFrameworkExtension implements ExtensionInterface {
     private _rootDir: ModuleLink;
     private _moduleLink: ModuleLink;
     private _moduleMemories: ModuleMemories<unknown> = {};
@@ -459,7 +459,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     // Except for the NodeJS extension itself.
     //
     private postBuiltInIdentifiers = async (projectMemory: ProjectMemory): Promise<Result<ProjectMemory>> => {
-        const identifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
+        const identifiers = await AstroBuiltInIdentifiers.getBuiltInIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(
                 `getBuiltInIdentifiers(): ${identifiers.errorTitle}`,

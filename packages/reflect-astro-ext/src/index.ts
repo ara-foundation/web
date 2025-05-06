@@ -31,4 +31,4 @@ export {
 
 export { ModuleLink } from "@ara-web/p-hintjens";
 
-export { ReflectAstroFramework } from "./ReflectExtension.js"
+export { AstroFrameworkExtension } from "./astro-framework-ext.js"

@@ -5,7 +5,7 @@
 
 import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
-import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, ModuleIdentifier, Asset } from "../src";
+import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, ModuleIdentifier, Asset, Module } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { Debug } from "@ara-web/p-hintjens";
 
@@ -165,7 +165,7 @@ test(`Make sure the that scripts are generated`, async () => {
         }
 
         scriptFound = true;
-        const identifiedModule = await ModuleIdentifier.identify<Script>(moduleParts.getValue(), moduleMemory as ModuleMemory<Script>, projectMemory);
+        const identifiedModule = await ModuleIdentifier.identify<Module>(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>, projectMemory);
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(scriptFound).toBe(true);

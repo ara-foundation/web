@@ -4,7 +4,7 @@ import { type Page } from "./ontology/index.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export declare class ReflectAstroFramework implements ExtensionInterface {
+export declare class AstroFrameworkExtension implements ExtensionInterface {
     private _rootDir;
     private _moduleLink;
     private _moduleMemories;

@@ -4,11 +4,11 @@ import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
 import { PageLevel } from "./page-level/index.js";
 import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, } from "./module.js";
-import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
+import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export class ReflectAstroFramework {
+export class AstroFrameworkExtension {
     _rootDir;
     _moduleLink;
     _moduleMemories = {};
@@ -373,7 +373,7 @@ export class ReflectAstroFramework {
     // Except for the NodeJS extension itself.
     //
     postBuiltInIdentifiers = async (projectMemory) => {
-        const identifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
+        const identifiers = await AstroBuiltInIdentifiers.getBuiltInIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(`getBuiltInIdentifiers(): ${identifiers.errorTitle}`, identifiers.errorDescription);
         }
