@@ -57,6 +57,13 @@ export class ReflectAstroFramework implements ExtensionInterface {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink)
     }
+    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+    public get memoryOperatorId(): ModuleLink {
+        return this._rootDir
+    }
+    public get packageLink(): ModuleLink {
+        return this._rootDir
+    }
 
     public getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[] {
         if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {

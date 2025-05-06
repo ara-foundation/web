@@ -35,6 +35,13 @@ export class ReflectAstroFramework {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink);
     }
+    afterGet;
+    get memoryOperatorId() {
+        return this._rootDir;
+    }
+    get packageLink() {
+        return this._rootDir;
+    }
     getModuleWithFileExtensions(moduleLink) {
         if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
             return [];

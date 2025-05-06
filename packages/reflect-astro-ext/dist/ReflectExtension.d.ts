@@ -19,6 +19,9 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
      * @param rootDir
      */
     constructor(rootDir?: ModuleLink);
+    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+    get memoryOperatorId(): ModuleLink;
+    get packageLink(): ModuleLink;
     getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
     get operatorId(): ModuleLink;
     get moduleLink(): ModuleLink;
