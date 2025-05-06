@@ -95,7 +95,7 @@ export class PageLevel {
                 )
             }
 
-            const slot = ComponentLevel.identifySlot(linted.getValue());
+            const slot = ComponentLevel.identifySlotName(linted.getValue());
             if (slots[slot] === undefined) {
                 slots[slot] = [];
             }

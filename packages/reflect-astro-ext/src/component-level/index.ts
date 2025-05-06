@@ -112,8 +112,8 @@ export class ComponentLevel {
         
         return Result.ok(component);
     }
-     
-    public static identifySlot = (component: SlotElement): string => {
+
+    public static identifySlotName = (component: SlotElement): string => {
         if ("attributes" in component) {
             const slot = component.attributes.slot;
             if (slot !== undefined && typeof slot === "string") {
@@ -202,7 +202,7 @@ export class ComponentLevel {
                 )
             }
 
-            const slot = this.identifySlot(linted.getValue());
+            const slot = this.identifySlotName(linted.getValue());
             if (slots[slot] === undefined) {
                 slots[slot] = [];
             }
@@ -258,7 +258,7 @@ export class ComponentLevel {
                     linted.errorDescription!
                 )
             }
-            const slot = this.identifySlot(linted.getValue());
+            const slot = this.identifySlotName(linted.getValue());
             if (slots[slot] === undefined) {
                 slots[slot] = [];
             }

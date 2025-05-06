@@ -110,7 +110,7 @@ let PageLevel = (() => {
                 if (linted.isFailure) {
                     return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
                 }
-                const slot = ComponentLevel.identifySlot(linted.getValue());
+                const slot = ComponentLevel.identifySlotName(linted.getValue());
                 if (slots[slot] === undefined) {
                     slots[slot] = [];
                 }

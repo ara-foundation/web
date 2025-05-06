@@ -81,7 +81,7 @@ export class ComponentLevel {
         }
         return Result.ok(component);
     }
-    static identifySlot = (component) => {
+    static identifySlotName = (component) => {
         if ("attributes" in component) {
             const slot = component.attributes.slot;
             if (slot !== undefined && typeof slot === "string") {
@@ -149,7 +149,7 @@ export class ComponentLevel {
             if (linted.isFailure) {
                 return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
             }
-            const slot = this.identifySlot(linted.getValue());
+            const slot = this.identifySlotName(linted.getValue());
             if (slots[slot] === undefined) {
                 slots[slot] = [];
             }
@@ -194,7 +194,7 @@ export class ComponentLevel {
             if (linted.isFailure) {
                 return Result.fail(`expressionChild(${i}/${node.children.length - 1}): this.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
             }
-            const slot = this.identifySlot(linted.getValue());
+            const slot = this.identifySlotName(linted.getValue());
             if (slots[slot] === undefined) {
                 slots[slot] = [];
             }
