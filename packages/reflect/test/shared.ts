@@ -85,7 +85,7 @@ export const getProjectMemory = (modOps: MemoryOperations): ProjectMemory => {
 export const getEmptyModule = (filePath: string = import.meta.filename): ModuleMemory<unknown> => {
   const fileModuleLink = ModuleLink.newFileURL(filePath);
   const moduleLink = ModuleLink.newPackageURL("reflect", "test", fileModuleLink, modulePath);
-  return new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, undefined);
+  return new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, undefined);
 }
 
 export const putFuncModule = async (ext: ExtensionInterface, _modulePath: string = modulePath): Promise<ExtensionInterface> => {

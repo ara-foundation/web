@@ -14,14 +14,12 @@ To add *title* and *description*
 # Roadmap
 
 Components
-* Make sure that Astro built in is included.
-* Make sure components include a URL.
-* Make sure to work with the attributes linting.
+* Make sure no unknowns, nulls are used.
 * Make sure to parse the components to the respected areas in the slots.
-* Add Ara Web extension to detect the Ara Web Component description
+* Add Ara Web extension to detect the Ara Web Component Category description (predefined)
 * Add Ara Web extension to detect the RPC components.
 > RPC related code is commented at `src/component-level/index.ts`.
-> Another RPC related code is in the `@ara-web/rpc-engine` package.
+> Another related RPC code is in the `@ara-web/rpc-engine` package.
 
 Layouts
 * Make sure to generate layouts by nesting all as a single layout.

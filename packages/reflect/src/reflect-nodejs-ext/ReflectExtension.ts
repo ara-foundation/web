@@ -74,7 +74,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
                     return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`)
                 }
 
-                this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
+                this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
                 moduleLinks.push(moduleLink);
             }
         } else if ("module" in params) {
@@ -84,7 +84,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${singleRecord.importModuleClause}' relative to '${singleRecord.importMetaFilename}' locates to a file`)
             }
 
-            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(ModuleCategory.NodeJsModule, moduleLink, singleRecord.module);
+            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, singleRecord.module);
             moduleLinks.push(moduleLink);
         } else {
             return Result.fail(`Missing records and importModules properties`, `Pass the correct data`);
@@ -142,7 +142,7 @@ export class NodejsReflectExtension implements ExtensionInterface {
     }
 
     public get moduleCategories(): string[] {
-        return EnumTraits.enumValues(ModuleCategory);
+        return EnumTraits.enumValues(ModuleCategory) as string[];
     }
 
     public isSupportedModuleCategory(moduleCategory: string): boolean {

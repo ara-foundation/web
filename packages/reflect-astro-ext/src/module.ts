@@ -9,7 +9,7 @@ import {
     type OntologoicalIdentifier, 
     ElementType, 
     type Module, 
-    type Asset 
+    type Asset, 
 } from "./ontology/index.js";
 import { AstroNode } from "./astro-node.js";
 import { CodeLevel } from "./code-level/index.js";
@@ -26,7 +26,6 @@ export enum ModuleCategory {
     Page = "pages",
     Layout = "layouts"
 }
-
 
 /**
  * Detects the module category. To detct, it must be in the src.
@@ -56,6 +55,8 @@ export const extractModuleCategory = (srcDir: string, modulePath: string): Resul
 
     return Result.ok(moduleSlugs[0])
 }
+
+
 
 /**
  * Partition the Module into the UI elements and the source code
@@ -269,4 +270,27 @@ export class ModuleIdentifier {
         return Result.errorCode404(['module', 'Module Identifier'], 'identify', `The '${filePath}' file extension is neither for assets nor for scripts`);
     }
 
+    /**
+     * Checks if the module is an Astro generated module.
+     * Like, the Astro component, Astro page, Astro layout etc with .astro extension.
+     * @param moduleMemory 
+     * @returns 
+     */
+    public static isAstroGeneratedModule = (moduleMemory: ModuleMemory<unknown>): boolean => {
+        return this.isAstroGeneratedModuleByPath(moduleMemory.moduleLink.toFilePath);
+    }
+
+    public static isAstroGeneratedModuleByPath = (modulePath: string): boolean => {
+        const fileExtensionResult = FilePath.getFileExtension(modulePath, [FileExtension.Astro]);
+        if (fileExtensionResult.isFailure) {
+            return false;
+        }
+        const fileExtension = fileExtensionResult.getValue() as FileExtension;    
+
+        return fileExtension === FileExtension.Astro;
+    }
+
+    public static isAstroGeneratedModuleCategory = (moduleCategory: ModuleCategory): boolean => {
+        return moduleCategory === ModuleCategory.Page || moduleCategory === ModuleCategory.Layout || moduleCategory === ModuleCategory.Component;
+    }
 }

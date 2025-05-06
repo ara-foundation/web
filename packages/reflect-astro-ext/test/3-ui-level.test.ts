@@ -7,6 +7,7 @@ import { expect, test } from "vitest";
 import { ModuleMemory } from "@ara-web/reflect";
 import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, ModuleIdentifier, Asset } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
@@ -122,10 +123,21 @@ test(`Make sure the that layouts are generated`, async () => {
         if (moduleMemory.moduleCategory !== ModuleCategory.Layout) {
             continue;
         }
+        if (reflectExtension.beforeGet !== undefined) {
+            const posted = await reflectExtension.beforeGet(moduleMemory.moduleCategory, projectMemory);
+            if (posted.isFailure) {
+                Debug.log(`beforeGet() failed: ${posted.errorTitle}`);
+                Debug.log(posted.errorDescription);
+                return;
+            }
+            expect(posted.isSuccess).toBe(true);
+        }
         layoutFound = true;
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
         const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
+        Debug.log(`Identified layout:`)
+        Debug.log(identifiedModule)
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(layoutFound).toBe(true);

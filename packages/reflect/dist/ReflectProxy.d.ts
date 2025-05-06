@@ -1,9 +1,6 @@
 import { Result, type ModuleLink } from "@ara-web/p-hintjens";
 import { type ReflectProxyInterface, type ServiceMetaInterface } from "./reflect-interface.js";
-export type Module = unknown;
-export type ModulePath = string;
-export type ModuleCategory = string;
-export type AbsoluteFilePath = string;
+import type { Module, ModulePath, AbsoluteFilePath } from "./extension-interface.js";
 /**
  * A type of imported records fetched by `import.meta.glob` if you use `vite` plugin.
  * The `importingFilePath` property is the module that records. You may set it using `import.meta.filename`
