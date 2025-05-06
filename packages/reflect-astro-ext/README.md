@@ -12,9 +12,7 @@ Possible use case:
 To add *title* and *description*
 
 # Roadmap
-
 Components
-* Make sure to parse the components to the respected areas in the slots.
 * Add Ara Web extension to detect the Ara Web Component Category description (predefined)
 * Add Ara Web extension to detect the RPC components.
 > RPC related code is commented at `src/component-level/index.ts`.

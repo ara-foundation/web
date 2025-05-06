@@ -33,7 +33,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
-import { FileExtension, DEFAULT_SLOT, ComponentLevel, CodeLevel } from "../index.js";
+import { FileExtension, ComponentLevel, CodeLevel } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
@@ -95,9 +95,7 @@ let PageLevel = (() => {
          * @returns {Result<AraPage>}
          */
         static identifySlots = async (uiContent, memory, projectMemory) => {
-            const slots = {
-                [DEFAULT_SLOT]: []
-            };
+            const slots = {};
             const emptyObjLink = new ObjectLink(memory.moduleLink);
             for (const componentNode of uiContent.elements) {
                 if (componentNode.isText && componentNode.value.length === 0) {
@@ -112,8 +110,12 @@ let PageLevel = (() => {
                 if (linted.isFailure) {
                     return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
                 }
+                const slot = ComponentLevel.identifySlot(linted.getValue());
+                if (slots[slot] === undefined) {
+                    slots[slot] = [];
+                }
                 Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`);
-                slots[DEFAULT_SLOT].push(linted.getValue());
+                slots[slot].push(linted.getValue());
                 //         // Let's detect the ComponentType
                 //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
                 //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')

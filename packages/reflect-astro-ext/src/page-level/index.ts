@@ -4,7 +4,6 @@ import {
     FileExtension, 
     type ModuleParts, 
     type OntologoicalIdentifier,
-    DEFAULT_SLOT,
     type Page, 
     type Slots,
     ComponentLevel,
@@ -71,9 +70,7 @@ export class PageLevel {
      * @returns {Result<AraPage>}
      */
     private static identifySlots = async (uiContent: ModuleParts, memory: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<Slots>> => {
-        const slots: Slots = {
-            [DEFAULT_SLOT]: []
-        };
+        const slots: Slots = {};
         const emptyObjLink = new ObjectLink(memory.moduleLink);
         for (const componentNode of uiContent.elements!) {
             if (componentNode.isText && componentNode.value.length === 0) {
@@ -98,8 +95,12 @@ export class PageLevel {
                 )
             }
 
+            const slot = ComponentLevel.identifySlot(linted.getValue());
+            if (slots[slot] === undefined) {
+                slots[slot] = [];
+            }
             Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`)
-            slots[DEFAULT_SLOT].push(linted.getValue())
+            slots[slot].push(linted.getValue())
 
         //         // Let's detect the ComponentType
         //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {

@@ -86,7 +86,7 @@ export class ReflectAstroFramework implements ExtensionInterface {
     }
 
     public get moduleCategories(): string[] {
-        return EnumTraits.enumValues(ModuleCategory);
+        return EnumTraits.enumValues(ModuleCategory) as string[];
     }
 
     public get rootDir(): string {

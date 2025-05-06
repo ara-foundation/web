@@ -10,6 +10,7 @@ import { ProjectMemory } from "@ara-web/reflect";
  */
 export declare class ComponentLevel {
     static lintAttributes(component: SlotElement, memory: ModuleMemory<unknown>, projectMemory: ProjectMemory): Promise<Result<SlotElement>>;
+    static identifySlot: (component: SlotElement) => string;
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
      * @param {AstroNode} element

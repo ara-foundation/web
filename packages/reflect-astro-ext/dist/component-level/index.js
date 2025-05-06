@@ -81,6 +81,15 @@ export class ComponentLevel {
         }
         return Result.ok(component);
     }
+    static identifySlot = (component) => {
+        if ("attributes" in component) {
+            const slot = component.attributes.slot;
+            if (slot !== undefined && typeof slot === "string") {
+                return slot;
+            }
+        }
+        return DEFAULT_SLOT;
+    };
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
      * @param {AstroNode} element
@@ -94,9 +103,7 @@ export class ComponentLevel {
         const component = {
             get: element,
             link: elementLink,
-            slots: {
-                [DEFAULT_SLOT]: []
-            },
+            slots: {},
             attributes: attributes.getValue(),
             class: htmlPackageURL,
         };
@@ -126,9 +133,7 @@ export class ComponentLevel {
      * @returns {Component}
      */
     static identifyChildren = async (moduleParts, memory, element, elementLink, projectMemory) => {
-        const slots = {
-            [DEFAULT_SLOT]: []
-        };
+        const slots = {};
         if (element.children.length === 0) {
             return Result.ok(slots);
         }
@@ -144,7 +149,11 @@ export class ComponentLevel {
             if (linted.isFailure) {
                 return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
             }
-            slots[DEFAULT_SLOT].push(linted.getValue());
+            const slot = this.identifySlot(linted.getValue());
+            if (slots[slot] === undefined) {
+                slots[slot] = [];
+            }
+            slots[slot].push(linted.getValue());
         }
         return Result.ok(slots);
     };
@@ -161,7 +170,7 @@ export class ComponentLevel {
      *                                           the identified Expression or an error if identification fails.
      */
     static identifyExpression = async (uiContent, memory, node, nodeLink, projectMemory) => {
-        const elements = [];
+        const slots = {};
         let prefix = "Expression {";
         let suffix = "}";
         for (let i = 0; i < node.children.length; i++) {
@@ -185,13 +194,17 @@ export class ComponentLevel {
             if (linted.isFailure) {
                 return Result.fail(`expressionChild(${i}/${node.children.length - 1}): this.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
             }
-            elements.push(linted.getValue());
+            const slot = this.identifySlot(linted.getValue());
+            if (slots[slot] === undefined) {
+                slots[slot] = [];
+            }
+            slots[slot].push(linted.getValue());
         }
         const expression = {
             link: nodeLink,
             get: node,
             description: `${prefix} ${nodeLink.getId()} ${suffix} (Use AI to wrtie it)`,
-            slots: { [DEFAULT_SLOT]: elements },
+            slots: slots,
             type: ElementType.Expression,
         };
         return Result.ok(expression);

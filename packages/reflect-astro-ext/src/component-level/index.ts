@@ -112,7 +112,17 @@ export class ComponentLevel {
         
         return Result.ok(component);
     }
-        
+     
+    public static identifySlot = (component: SlotElement): string => {
+        if ("attributes" in component) {
+            const slot = component.attributes.slot;
+            if (slot !== undefined && typeof slot === "string") {
+                return slot;
+            }
+        }
+
+        return DEFAULT_SLOT
+    }
 
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component
@@ -128,9 +138,7 @@ export class ComponentLevel {
         const component: Component = {
             get: element,
             link: elementLink,
-            slots: {
-                [DEFAULT_SLOT]: []
-            },
+            slots: {},
             attributes: attributes.getValue(),
             class: htmlPackageURL,
         }
@@ -169,9 +177,7 @@ export class ComponentLevel {
      * @returns {Component}
      */
     public static identifyChildren = async (moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Slots>> => {
-        const slots: Slots = {
-            [DEFAULT_SLOT]: []
-        }
+        const slots: Slots = {}
         if (element.children.length === 0) {
             return Result.ok(slots);
         }
@@ -196,7 +202,11 @@ export class ComponentLevel {
                 )
             }
 
-            slots[DEFAULT_SLOT].push(linted.getValue())
+            const slot = this.identifySlot(linted.getValue());
+            if (slots[slot] === undefined) {
+                slots[slot] = [];
+            }
+            slots[slot].push(linted.getValue())
         }
 
         return Result.ok(slots)
@@ -215,7 +225,7 @@ export class ComponentLevel {
      *                                           the identified Expression or an error if identification fails.
      */
     public static identifyExpression = async (uiContent: ModuleParts, memory: ModuleMemory<unknown>, node: AstroNode, nodeLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Expression>> => {
-        const elements: SlotElement[] = [];
+        const slots: Slots = {};
         let prefix: string = "Expression {";
         let suffix: string = "}";
 
@@ -248,14 +258,18 @@ export class ComponentLevel {
                     linted.errorDescription!
                 )
             }
-            elements.push(linted.getValue());
+            const slot = this.identifySlot(linted.getValue());
+            if (slots[slot] === undefined) {
+                slots[slot] = [];
+            }
+            slots[slot].push(linted.getValue());
         }
 
         const expression: Expression = {
             link: nodeLink,
             get: node,
             description: `${prefix} ${nodeLink.getId()} ${suffix} (Use AI to wrtie it)`,
-            slots: {[DEFAULT_SLOT]: elements},
+            slots: slots,
             type: ElementType.Expression,
         }
 

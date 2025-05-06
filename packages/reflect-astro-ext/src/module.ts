@@ -42,7 +42,7 @@ export const extractModuleCategory = (srcDir: string, modulePath: string): Resul
 
     // Could be one of the pre-defined categories such as 'pages', 'components' etc.
     for (const moduleCategory of EnumTraits.enumValues(ModuleCategory)) {
-        if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory]))) {
+        if (modulePath.startsWith(FilePath.join([srcDir, moduleCategory as string]))) {
             return Result.ok(moduleCategory as ModuleCategory);
         }
     }
@@ -55,8 +55,6 @@ export const extractModuleCategory = (srcDir: string, modulePath: string): Resul
 
     return Result.ok(moduleSlugs[0])
 }
-
-
 
 /**
  * Partition the Module into the UI elements and the source code
@@ -111,7 +109,7 @@ export class ModulePartitioner {
      * @returns 
      */
     private static getModuleParts = async <T>(moduleMemory: ModuleMemory<T>): Promise<Result<ModuleParts>> => {
-        const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, EnumTraits.enumValues(FileExtension));
+        const fileExtensionResult = FilePath.getFileExtension(moduleMemory.moduleLink.toFilePath, EnumTraits.enumValues(FileExtension) as string[]);
         if (fileExtensionResult.isFailure) {
             return Result.fail(
                 `getFileExtension('${moduleMemory.moduleLink.toFilePath}'): ${fileExtensionResult.errorTitle}`,
@@ -228,7 +226,7 @@ export class ModuleIdentifier {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public static identify = async <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>, _: ProjectMemory): Promise<Result<T>> => {
         const filePath = rawMemory.moduleLink.toFilePath;
-        const fileExtensionResult = FilePath.getFileExtension(filePath, EnumTraits.enumValues(FileExtension));
+        const fileExtensionResult = FilePath.getFileExtension(filePath, EnumTraits.enumValues(FileExtension) as string[]);
         if (fileExtensionResult.isFailure) {
             return Result.fail(
                 `FilePath.getFileExtension('${filePath}, [${EnumTraits.enumValues(FileExtension).join(", ")}]): ${fileExtensionResult.errorTitle}`,
