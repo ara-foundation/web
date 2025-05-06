@@ -332,7 +332,7 @@ export class ValueLevel {
         }
     
         if (!(astNode.data instanceof AraLink)) {
-            return Result.errorCode501(['Code'], 'identifyTypedData');
+            return Result.ok({dataType: astNode.dataType, data: astNode.data})
         }
         
         const typedData = await this.identifyExpressionLinkData(astNode, astNodeContext);

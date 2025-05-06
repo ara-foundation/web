@@ -77,7 +77,7 @@ export class AstNode {
         return this._genericHandler !== undefined;
     }
 
-    public handleGeneric  = (genericValues: ValueType[]): Result<AstNode> => {
+    public handleGeneric = (genericValues: ValueType[]): Result<AstNode> => {
         if (!this.isGenericHandlerExist) {
             return Result.fail(
                 `this.isGenericHandlerExist: not found`,

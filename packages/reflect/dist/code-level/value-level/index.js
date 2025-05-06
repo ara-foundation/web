@@ -276,7 +276,7 @@ export class ValueLevel {
             return Result.ok({ dataType: astNode.dataType, data: ValueLevel.emptyValueByType('', astNode.dataType) });
         }
         if (!(astNode.data instanceof AraLink)) {
-            return Result.errorCode501(['Code'], 'identifyTypedData');
+            return Result.ok({ dataType: astNode.dataType, data: astNode.data });
         }
         const typedData = await this.identifyExpressionLinkData(astNode, astNodeContext);
         if (typedData.isFailure) {

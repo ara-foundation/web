@@ -222,14 +222,15 @@ export class NodejsReflectExtension implements ExtensionInterface {
             return Result.ok(projectMemory);
         }
         
-        const moduleMemories = projectMemory.getModules();
-        for (let module of moduleMemories) {
-            if (module.moduleCategory === ModuleCategory.NodeJsModule) {
-                continue;
-            }
-            module.addIdentifiers(identifiers.getValue());
-        }
-
+        projectMemory
+        .getModules()
+        .filter(
+            (module) => 
+            module.moduleCategory !== ModuleCategory.NodeJsModule
+        ).forEach(
+            (module) => 
+            {module.addIdentifiers(identifiers.getValue())}
+        );
         return Result.ok(projectMemory);
     }
 
