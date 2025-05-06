@@ -1,5 +1,5 @@
-import { ReflectProxy } from "@ara-web/reflect";
-export declare class ReflectEslintProxy extends ReflectProxy {
+import { SDSProxy } from "@ara-web/p-hintjens/sds";
+export declare class ReflectEslintProxy extends SDSProxy {
     private _version;
     private _cwd?;
     private _packageJsonFileName?;
@@ -8,7 +8,7 @@ export declare class ReflectEslintProxy extends ReflectProxy {
      *
      * @returns Returns the Plugin Object needed for the ESLint.
      */
-    getPlugin(): Promise<{
+    getPlugin?(): Promise<{
         configs: {
             readonly recommended: {
                 plugins: {

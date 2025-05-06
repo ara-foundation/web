@@ -45,7 +45,7 @@ ruleTester.run("sds-module-imports", getRule(dependencies), {
       errors: [
         {
           line: 1,
-          messageId: "grandChild",
+          messageId: "grandNamedChild",
         },
       ],
     },
