@@ -95,4 +95,5 @@ export declare class ReflectAstroFramework implements ExtensionInterface {
      * Returns a page by it's path
      */
     getPageByUrl: (url: string | undefined) => Promise<Page | undefined>;
+    private postBuiltInIdentifiers;
 }

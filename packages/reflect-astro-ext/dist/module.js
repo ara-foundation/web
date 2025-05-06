@@ -35,7 +35,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 import { parse as AstroParse } from "@astrojs/compiler";
 import { Debug, Result, EnumTraits, ObjectTraits } from "@ara-web/p-hintjens";
 import { FilePath, ModuleMemory } from "@ara-web/reflect";
-import { FileExtension, ElementType } from "./ontology/index.js";
+import { FileExtension, ElementType, } from "./ontology/index.js";
 import { AstroNode } from "./astro-node.js";
 import { CodeLevel } from "./code-level/index.js";
 /**
@@ -266,6 +266,26 @@ let ModuleIdentifier = (() => {
                 return Result.ok(data);
             }
             return Result.errorCode404(['module', 'Module Identifier'], 'identify', `The '${filePath}' file extension is neither for assets nor for scripts`);
+        };
+        /**
+         * Checks if the module is an Astro generated module.
+         * Like, the Astro component, Astro page, Astro layout etc with .astro extension.
+         * @param moduleMemory
+         * @returns
+         */
+        static isAstroGeneratedModule = (moduleMemory) => {
+            return _classThis.isAstroGeneratedModuleByPath(moduleMemory.moduleLink.toFilePath);
+        };
+        static isAstroGeneratedModuleByPath = (modulePath) => {
+            const fileExtensionResult = FilePath.getFileExtension(modulePath, [FileExtension.Astro]);
+            if (fileExtensionResult.isFailure) {
+                return false;
+            }
+            const fileExtension = fileExtensionResult.getValue();
+            return fileExtension === FileExtension.Astro;
+        };
+        static isAstroGeneratedModuleCategory = (moduleCategory) => {
+            return moduleCategory === ModuleCategory.Page || moduleCategory === ModuleCategory.Layout || moduleCategory === ModuleCategory.Component;
         };
         static {
             __runInitializers(_classThis, _classExtraInitializers);

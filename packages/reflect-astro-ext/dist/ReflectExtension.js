@@ -4,6 +4,7 @@ import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
 import { PageLevel } from "./page-level/index.js";
 import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, } from "./module.js";
+import { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
 /**
  * ReflectExtension adds Astro Framework support.
  */
@@ -181,6 +182,12 @@ export class ReflectAstroFramework {
         if (result.isFailure) {
             return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription);
         }
+        if (ModuleIdentifier.isAstroGeneratedModuleCategory(moduleCategory)) {
+            const builtInIdentified = await this.postBuiltInIdentifiers(projectMemory);
+            if (builtInIdentified.isFailure) {
+                return Result.fail(`this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`, builtInIdentified.errorDescription);
+            }
+        }
         if (moduleCategory === ModuleCategory.Page) {
             const contents = await this.postPageContents(projectMemory);
             if (contents.isFailure) {
@@ -353,5 +360,23 @@ export class ReflectAstroFramework {
             url = url.substring(0, url.length - 1);
         }
         return undefined;
+    };
+    //
+    // Adds the Array, Object and other classes, types that are available in the Environment
+    // Except for the NodeJS extension itself.
+    //
+    postBuiltInIdentifiers = async (projectMemory) => {
+        const identifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
+        if (identifiers.isFailure) {
+            return Result.fail(`getBuiltInIdentifiers(): ${identifiers.errorTitle}`, identifiers.errorDescription);
+        }
+        const importIdentifiersCount = Object.keys(identifiers.getValue()).length;
+        if (importIdentifiersCount === 0) {
+            return Result.ok(projectMemory);
+        }
+        projectMemory
+            .getModules()
+            .filter((module) => ModuleIdentifier.isAstroGeneratedModule(module)).forEach((module) => { module.addIdentifiers(identifiers.getValue()); });
+        return Result.ok(projectMemory);
     };
 }

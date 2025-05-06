@@ -112,6 +112,7 @@ let PageLevel = (() => {
                 if (linted.isFailure) {
                     return Result.fail(`ComponentLevel.lintAttributes(): ${linted.errorTitle}`, linted.errorDescription);
                 }
+                Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`);
                 slots[DEFAULT_SLOT].push(linted.getValue());
                 //         // Let's detect the ComponentType
                 //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {

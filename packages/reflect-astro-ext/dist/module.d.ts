@@ -80,4 +80,13 @@ export declare class ModuleIdentifier {
      * @returns
      */
     static identify: <T>(parts: ModuleParts, rawMemory: ModuleMemory<T>, _: ProjectMemory) => Promise<Result<T>>;
+    /**
+     * Checks if the module is an Astro generated module.
+     * Like, the Astro component, Astro page, Astro layout etc with .astro extension.
+     * @param moduleMemory
+     * @returns
+     */
+    static isAstroGeneratedModule: (moduleMemory: ModuleMemory<unknown>) => boolean;
+    static isAstroGeneratedModuleByPath: (modulePath: string) => boolean;
+    static isAstroGeneratedModuleCategory: (moduleCategory: ModuleCategory) => boolean;
 }
