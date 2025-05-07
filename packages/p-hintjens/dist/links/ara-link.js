@@ -2,11 +2,6 @@ import { ArrayTraits } from "../index.js";
 import { ModuleLink } from "./module-link.js";
 import path from "path";
 export const NpmProtocol = "npm";
-/**
- * Ara Web protocol and Ara Web's Modules
- */
-export const AraWebProtocol = "ara-web";
-export const AraWebModuleSlugs = ["ara-web", "module"];
 export class AraLink {
     _protocol;
     _slugs;

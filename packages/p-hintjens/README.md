@@ -25,9 +25,7 @@ The `staticImplements` allows creating interfaces with the static methods.
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
 
 # Roadmap
-* Create Extension as SDS app. 
-* SDS as another module under `sds`, then use for extension's add builtInIdentifier.
-* If element has the dynamic data, then pass in the body a qualifier.
-* If you have a dynamic data in the link, for example:
-html://div#container/img#background?src=[0]&alty=""&fetchpriority="high"
-then, it also means, the page will run the Module().executeExpression() in the component's class.
+
+* A REST operation to replace anything
+* > `Rest.Post(objectLink("*[description]"), (data) => {find_data})`
+* > `Rest.Put(objectLink(""))`

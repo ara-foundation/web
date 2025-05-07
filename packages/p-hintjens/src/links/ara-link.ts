@@ -13,12 +13,6 @@ export type AraURL =
     `ws://${string}` | ModuleURL | 
 `this`;
 
-/**
- * Ara Web protocol and Ara Web's Modules
- */
-export const AraWebProtocol: string = "ara-web";
-export const AraWebModuleSlugs: string[] = ["ara-web", "module"]
-
 export class AraLink<T> {
     private _protocol: string;
     private _slugs: string[];

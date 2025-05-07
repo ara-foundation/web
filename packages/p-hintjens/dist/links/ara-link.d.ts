@@ -1,11 +1,6 @@
 import { ModuleLink, type ModuleURL } from "./module-link.js";
 export declare const NpmProtocol = "npm";
 export type AraURL = `ara:` | `sever:` | `reflect:` | `http://${string}` | `https://${string}` | `ws://${string}` | ModuleURL | `this`;
-/**
- * Ara Web protocol and Ara Web's Modules
- */
-export declare const AraWebProtocol: string;
-export declare const AraWebModuleSlugs: string[];
 export declare class AraLink<T> {
     private _protocol;
     private _slugs;
