@@ -1,14 +1,15 @@
-import { ModuleMemory, ProjectMemory, FilePath } from "@ara-web/reflect";
+import { ModuleMemory, ProjectMemory, FilePath, } from "@ara-web/reflect";
 import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/p-hintjens";
 import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
 import { PageLevel } from "./page-level/index.js";
 import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, } from "./module.js";
 import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
+import { SDSService } from "@ara-web/p-hintjens/sds";
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export class AstroFrameworkExtension {
+export class ReflectAstroExtension extends SDSService {
     _rootDir;
     _moduleLink;
     _moduleMemories = {};
@@ -22,7 +23,8 @@ export class AstroFrameworkExtension {
      * ```
      * @param rootDir
      */
-    constructor(rootDir) {
+    constructor(rootDir, setup) {
+        super({ ...setup, packageLink: ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext") }, []);
         if (rootDir !== undefined) {
             if (!FilePath.isAbsolutePath(rootDir.toFilePath)) {
                 throw `rootDir must be absolute, '${rootDir}' not absolute, perhaps use FilePath.getAbsolutePath(rootDir, moduleThatCalls)`;
@@ -35,19 +37,11 @@ export class AstroFrameworkExtension {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink);
     }
-    afterGet;
     get memoryOperatorId() {
         return this._rootDir;
     }
     get packageLink() {
         return this._rootDir;
-    }
-    getModuleWithFileExtensions(moduleLink) {
-        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
-            return [];
-        }
-        return EnumTraits.enumValues(FileExtension)
-            .map((ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext));
     }
     get operatorId() {
         return this.moduleLink;
@@ -69,6 +63,14 @@ export class AstroFrameworkExtension {
     }
     get srcDir() {
         return FilePath.join([this._rootDir.toFilePath, 'src']);
+    }
+    afterGet;
+    getModuleWithFileExtensions(moduleLink) {
+        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
+            return [];
+        }
+        return EnumTraits.enumValues(FileExtension)
+            .map((ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext));
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async putPackage(_) {
@@ -240,7 +242,8 @@ export class AstroFrameworkExtension {
      */
     identifyComponentContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Component);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -254,6 +257,19 @@ export class AstroFrameworkExtension {
                 return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
             }
             moduleMemory.content = data.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Component, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription);
+                        }
+                        else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         return OkResult.ok();
     };
@@ -263,7 +279,8 @@ export class AstroFrameworkExtension {
      */
     postLayoutContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Layout);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -277,6 +294,19 @@ export class AstroFrameworkExtension {
                 return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription);
             }
             moduleMemory.content = data.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Layout, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription);
+                        }
+                        else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         return OkResult.ok();
     };
@@ -288,7 +318,8 @@ export class AstroFrameworkExtension {
      */
     postPageContents = async (projectMemory) => {
         const noContentModules = this.getNoContentModules(ModuleCategory.Page);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription);
@@ -302,6 +333,19 @@ export class AstroFrameworkExtension {
                 return OkResult.fail(`PageLevel.identify('${moduleMemory.moduleLink.moduleURL}'): ${page.errorTitle}`, page.errorDescription);
             }
             moduleMemory.content = page.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Page, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription);
+                        }
+                        else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         return OkResult.ok();
     };

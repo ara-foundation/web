@@ -6,7 +6,7 @@ import {
     ProjectMemory, 
     type ModuleMemories,
     FilePath,
-    type SingleRecord
+    type SingleRecord,
 } from "@ara-web/reflect";
 import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
 import {
@@ -26,11 +26,19 @@ import {
     ModulePartitioner,
 } from "./module.js"
 import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
+import { SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/p-hintjens/sds";
+
+// Not ReflectExtensionInterface, since it's not an extension of Reflect.
+// But on it's own available for the Astro Extension itself.
+export interface AstroExtensionInterface extends SDSExtensionInterface {
+    // Call this extension method after calling PageLevel.identify<>
+    afterPageLvlIdenfication?(moduleCategory: string, module: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<ModuleMemory<Page>>>;
+}
 
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export class AstroFrameworkExtension implements ExtensionInterface {
+export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, AstroExtensionInterface> implements ExtensionInterface {
     private _rootDir: ModuleLink;
     private _moduleLink: ModuleLink;
     private _moduleMemories: ModuleMemories<unknown> = {};
@@ -45,7 +53,8 @@ export class AstroFrameworkExtension implements ExtensionInterface {
      * ```
      * @param rootDir 
      */
-    constructor(rootDir?: ModuleLink) {
+    constructor(rootDir?: ModuleLink, setup?: Omit<SDSSetup<AstroExtensionInterface>, "packageLink">) {
+        super({...setup, packageLink: ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext")}, [])
         if (rootDir !== undefined) {
             if (!FilePath.isAbsolutePath(rootDir.toFilePath)) {
                 throw `rootDir must be absolute, '${rootDir}' not absolute, perhaps use FilePath.getAbsolutePath(rootDir, moduleThatCalls)`
@@ -57,29 +66,16 @@ export class AstroFrameworkExtension implements ExtensionInterface {
         const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink)
     }
-    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+
     public get memoryOperatorId(): ModuleLink {
         return this._rootDir
     }
     public get packageLink(): ModuleLink {
         return this._rootDir
     }
-
-    public getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[] {
-        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
-            return [];
-        }
-        
-        return EnumTraits.enumValues(FileExtension)
-            .map(
-                (ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext)
-            );
-    }
-    
     public get operatorId(): ModuleLink {
         return this.moduleLink;
     }
-    
     public get moduleLink(): ModuleLink {
         return this._moduleLink;
     }
@@ -102,6 +98,19 @@ export class AstroFrameworkExtension implements ExtensionInterface {
 
     public get srcDir(): string {
         return FilePath.join([this._rootDir.toFilePath, 'src']);
+    }
+
+    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+
+    public getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[] {
+        if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
+            return [];
+        }
+        
+        return EnumTraits.enumValues(FileExtension)
+            .map(
+                (ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext)
+            );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -301,7 +310,8 @@ export class AstroFrameworkExtension implements ExtensionInterface {
      */
     private identifyComponentContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Component);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -318,6 +328,18 @@ export class AstroFrameworkExtension implements ExtensionInterface {
             }
 
             moduleMemory.content = data.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Component, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
+                        } else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         
         return OkResult.ok();
@@ -329,7 +351,8 @@ export class AstroFrameworkExtension implements ExtensionInterface {
      */
     private postLayoutContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Layout);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -340,12 +363,24 @@ export class AstroFrameworkExtension implements ExtensionInterface {
                 return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
             }
 
-            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
+            const data = await PageLevel.identify<Page>( moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
             if (data.isFailure) {
                 return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
             }
 
             moduleMemory.content = data.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Layout, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
+                        } else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         return OkResult.ok();
     }
@@ -358,7 +393,8 @@ export class AstroFrameworkExtension implements ExtensionInterface {
      */
     private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
         const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
-        for (const moduleMemory of noContentModules) {
+        for (const moduleIndex in noContentModules) {
+            const moduleMemory = noContentModules[moduleIndex];
             const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
             if (moduleParts.isFailure) {
                 return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
@@ -375,6 +411,18 @@ export class AstroFrameworkExtension implements ExtensionInterface {
             }
 
             moduleMemory.content = page.getValue();
+            if (this._extensions.length > 0) {
+                for (const extension of this._extensions) {
+                    if (extension.afterPageLvlIdenfication !== undefined) {
+                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Page, moduleMemory, projectMemory);
+                        if (identifiedPage.isFailure) {
+                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
+                        } else {
+                            noContentModules[moduleIndex] = identifiedPage.getValue();
+                        }
+                    }
+                }
+            }
         }
         return OkResult.ok();
     }

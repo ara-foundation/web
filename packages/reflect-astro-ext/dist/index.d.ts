@@ -5,4 +5,5 @@ export { CodeLevel } from "./code-level/index.js";
 export { PageLevel } from "./page-level/index.js";
 export { ComponentLevel } from "./component-level/index.js";
 export { ModuleLink } from "@ara-web/p-hintjens";
-export { AstroFrameworkExtension } from "./astro-framework-ext.js";
+export { ReflectAstroExtension, type AstroExtensionInterface } from "./astro-framework-ext.js";
+export { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";

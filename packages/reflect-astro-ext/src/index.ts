@@ -31,4 +31,6 @@ export {
 
 export { ModuleLink } from "@ara-web/p-hintjens";
 
-export { AstroFrameworkExtension } from "./astro-framework-ext.js"
+export { ReflectAstroExtension, type AstroExtensionInterface } from "./astro-framework-ext.js"
+
+export { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js"

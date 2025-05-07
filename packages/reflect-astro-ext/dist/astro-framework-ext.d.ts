@@ -1,10 +1,14 @@
 import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory, type SingleRecord } from "@ara-web/reflect";
 import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
 import { type Page } from "./ontology/index.js";
+import { SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/p-hintjens/sds";
+export interface AstroExtensionInterface extends SDSExtensionInterface {
+    afterPageLvlIdenfication?(moduleCategory: string, module: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<ModuleMemory<Page>>>;
+}
 /**
  * ReflectExtension adds Astro Framework support.
  */
-export declare class AstroFrameworkExtension implements ExtensionInterface {
+export declare class ReflectAstroExtension extends SDSService<ReflectAstroExtension, AstroExtensionInterface> implements ExtensionInterface {
     private _rootDir;
     private _moduleLink;
     private _moduleMemories;
@@ -18,11 +22,9 @@ export declare class AstroFrameworkExtension implements ExtensionInterface {
      * ```
      * @param rootDir
      */
-    constructor(rootDir?: ModuleLink);
-    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+    constructor(rootDir?: ModuleLink, setup?: Omit<SDSSetup<AstroExtensionInterface>, "packageLink">);
     get memoryOperatorId(): ModuleLink;
     get packageLink(): ModuleLink;
-    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
     get operatorId(): ModuleLink;
     get moduleLink(): ModuleLink;
     get moduleMemories(): ModuleMemory<unknown>[];
@@ -30,6 +32,8 @@ export declare class AstroFrameworkExtension implements ExtensionInterface {
     get moduleCategories(): string[];
     get rootDir(): string;
     get srcDir(): string;
+    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
     putPackage(_: SingleRecord): Promise<Result<ModuleLink>>;
     /**
      * Put the modules, the Astro Framework's Reflect will require the modules

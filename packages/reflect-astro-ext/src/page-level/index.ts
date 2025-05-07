@@ -80,7 +80,7 @@ export class PageLevel {
             if (identificationResult.isFailure) {
                 const err = Debug.error(
                     `ComponentLevel.identifyAstroNode(): ${identificationResult.errorTitle}`, 
-                     identificationResult.errorDescription!,
+                    identificationResult.errorDescription!,
                     componentNode,
                 )    
                 

@@ -1,5 +1,5 @@
 import { ProjectMemory, FilePath, ExtensionInterface, ImportedRecords } from "@ara-web/reflect";
-import { AstroFrameworkExtension } from "../src";
+import { ReflectAstroExtension } from "../src";
 
 let categorizedModuleAmount = 0;
 export const getCategorizedModuleAmount = (): number => {
@@ -14,9 +14,9 @@ export const getImportRecords = (): ImportedRecords => {
     }
 }
 
-export const getNewAstroReflect = async (): Promise<AstroFrameworkExtension> => {
+export const getNewAstroReflect = async (): Promise<ReflectAstroExtension> => {
     const rootDir = FilePath.getFileAbsolutePath("./test-app", import.meta.dirname);
-    const reflectExtension = new AstroFrameworkExtension(rootDir);
+    const reflectExtension = new ReflectAstroExtension(rootDir);
     
     return reflectExtension;
 }
