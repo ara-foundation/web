@@ -70,9 +70,9 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
     moduleCategories: ModuleCategory[];
     
     /**
-    //  * Whether the given value is one of the supported module categories or not
-    //  * @param moduleCategory 
-    //  */
+     * Whether the given value is one of the supported module categories or not
+     * @param moduleCategory 
+     */
     isSupportedModuleCategory(moduleCategory: ModuleCategory): boolean;
     
     /**************************************************************************
@@ -86,6 +86,7 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
      * `ext.putPackge({records, importingFilePath: import.meta.fileName, importClause: 'npm-url'})`
      */
     putPackage(importedRecords: SingleRecord): Promise<Result<ModuleLink>>;
+    
     /**
      * Put the record as the module in the file system.
      */
@@ -100,6 +101,6 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
     /**************************************************************************
      * HOOKS
      **************************************************************************/
-    beforeGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
-    afterGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
+    beforeGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
+    afterGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
 }

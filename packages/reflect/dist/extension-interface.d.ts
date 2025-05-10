@@ -68,9 +68,9 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
      */
     moduleCategories: ModuleCategory[];
     /**
-    //  * Whether the given value is one of the supported module categories or not
-    //  * @param moduleCategory
-    //  */
+     * Whether the given value is one of the supported module categories or not
+     * @param moduleCategory
+     */
     isSupportedModuleCategory(moduleCategory: ModuleCategory): boolean;
     /**************************************************************************
      * Setup
