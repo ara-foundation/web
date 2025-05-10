@@ -1,4 +1,4 @@
-import { Debug } from "../index.js";
+import { Debug, ObjectLink } from "../index.js";
 import {type Options as CSSOptions, selectAll as cssGetAll, selectOne as cssGet, is as isCssObjectMatchQuery, compile as cssCompile } from "css-select";
 
 export type Predicate<Value> = (v: Value) => boolean;
@@ -195,14 +195,10 @@ export class ObjectAdapter<BranchedModuleObject extends ObjectNode> implements A
         
         return node.siblings;
     }
-    getText(node: ObjectNode): string {
-        Debug.log(`ObjectDatapter.getText: ${node.name}: ${node.toString()}`)
-        
+    getText(node: ObjectNode): string {        
         return node.toString();
     }
-    hasAttrib(elem: BranchedModuleObject, name: string): boolean {
-        Debug.log(`ObjectDatapter.hasAttrib: ${elem.name} attribute: ${name}`)
-        
+    hasAttrib(elem: BranchedModuleObject, name: string): boolean {        
         return elem.isAttributeExist(name);
     }
     /**
@@ -261,9 +257,6 @@ export class ObjectAdapter<BranchedModuleObject extends ObjectNode> implements A
         return found;
     }
     findOne(test: Predicate<BranchedModuleObject>, nodes: ObjectNode[]): BranchedModuleObject | null {
-        Debug.log(`ObjectDatapter.findOne: predicate`)
-        Debug.log(test);
-        
         for (const node of nodes) {
             try {
                 const pass = test(node as BranchedModuleObject);

@@ -15,15 +15,22 @@ export {
     type OntologoicalIdentifier,
     type Attributes,
     type SlotElement,
+    type WalkFilter
 } from "./ontology/index.js"
 export {
     AstroNode
 } from "./astro-node.js"
 export {
+    astroNodesToObjectNodes, AstroObjectNode, AstroNodeAdapter
+} from "./astro-adapter.js"
+export {
+    NodeAdapter
+} from "./node-adapter.js"
+export {
     CodeLevel
 } from "./code-level/index.js"
 export {
-    PageLevel
+    PageLevel, PageObjectAdapter, pageToObjectNodes, PageObjectNode
 } from "./page-level/index.js"
 export {
     ComponentLevel

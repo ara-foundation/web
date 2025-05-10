@@ -54,7 +54,7 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
      * @param rootDir 
      */
     constructor(rootDir?: ModuleLink, setup?: Omit<SDSSetup<AstroExtensionInterface>, "packageLink">) {
-        super({...setup, packageLink: ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext")}, [])
+        super({...setup, packageLink: ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext")}, ["beforeGet", "afterGet"])
         if (rootDir !== undefined) {
             if (!FilePath.isAbsolutePath(rootDir.toFilePath)) {
                 throw `rootDir must be absolute, '${rootDir}' not absolute, perhaps use FilePath.getAbsolutePath(rootDir, moduleThatCalls)`
@@ -247,7 +247,7 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
      * @param projectMemory 
      * @returns 
      */
-    public beforeGet? = async (moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> => {
+    public async beforeGet?(moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> {
         const result = await this._autoPut(moduleCategory);
         if (result.isFailure) {
             return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription!);

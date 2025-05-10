@@ -19,14 +19,17 @@
     }
   },
   "devDependencies": {
+    "@ara-web/reflect-eslint-proxy": "workspace:*",
+    "css-select": "workspace:*",
     "@eslint/js": "^9.25.1",
     "@types/node": "^20.10.5",
     "@types/react": "^19.0.10",
+    "css-what": "^6.1.0",
     "eslint": "^9.25.1",
     "globals": "^16.0.0",
+    "jsdom": "^26.1.0",
     "typescript": "~5.7.3",
-    "typescript-eslint": "^8.31.1",
-    "@ara-web/reflect-eslint-proxy": "workspace:*"
+    "typescript-eslint": "^8.31.1"
   },
   "dependencies": {
     "@ara-web/p-hintjens": "workspace:*",

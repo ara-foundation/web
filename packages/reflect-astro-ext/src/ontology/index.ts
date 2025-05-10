@@ -8,6 +8,8 @@ import type { ReflectLink } from "@ara-web/reflect/code-level";
 import { AstroNode } from "../index.js";
 import type { ValueType } from "@ara-web/reflect/code-level";
 
+export type WalkFilter = (slotElement: SlotElement) => boolean;
+
 /**
  * Any UI Content is composed of the HTML Elements and the source code
  */
@@ -53,6 +55,7 @@ export enum ElementType {
     Script,     // Anything in the scripts
     Asset,      // For example Images, Markdown files
                 // Anything provided as it is, and not parsable as ontological data yet. Perhaps use AI for it?
+    Text,
 }
 
 export type Meta = {
@@ -99,15 +102,17 @@ export type Component = {
     slots: Slots;
     get: unknown;
     attributes: Attributes;
+    type: ElementType.Component;
 }
 
-export type Expression = Omit<Component, "attributes" | "class"> & {
+export type Expression = Omit<Component, "attributes" | "class" | "type"> & {
     description?: string;   // description of the expression
     type: ElementType.Expression;
 }
 
-export type Text = Omit<Component, "attributes" | "class" | "slots"> & {
+export type Text = Omit<Component, "attributes" | "class" | "slots" | "type"> & {
     value: string;
+    type: ElementType.Text;
 }
 
-export type Page = Omit<Component, "class" | "link" | "get" | "attributes"> & Omit<Module, "type" > & {};
+export type Page = Omit<Component, "class" | "link" | "get" | "attributes" | "type"> & Omit<Module, "type" > & {};

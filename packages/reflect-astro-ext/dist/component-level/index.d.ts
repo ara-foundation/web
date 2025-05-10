@@ -9,7 +9,19 @@ import { ProjectMemory } from "@ara-web/reflect";
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */
 export declare class ComponentLevel {
+    /**
+     * If attributes of a component has an expression, then evaluate them using `CodeLevel`.
+     * @param component
+     * @param memory
+     * @param projectMemory
+     * @returns
+     */
     static lintAttributes(component: SlotElement, memory: ModuleMemory<unknown>, projectMemory: ProjectMemory): Promise<Result<SlotElement>>;
+    /**
+     * In which layout's slot the component should be set in.
+     * @param component
+     * @returns
+     */
     static identifySlotName: (component: SlotElement) => string;
     /**
      * Converts the AstroNode (HTML elements such as Body, Head, Div etc) into a Component

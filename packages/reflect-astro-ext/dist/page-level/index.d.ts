@@ -1,7 +1,9 @@
 import { Result } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
-import { type ModuleParts } from "../index.js";
+import { type ModuleParts, type Slots, type SlotElement, type WalkFilter } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
+export { PageObjectNode } from "./page-object-node.js";
+export { PageObjectAdapter, pageToObjectNodes } from "./page-object-adapter.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */
@@ -18,4 +20,5 @@ export declare class PageLevel {
      * @returns {Result<AraPage>}
      */
     private static identifySlots;
+    static walk: (slots: Slots, walkFilter: WalkFilter) => SlotElement | undefined;
 }

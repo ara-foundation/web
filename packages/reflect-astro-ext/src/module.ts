@@ -130,7 +130,7 @@ export class ModulePartitioner {
             return Result.ok({fileExtension, elements: [], source: `${source}`})
         }
 
-        const fileContent: ModuleParts = await this.parseAstroFile(source);
+        const fileContent: ModuleParts = await this.parseAstroSource(source);
         return Result.ok(fileContent);
     }
 
@@ -139,12 +139,12 @@ export class ModulePartitioner {
      * @param astroSource through the file system we read the content of the file
      * @returns {Promise<ModuleParts>} fileContent with the `nodes` and `code` properties set
      */
-    private static parseAstroFile = async (astroSource: string): Promise<ModuleParts> => {
+    public static parseAstroSource = async (astroSource: string): Promise<ModuleParts> => {
         const result = await AstroParse(astroSource, {
             position: false, // defaults to `true`
         });
 
-        const {frontmatterCode, componentNodes} = this.extractAstroComponents(result.ast);
+        const {frontmatterCode, componentNodes} = this.parseAstroRootNode(result.ast);
 
         const fileContent: ModuleParts = {
             source: frontmatterCode.length > 0 ? frontmatterCode : '',
@@ -165,7 +165,7 @@ export class ModulePartitioner {
      * @param ast A RootNode of the Astro Web Page
      * @returns Components and Frontmatter
      */
-    private static extractAstroComponents = (ast: RootNode): {componentNodes: AstroNode[], frontmatterCode: string} => {
+    private static parseAstroRootNode = (ast: RootNode): {componentNodes: AstroNode[], frontmatterCode: string} => {
         const componentNodes: AstroNode[] = [];
         let frontmatterCode: string = "";
 

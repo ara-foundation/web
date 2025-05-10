@@ -35,6 +35,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
 import { FileExtension, ComponentLevel, CodeLevel } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
+export { PageObjectNode } from "./page-object-node.js";
+export { PageObjectAdapter, pageToObjectNodes } from "./page-object-adapter.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */
@@ -114,51 +116,29 @@ let PageLevel = (() => {
                 if (slots[slot] === undefined) {
                     slots[slot] = [];
                 }
-                Debug.log(`Make sure to detect the slots and put the data in accordance in identifySlots() PageLevel`);
                 slots[slot].push(linted.getValue());
-                //         // Let's detect the ComponentType
-                //         if (identifiedComponent.id === ComponentIdentity.Undeclared) {
-                //             return Result.fail(`code.identifyComponent(componentNode='${componentName(componentNode)}'): error`, 'The component type is not supported by Ara Web')
-                //         } else if (identifiedComponent.id === ComponentIdentity.Component || 
-                //             identifiedComponent.id === ComponentIdentity.Expression) {
-                //             pageTraits.page.metaComponents?.push(identifiedComponent);
-                //             continue;
-                //         } else if (identifiedComponent.id === ComponentIdentity.Rpc) {
-                //             if (pageTraits.page.rpcs === undefined) {
-                //                 pageTraits.page.rpcs = {};
-                //             }
-                //             const componentData = identifiedComponent as RpcCallType;
-                //             if (componentData.rpcType === RpcType.Extension) {
-                //                 if (pageTraits.page.rpcs.extension === undefined) {
-                //                     pageTraits.page.rpcs.extension = [];
-                //                 }
-                //                 pageTraits.page.rpcs.extension.push(componentData)
-                //             } else if (componentData.rpcType === RpcType.Independent) {
-                //                 if (pageTraits.page.rpcs.independent === undefined) {
-                //                     pageTraits.page.rpcs.independent = [];
-                //                 }
-                //                 pageTraits.page.rpcs.independent.push(componentData)
-                //             } else if (componentData.rpcType === RpcType.Proxy) {
-                //                 if (pageTraits.page.rpcs.proxy === undefined) {
-                //                     pageTraits.page.rpcs.proxy = [];
-                //                 }
-                //                 pageTraits.page.rpcs.proxy.push(componentData)
-                //             }
-                //             continue;
-                //         } else if (identifiedComponent.id === ComponentIdentity.Layout) {
-                //             const identificationResult = await identifyLayoutComponents(pageTraits, componentNode);
-                //             if (identificationResult.isFailure) {
-                //                 return Result.fail(
-                //                     `this.identifyLayoutComponents(componentNode='${componentName(componentNode)}'): ${identificationResult.errorTitle}`,
-                //                     identificationResult.errorDescription!
-                //                 )
-                //             }
-                //             continue;
-                //         } else {
-                //             console.log(`Component ${componentName(componentNode)} was not identified. It's neither Layout, nor Component nor RPC Call`);
-                //         }
             }
             return Result.ok(slots);
+        };
+        // Pass the page.slots to walk and find a slot that matches the WalkFilter.
+        // TODO: change to use getPageAsObjectTree.
+        static walk = (slots, walkFilter) => {
+            for (const slotName in slots) {
+                const slotElements = slots[slotName];
+                for (const slotElementIndex in slotElements) {
+                    const slotElement = slotElements[slotElementIndex];
+                    if (walkFilter(slotElement)) {
+                        return slotElement;
+                    }
+                    else if ("slots" in slotElement) {
+                        const identified = PageLevel.walk(slotElement.slots, walkFilter);
+                        if (identified !== undefined) {
+                            return identified;
+                        }
+                    }
+                }
+            }
+            return undefined;
         };
         static {
             __runInitializers(_classThis, _classExtraInitializers);

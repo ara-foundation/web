@@ -136,8 +136,6 @@ test(`Make sure the that layouts are generated`, async () => {
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
         const identifiedModule = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
-        Debug.log(`Identified layout:`)
-        Debug.log(identifiedModule)
         expect(identifiedModule.isSuccess).toBe(true);
     }
     expect(layoutFound).toBe(true);

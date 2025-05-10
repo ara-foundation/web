@@ -33,37 +33,17 @@ var ComponentType;
 // Component specific methods
 //
 //////////////////////////////////////////////////////////////////////////////////
-// /**
-//  * If the component is RPC Call, then find out its data by checking the script
-//  * @param componentNode Component parameter
-//  * @param astSource If the RPC Call is not a string literal but an expression that is defined in the script, then find 
-//  * its value from traversing in the AST
-//  * @returns {RpcCallType|AraLink<Expression code string>}
-//  */
-// const identifyRpcCallComponent = async (page: Page, uiContent: UiContent, componentNode: AstroNode): Promise<Result<RpcCallType|AraLink<string>>> => {
-//     const attrName = "rpcCall";
-//     const attr = attributeByName(componentNode, attrName);
-//     if (attr === undefined) {
-//         return Result.fail(
-//             `this.attributeByName(componentNode=(${JSON.stringify(componentNode)}), attrName='${attrName}')`,
-//             `Attribute not found`
-//         )
-//     }
-//     // Get the RPC Call value
-//     const data = await identifyAttribute<RpcCallType>(uiContent, attr);
-//     if (data.isFailure) {
-//         return Result.fail(
-//            `identifyAttribute(attr=${attr.name}): ${data.errorTitle}`,
-//            data.errorDescription!
-//         )
-//     }
-//     return Result.errorCode501(["UI Level", "Element Level"], "identifyRpcCallComponent")
-//     // return Result.ok(data.getValue());
-// }
 /**
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */
 export class ComponentLevel {
+    /**
+     * If attributes of a component has an expression, then evaluate them using `CodeLevel`.
+     * @param component
+     * @param memory
+     * @param projectMemory
+     * @returns
+     */
     static async lintAttributes(component, memory, projectMemory) {
         if ("attributes" in component) {
             const lintedAttributes = await AttributeLevel.lintAttributes(component.attributes, memory, projectMemory);
@@ -81,6 +61,11 @@ export class ComponentLevel {
         }
         return Result.ok(component);
     }
+    /**
+     * In which layout's slot the component should be set in.
+     * @param component
+     * @returns
+     */
     static identifySlotName = (component) => {
         if ("attributes" in component) {
             const slot = component.attributes.slot;
@@ -104,8 +89,9 @@ export class ComponentLevel {
             get: element,
             link: elementLink,
             slots: {},
-            attributes: attributes.getValue(),
+            attributes: { ...attributes.getValue(), name: element.name },
             class: htmlPackageURL,
+            type: ElementType.Component
         };
         const slots = await this.identifyChildren(moduleParts, memory, element, elementLink, projectMemory);
         if (slots.isFailure) {
@@ -123,7 +109,8 @@ export class ComponentLevel {
         const text = {
             get: element,
             link: elementLink,
-            value: element.value
+            value: element.value,
+            type: ElementType.Text
         };
         return text;
     };
@@ -252,29 +239,6 @@ export class ComponentLevel {
         if (astNode === undefined) {
             return Result.fail(`memory.identifierByName(identifier: '${element.name}'): not found`, 'The element not found in the memory, perhaps its not defined yet nor imported?');
         }
-        // Following is the part of the ara-web extension
-        //
-        // Component indicates an RPC Call?
-        //
-        // if (isRpcCallComponentLink(pathResult.importPath! as AraLink<string>)) {
-        // const identificationResult = await identifyRpcCallComponent(page, uiContent, element);
-        // if (identificationResult.isFailure) {
-        //     return Result.fail(
-        //         `this.identifyRpcCallComponent(componentNode='${element.name}'): ${identificationResult.errorTitle}`,
-        //         identificationResult.errorDescription!,
-        //     )
-        // } else {
-        //     return Result.ok({
-        //         id: ComponentIdentity.Rpc,
-        //         data: identificationResult.getValue()
-        //     })
-        // }
-        // } else if (ComponentEngine.isLayoutModulePath(pathResult.importPath.resource as string)) {
-        //     return Result.ok({
-        //         id: ComponentIdentity.Layout,
-        //         data: ComponentEngine.astroLayoutNodeToComponent(element, pathResult.importPath.toString())
-        //     })
-        // } else if (element.type === "component") {          
         const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.data, elementLink, projectMemory);
         if (componentData.isFailure) {
             return Result.fail(`astroNodeToComponent('${element.name}', '${memory.moduleLink.moduleURL}'): ${componentData.errorTitle}`, componentData.errorDescription);
@@ -303,73 +267,9 @@ export class ComponentLevel {
             get: glob,
             slots: children.getValue(),
             attributes: attributes.getValue(),
-            class: ReflectLink.linkToIdentifier(node.name, { caller: nodeLink }).toModuleLink()
+            class: ReflectLink.linkToIdentifier(node.name, { caller: nodeLink }).toModuleLink(),
+            type: ElementType.Component
         };
         return Result.ok(component);
     };
 }
-//     /**
-//      * Detect's the Component's layout within the page.
-//      * If no component layout was given then it's considered to be at the default layout: content-center
-//      * @param node
-//      */
-// const detectComponentLayoutSlug = async (page: Page, uiContent: UiContent, node: AstroNode): Promise<Result<LayoutSlugs>> => {
-//         const data: LayoutSlugs = {column: ColumnSlug.Center}
-//         const columnSlugs = Object.values(ColumnSlug).filter(value => typeof value === 'string') as string[];
-//         const rowSlugs = Object.values(RowSlug).filter(value => typeof value === 'string') as string[];
-//         const attr = attributeByName(node, "slot")
-//         if (attr === undefined) {
-//             data.row = RowSlug.Content;
-//             data.column = ColumnSlug.Center;
-//             return Result.ok(data);
-//         }
-//         const slotAttr = await identifyAttribute<string>(uiContent, attr);
-//         if (slotAttr.isFailure) {
-//             return Result.fail(
-//                 `this.identifyAttribute<string>(attr='${attr.name}'): ${slotAttr.errorTitle}`,
-//                 slotAttr.errorDescription!,
-//             )
-//         }
-//         const slotData = slotAttr.getValue();
-//         if (slotData === undefined || (typeof slotData === "string" && slotData.length === 0)) {
-//             data.row = RowSlug.Content;
-//             data.column = ColumnSlug.Center;
-//             return Result.ok(data)
-//         } else if (slotData instanceof AraLink) {
-//             return Result.fail(
-//                 `Slot Data is not a string`,
-//                 `Ara Web supports string slot data for now only`
-//             )
-//         }
-//         let slugs: string[] = slotData.split("-");
-//         if (slugs.length === 1) {
-//             if (columnSlugs.indexOf(slugs[0]) > -1) {
-//                 data.column = slugs[0] as ColumnSlug
-//             }
-//         } else if (slugs.length === 2) {
-//             if (columnSlugs.indexOf(slugs[1]) > -1) {
-//                 data.column = slugs[1] as ColumnSlug
-//                 if (rowSlugs.indexOf(slugs[0]) > -1) {
-//                     data.row = slugs[0] as RowSlug
-//                 }
-//             }
-//         }
-//         return Result.ok(data);
-//     }
-//     /**
-//      * Add the component into the page at the layout
-//      * @param node The component to add
-//      * @param layoutSlugs The layout to pass the page
-//      */
-//     const pushComponentAtLayoutSlugs = (page: Page, node: IdentifiedComponent, layoutSlugs: LayoutSlugs) => {
-//         if (page.components === undefined) {
-//             page.components = {};
-//         }
-//         if (page.components[layoutSlugs.row!] === undefined) {
-//             page.components[layoutSlugs.row!] = {};
-//         }
-//         if (page.components[layoutSlugs.row!]![layoutSlugs.column] === undefined) {
-//             page.components[layoutSlugs.row!]![layoutSlugs.column] = [];
-//         }
-//         page.components[layoutSlugs.row!]![layoutSlugs.column]?.push(node);
-//     }

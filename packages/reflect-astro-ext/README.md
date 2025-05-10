@@ -12,6 +12,8 @@ Possible use case:
 To add *title* and *description*
 
 # Roadmap
+* Remove `PageLevel.walk` after installing REST operator.
+
 Components
 * Add Ara Web extension to detect the Ara Web Component Category description (predefined)
 * Add Ara Web extension to detect the RPC components.

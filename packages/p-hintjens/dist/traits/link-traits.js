@@ -1,4 +1,4 @@
-import { Debug } from "../index.js";
+import { Debug, ObjectLink } from "../index.js";
 import { selectAll as cssGetAll, selectOne as cssGet, is as isCssObjectMatchQuery, compile as cssCompile } from "css-select";
 export class ObjectAdapter {
     /**
@@ -59,11 +59,9 @@ export class ObjectAdapter {
         return node.siblings;
     }
     getText(node) {
-        Debug.log(`ObjectDatapter.getText: ${node.name}: ${node.toString()}`);
         return node.toString();
     }
     hasAttrib(elem, name) {
-        Debug.log(`ObjectDatapter.hasAttrib: ${elem.name} attribute: ${name}`);
         return elem.isAttributeExist(name);
     }
     /**
@@ -118,8 +116,6 @@ export class ObjectAdapter {
         return found;
     }
     findOne(test, nodes) {
-        Debug.log(`ObjectDatapter.findOne: predicate`);
-        Debug.log(test);
         for (const node of nodes) {
             try {
                 const pass = test(node);

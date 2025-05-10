@@ -3,6 +3,7 @@ import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
 import { AstroNode } from "../index.js";
 import type { ValueType } from "@ara-web/reflect/code-level";
+export type WalkFilter = (slotElement: SlotElement) => boolean;
 /**
  * Any UI Content is composed of the HTML Elements and the source code
  */
@@ -41,7 +42,8 @@ export declare enum ElementType {
     Component = 2,
     Expression = 3,
     Script = 4,// Anything in the scripts
-    Asset = 5
+    Asset = 5,// For example Images, Markdown files
+    Text = 6
 }
 export type Meta = {
     title: string;
@@ -81,12 +83,14 @@ export type Component = {
     slots: Slots;
     get: unknown;
     attributes: Attributes;
+    type: ElementType.Component;
 };
-export type Expression = Omit<Component, "attributes" | "class"> & {
+export type Expression = Omit<Component, "attributes" | "class" | "type"> & {
     description?: string;
     type: ElementType.Expression;
 };
-export type Text = Omit<Component, "attributes" | "class" | "slots"> & {
+export type Text = Omit<Component, "attributes" | "class" | "slots" | "type"> & {
     value: string;
+    type: ElementType.Text;
 };
-export type Page = Omit<Component, "class" | "link" | "get" | "attributes"> & Omit<Module, "type"> & {};
+export type Page = Omit<Component, "class" | "link" | "get" | "attributes" | "type"> & Omit<Module, "type"> & {};

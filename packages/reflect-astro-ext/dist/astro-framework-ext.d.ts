@@ -67,7 +67,7 @@ export declare class ReflectAstroExtension extends SDSService<ReflectAstroExtens
      * @param projectMemory
      * @returns
      */
-    beforeGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
+    beforeGet?(moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult>;
     /**
      * Identifies the data of the component modules.
      * @notice Components are not evaluated by internal structures.

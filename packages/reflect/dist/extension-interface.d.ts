@@ -94,6 +94,6 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
     /**************************************************************************
      * HOOKS
      **************************************************************************/
-    beforeGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
-    afterGet?: (moduleCategory: ModuleCategory, projectMemory: ProjectMemory) => Promise<OkResult>;
+    beforeGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
+    afterGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
 }

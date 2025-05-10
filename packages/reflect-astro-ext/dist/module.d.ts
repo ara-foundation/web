@@ -46,7 +46,7 @@ export declare class ModulePartitioner {
      * @param astroSource through the file system we read the content of the file
      * @returns {Promise<ModuleParts>} fileContent with the `nodes` and `code` properties set
      */
-    private static parseAstroFile;
+    static parseAstroSource: (astroSource: string) => Promise<ModuleParts>;
     /**
      * Parses the Astro web page into the components and its frontmatter code.
      *
@@ -57,7 +57,7 @@ export declare class ModulePartitioner {
      * @param ast A RootNode of the Astro Web Page
      * @returns Components and Frontmatter
      */
-    private static extractAstroComponents;
+    private static parseAstroRootNode;
 }
 /**
  * If Module is Script or Asset, basically anything that is not UI Level, but also

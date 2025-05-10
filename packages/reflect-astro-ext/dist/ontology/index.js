@@ -24,4 +24,5 @@ export var ElementType;
     ElementType[ElementType["Script"] = 4] = "Script";
     ElementType[ElementType["Asset"] = 5] = "Asset";
     // Anything provided as it is, and not parsable as ontological data yet. Perhaps use AI for it?
+    ElementType[ElementType["Text"] = 6] = "Text";
 })(ElementType || (ElementType = {}));
