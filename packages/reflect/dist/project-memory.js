@@ -2,7 +2,7 @@
 // E.g.
 //  Page -> Index -> memory of index
 import { Debug, Result, ModuleLink } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "./ModuleMemory.js";
+import { ModuleMemory } from "./module-memory.js";
 //  purl -> memory of Ceo.tsx
 /**
  * `ProjectMemory` links all the module memories between extensions.

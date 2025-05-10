@@ -1,5 +1,5 @@
 import { ModuleLink, Debug } from "@ara-web/p-hintjens";
-import { AstIdentifierMemory } from "./AstIdentifierMemory.js";
+import { AstIdentifierMemory } from "./ast-nodes-memory.js";
 export class ModuleMemory extends AstIdentifierMemory {
     _moduleLink;
     _glob;

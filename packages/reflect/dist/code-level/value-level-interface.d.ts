@@ -1,5 +1,5 @@
 import type { Result } from "@ara-web/p-hintjens";
-import type { AstNodeContext } from "./AstNodeContext.js";
+import type { AstNodeContext } from "./ast-node-context.js";
 import type { TsNode, TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";
 export interface ValueIdentifierInterface {

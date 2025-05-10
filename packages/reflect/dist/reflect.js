@@ -1,5 +1,5 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ProjectMemory } from "./ProjectMemory.js";
+import { ProjectMemory } from "./project-memory.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import { SDSService } from "@ara-web/p-hintjens/sds";
 const setupWithNodeJsExt = (reflectSetup) => {

@@ -1,6 +1,6 @@
 import type { OkResult, Result, ModuleLink, ModuleURL } from "@ara-web/p-hintjens";
-import type { ModuleMemory } from "./ModuleMemory.js";
-import type { ProjectMemory } from "./ProjectMemory.js";
+import type { ModuleMemory } from "./module-memory.js";
+import type { ProjectMemory } from "./project-memory.js";
 import type { SDSExtensionInterface } from "@ara-web/p-hintjens/sds";
 export type Module = unknown;
 export type ModulePath = string;

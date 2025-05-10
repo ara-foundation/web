@@ -34,9 +34,25 @@ export class AstNode {
         const astNode = new AstNode(tsNode);
         return astNode;
     }
+    isObjectBinding() {
+        if (this.memoryDataLength() > 0) {
+            return this.getMemoryData(0)?.nodeType === AstNodeType.Property;
+        }
+        return false;
+    }
+    getBindedObject() {
+        if (this.isObjectBinding()) {
+            return this.getMemoryData(0);
+        }
+    }
+    putBindedObjectData(data) {
+        if (this._nodeMemory !== undefined && this._nodeMemory.length > 0) {
+            this._nodeMemory[0].data = data;
+        }
+    }
     //----------------------------------------------------------
     //
-    // Traits
+    // Typed Data (data and dataType)
     //
     //----------------------------------------------------------
     get typedData() {
@@ -49,6 +65,11 @@ export class AstNode {
         this.data = _typedData.data;
         this.dataType = _typedData.dataType;
     }
+    //----------------------------------------------------------
+    //
+    // Generic Handler (In typescript, the generic type is between < and >)
+    // Array<string> or CustomType<Node>
+    //----------------------------------------------------------
     get isGenericHandlerExist() {
         return this._genericHandler !== undefined;
     }
@@ -65,6 +86,20 @@ export class AstNode {
     putGenericHandler = (genericHandler) => {
         this._genericHandler = genericHandler;
     };
+    //----------------------------------------------------------
+    //
+    // Internal memory of the AST node.
+    // For example, additional internal ast nodes for example generic values
+    // is assigned here.
+    //
+    // TODO: use the @ara-web/p-hintjens/rest
+    //
+    //----------------------------------------------------------
+    /**
+     * Put internal memory. Wrong, it should be postMemory.
+     * @param astNode
+     * @returns
+     */
     putMemoryData(astNode) {
         if (this._nodeMemory === undefined) {
             this._nodeMemory = [astNode];
@@ -72,6 +107,11 @@ export class AstNode {
         }
         this._nodeMemory.push(astNode);
     }
+    /**
+     * Post internal memory data. it should be putMemmory.
+     * @param index
+     * @param astNode
+     */
     postMemoryData(index, astNode) {
         if (this._nodeMemory === undefined) {
             if (astNode !== undefined) {
@@ -90,12 +130,21 @@ export class AstNode {
             }
         }
     }
+    /**
+     * How many internal memory data is assigned to this node?
+     * @returns
+     */
     memoryDataLength() {
         if (this._nodeMemory === undefined) {
             return 0;
         }
         return this._nodeMemory.length;
     }
+    /**
+     * Return all the internal memory data except {@link skippedIdentifiers}.
+     * @param skippedIdentifiers
+     * @returns
+     */
     getAllMemoryData(skippedIdentifiers) {
         if (this._nodeMemory === undefined) {
             return [];
@@ -115,6 +164,11 @@ export class AstNode {
         }
         return nodes;
     }
+    /**
+     * Get the memory data by index.
+     * @param index
+     * @returns
+     */
     getMemoryData(index) {
         if (index < 0) {
             return undefined;
@@ -124,6 +178,11 @@ export class AstNode {
         }
         return this._nodeMemory[index];
     }
+    /**
+     * Delete the memory data by index.
+     * @param index
+     * @returns
+     */
     deleteMemoryData(index) {
         if (index === undefined) {
             this._nodeMemory = undefined;
@@ -140,12 +199,28 @@ export class AstNode {
     // Pure Ast node work, therefore static methods.
     //
     //----------------------------------------------------------
+    /**
+     * This node was defined in another module, therefore it has an import path.
+     * @param child
+     * @returns
+     */
     static isDefinedInOtherModule = (child) => {
         return (child.importPath !== undefined);
     };
+    /**
+     * This node was defined in the same module, therefore it has no import path.
+     * @param child
+     * @returns
+     */
     static isDefinedInLocal = (child) => {
         return (child.importPath === undefined);
     };
+    /**
+     * This node has a data? It can't be literal value.
+     * It must be a link, non-empty array or object.
+     * @param child
+     * @returns
+     */
     static isDataNotEmpty = (child) => {
         if (child.data === undefined) {
             return false;
@@ -161,15 +236,30 @@ export class AstNode {
         }
         return Object.keys(child.data).length > 0;
     };
+    /**
+     * Is node data value is a link to another node?
+     * @param child
+     * @returns
+     */
     static isDataLink = (child) => {
         if (child.data === undefined) {
             return false;
         }
         return child.data instanceof AraLink;
     };
+    /**
+     * Is it a type declaration?
+     * @param child
+     * @returns
+     */
     static isTypeDeclaration = (child) => {
         return (child.nodeType === AstNodeType.Type);
     };
+    /**
+     * Is it a variable declaration?
+     * @param child
+     * @returns
+     */
     static isVariableDeclaration = (child) => {
         return (child.nodeType === AstNodeType.Variable);
     };

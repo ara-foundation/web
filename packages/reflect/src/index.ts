@@ -1,7 +1,7 @@
 export { 
     Reflect, 
     type ReflectSetup 
-} from "./Reflect.js"
+} from "./reflect.js"
 export type { 
     ExtensionInterface, 
     ImportedRecords,
@@ -10,8 +10,8 @@ export type {
     MemoryOperations
 } from "./extension-interface.js"
 
-export { ModuleMemory } from "./ModuleMemory.js";
-export { ProjectMemory, type ModuleMemories } from "./ProjectMemory.js";
-export { BuiltInIdentifiers } from "./BuiltInIdentifiers.js";
+export { ModuleMemory } from "./module-memory.js";
+export { ProjectMemory, type ModuleMemories } from "./project-memory.js";
+export { BuiltInIdentifiers } from "./built-in-identifiers.js";
 export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module.js";
 export { ModuleLink, AraLink } from "@ara-web/p-hintjens";

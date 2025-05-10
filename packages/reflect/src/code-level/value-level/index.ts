@@ -354,23 +354,35 @@ export class ValueLevel {
      * @returns 
      */
     private static identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
-        if (ReflectLink.isIdentifierLink(astNode.data)) {
-            const identifierLink = astNode.data as AraLink<string>;
-            const identifier = astNodeContext.getIdentifier(identifierLink);
-            if (identifier === undefined) {
+        if (astNode.isObjectBinding()) {
+            const objectBinding = astNode.getBindedObject()!;
+            if (ReflectLink.isTsNodeLink(objectBinding.data)) {
+                const identified = await this.identifyExpressionLinkData(objectBinding, astNodeContext);
+                if (identified.isFailure) {
+                    return Result.fail(
+                        `ObjectBinding('${objectBinding.identifier}'): this.identifyExpressionLinkData('${objectBinding.identifier}'): ${identified.errorTitle}`,
+                        identified.errorDescription!
+                    )
+                } else if (identified.getValue().dataType !== ValueTypeString.object || typeof identified.getValue().data !== "object") {
+                    return Result.fail(
+                        `ObjectBinding('${objectBinding.identifier}'): this.identifyExpressionLinkData('${objectBinding.identifier}'): ${identified.getValue().dataType}`,
+                        `The object binding must be an object`
+                    )
+                } else {
+                    objectBinding.data = identified.getValue().data;
+                    objectBinding.dataType = identified.getValue().dataType;
+                    astNode.putBindedObjectData(identified.getValue().data!);
+                }
+            }
+
+            const bindedObj = objectBinding.data as object;
+            if (!(astNode.identifier! in bindedObj)) {
                 return Result.fail(
-                    `The identifier '${identifierLink.toString()}' not found`,
-                    `Add the type into AstNodeContext`
+                    `ObjectBinding('${objectBinding.identifier}'): '${astNode.identifier}' not found property not found`,
+                    `Add the property into the object binding`
                 )
             }
-            const identifiedAstNode = await this.identifyAstNodeData(identifier, astNodeContext);
-            if (identifiedAstNode.isFailure) {
-                return Result.fail(
-                    `this.identifyAstNodeData('${identifierLink.toString()}'): ${identifiedAstNode.errorTitle}`,
-                    identifiedAstNode.errorDescription!
-                )
-            }
-            return Result.ok(identifiedAstNode.getValue());
+            return Result.ok({data: (bindedObj as any)[astNode.identifier!], dataType: ValueTypeString.default});
         }
         if (!ReflectLink.isTsNodeLink(astNode.data)) {
             return Result.fail(`The argument is not a link to Typescript Node`, `Pass the AraLink to the Typescript Node, instead: ${astNode.data}`)

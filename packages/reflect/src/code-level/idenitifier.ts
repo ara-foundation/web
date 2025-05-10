@@ -4,8 +4,8 @@ import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";
 import { type ValueLevelInterface } from "./value-level-interface.js";
-import type { AstNodeContext } from "./AstNodeContext.js";
-import { ReflectLink } from "./ReflectLink.js";
+import type { AstNodeContext } from "./ast-node-context.js";
+import { ReflectLink } from "./reflect-link.js";
 import { ValueLevel } from "./value-level/index.js";
 
 /**

@@ -37,7 +37,7 @@ import { Result, ObjectTraits, AraLink, Debug } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode } from "./ts-node.js";
 import {} from "./value-level-interface.js";
-import { ReflectLink } from "./ReflectLink.js";
+import { ReflectLink } from "./reflect-link.js";
 import { ValueLevel } from "./value-level/index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.

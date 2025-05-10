@@ -1,5 +1,5 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ProjectMemory } from "./ProjectMemory.js";
+import { ProjectMemory } from "./project-memory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import type { ReflectInterface } from "./reflect-interface.js";

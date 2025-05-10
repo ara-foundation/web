@@ -1,7 +1,7 @@
 /**
  * Testing the Reflect proxibility
  */
-import { Reflect } from "../src/Reflect.js"
+import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { ModuleLink } from "@ara-web/p-hintjens";
 import { SDSProxy } from "@ara-web/p-hintjens/sds";

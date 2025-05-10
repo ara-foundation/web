@@ -8,7 +8,7 @@ import {
     ModuleLink, 
     type ModuleURL
  } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "./ModuleMemory.js";
+import { ModuleMemory } from "./module-memory.js";
 import type { MemoryOperations } from "./extension-interface.js";
 
 export type ModuleMemories<T> = {[key: ModuleURL]: ModuleMemory<T|unknown>};

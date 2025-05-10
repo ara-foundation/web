@@ -2,11 +2,11 @@ import  { type Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";
-import { AstNodeContext } from "../src/code-level/AstNodeContext.js";
-import { ProjectMemory } from "../src/ProjectMemory.js";
-import { ModuleMemory } from "../src/ModuleMemory.js";
+import { AstNodeContext } from "../src/code-level/ast-node-context.js";
+import { ProjectMemory } from "../src/project-memory.js";
+import { ModuleMemory } from "../src/module-memory.js";
 import { ExtensionInterface, ImportedRecords, MemoryOperations, SingleRecord } from "../src/extension-interface.js";
-import { ModuleCategory } from "../src/reflect-nodejs-ext/module.js";
+import { ModuleCategory } from "../src/reflect-nodejs-ext/index.js";
 import { FilePath } from "../src/module.js";
 
 export type AstNodeProperties = Pick<AstNode, "constant" | "public">

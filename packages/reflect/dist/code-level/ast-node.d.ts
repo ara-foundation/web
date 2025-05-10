@@ -37,21 +37,84 @@ export declare class AstNode {
     get tsNode(): TsNode;
     protected constructor(tsNode: TsNode);
     static fromTsNode(tsNode: TsNode): AstNode;
+    isObjectBinding(): boolean;
+    getBindedObject(): AstNode | undefined;
+    putBindedObjectData(data: ValueType): void;
     get typedData(): TypedData;
     set typedData(_typedData: TypedData);
     get isGenericHandlerExist(): boolean;
     handleGeneric: (genericValues: ValueType[]) => Result<AstNode>;
     putGenericHandler: (genericHandler: GenericHandler) => void;
+    /**
+     * Put internal memory. Wrong, it should be postMemory.
+     * @param astNode
+     * @returns
+     */
     putMemoryData(astNode: AstNode): void;
+    /**
+     * Post internal memory data. it should be putMemmory.
+     * @param index
+     * @param astNode
+     */
     postMemoryData(index: number, astNode?: AstNode): void;
+    /**
+     * How many internal memory data is assigned to this node?
+     * @returns
+     */
     memoryDataLength(): number;
+    /**
+     * Return all the internal memory data except {@link skippedIdentifiers}.
+     * @param skippedIdentifiers
+     * @returns
+     */
     getAllMemoryData(skippedIdentifiers?: string[]): AstNode[];
+    /**
+     * Get the memory data by index.
+     * @param index
+     * @returns
+     */
     getMemoryData(index: number): AstNode | undefined;
+    /**
+     * Delete the memory data by index.
+     * @param index
+     * @returns
+     */
     deleteMemoryData(index?: number): boolean;
+    /**
+     * This node was defined in another module, therefore it has an import path.
+     * @param child
+     * @returns
+     */
     static isDefinedInOtherModule: AstNodeValidator;
+    /**
+     * This node was defined in the same module, therefore it has no import path.
+     * @param child
+     * @returns
+     */
     static isDefinedInLocal: AstNodeValidator;
+    /**
+     * This node has a data? It can't be literal value.
+     * It must be a link, non-empty array or object.
+     * @param child
+     * @returns
+     */
     static isDataNotEmpty: AstNodeValidator;
+    /**
+     * Is node data value is a link to another node?
+     * @param child
+     * @returns
+     */
     static isDataLink: AstNodeValidator;
+    /**
+     * Is it a type declaration?
+     * @param child
+     * @returns
+     */
     static isTypeDeclaration: AstNodeValidator;
+    /**
+     * Is it a variable declaration?
+     * @param child
+     * @returns
+     */
     static isVariableDeclaration: AstNodeValidator;
 }

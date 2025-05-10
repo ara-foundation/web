@@ -19,7 +19,7 @@ import { TypeLevel } from "./type-level/index.js";
 import { AstNode, type AstIdentifiers, AstNodeType, type TypedData } from "./ast-node.js";
 import { ValueTypeString, type ValueType } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import { AstNodeContext } from "./AstNodeContext.js";
+import { AstNodeContext } from "./ast-node-context.js";
 import { ValueLevel } from "./value-level/index.js";
 
 export type Object = {[key: string]: ValueType};
@@ -66,16 +66,6 @@ export class Code {
 
         return nodes;
     }
-
-    // /**
-    //  * Clone the Code with the new AST.
-    //  * Used to evaluate various attributes by manipulating AST itself.
-    //  * @returns {Code}
-    //  */
-    // private clone = (): this => {
-    //     const cloned = new (this.constructor as typeof Code)(this.code, this.tempCodeAmount) as this;
-    //     return cloned;
-    // }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     //

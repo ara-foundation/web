@@ -2,7 +2,7 @@
  * Testing the Reflect itself
  */
 import { expect, test } from "vitest";
-import { ReflectLink } from "../src/code-level/ReflectLink.js";
+import { ReflectLink } from "../src/code-level/reflect-link"
 import { AraLink, Debug } from "@ara-web/p-hintjens";
 
 test('Link to identifier and expression', async () => {

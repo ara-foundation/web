@@ -69,7 +69,6 @@ export class TsNode {
         return node;
     }
 
-
     /**
      * Returns the children.
      * @param skipFilters 

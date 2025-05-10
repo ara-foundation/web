@@ -4,7 +4,7 @@ import { ValueTypeString } from "./ast-node-data.js";
 import { TsNode, type TsNodeValidator } from "./ts-node.js";
 import type { TypedData } from "./ast-node.js";
 import { type ValueLevelInterface } from "./value-level-interface.js";
-import type { AstNodeContext } from "./AstNodeContext.js";
+import type { AstNodeContext } from "./ast-node-context.js";
 
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.

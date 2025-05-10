@@ -2,10 +2,10 @@
  * Testing the Reflect itself
  */
 import { FilePath } from "../src/module.js";
-import { Reflect } from "../src/Reflect.js"
+import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { getEmptyModule, getProjectMemory, putFuncModule } from "./shared.js";
-import { Code } from "../src/code-level/Code.js";
+import { Code } from "../src/code-level/code.js";
 
 class TestCode extends Code {
 }

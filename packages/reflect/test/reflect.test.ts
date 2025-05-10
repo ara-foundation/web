@@ -2,8 +2,8 @@
  * Testing the Reflect itself
  */
 import { ModuleCategory } from "../src/module.js";
-import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-ext/module.js";
-import { Reflect } from "../src/Reflect.js"
+import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-ext/index.js";
+import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage } from "./shared.js";
 import { ModuleLink } from "@ara-web/p-hintjens";

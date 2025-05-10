@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { Code } from "../src/code-level/Code.js";
+import { Code } from "../src/code-level/code.js";
 import { ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { ProjectMemory } from "../src/ProjectMemory.js";
+import { ProjectMemory } from "../src/project-memory.js";
 
 test('Identify literal value', async () => {
   const varValue = "/ara/act/ara-web/action/get";

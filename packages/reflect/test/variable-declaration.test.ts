@@ -1,19 +1,20 @@
 import { expect, test } from "vitest";
-import { Code } from "../src/code-level/Code.js";
+import { Code } from "../src/code-level/code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
-import { ReflectLink } from "../src/code-level/ReflectLink.js";
-import { Reflect } from "../src/Reflect.js"
+import { AraLink, Debug, ModuleLink } from "@ara-web/p-hintjens";
+import { ReflectLink } from "../src/code-level/reflect-link.js";
+import { Reflect } from "../src/reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
 import type { TsNode } from "../src/code-level/ts-node.js";
-import { AstNodeContext } from "../src/code-level/AstNodeContext.js";
+import { AstNodeContext } from "../src/code-level/ast-node-context.js";
 import { ValueLevel } from "../src/code-level/value-level/index.js";
-import { BuiltInIdentifiers } from "../src/BuiltInIdentifiers.js";
+import { BuiltInIdentifiers } from "../src/built-in-identifiers.js";
 import { TypeLevel } from "../src/code-level/index.js";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
+// const parentUrl = "/ara/act/ara-web/action/get";
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
@@ -61,6 +62,7 @@ test('Supports the simple variable declaration as public, export keywords too', 
   expect(astNode.data).toBeUndefined();
 });
 
+// const { slug } = Astro.params;
 test('Supports the variable declaration derived from the object decoupling', async () => {
   const varName = 'slug'
   const varValue = "Astro.params";
@@ -85,11 +87,11 @@ test('Supports the variable declaration derived from the object decoupling', asy
   expect(astNode.getMemoryData(0)?.identifier).toBe(varName)
   expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<TsNode>)).toBe(true)
   expect(astNode.getMemoryData(0)?.nodeType).toBe(AstNodeType.Property)
-  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();  
+  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
 });
 
 // Decoupling with a new name.
-// const { slug: slugName } = Astro.params;
+// const { slug: derivedSlug } = Astro.params;
 test('Supports the variable declaration by alias derived from the object decoupling', async () => {
   const varName = 'derivedSlug'
   const propertyName = 'slug'
@@ -118,7 +120,7 @@ test('Supports the variable declaration by alias derived from the object decoupl
   expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
 });
 
-// Support the variable with the type declaration
+// const action: Action | undefined = getActionBySlug(slug);
 test('Supports the simple variable declaration as public, export keywords too', async () => {
   const varName = 'action'
   const varValue = "getActionBySlug(slug)";
@@ -143,7 +145,6 @@ test('Supports the simple variable declaration as public, export keywords too', 
   expect(data.getUnion(1)).toEqual(ValueTypeString.undefined)
 });
 
-// Support the variable declaration with the generic value
 // const data: Array<string> = func<string>();
 test('Supports the the variable declaration with the generic value', async () => {
   const varName = 'data'
@@ -176,6 +177,7 @@ test('Supports the the variable declaration with the generic value', async () =>
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// const parentUrl = "/ara/act/ara-web/action/get";
 test('Supports the literal value assignment', async () => {
   const varName = 'parentUrl'
   const varValue = "/ara/act/ara-web/action/get";
@@ -196,7 +198,57 @@ test('Supports the literal value assignment', async () => {
   expect(astNode.data).toEqual(varValue)
 });
 
+// const obj = { slug: "Astro.params" }
+// const { slug } = obj;
+test('Supports the linting variable parameter from object decoupling', async () => {
+  const varName = 'slug'
+  const src = 
+    `const obj = { slug: "Astro.params" }` +
+    `const { slug } = obj`
+  ;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const vars = await code.getVariableIdentifiers();
+  // Result
+  expectAstNodeResult(vars, varName)
+  const astNode = vars.getValue()[varName] as AstNode;
+  let expectedProps: AstNodeProperties = {
+    constant: true,
+    public: false
+  }
+  expectValidVariableNode(astNode, varName, expectedProps);
 
+  // The Ast node's data must be a link to the identifier
+  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+  expect((astNode.data as AraLink<string>).resource).toBe(varName)
+
+  // The Ast node's binding should a property of the expression
+  expect(astNode.isObjectBinding()).toBe(true)
+  expect(astNode.getBindedObject()?.dataType).toBeUndefined();
+  expect(astNode.getBindedObject()?.identifier).toBe('slug')
+  expect(ReflectLink.isTsNodeLink(astNode.getBindedObject()?.data as AraLink<TsNode>)).toBe(true)
+
+  // Linting
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
+  const moduleMemory = getEmptyModule();
+  await putFuncModule(reflect.nodeJsExt);
+
+  const objectName = 'obj'
+  const objectAstNode = vars.getValue()[objectName] as AstNode;
+  moduleMemory.addIdentifiers({[objectAstNode.identifier!]: objectAstNode})
+
+  const context = new AstNodeContext(astNode.getAllMemoryData(), moduleMemory.getIdentifiers(), projectMemory);
+  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  expect(identifiedData.isSuccess).toBe(true);
+  astNode.typedData = identifiedData.getValue();
+  expect(astNode.dataType).toEqual(ValueTypeString.string);
+  expect("Astro.params").toEqual(astNode.data)
+});
+
+
+// import { fooBar } from "./funcs.ts"
+// const fooBar = fooBar('medet', 'ahmetson');
+//
 // To work with function result, we need to create a function declaration.
 // function call as a result.
 test('Supports the function call as variable value', async () => {
@@ -235,6 +287,9 @@ test('Supports the function call as variable value', async () => {
   expect(('medet' + 'ahmetson')).toHaveLength(astNode.data as number)
 });
 
+// import { fooBar } from "./funcs.ts"
+// const fooBar = fooBar('medet', 'ahmetson');
+//
 // function call, but variable has defined type such as string
 // but function returns another type.
 test('Supports the function call as variable value but mismatch the types', async () => {
@@ -270,6 +325,9 @@ test('Supports the function call as variable value but mismatch the types', asyn
   expect(identifiedData.isSuccess).toBe(false);
 });
 
+// import { helloAndWelcome } from "./funcs.ts"
+// const greeting: string = helloAndWelcome();
+//
 // function call without any argument
 test('Supports the function call without any argument', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
@@ -307,6 +365,10 @@ test('Supports the function call without any argument', async () => {
   expect(astNode.data).toEqual(varValue)
 });
 
+// import { fooBar } from "./funcs.ts"
+// const CustomObj = {customMethod: fooBar }
+// const greeting: number = CustomObj.customMethod('12345', '67890');
+//
 // method call as a result
 test('Supports the method call', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
@@ -353,6 +415,9 @@ test('Supports the method call', async () => {
   expect(astNode.data).toEqual(varValue)
 });
 
+// import { Sex } from "./funcs.ts"
+// const profile = {name: "Medet", sex: Sex.Male}
+// const obj = {...profile};
 test('Supports the spread assignment through enums', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -404,6 +469,9 @@ test('Supports the spread assignment through enums', async () => {
   expect(astNode.data).toStrictEqual({ name: 'Medet', sex: 0 })
 });
 
+// import { type CustomType } from "./funcs.ts"
+// const profile = {name: "Medet", sex: 0}
+// const obj = {...profile};
 test('Supports the type from the imports', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -455,12 +523,9 @@ test('Supports the type from the imports', async () => {
   expect(astNode.data).toStrictEqual({ name: 'Medet', sex: 0 })
 });
 
-/*
-AS Keyword but with local
-`import { type CustomType } from "${modulePath}";` +
-  ` const profile = {name: "Medet", sex: ${enumName}.Male}; ` +
-   ` const ${varName} = {...profile} as CustomType`;
-*/
+// export type CustomType = {name: string, sex: number}
+// const profile: CustomType = {name: "Medet", sex: 1}
+// const obj = {...profile} as CustomType;
 test('Supports the type from the local type with `as` keyword', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -505,6 +570,10 @@ test('Supports the type from the local type with `as` keyword', async () => {
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 });
 
+// export type CustomType = {name: string, sex: number}
+// const profile: ProfileType = {name: "Medet", sex: 1} | {surname: string}
+// const obj: ProfileType = {surname: 'Ahmetson'}
+//
 // Support with the UnionType
 test('Supports the union types', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
@@ -549,6 +618,10 @@ test('Supports the union types', async () => {
   context.post([varAstNode])
 });
 
+// export type CustomType = {name: string, sex: number}
+// const profile: ProfileType = {name: "Medet", sex: 1} & {surname: string}
+// const obj: ProfileType = {'name': 'Medet', sex: -1, surname: 'Ahmetson'}
+//
 // Support with the Intersected
 test('Supports the intersected types', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
@@ -593,6 +666,8 @@ test('Supports the intersected types', async () => {
   context.post([varAstNode])
 });
 
+// export type CustomType = {name: string, sex: number}
+// const obj: Array<CustomType> = [{name: 'Medet', sex:0, surname: 'Ahmetson'}, {name: 'Brynn', sex: 1}];
 test('Supports the arrays through Array generic', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -637,7 +712,8 @@ test('Supports the arrays through Array generic', async () => {
   context.post([varAstNode])
 });
 
-// Support of the arrays through the Array literals instead Generic Array
+// export type CustomType = {name: string, sex: number}
+// const obj: CustomType[] = [{name: 'Medet', sex:0, surname: 'Ahmetson'}, {name: 'Brynn', sex: 1}];
 test('Supports the arrays through Array literals', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -683,7 +759,7 @@ test('Supports the arrays through Array literals', async () => {
   context.post([varAstNode])
 });
 
-// Support array with the primitive types
+// const names: string[] = ['Medet', 'Brynn'];
 test('Supports the arrays with primitive types', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -715,7 +791,9 @@ test('Supports the arrays with primitive types', async () => {
   context.post([varAstNode])
 });
 
-// Support array with the primitive types
+// export type CustomType = {name: string, sex: number}
+// const name = 'Medet';
+// const names: CustomType = {name, sex: 1};
 test('Supports the shorthand project assign with primitive types', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -762,7 +840,8 @@ test('Supports the shorthand project assign with primitive types', async () => {
   context.post([varAstNode])
 });
 
-// Support array with the primitive types
+// export type CustomType = {name: string, sex: number}
+// const names: CustomType = ({name: 'Medet', sex: +1});
 test('Supports the parenthesis', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
@@ -809,6 +888,9 @@ test('Supports the parenthesis', async () => {
   context.post([varAstNode])
 });
 
+// export type CustomType = {name: string, sex: number}
+// const data = 1
+// const names = data === 1 ? ({name: 'Medet', sex: +1}) : 'Not found';
 test('Supports the conditional expression', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);

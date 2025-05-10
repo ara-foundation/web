@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
-import { Code } from "../src/code-level/Code.js";
+import { Code } from "../src/code-level/code.js";
 import { AstNode } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { ModuleMemory } from "../src/ModuleMemory.js";
-import { ProjectMemory } from "../src/ProjectMemory.js";
+import { ModuleMemory } from "../src/module-memory.js";
+import { ProjectMemory } from "../src/project-memory.js";
 import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
-import { ReflectLink } from "../src/code-level/ReflectLink.js";
+import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { BuiltInIdentifiers } from "../src/index.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
