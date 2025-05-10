@@ -294,8 +294,20 @@ export class ValueLevel {
      * @returns
      */
     static identifyExpressionLinkData = async (astNode, astNodeContext) => {
+        if (ReflectLink.isIdentifierLink(astNode.data)) {
+            const identifierLink = astNode.data;
+            const identifier = astNodeContext.getIdentifier(identifierLink);
+            if (identifier === undefined) {
+                return Result.fail(`The identifier '${identifierLink.toString()}' not found`, `Add the type into AstNodeContext`);
+            }
+            const identifiedAstNode = await this.identifyAstNodeData(identifier, astNodeContext);
+            if (identifiedAstNode.isFailure) {
+                return Result.fail(`this.identifyAstNodeData('${identifierLink.toString()}'): ${identifiedAstNode.errorTitle}`, identifiedAstNode.errorDescription);
+            }
+            return Result.ok(identifiedAstNode.getValue());
+        }
         if (!ReflectLink.isTsNodeLink(astNode.data)) {
-            return Result.fail(`The argument is not an expression link`, `Pass the AraLink to the expression`);
+            return Result.fail(`The argument is not a link to Typescript Node`, `Pass the AraLink to the Typescript Node, instead: ${astNode.data}`);
         }
         const expTsNode = ReflectLink.getResourceAsTsNode(astNode.data);
         if (astNode.dataType === undefined) {
