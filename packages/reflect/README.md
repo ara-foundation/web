@@ -176,8 +176,6 @@ the files if its updated.
 
 # Roadmap
 Ast Node
-* Remove ts-node.ts (over-abstracting)
-* Rename AST Node to Code Piece.
 * Use REST for the ast memory.
 * Use REST for Reflect module.
 
