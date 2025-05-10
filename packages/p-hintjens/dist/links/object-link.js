@@ -99,15 +99,21 @@ export class ObjectLink {
     /**
      * The getClass method returns the object's first class.
      */
-    getClass() {
+    getClass(index) {
         if (this._selectors.length === 0) {
-            return undefined;
+            return [];
         }
         const lastSelector = this._selectors[this._selectors.length - 1];
         if (lastSelector.classes === undefined || lastSelector.classes.length === 0) {
-            return undefined;
+            return [];
         }
-        return lastSelector.classes[0];
+        if (index === undefined) {
+            return lastSelector.classes;
+        }
+        if (index >= lastSelector.classes.length) {
+            return [];
+        }
+        return lastSelector.classes[index];
     }
     /**
      * The getAsChildLink method creates and returns

@@ -1,19 +1,19 @@
 # SDS
 **SDS** module to convert your app into a plug-and-play  architecture. It lets others:
 * **Extend, add Plugins to Your App**: Develoeprs can write extensions (plugins) that add functionality without modifying your code.
-* **Customize interface**: Use proxies to intercept the methods so that the service could be exposed as a different class. *For example: as a CLI, Http Web, Http API, or other interfaces separated from the core logic. And add any proxy to create various ways to access your app.*
+* **Customize interface**: Use proxies to intercept the methods so that the service could be exposed as a different class. *For example: as a CLI, Http Web, Http API, or other interfaces separated from the core logic. Additionally, with proxy create validations, authentications.*
 * **Modularize Code**: By separating the app into a main service with proxies and extensions, SDS creates a standard which makes your app as a framework open to community contributions.
 
-In essence, SDS is intended for apps where you expect third parties or event internal develoeprs to create plugins and extensions that build on top of your bace functionality.
+In essence, SDS is intended for apps where you expect third parties or even for internal develoeprs to create plugins and extensions that build on top of your app functionality.
 
-Check out the [Reflect](../reflect/README.md) for sample implementation.
+Check out the [Reflect](../reflect/README.md) for real-world implementation.
 
 ## Tutorial
 
-> By following this guide, you can build an app that is a plug-&-play, turning your application into a more dynamic and community-driven project.
+By following this tutorial, you can build an app that is a plug-&-play, turning your application into a more dynamic and community-driven project.
 
-### 1. Setting Up the Environment
-Let's start from the app configuration that set's up the app.
+### 1. Setting Up your App
+Let's start with the app setup.
 This setup contains details like the name of the app, description, a list of proxies and extensions that your app will have.
 
 ```typescript
@@ -36,7 +36,7 @@ const backgammonSetup: SDSSetup = {
 ```
 
 ### 2. Defining a Service
-Create your app as SDS service class by extending `SDSService`. 
+In SDS, each app is exposed as Objects. Create your apps' primary class by extending `SDSService`. 
 
 ```typescript
 interface SampleExtensionInterface extends SDSExtensionInterface {
@@ -63,11 +63,23 @@ class SampleService extends SDSService<SampleExtensionInterface> {
 }
 ```
 
-The service exposes a couple of methods that could be available to the proxy. In our example we passed the list of public methods to the `super` during the service construction. It's recommended to list all public methods.
+Before we setup our service, we define the possible Extensions interfaces.
+Any plugin for our app will have to implement the extension interface we provided.
 
-> Note, any exposed methods must be optional, which means all public methods must end with `?` mark. Or, a type should be a union of `public property: string|**undefined**`.
+> Tip
+> Don't try to define all extension methods upfront.
+> My recommendation is to add the methods as they come to your needs.
+> Initially, its better to start with the empty extension interface.
 
-In our example the service passes to `SDSService.constructor`the `helloService` and `getNumber`, which can later be augmented or intercepted by proxies or extensions.
+After declaring the extension interface, we define our app by extending SDS Service. Our app for this tutorial has `helloService` and `getNumber` methods.
+
+Our app initialization in the constructor has two processes. Firstly, we initialize by SDSSetup. It tells our app what are the proxies and extensions that we have. Other initialization is keep track of all public methods that pass to SDSService constructor as the second argument.
+
+```typescript
+super(setup, ["helloService", "getNumber"])
+```
+
+> Note, the methods or properties that we pass to SDSService must be optional, which that ends with `?` mark. Or, a type should be a union of `string|undefined`. Otherwise, if the app is proxified, SDS wouldn't be able to hide the methods you passed.
 
 ### 3. Creating Proxies
 Proxies wrap the service (a.k.a our app) to modify its interface.

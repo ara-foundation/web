@@ -39,3 +39,20 @@ URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-
 Here, the REST Path interface is: `Rest.patch<T>(target: ObjectLink, targetType: T, restOperator: REST, recursive: boolean = false)`
 
 We pass the objects that has 'description' property, and we do it recursively. The engine that will operate it is the `REST`.
+
+How to work with the REST?
+
+```typescript
+const pageRestProxy = new PageREST(target: Page);
+const restSetup = {proxies: [pageRestProxy]};
+const pageRest = new REST(restSetup).proxifyMe<PageREST>();
+
+// Functions:
+pageRest.put(selector: string, value?: Component | ValueType)
+```
+
+Or shorter version:
+
+```typescript
+REST.put<PageREST>(page, selector, value?);
+```

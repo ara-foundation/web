@@ -5,7 +5,7 @@ import cssSelect from "css-select"
 import { Debug, ModuleLink, ObjectLink } from "../src";
 
 const moduleLink = ModuleLink.newFileURL("./test-app/src/components/Welcome.astro");
-var html = "<main><div></div><div class=\"apple\"></div><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></main>";
+var html = "<main><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></main>";
 var adapter = new NodeAdapter()
 
 function getBody(html: string): HTMLBodyElement | null {
@@ -74,4 +74,38 @@ test(`Simply testing css-select with adapter`, async() => {
     // get child
     let child = cssSelect("main > div", [body!], options);
     expect(child).toHaveLength(2);
+})
+
+test(`Test fetching css selector by classes`, async() => {
+    const options = {adapter};
+    const body = getBody(html)
+
+    let pears = cssSelect("main .pear", [body!], options);
+    expect(pears).toHaveLength(1);
+    let potatoes = cssSelect("main .potato", [body!], options);
+    expect(potatoes).toHaveLength(1);
+
+    expect(potatoes[0].isEqualNode(pears[0])).toBe(true);
+    expect(potatoes[0].nodeName).toBe("SPAN");
+})
+
+test(`Test fetching css selector id`, async() => {
+    const options = {adapter};
+    const body = getBody(html)
+
+    let burgers = cssSelect("main #cheese-burger", [body!], options);
+    expect(burgers).toHaveLength(1);
+})
+
+test(`Test fetching css selector by attribute`, async() => {
+    const options = {adapter};
+    const body = getBody(html)
+    let links = cssSelect("main [href]", [body!], options);
+    expect(links).toHaveLength(1);
+    let exactLinks = cssSelect("main [href=\"example.com\"]", [body!], options);
+    expect(exactLinks).toHaveLength(1);
+    let notExactLinks = cssSelect("main [href=\"no-website\"]", [body!], options);
+    expect(notExactLinks).toHaveLength(0);
+    let divs3 = cssSelect("main [class=\"pear potato\"]", [body!], options);
+    expect(divs3).toHaveLength(1);
 })

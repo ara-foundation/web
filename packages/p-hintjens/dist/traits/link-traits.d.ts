@@ -114,39 +114,6 @@ export interface ObjectNode extends Node {
     isAttributeExist(name: string): boolean;
     isEqualTo(node: ObjectNode | null | undefined): boolean;
 }
-export declare class ObjectAdapter<BranchedModuleObject extends ObjectNode> implements Adapter<ObjectNode, BranchedModuleObject> {
-    /**
-     *  Is the node a tag?
-     */
-    isTag(node: ObjectNode): node is BranchedModuleObject;
-    /**
-     * Does at least one of passed element nodes pass the test predicate?
-     */
-    existsOne(test: Predicate<BranchedModuleObject>, elems: ObjectNode[]): boolean;
-    getAttributeValue(elem: BranchedModuleObject, name: string): string | undefined;
-    getChildren(node: ObjectNode): ObjectNode[];
-    /**
-     * Get name of the tag
-     * @param elem
-     * @returns
-     */
-    getName(elem: BranchedModuleObject): string;
-    getParent(node: BranchedModuleObject): BranchedModuleObject | null;
-    getSiblings(node: ObjectNode): ObjectNode[];
-    getText(node: ObjectNode): string;
-    hasAttrib(elem: BranchedModuleObject, name: string): boolean;
-    /**
-     * Takes an array of nodes, and removes any duplicates, as well as any
-     * nodes whose ancestors are also in the array.
-     */
-    removeSubsets(nodes: ObjectNode[]): ObjectNode[];
-    findAll(test: Predicate<BranchedModuleObject>, nodes: ObjectNode[]): BranchedModuleObject[];
-    findOne(test: Predicate<BranchedModuleObject>, nodes: ObjectNode[]): BranchedModuleObject | null;
-    equals(a: ObjectNode, b: ObjectNode): boolean;
-    isHovered?: ((elem: BranchedModuleObject) => boolean) | undefined;
-    isVisited?: ((elem: BranchedModuleObject) => boolean) | undefined;
-    isActive?: ((elem: BranchedModuleObject) => boolean) | undefined;
-}
 export declare class LinkTraits {
     static getAll<ObjectNode, BranchedModuleObject extends ObjectNode>(query: string, objects: ObjectNode[], options: CSSOptions<ObjectNode, BranchedModuleObject>): ObjectNode[];
     static isObjectMatchQuery<ObjectNode, BranchedModuleObject extends ObjectNode>(node: BranchedModuleObject, query: string, options: CSSOptions<ObjectNode, BranchedModuleObject>): boolean;
