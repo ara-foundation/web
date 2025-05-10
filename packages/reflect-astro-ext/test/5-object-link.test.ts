@@ -15,7 +15,7 @@ var html =
             "<em>World!</em>" + 
         "</span>" + 
     "</main>";
-const adapter = new AstroNodeAdapter()  // if it's ObjectAdapter, then returns wrong data
+const adapter = new AstroNodeAdapter()
 var nodeAdapter = new NodeAdapter()
 
 function getBody(html: string): HTMLElement | null {

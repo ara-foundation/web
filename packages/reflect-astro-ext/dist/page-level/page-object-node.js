@@ -8,6 +8,7 @@ import { ObjectTraits } from "@ara-web/p-hintjens";
  * it can be used to walk through the page using CSS selectors.
  */
 export class PageObjectNode {
+    static DOCUMENT_SELECTOR = "#document";
     selector;
     isTag;
     _element; // Only component like data
@@ -17,7 +18,7 @@ export class PageObjectNode {
         this._children = [];
         this._parent = parent;
         if (node === undefined) {
-            this.selector = "#document";
+            this.selector = PageObjectNode.DOCUMENT_SELECTOR;
             this.isTag = true;
         }
         else {
@@ -154,7 +155,7 @@ export class PageObjectNode {
     }
     getSelector(element) {
         if (element && "link" in element) {
-            return element.link.getTag() || "";
+            return element.link.selector || "";
         }
         return "";
     }
@@ -163,7 +164,7 @@ export class PageObjectNode {
      */
     get name() {
         if (this._element === undefined) {
-            return "#document";
+            return PageObjectNode.DOCUMENT_SELECTOR;
         }
         let name = "";
         if (this._element && "link" in this._element) {
@@ -175,6 +176,21 @@ export class PageObjectNode {
         return this._parent === undefined ? null : this._parent;
     }
     getAttribute(attrName) {
+        if (this.name === PageObjectNode.DOCUMENT_SELECTOR) {
+            return undefined;
+        }
+        if (attrName === "class") {
+            if (this._element && "link" in this._element) {
+                const classes = this._element.link.getClass();
+                if (Array.isArray(classes)) {
+                    return classes.join(" ");
+                }
+                return classes;
+            }
+            else {
+                return undefined;
+            }
+        }
         if (this._element === undefined) {
             return undefined;
         }

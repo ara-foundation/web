@@ -9,6 +9,7 @@ import type { SlotElement, Slots } from "../index.js";
  * it can be used to walk through the page using CSS selectors.
  */
 export declare class PageObjectNode implements ObjectNode {
+    static readonly DOCUMENT_SELECTOR = "#document";
     selector: string;
     isTag: boolean;
     private _element?;

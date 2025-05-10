@@ -7,7 +7,6 @@ import { expect, test } from "vitest";
 import { FilePath, ImportedRecords } from "@ara-web/reflect";
 import { ModuleCategory } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { Debug } from "@ara-web/p-hintjens";
 
 test('Simply creating a reflect extension', async () => {
     const reflectExtension = await getNewAstroReflect();
@@ -52,7 +51,7 @@ test(`Test the categorization of the import.meta.glob`, async () => {
     // Make sure they are all no content moduled
     const projectMemory = getNewProjectMemory(reflectExtension);
 
-    const welcomeComponentPath = FilePath.getFileAbsolutePath("./src/components/Welcome.astro", reflectExtension.rootDir);
-    const welcomeComponent = projectMemory.getModule<unknown>(welcomeComponentPath);
+    const componentPath = FilePath.getFileAbsolutePath("./src/components/SubComponent.astro", reflectExtension.rootDir);
+    const welcomeComponent = projectMemory.getModule<unknown>(componentPath);
     expect(welcomeComponent.isSuccess).toBe(true);
 })

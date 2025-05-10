@@ -10,6 +10,7 @@ import type { SlotElement, Slots } from "../index.js";
  * it can be used to walk through the page using CSS selectors.
  */
 export class PageObjectNode implements ObjectNode {
+    public static readonly DOCUMENT_SELECTOR = "#document";
     public selector: string;
     public isTag: boolean;
     private _element?: SlotElement;  // Only component like data
@@ -20,7 +21,7 @@ export class PageObjectNode implements ObjectNode {
         this._children = [];
 		this._parent = parent;
 		if (node === undefined) {
-			this.selector = "#document";
+			this.selector = PageObjectNode.DOCUMENT_SELECTOR;
 			this.isTag = true;
 		} else {
 			this._element = node;
@@ -148,7 +149,7 @@ export class PageObjectNode implements ObjectNode {
         if (!node) {
             return false;
         }
-        
+
         // Compare selectors
         if (this.selector !== node.selector) {
             return false;
@@ -164,7 +165,7 @@ export class PageObjectNode implements ObjectNode {
 
     private getSelector(element?: SlotElement): string {
         if (element && "link" in element) {
-            return element.link.getTag() || "";
+            return element.link.selector || "";
         }
         return "";
     }
@@ -174,7 +175,7 @@ export class PageObjectNode implements ObjectNode {
      */
     public get name(): string {
         if (this._element === undefined) {
-            return "#document";
+            return PageObjectNode.DOCUMENT_SELECTOR;
         }
         let name = "";
         if (this._element && "link" in this._element) {
@@ -189,6 +190,20 @@ export class PageObjectNode implements ObjectNode {
 	}
 
     getAttribute(attrName: string): string | undefined {
+        if (this.name === PageObjectNode.DOCUMENT_SELECTOR) {
+            return undefined;
+        }
+        if (attrName === "class") {
+            if (this._element && "link" in this._element) {
+                const classes = this._element.link.getClass();
+                if (Array.isArray(classes)) {
+                    return classes.join(" ");
+                }
+                return classes;
+            } else {
+                return undefined;
+            }
+        }
         if (this._element === undefined) {
             return undefined;
         }

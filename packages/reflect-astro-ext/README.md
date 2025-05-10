@@ -12,6 +12,10 @@ Possible use case:
 To add *title* and *description*
 
 # Roadmap
+* **BUG**: `SubComponent.astro` with the `const {id, test} = Astro.props` doesn't work.
+The Reflect's variable level links the `id` and `test` to `id` and `test` not to `Astro.props.id` 
+or `Astro.props.test`.
+
 * Remove `PageLevel.walk` after installing REST operator.
 
 Components

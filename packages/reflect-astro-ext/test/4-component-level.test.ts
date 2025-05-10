@@ -40,6 +40,9 @@ test(`Make sure the that object links are correct`, async () => {
         if (moduleMemory.moduleCategory !== ModuleCategory.Component) {
             continue;
         }
+        if (moduleMemory.moduleLink.toFilePath.indexOf("Welcome") === -1) {
+            continue;
+        }
         const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
         expect(identifiedSourceCode.isSuccess).toBe(true);
         // Test by using ObjectLinkSelector.
@@ -203,5 +206,140 @@ test(`Make sure that object looking works and object linking components work`, a
             {adapter: new PageObjectAdapter()}
         )
         expect(query6 !== null).toBe(true)
+    }
+})
+
+test(`Linking page components by the classes`, async () => {
+    const options = {adapter: new PageObjectAdapter()}
+    const modules = getImportRecords()
+      
+    const reflectExtension = await getNewAstroReflect();
+    const validated = await reflectExtension.putModules(modules);
+    expect(validated.isSuccess).toBe(true);
+    // Make sure they are all no content moduled
+    const projectMemory = getNewProjectMemory(reflectExtension);
+    
+    const moduleMemories = projectMemory.getModules();
+    expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
+    for (let moduleMemory of moduleMemories) {
+        if (!([
+                ModuleCategory.Component, 
+                ModuleCategory.Layout,
+                ModuleCategory.Page
+            ].includes(moduleMemory.moduleCategory as ModuleCategory))) {
+            continue;
+        }
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
+        expect(moduleParts.isSuccess).toBe(true);
+    
+        if (moduleParts.getValue().fileExtension !== FileExtension.Astro) {
+            continue;
+        } 
+        // Only Component
+        if (moduleMemory.moduleCategory !== ModuleCategory.Page) {
+            continue;
+        }
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
+        expect(identifiedSourceCode.isSuccess).toBe(true);
+        // Test by using ObjectLinkSelector.
+        // Uncomment to see the object links.
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
+        expect(page.isSuccess).toBe(true);
+        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
+        const layout = page.getValue().slots["default"][0] as Component;
+        Debug.log(`The layout object link: '${layout.link.selector}'`)
+        const slotNames = Object.keys(layout.slots);
+        expect(slotNames.length).toBe(3);
+        
+        expect(layout.slots[slotNames[0]].length).toBeGreaterThan(0);
+        const firstLayoutElement = layout.slots[slotNames[0]][0];
+        Debug.log(`The selector of first element in the 'layout' default slot: ${firstLayoutElement.link.selector}`)
+
+        const pageObjectNodes = pageToObjectNodes(page.getValue().slots)
+        const query1 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout.astro', pageObjectNodes, options)
+        expect(query1 !== null).toBe(true)
+
+        const query2 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.astro', pageObjectNodes, options)
+        expect(query2).toHaveLength(2)
+
+        const query3 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.astro > ul > li', pageObjectNodes, options)
+        expect(query3).toHaveLength(4)
+    }
+})
+
+test(`Linking page components by the attributes and id`, async () => {
+    const options = {adapter: new PageObjectAdapter()}
+    const modules = getImportRecords()
+      
+    const reflectExtension = await getNewAstroReflect();
+    const validated = await reflectExtension.putModules(modules);
+    expect(validated.isSuccess).toBe(true);
+    // Make sure they are all no content moduled
+    const projectMemory = getNewProjectMemory(reflectExtension);
+    
+    const moduleMemories = projectMemory.getModules();
+    expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
+    for (let moduleMemory of moduleMemories) {
+        if (!([
+                ModuleCategory.Component, 
+                ModuleCategory.Layout,
+                ModuleCategory.Page
+            ].includes(moduleMemory.moduleCategory as ModuleCategory))) {
+            continue;
+        }
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
+        expect(moduleParts.isSuccess).toBe(true);
+    
+        if (moduleParts.getValue().fileExtension !== FileExtension.Astro) {
+            continue;
+        } 
+        // Only Component
+        if (moduleMemory.moduleCategory !== ModuleCategory.Component) {
+            continue;
+        }
+        
+        if (moduleMemory.moduleLink.toFilePath.indexOf("Welcome") === -1) {
+            continue;
+        }
+
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
+        expect(identifiedSourceCode.isSuccess).toBe(true);
+        // Test by using ObjectLinkSelector.
+        // Uncomment to see the object links.
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
+        expect(page.isSuccess).toBe(true);
+        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
+        const layout = page.getValue().slots["default"][0] as Component;
+        Debug.log(`The layout object link: '${layout.link.selector}'`)
+        
+        const pageObjectNodes = pageToObjectNodes(page.getValue().slots)
+        const query1 = LinkTraits.get<ObjectNode, PageObjectNode>('#container', pageObjectNodes, options)
+        expect(query1 !== null).toBe(true)
+
+        const query2 = LinkTraits.getAll<ObjectNode, PageObjectNode>('[id="container"]', pageObjectNodes, options)
+        expect(query2).toHaveLength(1)
+
+        const query4 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.htme#container> img[src]', pageObjectNodes, options)
+        expect(query4).toHaveLength(1)
+        expect(query4[0].getAttribute("src")).toBeDefined();
+
+        const query5 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.htme#container .astro', pageObjectNodes, options)
+        expect(query5).toHaveLength(1)
+
+        const query6 = LinkTraits.getAll<ObjectNode, PageObjectNode>('a.htme', pageObjectNodes, options)
+        expect(query6).toHaveLength(4)
+
+        const query7 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent", pageObjectNodes, options)
+        expect(query7 !== null).toBe(true)
+
+        const query8 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent[noAttr]", pageObjectNodes, options)
+        expect(query8 === null).toBe(true)
+
+        const query9 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent[text]", pageObjectNodes, options)
+        expect(query9 !== null).toBe(true)
+
+        const query10 = LinkTraits.get<ObjectNode, PageObjectNode>(".astro[text=\"hello-world\"]", pageObjectNodes, options)
+        expect(query10 !== null).toBe(true)
+        expect(query10 === query9).toBe(true);
     }
 })

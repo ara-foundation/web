@@ -8,6 +8,7 @@ export const getCategorizedModuleAmount = (): number => {
 
 export const getImportRecords = (): ImportedRecords => {
     const imported = import.meta.glob(['./test-app/src/**/*.{astro,ts,svg}'], {eager: true});
+    // const imported = import.meta.glob(['./test-app/src/components/SubComponent.astro'], {eager: true});
     return {
         records: imported,
         importMetaFilename: import.meta.filename

@@ -6,9 +6,12 @@
 import { expect, test } from "vitest";
 import { ModulePartitioner, FileExtension, CodeLevel } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that code is importing`, async () => {
     const modules = getImportRecords()
+    Debug.log(`modules`);
+    Debug.log(modules);
       
     const reflectExtension = await getNewAstroReflect();
     const validated = await reflectExtension.putModules(modules);
@@ -26,6 +29,8 @@ test(`Make sure the that code is importing`, async () => {
             continue;
         } 
         const identifiedSourceCode = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
+        Debug.log(`identifiedSourceCode`);
+        Debug.log(identifiedSourceCode);
         expect(identifiedSourceCode.isSuccess).toBe(true);
     }
 })

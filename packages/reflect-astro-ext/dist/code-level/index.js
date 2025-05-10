@@ -1,4 +1,4 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code } from "@ara-web/reflect/code-level";
 import { Comment } from "./comment.js";
@@ -22,7 +22,7 @@ export class CodeLevel {
         // The identified Imports
         const importsIdentifed = await this.identifyImports(code, projectMemory);
         if (importsIdentifed.isFailure) {
-            return Result.fail(`this.identifyImports(): ${importsIdentifed.errorTitle}`, importsIdentifed.errorDescription);
+            return Result.fail(`this.identifyImports('${moduleMemory.moduleLink}'): ${importsIdentifed.errorTitle}`, importsIdentifed.errorDescription);
         }
         else {
             moduleMemory.addIdentifiers(importsIdentifed.getValue());
@@ -30,7 +30,7 @@ export class CodeLevel {
         // The type declarations
         const identifiedTypes = await this.identifyTypes(code);
         if (identifiedTypes.isFailure) {
-            return Result.fail(`this.identifyTypes(): ${identifiedTypes.errorTitle}`, identifiedTypes.errorDescription);
+            return Result.fail(`this.identifyTypes('${moduleMemory.moduleLink}'): ${identifiedTypes.errorTitle}`, identifiedTypes.errorDescription);
         }
         else {
             moduleMemory.addIdentifiers(identifiedTypes.getValue());
@@ -38,23 +38,23 @@ export class CodeLevel {
         // The Linted import identifiers
         const importsLinted = await this.lintImports(code, moduleMemory, projectMemory);
         if (importsLinted.isFailure) {
-            return Result.fail(`this.importsLinted(): ${importsLinted.errorTitle}`, importsLinted.errorDescription);
+            return Result.fail(`this.importsLinted('${moduleMemory.moduleLink}'): ${importsLinted.errorTitle}`, importsLinted.errorDescription);
         }
         // The Linted locally defined types
         const typesLinted = await this.lintTypes(code, moduleMemory, projectMemory);
         if (typesLinted.isFailure) {
-            return Result.fail(`this.typesLinted(): ${typesLinted.errorTitle}`, typesLinted.errorDescription);
+            return Result.fail(`this.typesLinted('${moduleMemory.moduleLink}'): ${typesLinted.errorTitle}`, typesLinted.errorDescription);
         }
         const identifiedVariables = await code.getVariableIdentifiers();
         if (identifiedVariables.isFailure) {
-            return Result.fail(`code.getVariableIdentifiers(): ${identifiedVariables.errorTitle}`, identifiedVariables.errorDescription);
+            return Result.fail(`code.getVariableIdentifiers('${moduleMemory.moduleLink}'): ${identifiedVariables.errorTitle}`, identifiedVariables.errorDescription);
         }
         else {
             moduleMemory.addIdentifiers(identifiedVariables.getValue());
         }
         const lintVariables = await this.lintVariables(code, moduleMemory, projectMemory);
         if (lintVariables.isFailure) {
-            return Result.fail(`this.lintVariables(): ${lintVariables.errorTitle}`, lintVariables.errorDescription);
+            return Result.fail(`this.lintVariables('${moduleMemory.moduleLink}'): ${lintVariables.errorTitle}`, lintVariables.errorDescription);
         }
         return Result.ok(moduleMemory);
     };

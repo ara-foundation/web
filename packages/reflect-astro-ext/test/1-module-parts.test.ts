@@ -29,7 +29,7 @@ test(`Make sure the module parts are importing`, async () => {
         }
     }
 
-    const welcomeLink = FilePath.getFileAbsolutePath('./components/Welcome.astro', reflectExtension.srcDir);
-    let welcomeComponent = projectMemory.getModule<Page>(welcomeLink);
-    expect(welcomeComponent.isSuccess).toBe(true);
+    const componentLink = FilePath.getFileAbsolutePath('./components/SubComponent.astro', reflectExtension.srcDir);
+    let component = projectMemory.getModule<Page>(componentLink);
+    expect(component.isSuccess).toBe(true);
 })
