@@ -1,7 +1,7 @@
 # Reflect Architecture
 
 The primary reflection is exposed through `Reflect` class. 
-To reflect your app, create an instance of `Reflect` with the necessary setup. Register the modules that it has access to. Then use the reflect by calling `reflect.get()` or `reflect.put()` etc.
+To reflect your app, create an instance of `Reflect` with the necessary setup. Register the modules that it has access to. Then use the reflect by calling `reflect.get()` or `reflect.put()` methods.
 
 ## Structure between Reflect, Ara Web and Ara.
 Reflect package is based on `SDS` architectural rules. SDS architectural rules allowed us to create our app as a series of plugins and middlewares. 
@@ -16,14 +16,14 @@ maintainers and contributors.
 
 ## 1. Modules (source file)
 The Reflect uses the Nodejs's convention to structurize the Nodejs based source code. In Nodejs, a source code is treated as a single module.
-So, in reflect any source code is treated as a Module.
+So, does reflect.
 
 > Module = a single file.
 
 ### 1.1 Module Category (directory)
-In the file system, files are groupped in the directories. In reflect, instead directory, each
-module has a `category` property usually
-matching to the directory, not mandatory though.
+In the file system, files are groupped in the directories. In reflect each
+module has a `category` property, that usually
+matches to the directory, not mandatory though.
 
 ### 1.2 Module Link
 A module link is a unique identifier of a module
@@ -54,25 +54,30 @@ and vice-versa.
 To identify which extension will generate the content, Reflect uses a module link and a module category.
 
 > Tip:
-> Before defining a content, identify all other memory parameters, especially the module's [ast node memory](#14-ast-node-memory)
+> Before defining a content, identify all other memory parameters, especially the module's [code piece memory](#14-code-piece-memory).
 
 ### 1.3 Module Memory
-Reflect keeps all module data such as JSON content, module category and module link in memory.
+Reflect keeps the module data such as JSON content, module category and module link in a memory.
+Which makes them evailable for fast access by users.
 
-#### 1.4 Ast Node Memory
-Quite often, the module data is dynamic. To generate a web components,  a module has to be run and the evaluated result is then used to generate the properties of the web elements.
+#### 1.4 Code Piece Memory
+Quite often, the module data is dynamic.
+Rarely, a simply file from a server returned to the user.
+A users request initiates multiple data transforms and the data is collected from multiple sources before being composed as a one document to respond with it back to the user.
+To generate a web document or document elements from a module, Reflect must have to evaluate has to be run and the evaluated the module's scripting part.
 
-Reflect provides `Code` that
-works with the module's script. Code supports any Typescript syntax.
+Reflect provides `Code` module that
+works with the module's scripting part. Code Level supports any Typescript syntax.
 
-Before evaluating JSON content by extension, call the `Code` and identify all the scripting part of the module. The Result is the list of AST nodes matched to the identifiers (function names, variable names, type or class names). When an extension wants to generate a content, it will use
-the Ast node identifiers to know what to put in the code.
+Before evaluating JSON content by extension, call the `Code` and identify all the scripting parts of the module. The Result is the list of Code Pieces stored by the identifiers in the script (function names, variable names, type or class names). When an extension is called to generate a module's JSON content, it will use CodePieces from memory to put in the dynamic parts of the Web Elements.
+
+> For now, it only works with the Web Elements properties.
 
 ---
 For more info on how the `Code` class is working [Code-level-architecutre](./CODE-LEVEL-ARCHITECTURE.md).
 
 ---
-Globally exposes additional modules related to a work on modules.
+Additionally reflect provides the following Modules to work with
 
 ### Module File Path
 > location `src/module.ts#FilePath`
@@ -91,7 +96,7 @@ is the low level, while module path
 mostly works with the import clauses.
 
 ## 2. Project Memory
-Project memory is just a wrapper over the Module Memory array providing various methods to filter out module memory.
+Project memory is just a wrapper over the Module Memory array providing various methods to filter out data without worrying which extension to call for necessary operations.
 
 ## 3. Reflect NodeJS Extension
 The Reflect comes with the built in extension
