@@ -1,4 +1,4 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code, type AstIdentifiers } from "@ara-web/reflect/code-level";
 import { Comment } from "./comment.js";
@@ -29,7 +29,7 @@ export class CodeLevel {
         const importsIdentifed = await this.identifyImports(code, projectMemory);
         if (importsIdentifed.isFailure) {
             return Result.fail(
-                `this.identifyImports(): ${importsIdentifed.errorTitle}`,
+                `this.identifyImports('${moduleMemory.moduleLink}'): ${importsIdentifed.errorTitle}`,
                 importsIdentifed.errorDescription!
             )
         } else {
@@ -40,7 +40,7 @@ export class CodeLevel {
         const identifiedTypes = await this.identifyTypes(code);
         if (identifiedTypes.isFailure) {
             return Result.fail(
-                `this.identifyTypes(): ${identifiedTypes.errorTitle}`,
+                `this.identifyTypes('${moduleMemory.moduleLink}'): ${identifiedTypes.errorTitle}`,
                 identifiedTypes.errorDescription!
             )
         } else {
@@ -51,7 +51,7 @@ export class CodeLevel {
         const importsLinted = await this.lintImports<T>(code, moduleMemory, projectMemory);
         if (importsLinted.isFailure) {
             return Result.fail(
-                `this.importsLinted(): ${importsLinted.errorTitle}`,
+                `this.importsLinted('${moduleMemory.moduleLink}'): ${importsLinted.errorTitle}`,
                 importsLinted.errorDescription!
             )
         }
@@ -60,7 +60,7 @@ export class CodeLevel {
         const typesLinted = await this.lintTypes<T>(code, moduleMemory, projectMemory);
         if (typesLinted.isFailure) {
             return Result.fail(
-                `this.typesLinted(): ${typesLinted.errorTitle}`,
+                `this.typesLinted('${moduleMemory.moduleLink}'): ${typesLinted.errorTitle}`,
                 typesLinted.errorDescription!
             )
         }
@@ -68,7 +68,7 @@ export class CodeLevel {
         const identifiedVariables = await code.getVariableIdentifiers();
         if (identifiedVariables.isFailure) {
             return Result.fail(
-                `code.getVariableIdentifiers(): ${identifiedVariables.errorTitle}`,
+                `code.getVariableIdentifiers('${moduleMemory.moduleLink}'): ${identifiedVariables.errorTitle}`,
                 identifiedVariables.errorDescription!
             )
         } else {
@@ -78,7 +78,7 @@ export class CodeLevel {
         const lintVariables = await this.lintVariables<T>(code, moduleMemory, projectMemory);
         if (lintVariables.isFailure) {
             return Result.fail(
-                `this.lintVariables(): ${lintVariables.errorTitle}`,
+                `this.lintVariables('${moduleMemory.moduleLink}'): ${lintVariables.errorTitle}`,
                 lintVariables.errorDescription!
             )
         }
