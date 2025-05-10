@@ -3,21 +3,21 @@
  *
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
-import { VariableStatement as TsVariableStatement } from "ts-morph";
+import { VariableStatement as TsVariableStatement, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { TsNode, type TsNodeValidator, type AstIdentifiers } from "../index.js";
-export declare class VariableStatement extends TsNode {
+import { type AstNodeFilter, type CodePieceRecord } from "../index.js";
+export declare class VariableStatement {
     protected _tsNode: TsVariableStatement;
     private _astNodes;
     private constructor();
-    static fromTsNode(tsNode: TsNode): Promise<Result<VariableStatement>>;
-    static isVariableStatement: TsNodeValidator;
-    static isVariableDeclarationList: TsNodeValidator;
-    static isNonImportantKeyword: TsNodeValidator;
+    static fromTsNode(tsNode: Node): Promise<Result<VariableStatement>>;
+    static isVariableStatement: AstNodeFilter;
+    static isVariableDeclarationList: AstNodeFilter;
+    static isNonImportantKeyword: AstNodeFilter;
     /**
      * Returns the variable's identifier
      */
-    getAstIdentifiers: () => AstIdentifiers;
+    getAstIdentifiers: () => CodePieceRecord;
     /**
      * Variable declaration comes as "var <declaration>" or "let <declaration>"
      * @param tsNode

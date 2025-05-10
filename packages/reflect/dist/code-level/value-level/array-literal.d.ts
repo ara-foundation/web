@@ -1,12 +1,13 @@
+import { Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { TsNode, type TsNodeValidator, AstNodeContext, type TypedData } from "../index.js";
+import { type AstNodeFilter, AstNodeContext, type TypedData } from "../index.js";
 /**
  * Literal class identifies the object literals
  */
 export declare class ArrayLiteral {
     static get name(): string;
-    static isA: TsNodeValidator;
-    identifyValue: (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext) => Promise<Result<TypedData>>;
+    static isA: AstNodeFilter;
+    identifyValue: (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext) => Promise<Result<TypedData>>;
     /**
          * ObjectLiteralExpression has three children:
          * @child {Node} '{'

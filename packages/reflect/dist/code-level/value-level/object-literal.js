@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, ObjectLiteralExpression } from "ts-morph";
 import { ObjectTraits, Result } from "@ara-web/p-hintjens";
-import { TypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString, TsNode, AstNodeContext, ValueLevel, ReflectLink } from "../index.js";
+import { AstNodeTraits, UserTypeDeclaration, IntersectedUnionType, UnionTypeDeclaration, ValueTypeString, AstNodeContext, ValueLevel, ReflectLink } from "../index.js";
 /**
  * Literal class identifies the object literals
  */
@@ -54,14 +54,13 @@ let ObjectLiteral = (() => {
         static get name() {
             return "ObjectLiteral";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof ObjectLiteralExpression;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+            const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
             if (syntaxLists.length !== 1) {
-                return Result.fail(`tsNode.getChildren([TsNode.isSyntaxList]): expected 1 syntax list`, `There must be one syntax list, while node has ${syntaxLists.length}`);
+                return Result.fail(`tsNode.getChildren([Node.isSyntaxList]): expected 1 syntax list`, `There must be one syntax list, while node has ${syntaxLists.length}`);
             }
             const identified = await this.identifyObjectLiteral(typedData, syntaxLists[0], astNodeContext);
             if (identified.isFailure) {
@@ -79,7 +78,7 @@ let ObjectLiteral = (() => {
              * @child Node '}'
              */
         identifyObjectLiteral = async (typedData, syntaxList, astNodeContext) => {
-            const syntaxListElements = syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+            const syntaxListElements = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
             if (typedData.data === undefined) {
                 const exactData = ValueLevel.exactValueByType(typedData);
                 if (exactData.isFailure) {
@@ -98,7 +97,7 @@ let ObjectLiteral = (() => {
                 if (typedData.dataType !== ValueTypeString.default &&
                     typedData.dataType !== ValueTypeString.object &&
                     !(typedData.dataType instanceof UnionTypeDeclaration) &&
-                    !(typedData.dataType instanceof TypeDeclaration) &&
+                    !(typedData.dataType instanceof UserTypeDeclaration) &&
                     !(typedData.dataType instanceof IntersectedUnionType) &&
                     typeof typedData.dataType !== "object") {
                     return Result.fail(`For now, only default value string type supported`, `Please update the ObjectLiteral.identifyObjectLiteral to support '${typedData.dataType}'`);

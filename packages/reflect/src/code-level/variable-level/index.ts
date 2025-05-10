@@ -1,11 +1,12 @@
+import { Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import type { AstIdentifiers, TsNode } from "../index.js";
+import type { CodePieceRecord } from "../index.js";
 import { VariableStatement } from "./variable-statement.js";
 
 export class VariableLevel {
-    public static getVariableIdentifiers = async (tsNodes: TsNode[]): Promise<Result<AstIdentifiers>> => {
+    public static getVariableIdentifiers = async (tsNodes: Node[]): Promise<Result<CodePieceRecord>> => {
         const varStatements = tsNodes.filter((tsNode) => (VariableStatement.isVariableStatement(tsNode)))
-        let identifiers: AstIdentifiers = {};
+        let identifiers: CodePieceRecord = {};
             
         for (let tsNode of varStatements) {
             var varStatement = await VariableStatement.fromTsNode(tsNode);

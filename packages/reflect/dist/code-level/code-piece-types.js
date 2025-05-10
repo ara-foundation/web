@@ -17,7 +17,7 @@ export var ValueTypeString;
 /**
  * The type declaration literal discovered in the source code represented as this class.
  */
-export class TypeDeclaration {
+export class UserTypeDeclaration {
     _records = {};
     constructor() { }
     putOrPost(record) {
@@ -76,7 +76,7 @@ export class TypeDeclaration {
         return Result.ok(data);
     };
     postDataType = (dataType) => {
-        if (!(dataType instanceof TypeDeclaration) &&
+        if (!(dataType instanceof UserTypeDeclaration) &&
             dataType !== ValueTypeString.object &&
             typeof dataType !== ValueTypeString.object) {
             return Result.fail(`The data type '${dataType}' not supported`, `Please pass only objects posting into type declaration`);
@@ -138,7 +138,7 @@ export class UnionTypeDeclaration {
     };
 }
 // Type Declaration, but some parts are also are optional as its an union.
-export class IntersectedUnionType extends TypeDeclaration {
+export class IntersectedUnionType extends UserTypeDeclaration {
     _unions;
     _araLinks;
     constructor(obj) {
@@ -187,7 +187,7 @@ export class IntersectedUnionType extends TypeDeclaration {
         this._unions.putUnion(index, dataType);
     }
     get typeDeclaration() {
-        const typeDeclaration = new TypeDeclaration();
+        const typeDeclaration = new UserTypeDeclaration();
         typeDeclaration.post(this._records);
         return typeDeclaration;
     }

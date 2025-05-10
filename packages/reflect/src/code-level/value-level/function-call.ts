@@ -1,8 +1,8 @@
 import { Node, CallExpression } from "ts-morph";
 import { Debug, Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    AstNodeTraits, 
+    type AstNodeFilter,
     type TypedData,
     AstNodeContext,
     ValueLevel,
@@ -22,23 +22,22 @@ export class FunctionCall {
         return "FunctionCall"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof CallExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(0)) {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`The TS Node doesn't have any children`, `Please, update the TS Node`)
         }
-        if (!tsNode.isChildExist(2)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(`The TS Node doesn't have the syntax list`, `Please, update the TS Node`)
         }
-        if (!TsNode.isSyntaxList(tsNode.getChild(2)!)) {
-            return Result.fail(`The TS Node for function call expects syntax list`, `Please, update the FunctionCall.identifyValue() to support '${tsNode.getChild(2)?.getText()}'`)
+        if (!AstNodeTraits.isSyntaxList(tsNode.getChildAtIndex(2)!)) {
+            return Result.fail(`The TS Node for function call expects syntax list`, `Please, update the FunctionCall.identifyValue() to support '${tsNode.getChildAtIndex(2)?.getText()}'`)
         }
-        const identifier = tsNode.getChild(0)!;
-        let syntaxList = tsNode.getChild(2)!;
+        const identifier = tsNode.getChildAtIndex(0)!;
+        let syntaxList = tsNode.getChildAtIndex(2)!;
 
         const funcArgs = await this.getFuncArgs(syntaxList, astNodeContext!);
         if (funcArgs.isFailure) {
@@ -91,9 +90,9 @@ export class FunctionCall {
         return Result.ok(callResult.getValue());
     }
 
-    private getFuncArgs = async (syntaxList: TsNode, astNodeContext: AstNodeContext): Promise<Result<TypedData[]>> => {
+    private getFuncArgs = async (syntaxList: Node, astNodeContext: AstNodeContext): Promise<Result<TypedData[]>> => {
         const funcArgs: TypedData[] = [];
-        const children = syntaxList.getChildren([], [TsNode.isNonImportant], [","])
+        const children = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","])
         for (let funcArg of children) {
             // Debug.push(`FuncArg: ValueLevel.identifyValue()`, {tsNode: funcArg.getText()});
             let result = await ValueLevel.identifyValue(funcArg, {}, astNodeContext!);
@@ -118,7 +117,7 @@ export class FunctionCall {
      * @param memory 
      * @returns 
      */
-    private identifyMethodCall = async(methodAccess: TsNode, funcArgs: TypedData[], astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private identifyMethodCall = async(methodAccess: Node, funcArgs: TypedData[], astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         const propertyAccess = new PropertyAccess();
         const propertyValue = await propertyAccess.identifyValue(methodAccess, {dataType: ValueTypeString.default}, astNodeContext);
         if (propertyValue.isFailure) {

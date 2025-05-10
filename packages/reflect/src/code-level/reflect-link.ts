@@ -4,9 +4,9 @@
  * - Ts Nodes (to parse or connect between ts node tree)
  * - Expressions
  */
+import { Node } from "ts-morph";
 import { AraLink } from "@ara-web/p-hintjens";
-import type { ValueType } from "./ast-node-data.js";
-import { TsNode } from "./ts-node.js";
+import type { ValueType } from "./code-piece-types.js";
 
 export const ReflectProtocol = "reflect"
 
@@ -25,8 +25,8 @@ export class ReflectLink {
         return araLink;
     }
 
-    public static linkToTsNode = (tsNode: TsNode): AraLink<TsNode> => {
-        const araLink = new AraLink<TsNode>(ReflectProtocol, tsNode, TsNodeSlugs) 
+    public static linkToTsNode = (tsNode: Node): AraLink<Node> => {
+        const araLink = new AraLink<Node>(ReflectProtocol, tsNode, TsNodeSlugs) 
         return araLink;  
     }
 
@@ -71,7 +71,7 @@ export class ReflectLink {
         if (!araLink.isCorrectPath(ReflectProtocol, TsNodeSlugs)) {
             return false;
         }
-        return (araLink.resource instanceof TsNode)
+        return (araLink.resource instanceof Node)
     }
 
     public static getResourceAsIdentifier = (araLink: ValueType | undefined): string|undefined => {
@@ -100,11 +100,11 @@ export class ReflectLink {
     }
 
     /**
-     * Returns the TsNode from the AraLink.
+     * Returns the Node from the AraLink.
      * @param araLink 
-     * @returns {TsNode|undefined}
+     * @returns {undefined}
      */
-    public static getResourceAsTsNode = (araLink: ValueType | undefined): TsNode|undefined => {
+    public static getResourceAsTsNode = (araLink: ValueType | undefined): Node|undefined => {
         if (araLink === undefined) {
             return undefined;
         }
@@ -112,6 +112,6 @@ export class ReflectLink {
             return undefined;
         }
 
-        return araLink.resource as TsNode;
+        return araLink.resource as Node;
     }
 }

@@ -3,20 +3,20 @@
  *
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
-import { NamedImports } from "ts-morph";
+import { NamedImports, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { AstNodeType, type AstIdentifiers, TsNode, type TsNodeValidator } from "../index.js";
-export declare class NamedImport extends TsNode {
+import { CodePieceType, type CodePieceRecord, type AstNodeFilter } from "../index.js";
+export declare class NamedImport {
     protected _tsNode: NamedImports;
     private constructor();
-    static fromTsNode(tsNode: TsNode): Result<NamedImport>;
-    static isNamedImport: TsNodeValidator;
-    static isImportSpecifier: TsNodeValidator;
+    static fromTsNode(tsNode: Node): Result<NamedImport>;
+    static isNamedImport: AstNodeFilter;
+    static isImportSpecifier: AstNodeFilter;
     /**
-     * Overwrites the TsNode's getChildren, by returning the children of syntax list node in named imports.
+     * Overwrites the Node's getChildren, by returning the children of syntax list node in named imports.
      * @returns
      */
-    getChildren: () => TsNode[];
+    getChildren: () => Node[];
     /**
      * Import declarations could be named such as:
      * import { name1, name2 } from "string-literal-path".
@@ -26,5 +26,5 @@ export declare class NamedImport extends TsNode {
      * @param importPath
      * @returns
      */
-    static getIdentifiers: (nodeType: AstNodeType, namedChildren: TsNode[]) => Result<AstIdentifiers>;
+    static getIdentifiers: (nodeType: CodePieceType, namedChildren: Node[]) => Result<CodePieceRecord>;
 }

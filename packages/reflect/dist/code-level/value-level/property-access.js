@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, PropertyAccessExpression } from "ts-morph";
 import { Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
-import { ValueTypeString, TsNode, AstNodeContext, ValueLevel, Identifier } from "../index.js";
+import { ValueTypeString, AstNodeContext, ValueLevel, Identifier, AstNodeTraits } from "../index.js";
 /**
  * Property access such as Object.Property
  */
@@ -54,19 +54,18 @@ let PropertyAccess = (() => {
         static get name() {
             return "object-level/PropertyAccess";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof PropertyAccessExpression;
         };
         identifyValue = async (tsNode, _, astNodeContext) => {
-            if (!tsNode.isChildExist(0)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 0)) {
                 return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
             }
-            if (!tsNode.isChildExist(2)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 2)) {
                 return Result.fail(`Method expects to have the third child`, `Please update method access TS Node`);
             }
-            const objIdentifier = tsNode.getChild(0);
-            const property = tsNode.getChild(2);
+            const objIdentifier = tsNode.getChildAtIndex(0);
+            const property = tsNode.getChildAtIndex(2);
             if (!Identifier.isA(property)) {
                 return Result.fail(`Property expected to be identifier`, `Please update ProperyAccess.identifyValue() to support '${property.getText()}'`);
             }

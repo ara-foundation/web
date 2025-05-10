@@ -1,3 +1,4 @@
+import { Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
 import { VariableStatement } from "./variable-statement.js";
 export class VariableLevel {

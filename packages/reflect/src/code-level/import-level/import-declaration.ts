@@ -3,27 +3,27 @@
  * 
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
-import { ImportClause, ImportDeclaration as TsImportDeclaration } from "ts-morph";
+import { ImportClause, ImportDeclaration as TsImportDeclaration, Node } from "ts-morph";
 import { OkResult, Result, Debug, StringTraits } from "@ara-web/p-hintjens";
 import { 
-    AstNode, 
-    AstNodeType, 
-    type AstIdentifiers,
-    TsNode, 
-    type TsNodeValidator,
+    CodePiece, 
+    CodePieceType, 
+    type CodePieceRecord,
+    type AstNodeFilter,
     Identifier
 } from "../index.js";
 import { NamedImport } from "./named-import.js";
+import { AstNodeTraits } from "../ast-node-traits.js";
 
-export class ImportDeclaration extends TsNode {
+// export class ImportDeclaration extends Node {
+export class ImportDeclaration {
     private _importClause: string;
     private _defaultIdentifier?: string;
-    private _identfiers: AstIdentifiers = {};
+    private _identfiers: CodePieceRecord = {};
     protected _tsNode: TsImportDeclaration;
 
-    private constructor (tsNode: TsNode) {
-        super(tsNode);
-        this._tsNode = tsNode.getNode<TsImportDeclaration>()!;
+    private constructor (tsNode: TsImportDeclaration) {
+        this._tsNode = tsNode;
         this._importClause = '';
     }
 
@@ -35,11 +35,11 @@ export class ImportDeclaration extends TsNode {
         return this._defaultIdentifier;
     }
 
-    public get astIdentifiers(): AstIdentifiers {
+    public get codePieces(): CodePieceRecord {
         return this._identfiers;
     }
 
-    public static async fromTsNode(tsNode: TsNode): Promise<Result<ImportDeclaration>> {
+    public static async fromTsNode(tsNode: Node): Promise<Result<ImportDeclaration>> {
         if (!this.isImportDeclaration(tsNode)) {
             return Result.fail(
                 `The given node is not import declaration`,
@@ -48,7 +48,7 @@ export class ImportDeclaration extends TsNode {
         }
 
         try {
-            const importDeclaration = new ImportDeclaration(tsNode);
+            const importDeclaration = new ImportDeclaration(tsNode as TsImportDeclaration);
             const importClauseIdentified = await importDeclaration.identifyImportClause();
             if (importClauseIdentified.isFailure) {
                 return Result.fail(`importDeclaration.identifyImportClause(): ${importClauseIdentified.errorTitle}`, importClauseIdentified.errorDescription!);
@@ -66,35 +66,32 @@ export class ImportDeclaration extends TsNode {
         }
     }
 
-    public static isImportClause: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof ImportClause;
+    public static isImportClause: AstNodeFilter = (child: Node): boolean => {
+        return child instanceof ImportClause;
     }
 
-    public static isImportDeclaration: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof TsImportDeclaration;
+    public static isImportDeclaration: AstNodeFilter = (child: Node): boolean => {
+        return child instanceof TsImportDeclaration;
     }
 
-    private getNamedImports = (): TsNode[] => {
+    private getNamedImports = (): Node[] => {
         const importSpecifiers = this._tsNode.getChildren();
         if (importSpecifiers.length === 0) {
             return [];
         }
 
-        const tsNodes: TsNode[] = [];
+        const tsNodes: Node[] = [];
         for (let importSpecifier of importSpecifiers) {
-            const tsNode = new TsNode(importSpecifier);
-            if (TsNode.isNonImportant(tsNode)) {
+            if (AstNodeTraits.isNonImportant(importSpecifier)) {
                 continue;
-            } else if (TsNode.isString(tsNode)) {
+            } else if (AstNodeTraits.isString(importSpecifier)) {
                 continue;
-            } else if (TsNode.isKeyword(tsNode, ["from", "import"])) {
+            } else if (AstNodeTraits.isKeyword(importSpecifier, ["from", "import"])) {
                 continue;
-            } else if (Identifier.isA(tsNode)) {
+            } else if (Identifier.isA(importSpecifier)) {
                 continue;
             }
-            tsNodes.push(tsNode)
+            tsNodes.push(importSpecifier)
         }
 
         return tsNodes;
@@ -105,9 +102,10 @@ export class ImportDeclaration extends TsNode {
      * @returns {AraLink<string>} Link to the import
      */
     private identifyImportClause = async (): Promise<OkResult> => {
-        const children = this.getChildren( 
+        const children = AstNodeTraits.getChildren(
+            this._tsNode,
             [],
-            [Identifier.isA, TsNode.isNonImportant],
+            [Identifier.isA, AstNodeTraits.isNonImportant],
             ["import", "from"]
         )
         if (children.length === 0) {
@@ -119,13 +117,13 @@ export class ImportDeclaration extends TsNode {
 
         for (let tsNode of children) {
             if (ImportDeclaration.isImportClause(tsNode)) {
-                const stringNodes = tsNode.getChildren([TsNode.isString])
+                const stringNodes = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isString])
                 if (stringNodes.length !== 0) {
                     const importPath = StringTraits.unquote(stringNodes[0].getText());
                     this._importClause = importPath;
                     return OkResult.ok();
                 }
-            } else if (TsNode.isString(tsNode)) {
+            } else if (AstNodeTraits.isString(tsNode)) {
                 const importPath = StringTraits.unquote(tsNode.getText());
                 this._importClause = importPath;
                 return OkResult.ok();
@@ -142,7 +140,7 @@ export class ImportDeclaration extends TsNode {
 
         return OkResult.fail(
             `No import path found`,
-            `The import declaration doesn't have the path in '${this.getText()}' import declaration`
+            `The import declaration doesn't have the path in '${this._tsNode.getText()}' import declaration`
         )
     }
 
@@ -152,11 +150,11 @@ export class ImportDeclaration extends TsNode {
      * @param astImport 
      * @returns 
      */
-    private identifyImportDefaultIdentifier = (): Result<AstNode|undefined> => {
-        let nodeType: AstNodeType = AstNodeType.Object;
-        const children = this.getChildren(
+    private identifyImportDefaultIdentifier = (): Result<CodePiece|undefined> => {
+        let nodeType: CodePieceType = CodePieceType.Object;
+        const children = AstNodeTraits.getChildren(this._tsNode,
             [],
-            [TsNode.isString, TsNode.isNonImportant],
+            [AstNodeTraits.isString, AstNodeTraits.isNonImportant],
             ["import", "from"]
         )
         if (children.length === 0) {
@@ -171,25 +169,25 @@ export class ImportDeclaration extends TsNode {
         for (let i = 0; i < children.length; i++) {
             const tsNode = children[i];
             if (ImportDeclaration.isImportClause(tsNode)) {
-                const identifiers = tsNode.getChildren([Identifier.isA])
+                const identifiers = AstNodeTraits.getChildren(tsNode, [Identifier.isA])
                 if (identifiers.length !== 0) {
                     identifier = identifiers[0].getText()
                     
-                    const typeKeywords = tsNode.getChildren([TsNode.isTypeKeyword])
+                    const typeKeywords = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isTypeKeyword])
                     if (typeKeywords.length > 0) {
-                        nodeType = AstNodeType.Type;
+                        nodeType = CodePieceType.Type;
                     }
                     break;
                 }
             } else if (Identifier.isA(tsNode)) {
                 identifier = tsNode.getText();
                 break;
-            } else if (TsNode.isTypeKeyword(tsNode)) {
-                nodeType = AstNodeType.Type;
+            } else if (AstNodeTraits.isTypeKeyword(tsNode)) {
+                nodeType = CodePieceType.Type;
             } else {
                 const err = Debug.error(
                     `Unsupported child of import declaration to determine the default identifier of import`,
-                    `The ts node '${this.getText()}' has a '${tsNode.getText()}' child that is not import clause`,
+                    `The ts node '${this._tsNode.getText()}' has a '${tsNode.getText()}' child that is not import clause`,
                     tsNode,
                 )
         
@@ -201,7 +199,7 @@ export class ImportDeclaration extends TsNode {
             return Result.ok(undefined)
         }
 
-        const astNode = AstNode.fromTsNode(this);
+        const astNode = CodePiece.fromTsNode(this._tsNode);
         astNode.nodeType = nodeType;
         // astNode.data = this._moduleLink!;   // Entire glob
         // astNode.importPath = this._moduleLink!;
@@ -222,8 +220,8 @@ export class ImportDeclaration extends TsNode {
      * @param importPath 
      * @returns 
      */
-    private identifyNamedImports = (): Result<AstIdentifiers> => {
-        let identifiers: AstIdentifiers = {};
+    private identifyNamedImports = (): Result<CodePieceRecord> => {
+        let identifiers: CodePieceRecord = {};
         // Maybe a component is actually defined outside, so its in the imports?
         const namedImports = this.getNamedImports();
         if (namedImports.length === 0) {
@@ -231,8 +229,8 @@ export class ImportDeclaration extends TsNode {
         }
 
         for (let namedImport of namedImports) {
-            let nodeType = AstNodeType.Object;
-            const importClauseChildren = namedImport.getChildren([], [TsNode.isNonImportant])
+            let nodeType = CodePieceType.Object;
+            const importClauseChildren = AstNodeTraits.getChildren(namedImport, [], [AstNodeTraits.isNonImportant])
             
             // Debug.push(`NamedImport.getIdentifiers()`, {nodeType, moduleLink: this._moduleLink!.toString(), namedImports: importClauseChildren.length.toString() + " elements"});
             const namedIdentifiers = NamedImport.getIdentifiers(nodeType, importClauseChildren);
@@ -255,17 +253,17 @@ export class ImportDeclaration extends TsNode {
      * Import declarations could be default if it's a single literal.
      * 
      * import DefaultName from "string-literla-path"
-     * @returns {AstIdentifiers}
+     * @returns {CodePieceRecord}
     */
-    private getIdentifiers = (): Result<AstIdentifiers> => {
-        let identifiers: AstIdentifiers = {};
+    private getIdentifiers = (): Result<CodePieceRecord> => {
+        let identifiers: CodePieceRecord = {};
 
         // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();
         // Debug.pop();
         if (namedImportIdentifiers.isFailure) {
                 return Result.fail(
-                    `this.identifyNamedImports(tsNode='${this.getText()}', importPath='${this._importClause.toString()}'): ${namedImportIdentifiers.errorTitle}`,
+                    `this.identifyNamedImports(tsNode='${this._tsNode.getText()}', importPath='${this._importClause.toString()}'): ${namedImportIdentifiers.errorTitle}`,
                     namedImportIdentifiers.errorDescription!
                 )
         }
@@ -276,7 +274,7 @@ export class ImportDeclaration extends TsNode {
         
         if (importIdentifier.isFailure) {
             return Result.fail(
-                `this.identifyImportDefaultIdentifier('${this.getText()}'): ${importIdentifier.errorTitle}`,
+                `this.identifyImportDefaultIdentifier('${this._tsNode.getText()}'): ${importIdentifier.errorTitle}`,
                 importIdentifier.errorDescription!
             )
         } else if (importIdentifier.getValue() !== undefined) {

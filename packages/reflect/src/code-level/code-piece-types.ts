@@ -1,6 +1,6 @@
 import { Result, AraLink } from "@ara-web/p-hintjens";
 import { TypeLevel } from "./type-level/index.js";
-import type { TypedData } from "./ast-node.js";
+import type { TypedData } from "./code-piece.js";
 
 export type LiteralType = string | number | boolean;
 
@@ -49,7 +49,7 @@ interface IntersectedUnionInterface extends TypeObjectInterface, UnionTypeInterf
 /**
  * The type declaration literal discovered in the source code represented as this class.
  */
-export class TypeDeclaration implements TypeObjectInterface {
+export class UserTypeDeclaration implements TypeObjectInterface {
     protected _records: Record<string, IdentifiedNodeDataType> = {};
 
     constructor() {}
@@ -121,8 +121,8 @@ export class TypeDeclaration implements TypeObjectInterface {
         return Result.ok(data as object);
     }
 
-    public postDataType = (dataType: IdentifiedNodeDataType | undefined): Result<TypeDeclaration> => {
-        if (!(dataType instanceof TypeDeclaration) &&
+    public postDataType = (dataType: IdentifiedNodeDataType | undefined): Result<UserTypeDeclaration> => {
+        if (!(dataType instanceof UserTypeDeclaration) &&
             dataType !== ValueTypeString.object && 
             typeof dataType !== ValueTypeString.object) {
             return Result.fail(`The data type '${dataType}' not supported`, `Please pass only objects posting into type declaration`);
@@ -145,7 +145,7 @@ export type ValueType = LiteralType |
     Object | 
     EnumMembers | 
     AraLink<any> | 
-    TypeDeclaration |
+    UserTypeDeclaration |
     UnionTypeDeclaration
 ;
 
@@ -211,11 +211,11 @@ export class UnionTypeDeclaration implements UnionTypeInterface {
 }
 
 // Type Declaration, but some parts are also are optional as its an union.
-export class IntersectedUnionType extends TypeDeclaration implements IntersectedUnionInterface {
+export class IntersectedUnionType extends UserTypeDeclaration implements IntersectedUnionInterface {
     protected _unions: UnionTypeDeclaration;
     protected _araLinks: AraLink<string>[];
     
-    constructor(obj?: TypeDeclaration | IntersectedUnionType) {
+    constructor(obj?: UserTypeDeclaration | IntersectedUnionType) {
         super();
         this._unions = new UnionTypeDeclaration();
         this._araLinks = [];
@@ -272,8 +272,8 @@ export class IntersectedUnionType extends TypeDeclaration implements Intersected
         this._unions.putUnion(index, dataType);
     }
 
-    private get typeDeclaration(): TypeDeclaration {
-        const typeDeclaration = new TypeDeclaration();
+    private get typeDeclaration(): UserTypeDeclaration {
+        const typeDeclaration = new UserTypeDeclaration();
         typeDeclaration.post(this._records);
         return typeDeclaration;
     }

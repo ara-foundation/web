@@ -1,46 +1,8 @@
 import { CommentTypeElement, Expression, JSDoc, Node, PropertySignature, StringLiteral, SyntaxList, } from "ts-morph";
-export class TsNode {
+export class AstNodeTraits {
     static GenericNodeLength = 3;
-    _tsNode;
-    constructor(tsNode) {
-        if (tsNode === undefined) {
-            throw new Error(`TSNode recevied undefined instead ts-morph<Node> or TsNode`);
-        }
-        if (tsNode instanceof TsNode) {
-            this._tsNode = tsNode._tsNode;
-        }
-        else {
-            this._tsNode = tsNode;
-        }
-    }
-    getText = () => {
-        return this._tsNode.getText();
-    };
-    getNode() {
-        return this._tsNode;
-    }
-    /**
-     * If this TsNode has a sibling in the Ast Tree, then return it
-     */
-    getNextSibling() {
-        const node = this._tsNode.getNextSibling();
-        return node === undefined ? undefined : new TsNode(node);
-    }
-    getPreviousSibling() {
-        const node = this._tsNode.getPreviousSibling();
-        return node === undefined ? undefined : new TsNode(node);
-    }
-    isChildExist(index) {
-        if (index < 0) {
-            return false;
-        }
-        const childCount = this._tsNode.getChildCount();
-        return index + 1 <= childCount;
-    }
-    getChild(index) {
-        const child = this._tsNode.getChildAtIndex(index);
-        const node = new TsNode(child);
-        return node;
+    static isChildExist(tsNode, index) {
+        return (index >= 0 && index < tsNode.getChildCount());
     }
     /**
      * Returns the children.
@@ -48,14 +10,14 @@ export class TsNode {
      * @param skipKeywords
      * @returns
      */
-    getChildren = (includeFilters, skipFilters, skipKeywords) => {
+    static getChildren = (tsNode, includeFilters, skipFilters, skipKeywords) => {
         const nodes = [];
-        const children = this._tsNode.getChildren();
+        const children = tsNode.getChildren();
         for (let child of children) {
             if (includeFilters !== undefined) {
                 let unfiltered = false;
                 for (let filter of includeFilters) {
-                    if (!filter(new TsNode(child))) {
+                    if (!filter(child)) {
                         unfiltered = true;
                         break;
                     }
@@ -67,7 +29,7 @@ export class TsNode {
             if (skipFilters !== undefined) {
                 let filtered = false;
                 for (let filter of skipFilters) {
-                    if (filter(new TsNode(child))) {
+                    if (filter(child)) {
                         filtered = true;
                         break;
                     }
@@ -76,13 +38,12 @@ export class TsNode {
                     continue;
                 }
             }
-            const node = new TsNode(child);
             if (skipKeywords !== undefined) {
-                if (TsNode.isKeyword(node, skipKeywords)) {
+                if (AstNodeTraits.isKeyword(child, skipKeywords)) {
                     continue;
                 }
             }
-            nodes.push(node);
+            nodes.push(child);
         }
         return nodes;
     };
@@ -93,13 +54,13 @@ export class TsNode {
      * @returns {boolean}
      */
     static isNonImportant = (tsNode) => {
-        if (tsNode._tsNode instanceof JSDoc) {
+        if (tsNode instanceof JSDoc) {
             return true;
         }
-        else if (tsNode._tsNode instanceof CommentTypeElement) {
+        else if (tsNode instanceof CommentTypeElement) {
             return true;
         }
-        else if (tsNode._tsNode.getText() === ";") {
+        else if (tsNode.getText() === ";") {
             return true;
         }
         return false;
@@ -114,30 +75,30 @@ export class TsNode {
         if (typeof identifier === "string") {
             return tsNode.getText() === identifier;
         }
-        return identifier.includes(tsNode._tsNode.getText());
+        return identifier.includes(tsNode.getText());
     };
     static isExportKeyword = (tsNode) => {
-        return TsNode.isKeyword(tsNode, "export");
+        return this.isKeyword(tsNode, "export");
     };
     static isConstKeyword = (tsNode) => {
-        return TsNode.isKeyword(tsNode, "const");
+        return this.isKeyword(tsNode, "const");
     };
     static isTypeKeyword = (tsNode) => {
-        return TsNode.isKeyword(tsNode, "type");
+        return this.isKeyword(tsNode, "type");
     };
     static isAsKeyword = (tsNode) => {
-        return TsNode.isKeyword(tsNode, "as");
+        return this.isKeyword(tsNode, "as");
     };
     static isString = (tsNode) => {
-        return tsNode._tsNode instanceof StringLiteral;
+        return tsNode instanceof StringLiteral;
     };
     static isExpression = (child) => {
-        return child._tsNode instanceof Expression;
+        return child instanceof Expression;
     };
     static isSyntaxList = (child) => {
-        return child._tsNode instanceof SyntaxList;
+        return child instanceof SyntaxList;
     };
     static isPropertySignature = (child) => {
-        return child._tsNode instanceof PropertySignature;
+        return child instanceof PropertySignature;
     };
 }

@@ -1,19 +1,19 @@
 import { AraLink, Debug } from "@ara-web/p-hintjens";
 import { 
-    AstNodeType, 
-    AstNode, 
-    type AstIdentifiers, 
-    type AstNodeValidator 
+    CodePieceType, 
+    CodePiece, 
+    type CodePieceRecord, 
+    type CodePieceFilter 
 } from "./code-level/index.js";
 
 export abstract class AstIdentifierMemory {
-    private _identifiers: AstIdentifiers = {};
+    private _identifiers: CodePieceRecord = {};
 
     constructor() {
         this._identifiers = {};
     }
 
-    public addIdentifiers = (identifiers: AstIdentifiers) => {
+    public addIdentifiers = (identifiers: CodePieceRecord) => {
         this._identifiers = {...this._identifiers, ...identifiers}
     }
 
@@ -32,7 +32,7 @@ export abstract class AstIdentifierMemory {
      Because this method will fetch the referenced ara link.
      Otherwise you have to check that this identifier is not an alias of another identifier.
     */
-    public identifierByName = (identifier: string): AstNode|undefined => {
+    public identifierByName = (identifier: string): CodePiece|undefined => {
         if (this._identifiers[identifier] === undefined) {
             return undefined;
         }
@@ -44,7 +44,7 @@ export abstract class AstIdentifierMemory {
         return this._identifiers[identifier];
     }
 
-    public identifierByType = (identifier: string): AstNode|undefined => {
+    public identifierByType = (identifier: string): CodePiece|undefined => {
         let node = this.identifierByName(identifier);
         if (node === undefined) {
             return node;
@@ -57,8 +57,8 @@ export abstract class AstIdentifierMemory {
         return undefined;
     }
 
-    public getIdentifiers = (filters?: AstNodeValidator[], skippedIdentifiers?: string[]): AstIdentifiers => {
-        const identifiers: AstIdentifiers = {};
+    public getIdentifiers = (filters?: CodePieceFilter[], skippedIdentifiers?: string[]): CodePieceRecord => {
+        const identifiers: CodePieceRecord = {};
         const identifierKeys = Object.keys(this._identifiers);
 
         for (let _identifier of identifierKeys) {
@@ -95,8 +95,8 @@ export abstract class AstIdentifierMemory {
         return identifiers;
     }
 
-    public identifiersByType = (astNode: AstNodeType): AstNode[] => {
-        const identifiers: AstNode[] = []
+    public identifiersByType = (astNode: CodePieceType): CodePiece[] => {
+        const identifiers: CodePiece[] = []
         const identifierKeys = Object.keys(this._identifiers);
 
         for (let _identifier of identifierKeys) {

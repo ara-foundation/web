@@ -11,11 +11,25 @@ Possible use case:
 # Module Meta data
 To add *title* and *description*
 
-# Roadmap
-* **BUG**: `SubComponent.astro` with the `const {id, test} = Astro.props` doesn't work.
-The Reflect's variable level links the `id` and `test` to `id` and `test` not to `Astro.props.id` 
-or `Astro.props.test`.
+## Module Parts (For Astro Extension)
+Module data added into Reflect internally converted into module parts
+that differentiate various parts, primarily the scripting part, and
+Web elements.
 
+Reflect will first create the `Code` from the module's scripting part
+and identify all declared values, all imported modules and update the
+module's memory with the result of script.
+
+After the code, Reflect will parse the module as the JSON using the `UI-level` modules.
+For example, in astro, it first converts all modules into `Page`.
+Then pages are converting `Component`, while component itself 
+converts the `Attribute`.
+
+At the end, when all data is pre-defined, the module will make sure
+to lint the data between modules.
+
+# Roadmap
+* Add REST Api to walk in the page
 * Remove `PageLevel.walk` after installing REST operator.
 
 Components

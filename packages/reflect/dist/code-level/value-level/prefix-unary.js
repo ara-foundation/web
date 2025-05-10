@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, PrefixUnaryExpression } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { ValueTypeString, TsNode, AstNodeContext, ValueLevel } from "../index.js";
+import { ValueTypeString, AstNodeContext, ValueLevel, AstNodeTraits } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
@@ -102,25 +102,24 @@ let PrefixUnary = (() => {
             }
             return Result.fail(`The '${dataType}' is not expected`, `Prefix for '${prefixType}' expected, pass correct code`);
         };
-        static isPrefixUnary = (child) => {
-            const node = child.getNode();
+        static isPrefixUnary = (node) => {
             return node instanceof PrefixUnaryExpression;
         };
-        static isA = (child) => {
-            return _classThis.isPrefixUnary(child);
+        static isA = (node) => {
+            return _classThis.isPrefixUnary(node);
         };
         identifyValue = async (tsNode, _, astNodeContext) => {
             if (!PrefixUnary.isA(tsNode)) {
                 return Result.fail(`The TS Node is not a prefix unary`, `Please pass the correct value instead '${tsNode.getText()}'`);
             }
-            if (!tsNode.isChildExist(0)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 0)) {
                 return Result.fail(`Prefix is missing`, `Please pass the first element of property assignment`);
             }
-            if (!tsNode.isChildExist(1)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 1)) {
                 return Result.fail(`Prefixed node is missing`, `Please pass the second element of property assignment`);
             }
-            const prefix = tsNode.getChild(0);
-            const value = tsNode.getChild(1);
+            const prefix = tsNode.getChildAtIndex(0);
+            const value = tsNode.getChildAtIndex(1);
             if (!PrefixUnary.isSupportedPrefix(prefix)) {
                 return Result.fail(`The '${prefix.getText()}' not supported prefix`, `Please update PrefixUnary.identifyValue() to support new prefix type`);
             }

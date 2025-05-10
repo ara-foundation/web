@@ -1,5 +1,5 @@
 import { Result, AraLink } from "@ara-web/p-hintjens";
-import type { TypedData } from "./ast-node.js";
+import type { TypedData } from "./code-piece.js";
 export type LiteralType = string | number | boolean;
 export type EnumMembers = {
     [key: string]: string | number;
@@ -41,7 +41,7 @@ interface IntersectedUnionInterface extends TypeObjectInterface, UnionTypeInterf
 /**
  * The type declaration literal discovered in the source code represented as this class.
  */
-export declare class TypeDeclaration implements TypeObjectInterface {
+export declare class UserTypeDeclaration implements TypeObjectInterface {
     protected _records: Record<string, IdentifiedNodeDataType>;
     constructor();
     putOrPost(record: Record<string, IdentifiedNodeDataType>): void;
@@ -52,9 +52,9 @@ export declare class TypeDeclaration implements TypeObjectInterface {
     get(key: string): IdentifiedNodeDataType | undefined;
     put(record: Record<string, IdentifiedNodeDataType>): boolean;
     identifyData: (data: any) => Result<object>;
-    postDataType: (dataType: IdentifiedNodeDataType | undefined) => Result<TypeDeclaration>;
+    postDataType: (dataType: IdentifiedNodeDataType | undefined) => Result<UserTypeDeclaration>;
 }
-export type ValueType = LiteralType | Array<any> | Object | EnumMembers | AraLink<any> | TypeDeclaration | UnionTypeDeclaration;
+export type ValueType = LiteralType | Array<any> | Object | EnumMembers | AraLink<any> | UserTypeDeclaration | UnionTypeDeclaration;
 export type IdentifiedNodeDataType = ValueTypeString | ValueType;
 export declare class UnionTypeDeclaration implements UnionTypeInterface {
     protected _values: IdentifiedNodeDataType[];
@@ -68,10 +68,10 @@ export declare class UnionTypeDeclaration implements UnionTypeInterface {
     putUnion(index: number, dataType: IdentifiedNodeDataType): void;
     identifyData: (data: any) => Result<TypedData>;
 }
-export declare class IntersectedUnionType extends TypeDeclaration implements IntersectedUnionInterface {
+export declare class IntersectedUnionType extends UserTypeDeclaration implements IntersectedUnionInterface {
     protected _unions: UnionTypeDeclaration;
     protected _araLinks: AraLink<string>[];
-    constructor(obj?: TypeDeclaration | IntersectedUnionType);
+    constructor(obj?: UserTypeDeclaration | IntersectedUnionType);
     get araLinks(): AraLink<string>[];
     postAraLink(araLink: AraLink<string>): void;
     get unions(): UnionTypeDeclaration;

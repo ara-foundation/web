@@ -2,15 +2,16 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { TypeAliasDeclaration } from "ts-morph";
+import { Node, TypeAliasDeclaration } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { AstNode, TsNode, type TsNodeValidator } from "../index.js";
-export declare class TypeDeclaration extends TsNode {
+import { CodePiece, type AstNodeFilter } from "../index.js";
+export declare class TypeDeclaration {
     protected _tsNode: TypeAliasDeclaration;
     private constructor();
-    static fromTsNode(tsNode: TsNode): Result<TypeDeclaration>;
-    static isTypeDeclaration: (child: TsNode) => boolean;
-    static isTypeParameterDeclaration: TsNodeValidator;
+    static fromTsNode(tsNode: Node): Result<TypeDeclaration>;
+    getText(): string;
+    static isTypeDeclaration: (child: Node) => boolean;
+    static isTypeParameterDeclaration: AstNodeFilter;
     private identifyGenericDeclaration;
     /**
      * Returns the Generic declaration defined as SyntaxList after the "<" opening
@@ -18,12 +19,12 @@ export declare class TypeDeclaration extends TsNode {
      * @param tsNode
      * @returns
      */
-    static getGenericNodesAfterOpeningClause: (openingClause: TsNode) => TsNode[];
+    static getGenericNodesAfterOpeningClause: (openingClause: Node) => Node[];
     /**
          *
          * @param node Is the given node is the opening the generic type declarations
          * @returns
      */
-    static isGenericOpeningClause: (openingClause: TsNode) => boolean;
-    getAstNode: () => Promise<Result<AstNode>>;
+    static isGenericOpeningClause: (openingClause: Node) => boolean;
+    getAstNode: () => Promise<Result<CodePiece>>;
 }

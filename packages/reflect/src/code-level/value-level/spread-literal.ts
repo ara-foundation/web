@@ -1,12 +1,12 @@
 import { Node, SpreadAssignment } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    type AstNodeFilter,
     type TypedData,
     AstNodeContext,
     ValueLevel,
-    type ValueLevelInterface
+    type ValueLevelInterface,
+    AstNodeTraits
 } from "../index.js";
 
 /**
@@ -18,16 +18,15 @@ export class SpreadLiteral {
         return "object-level/SpreadLiteral"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof SpreadAssignment;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(1)) {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 1)) {
             return Result.fail(`Spread assignment must have the second element`, `Please pass the second element`)
         }
-        const spreadSource = tsNode.getChild(1)!;
+        const spreadSource = tsNode.getChildAtIndex(1)!;
         const identified = await ValueLevel.identifyValue(spreadSource, typedData!, astNodeContext!);
         if (identified.isFailure) {
             return Result.fail(

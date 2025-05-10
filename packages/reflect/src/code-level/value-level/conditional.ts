@@ -1,8 +1,8 @@
 import { ConditionalExpression, Node } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    AstNodeTraits, 
+    type AstNodeFilter,
     type TypedData,
     AstNodeContext,
     ValueLevel,
@@ -19,21 +19,20 @@ export class Conditional {
         return "Conditional"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof ConditionalExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(4)) {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 4)) {
             return Result.fail(
                 `The ts node must have four children at least`,
                 `Parenthesized expression must have four children`,
             )    
         }
-        const condition = tsNode.getChild(0)!
-        const trueExpression = tsNode.getChild(2)!;
-        const falseExpression = tsNode.getChild(4)!;
+        const condition = tsNode.getChildAtIndex(0)!
+        const trueExpression = tsNode.getChildAtIndex(2)!;
+        const falseExpression = tsNode.getChildAtIndex(4)!;
                 
         // Debug.push(`this.identifyValue('${condition.getText()}')`)
         const conditionResult = await ValueLevel.identifyValue(condition, {dataType: ValueTypeString.boolean}, astNodeContext!);

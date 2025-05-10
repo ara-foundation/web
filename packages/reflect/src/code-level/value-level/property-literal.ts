@@ -3,13 +3,13 @@ import { ObjectTraits, Result, Debug } from "@ara-web/p-hintjens";
 import  { 
     type TypedData,
     ValueTypeString,
-    TsNode, 
-    type TsNodeValidator,
+    type AstNodeFilter,
     AstNodeContext,
     ValueLevel,
     Identifier,
     Literal,
-    type ValueLevelInterface
+    type ValueLevelInterface,
+    AstNodeTraits
 } from "../index.js";
 
 /**
@@ -21,20 +21,19 @@ export class PropertyLiteral {
         return "object-level/PropertyLiteral"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof PropertyAssignment;
     }
 
-    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(0)) {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Property assignment has no first value`, `Please pass the first element of property assignment`)
         }
-        if (!tsNode.isChildExist(2)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(`Property assignment has no third value`, `Please pass the third element of property assignment`)
         }
-        const property = tsNode.getChild(0)!;
-        const value = tsNode.getChild(2)!;
+        const property = tsNode.getChildAtIndex(0)!;
+        const value = tsNode.getChildAtIndex(2)!;
 
         if (!Identifier.isA(property) && !Literal.isStringLiteral(property)) {
             const err = Debug.error(`The property '${property.getText()}' is not identifier nor a string literal`, `Ara Web supports identifiers as the property for now, please update it.`, property)

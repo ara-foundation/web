@@ -2,23 +2,22 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { TypeReferenceNode } from "ts-morph";
+import { TypeReferenceNode, Node } from "ts-morph";
 import { AraLink, Result } from "@ara-web/p-hintjens";
-import { TsNode } from "../index.js";
-export declare class TypeRef extends TsNode {
+export declare class TypeRef {
     protected _tsNode: TypeReferenceNode;
     private constructor();
-    static isTypeRef: (child: TsNode) => boolean;
-    static fromTsNode(tsNode: TsNode): Result<TypeRef>;
+    static isTypeRef: (node: Node) => boolean;
+    static fromTsNode(tsNode: Node): Result<TypeRef>;
     /**
      * Checks does the given node has '<SyntaxList>' generic declaration syntax
-     * @requires TsNode.node is TypeReferenceNode
+     * @requires Node as TypeReferenceNode
      * @param tsNode
      * @returns
      */
     private isGenericRefType;
     /**
-     * Returns the syntax list as TsNode that is between '<' and '>' in Typescript
+     * Returns the syntax list as Node that is between '<' and '>' in Typescript
      * @param typeRefNode
      * @requires the tsNode.node must be TypeReferenceNode
      * @returns

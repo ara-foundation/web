@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
-import { ValueTypeString } from "../src/code-level/ast-node-data.js";
+import { ValueTypeString } from "../src/code-level/code-piece-types.js";
 import { ProjectMemory } from "../src/project-memory.js";
 
 test('Identify literal value', async () => {

@@ -2,9 +2,9 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
+import { Node, ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
 import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
-import { Identifier, Literal, TsNode, TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../index.js";
+import { Identifier, Literal, AstNodeTraits, UserTypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../index.js";
 import { TypeRef } from "./type-ref.js";
 /**
  * TypeValueTraits parses the type's parameters.
@@ -22,32 +22,26 @@ export class TypeValueTraits {
             return false;
         }
         return data instanceof IntersectedUnionType || data instanceof UnionTypeDeclaration ||
-            data instanceof TypeDeclaration;
+            data instanceof UserTypeDeclaration;
         // return ["object"].includes(typeof data)
     };
-    static isTypeLiteral = (child) => {
-        const node = child.getNode();
+    static isTypeLiteral = (node) => {
         return node instanceof TypeLiteralNode;
     };
-    static isArrayTypeDeclaration = (child) => {
-        const node = child.getNode();
+    static isArrayTypeDeclaration = (node) => {
         return node instanceof ArrayTypeNode;
     };
-    static isUnionType = (child) => {
-        const node = child.getNode();
+    static isUnionType = (node) => {
         return node instanceof UnionTypeNode;
     };
     // The node is a literal value
-    static isLiteralType = (child) => {
-        const node = child.getNode();
+    static isLiteralType = (node) => {
         return node instanceof LiteralTypeNode;
     };
-    static isParenthesizedType = (child) => {
-        const node = child.getNode();
+    static isParenthesizedType = (node) => {
         return node instanceof ParenthesizedTypeNode;
     };
-    static isIntersectionType = (child) => {
-        const node = child.getNode();
+    static isIntersectionType = (node) => {
         return node instanceof IntersectionTypeNode;
     };
     /**
@@ -62,11 +56,11 @@ export class TypeValueTraits {
         if (!TypeValueTraits.isArrayTypeDeclaration(tsNode)) {
             return Result.fail(`The variable '${tsNode.getText()}' type is expected to be Array Type Declaration.`, `Ara Web supports One Dimensional array type declaration only, update identifyArrayType()`);
         }
-        if (!tsNode.isChildExist(2)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(`The variable '${tsNode.getText()}' type is doesn't have 3 elements.`, `Ara supports One Dimensional array type declaration only, update identifyArrayType()`);
         }
         // Debug.push(`this.identifyTypeValue()`, {identifier: '_array_index', tsNode: tsNode.getText()});
-        const arrayType = await this.identifyTypeValue(tsNode.getChild(0));
+        const arrayType = await this.identifyTypeValue(tsNode.getChildAtIndex(0));
         // Debug.pop()
         if (arrayType.isFailure) {
             return Result.fail(`identifyTypeValue(tsNode: '${tsNode.getText()}'): ${arrayType.errorTitle}`, arrayType.errorDescription);
@@ -74,10 +68,10 @@ export class TypeValueTraits {
         return Result.ok([arrayType.getValue()]);
     };
     static identifyExpression = (tsNode) => {
-        if (!TsNode.isExpression(tsNode)) {
+        if (!AstNodeTraits.isExpression(tsNode)) {
             return Result.fail(`identifyExpression requires Expression, but '${tsNode.getText()}' isn't`, `Update the identifyExpression()`);
         }
-        const expression = tsNode.getNode();
+        const expression = tsNode;
         const expCount = expression.getChildCount();
         if (expCount !== 0) {
             return Result.fail(`The Ara Web works with no child expression, your '${expression.getText()}' expression has '${expCount}' children`, `Update the identifyExpression()`);
@@ -107,7 +101,7 @@ export class TypeValueTraits {
         if (!this.isLiteralType(tsNode)) {
             return Result.fail(`this.isLiteralType('${tsNode.getText()}'): false`, `The TS Node is not a literal type, please pass the correct data, or update this.isLiteralType() method`);
         }
-        const children = tsNode.getChildren([], [TsNode.isNonImportant]);
+        const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant]);
         if (children.length !== 1) {
             return Result.fail(`tsNode.getChildren().length: to identify literal types the LiteralTypeNode must have one child`, `Please update identifyLiteralType() to support '${tsNode.getText()}' with '${children.length}' elements`);
         }
@@ -122,7 +116,7 @@ export class TypeValueTraits {
         if (!this.isParenthesizedType(tsNode)) {
             return Result.fail(`this.isParenthesizedType('${tsNode.getText()}'): false`, `The TS Node is not a parenthesized type, please pass the correct data, or update this.isParenthesizedType() method`);
         }
-        const children = tsNode.getChildren([], [TsNode.isNonImportant], ["(", ")"]);
+        const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant], ["(", ")"]);
         if (children.length !== 1) {
             return Result.fail(`tsNode.getChildren().length: to identify parenthesized types the ParenthesizedTypeNode must have one child`, `Please update identifyParenthesizedType() to support '${tsNode.getText()}' with '${children.length}' elements`);
         }
@@ -138,11 +132,11 @@ export class TypeValueTraits {
             return Result.fail(`this.isIntersectionType('${tsNode.getText()}'): false`, `The TS Node is not a parenthesized type, please pass the correct data, or update this.isIntersectionType() method`);
         }
         let object = new IntersectedUnionType();
-        const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+        const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail(`tsNode.getChildren().length: to identify parenthesized types the ParenthesizedTypeNode must have one child`, `Please update identifyParenthesizedType() to support '${tsNode.getText()}' with '${syntaxLists.length}' elements`);
         }
-        const children = syntaxLists[0].getChildren([], [TsNode.isNonImportant], ["&"]);
+        const children = AstNodeTraits.getChildren(syntaxLists[0], [], [AstNodeTraits.isNonImportant], ["&"]);
         for (let intersectedIndex = 0; intersectedIndex < children.length; intersectedIndex++) {
             const intersectionChild = children[intersectedIndex];
             // Debug.push(`this.identifyTypeValue(tsNode: '${intersectionChild.getText()}')`)
@@ -169,7 +163,7 @@ export class TypeValueTraits {
                 if (identifiedValue.getValue() instanceof UnionTypeDeclaration) {
                     object.putOrPostUnion(identifiedValue.getValue().union);
                 }
-                else if (identifiedValue.getValue() instanceof TypeDeclaration) {
+                else if (identifiedValue.getValue() instanceof UserTypeDeclaration) {
                     object.putOrPost(identifiedValue.getValue().records);
                 }
                 else if (identifiedValue.getValue() instanceof AraLink) {
@@ -188,7 +182,7 @@ export class TypeValueTraits {
         // Expressions such as type keywords 'string', 'number', etc
         // Hold only one key
         // returns ValueTypeString
-        if (TsNode.isExpression(tsNode)) {
+        if (AstNodeTraits.isExpression(tsNode)) {
             const identifedExpression = this.identifyExpression(tsNode);
             if (identifedExpression.isFailure) {
                 return Result.fail(`this.identifyExpression(expression: '${tsNode.getText()}'): ${identifedExpression.errorTitle}`, identifedExpression.errorDescription);
@@ -273,20 +267,20 @@ export class TypeValueTraits {
         if (!this.isTypeLiteral(tsNode)) {
             return Result.fail(`The node is not a type literal`, `Please pass the correct data to identifyTypeLiteral(), or update Ara Web to support '${tsNode.getText()}'`);
         }
-        if (!tsNode.isChildExist(1)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 1)) {
             return Result.fail("The second element of type literal body is missing", `Please update Reflect to support '${tsNode.getText()}' expression as type data`);
         }
-        const syntaxList = tsNode.getChild(1);
-        if (!TsNode.isSyntaxList(syntaxList)) {
+        const syntaxList = tsNode.getChildAtIndex(1);
+        if (!AstNodeTraits.isSyntaxList(syntaxList)) {
             return Result.fail("The second element of type literal body not a syntax list", `Please update Reflect to support '${tsNode.getText()}' expression as type data`);
         }
         // Working with the type literal
-        let typeDeclaration = new TypeDeclaration();
-        const typeLiteralSyntaxList = syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+        let typeDeclaration = new UserTypeDeclaration();
+        const typeLiteralSyntaxList = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
         const typeLiteralNodesCount = typeLiteralSyntaxList.length;
         for (let typeLiteralIndex = 0; typeLiteralIndex < typeLiteralNodesCount; typeLiteralIndex++) {
             const typeLiteralNode = typeLiteralSyntaxList[typeLiteralIndex];
-            if (!(TsNode.isPropertySignature(typeLiteralNode))) {
+            if (!(AstNodeTraits.isPropertySignature(typeLiteralNode))) {
                 const err = Debug.error(`The type literal node expects the property signature`, `The '${typeLiteralNode.getText()}' is not a property signature, update the identifyTypeLiteral()`, typeLiteralNode);
                 return Result.fail(err);
             }
@@ -307,11 +301,11 @@ export class TypeValueTraits {
             const err = Debug.error(`this.isUnionType(tsNode: '${tsNode.getText()}'): Not valid`, `Please pass the correct data to identifyUnionType(), perhaps fix isUnionType(), or update Ara Web to support '${tsNode.getText()}'`, tsNode);
             return Result.fail(err);
         }
-        const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+        const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail(`Union type '${tsNode.getText()}' expected to have a syntax list child`, `Syntax list not found, please pass the correct union type`);
         }
-        const children = syntaxLists[0].getChildren([], [TsNode.isNonImportant], ["|"]);
+        const children = AstNodeTraits.getChildren(syntaxLists[0], [], [AstNodeTraits.isNonImportant], ["|"]);
         // Working with the type literal
         let typeDeclaration = new UnionTypeDeclaration();
         for (let unionIndex = 0; unionIndex < children.length; unionIndex++) {
@@ -327,20 +321,20 @@ export class TypeValueTraits {
         return Result.ok(typeDeclaration);
     };
     static propertySignatureToTypeDeclaration = async (tsNode) => {
-        if (!TsNode.isPropertySignature(tsNode)) {
+        if (!AstNodeTraits.isPropertySignature(tsNode)) {
             return Result.fail(`The node is not a property signature`, `Please pass the correct data to propertySignatureToTypeDeclaration(), or update Ara Web to support '${tsNode.getText()}'`);
         }
-        if (!tsNode.isChildExist(0)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`The property signature is missing the first child`, `Please pass the valid data to property signature to type declaration`);
         }
-        const typeDeclaration = new TypeDeclaration();
-        const propertySignatureIdentifier = tsNode.getChild(0);
+        const typeDeclaration = new UserTypeDeclaration();
+        const propertySignatureIdentifier = tsNode.getChildAtIndex(0);
         if (!Identifier.isA(propertySignatureIdentifier)) {
             const err = Debug.error(`The '${tsNode.getText()}' first child expected to be an Identifier`, `Ara Web doesn't support the '${propertySignatureIdentifier.getText()}', update the propertySignatureToTypeDeclaration()`, propertySignatureIdentifier);
             return Result.fail(err);
         }
         const propertyIdentifier = propertySignatureIdentifier.getText();
-        const propertySignatureChildren = tsNode.getChildren([], [TsNode.isNonImportant, Identifier.isA], [":", ",", "?"] // ? at the end of the property indicates it's optional.
+        const propertySignatureChildren = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant, Identifier.isA], [":", ",", "?"] // ? at the end of the property indicates it's optional.
         );
         const propertySignatureCount = propertySignatureChildren.length;
         for (let propertySignatureIndex = 0; propertySignatureIndex < propertySignatureCount; propertySignatureIndex++) {

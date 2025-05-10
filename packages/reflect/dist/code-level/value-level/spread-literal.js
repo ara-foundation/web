@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, SpreadAssignment } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { TsNode, AstNodeContext, ValueLevel } from "../index.js";
+import { AstNodeContext, ValueLevel, AstNodeTraits } from "../index.js";
 /**
  * Property assignment such as {...obj} of the object literals
  */
@@ -54,15 +54,14 @@ let SpreadLiteral = (() => {
         static get name() {
             return "object-level/SpreadLiteral";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof SpreadAssignment;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            if (!tsNode.isChildExist(1)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 1)) {
                 return Result.fail(`Spread assignment must have the second element`, `Please pass the second element`);
             }
-            const spreadSource = tsNode.getChild(1);
+            const spreadSource = tsNode.getChildAtIndex(1);
             const identified = await ValueLevel.identifyValue(spreadSource, typedData, astNodeContext);
             if (identified.isFailure) {
                 return Result.fail(`ValueLevel.identifyValue('${spreadSource.getText()}'): ${identified.errorTitle}`, identified.errorDescription);

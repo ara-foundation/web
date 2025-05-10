@@ -1,8 +1,9 @@
 /**
  * Handles the AST Node's values
  */
+import { Node } from "ts-morph";
 import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
-import { ValueTypeString, TsNode, AstNodeType, AstNode, AstNodeContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
+import { ValueTypeString, CodePieceType, CodePiece, AstNodeContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
 import { FunctionCall } from "./function-call.js";
 import { ObjectLiteral } from "./object-literal.js";
 import { PropertyLiteral } from "./property-literal.js";
@@ -227,7 +228,7 @@ export class ValueLevel {
             if (dataType === undefined) {
                 return Result.fail(`Data type '${dataTypeLink.toString()}' not found`, `Add the type into AstNodeContext`);
             }
-            else if (dataType.nodeType !== AstNodeType.Type) {
+            else if (dataType.nodeType !== CodePieceType.Type) {
                 return Result.fail(`Data type is not a type`, `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`);
             }
             if (dataTypeLink.isPropertyExist(TypeLevel.GENERIC_VALUES_LINK_PROPERTY)) {

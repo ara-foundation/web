@@ -1,30 +1,30 @@
 import  { type Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
-import { AstNode, AstNodeType, type AstIdentifiers } from "../src/code-level/ast-node.js";
+import { CodePiece, CodePieceType, type CodePieceRecord } from "../src/code-level/code-piece.js";
 import { expect } from "vitest";
-import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/ast-node-data.js";
-import { AstNodeContext } from "../src/code-level/ast-node-context.js";
+import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/code-piece-types.js";
+import { CodePieceContext } from "../src/code-level/code-piece-context.js";
 import { ProjectMemory } from "../src/project-memory.js";
 import { ModuleMemory } from "../src/module-memory.js";
 import { ExtensionInterface, ImportedRecords, MemoryOperations, SingleRecord } from "../src/extension-interface.js";
 import { ModuleCategory } from "../src/reflect-nodejs-ext/index.js";
 import { FilePath } from "../src/module.js";
 
-export type AstNodeProperties = Pick<AstNode, "constant" | "public">
+export type AstNodeProperties = Pick<CodePiece, "constant" | "public">
 
-export const expectAstNodeResult = (result: Result<AstIdentifiers>, identifier: string|string[]): void => {
+export const expectAstNodeResult = (result: Result<CodePieceRecord>, identifier: string|string[]): void => {
     expect(result.isSuccess).toBe(true);
     if (Array.isArray(identifier)) {
       for (let i of identifier) {
-        expect(result.getValue()[i]).toBeInstanceOf(AstNode);
+        expect(result.getValue()[i]).toBeInstanceOf(CodePiece);
       }
     } else {
-      expect(result.getValue()[identifier]).toBeInstanceOf(AstNode);
+      expect(result.getValue()[identifier]).toBeInstanceOf(CodePiece);
     }
 }
   
-export const expectValidTypeNode = <DATA_TYPE>(astNode: AstNode, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType): void => {
+export const expectValidTypeNode = <DATA_TYPE>(astNode: CodePiece, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType): void => {
     expect(astNode.identifier).toEqual(identfier)
-    expect(astNode.nodeType).toEqual(AstNodeType.Type)
+    expect(astNode.nodeType).toEqual(CodePieceType.Type)
     if (typeof data === "string") {
       expect(astNode.data).toBe(data)
     } else if (data === undefined) {
@@ -40,9 +40,9 @@ export const expectValidTypeNode = <DATA_TYPE>(astNode: AstNode, identfier: stri
     }
 }
 
-export const expectValidVariableNode = (astNode: AstNode, identfier: string, properties: AstNodeProperties, dataType?: IdentifiedNodeDataType): void => {
+export const expectValidVariableNode = (astNode: CodePiece, identfier: string, properties: AstNodeProperties, dataType?: IdentifiedNodeDataType): void => {
     expect(astNode.identifier).toEqual(identfier)
-    expect(astNode.nodeType).toEqual(AstNodeType.Variable)
+    expect(astNode.nodeType).toEqual(CodePieceType.Variable)
     if (astNode.data !== undefined) {
       expect(astNode.data).toBeInstanceOf(AraLink);
     }
@@ -63,13 +63,13 @@ export const expectValidVariableNode = (astNode: AstNode, identfier: string, pro
     }
 }
 
-export const getEmptyContext = (identifers?: AstIdentifiers): AstNodeContext => {
+export const getEmptyContext = (identifers?: CodePieceRecord): CodePieceContext => {
   const projectMemory = new ProjectMemory()
   if (identifers === undefined) {
     identifers = {};
   }
 
-  const context = new AstNodeContext([], identifers, projectMemory);
+  const context = new CodePieceContext([], identifers, projectMemory);
 
   return context;
 }

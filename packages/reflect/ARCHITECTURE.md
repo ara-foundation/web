@@ -4,7 +4,7 @@ The primary reflection is exposed through `Reflect` class.
 To reflect your app, create an instance of `Reflect` with the necessary setup. Register the modules that it has access to. Then use the reflect by calling `reflect.get()` or `reflect.put()` etc.
 
 ## Structure between Reflect, Ara Web and Ara.
-Reflect package is based on `SDS` architecture modelling. SDS architecture allowed us to create our app as a series of plugins and middlewares. 
+Reflect package is based on `SDS` architectural rules. SDS architectural rules allowed us to create our app as a series of plugins and middlewares. 
 For more info on how to
 create your Reflect extensions or modifiers check the
 [Reflect SDS](./REFLECT-SDS.md).

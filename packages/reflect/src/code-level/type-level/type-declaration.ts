@@ -10,53 +10,52 @@ import {
 import { Result, Debug, StringTraits } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString, 
-    AstNode, 
-    AstNodeType, 
-    TsNode, 
-    type TsNodeValidator,
+    CodePiece, 
+    CodePieceType, 
+    AstNodeTraits, 
+    type AstNodeFilter,
     Identifier,
 } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 
-export class TypeDeclaration extends TsNode {
+export class TypeDeclaration {
     protected _tsNode: TypeAliasDeclaration;
     
-    private constructor (tsNode: TsNode) {
-        super(tsNode);
-
-        this._tsNode = tsNode.getNode<TypeAliasDeclaration>()!;
+    private constructor (tsNode: TypeAliasDeclaration) {
+        this._tsNode = tsNode;
     }
 
-    public static fromTsNode(tsNode: TsNode): Result<TypeDeclaration> {
+    public static fromTsNode(tsNode: Node): Result<TypeDeclaration> {
         if (!this.isTypeDeclaration(tsNode)) {
             return Result.fail(
                 `this.isTypeDeclaration(): false`,
                 `Please check the ts node '${tsNode.getText()}' is a valid node`
             )
         }
-        const importDeclaration = new TypeDeclaration(tsNode);
+        const importDeclaration = new TypeDeclaration(tsNode as TypeAliasDeclaration);
         return Result.ok(importDeclaration)
     }
 
-    
+    public getText(): string {
+        return this._tsNode.getText();
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Type Declarations
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static isTypeDeclaration = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof TypeAliasDeclaration;
+    public static isTypeDeclaration = (child: Node): boolean => {
+        return child instanceof TypeAliasDeclaration;
     }
 
-    public static isTypeParameterDeclaration: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
-        return node instanceof TypeParameterDeclaration;
+    public static isTypeParameterDeclaration: AstNodeFilter = (child: Node): boolean => {
+        return child instanceof TypeParameterDeclaration;
     }
 
-    private identifyGenericDeclaration = async (genericNode: TsNode): Promise<Result<AstNode>> => {
-        const nodes = genericNode.getChildren([], [TsNode.isNonImportant], []);
+    private identifyGenericDeclaration = async (genericNode: Node): Promise<Result<CodePiece>> => {
+        const nodes = AstNodeTraits.getChildren(genericNode, [], [AstNodeTraits.isNonImportant], []);
         const paramCount = nodes.length;
         if (paramCount === 0) {
             return Result.fail(
@@ -69,22 +68,22 @@ export class TypeDeclaration extends TsNode {
             const err = Debug.error(
                 `The first node '${nodes[0].getText()}' is not identifier`,
                 `Please update the Ara Web to support this feature or perhaps you made a mistake in your syntax? ;)`,
-                nodes[0].getNode<Node>()
+                nodes[0]
             );
 
             return Result.fail(err)
         }
 
-        let identifiedNode = AstNode.fromTsNode(genericNode);
+        let identifiedNode = CodePiece.fromTsNode(genericNode);
         identifiedNode.constant = true;
-        identifiedNode.nodeType = AstNodeType.Type;
+        identifiedNode.nodeType = CodePieceType.Type;
         identifiedNode.identifier = nodes[0].getText();
         identifiedNode.data = {};
         identifiedNode.dataType = ValueTypeString.object;
 
         for (let paramCounter = 1; paramCounter < paramCount; paramCounter++) {
             const paramNode = nodes[paramCounter];
-            if (!TsNode.isKeyword(paramNode, ["extends"])) {
+            if (!AstNodeTraits.isKeyword(paramNode, ["extends"])) {
                 const err = Debug.error(
                     `The second parameter of generic declaration is not 'extends'`,
                     `Ara Web doesn't support the '${paramNode.getText()}' as the ${paramCounter+1} node. Please update identifyGeneric()`,
@@ -119,13 +118,13 @@ export class TypeDeclaration extends TsNode {
      * @param tsNode 
      * @returns 
      */
-    public static getGenericNodesAfterOpeningClause = (openingClause: TsNode): TsNode[] => {
-            const syntaxList = openingClause.getNextSibling();
-            if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
-                return [];
-            }
+    public static getGenericNodesAfterOpeningClause = (openingClause: Node): Node[] => {
+        const syntaxList = openingClause.getNextSibling();
+        if (syntaxList === undefined || !AstNodeTraits.isSyntaxList(syntaxList)) {
+            return [];
+        }
             
-            return syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+        return AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
     }
     
     /**
@@ -133,18 +132,18 @@ export class TypeDeclaration extends TsNode {
          * @param node Is the given node is the opening the generic type declarations
          * @returns 
      */
-    public static isGenericOpeningClause = (openingClause: TsNode): boolean => {
+    public static isGenericOpeningClause = (openingClause: Node): boolean => {
         if (openingClause.getText() !== "<") {
             return false;
         }
     
         const syntaxList = openingClause.getNextSibling();
-        if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
+        if (syntaxList === undefined || !AstNodeTraits.isSyntaxList(syntaxList)) {
             return false;
         }
   
         const closingClause = syntaxList.getNextSibling();
-        if (closingClause === undefined || !TsNode.isKeyword(closingClause, ">")) {
+        if (closingClause === undefined || !AstNodeTraits.isKeyword(closingClause, ">")) {
                 return false;
         }
             
@@ -152,20 +151,20 @@ export class TypeDeclaration extends TsNode {
     }
     
 
-    public getAstNode = async (): Promise<Result<AstNode>> => {
-        let identifiedNode = AstNode.fromTsNode(this);
+    public getAstNode = async (): Promise<Result<CodePiece>> => {
+        let identifiedNode = CodePiece.fromTsNode(this._tsNode);
         identifiedNode.constant = true;
-        identifiedNode.nodeType = AstNodeType.Type;
+        identifiedNode.nodeType = CodePieceType.Type;
         identifiedNode.data = undefined;
             
         let identifier: string = '';
 
         // Type declaration has 'type' keyword and '=' sign to skip.
-        const children = this.getChildren([], [TsNode.isTypeKeyword, TsNode.isNonImportant], ["="]);
+        const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isTypeKeyword, AstNodeTraits.isNonImportant], ["="]);
         // Child = 0 is the keyword
         for (let i = 0; i < children.length; i++) {
             const typeChild = children[i];
-            if (TsNode.isExportKeyword(typeChild)) {
+            if (AstNodeTraits.isExportKeyword(typeChild)) {
                 identifiedNode.public = true;
                 continue;
             } else if (Identifier.isA(typeChild)) {
@@ -184,7 +183,7 @@ export class TypeDeclaration extends TsNode {
                     }
                     identifiedNode.putMemoryData(identifiedData.getValue());
                 }
-                i += AstNode.GenericNodeLength - 1;
+                i += CodePiece.GenericNodeLength - 1;
                 continue;
             } else {
                 const identified = await TypeValueTraits.identifyTypeValue(typeChild);

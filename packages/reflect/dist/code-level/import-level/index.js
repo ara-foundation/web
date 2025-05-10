@@ -1,5 +1,6 @@
+import { Node } from "ts-morph";
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { TsNode } from "../index.js";
+import {} from "../index.js";
 import { ImportDeclaration } from "./import-declaration.js";
 export class ImportLevel {
     // Caching to fetch the data few times.
@@ -40,7 +41,7 @@ export class ImportLevel {
         if (putted.isFailure) {
             return Result.fail(`this._putImportDeclaration(): ${putted.errorTitle}`, putted.errorDescription);
         }
-        return Result.ok(this._lastImportDeclartion.astIdentifiers);
+        return Result.ok(this._lastImportDeclartion.codePieces);
     };
     static getDefaultIdentifier = async (tsNode) => {
         const putted = await this._putImportDeclaration(tsNode);

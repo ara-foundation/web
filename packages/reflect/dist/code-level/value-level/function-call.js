@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, CallExpression } from "ts-morph";
 import { Debug, Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { TsNode, AstNodeContext, ValueLevel, ValueTypeString, Identifier } from "../index.js";
+import { AstNodeTraits, AstNodeContext, ValueLevel, ValueTypeString, Identifier } from "../index.js";
 import { PropertyAccess } from "./property-access.js";
 /**
  * Calls the function.
@@ -55,22 +55,21 @@ let FunctionCall = (() => {
         static get name() {
             return "FunctionCall";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof CallExpression;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            if (!tsNode.isChildExist(0)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 0)) {
                 return Result.fail(`The TS Node doesn't have any children`, `Please, update the TS Node`);
             }
-            if (!tsNode.isChildExist(2)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 2)) {
                 return Result.fail(`The TS Node doesn't have the syntax list`, `Please, update the TS Node`);
             }
-            if (!TsNode.isSyntaxList(tsNode.getChild(2))) {
-                return Result.fail(`The TS Node for function call expects syntax list`, `Please, update the FunctionCall.identifyValue() to support '${tsNode.getChild(2)?.getText()}'`);
+            if (!AstNodeTraits.isSyntaxList(tsNode.getChildAtIndex(2))) {
+                return Result.fail(`The TS Node for function call expects syntax list`, `Please, update the FunctionCall.identifyValue() to support '${tsNode.getChildAtIndex(2)?.getText()}'`);
             }
-            const identifier = tsNode.getChild(0);
-            let syntaxList = tsNode.getChild(2);
+            const identifier = tsNode.getChildAtIndex(0);
+            let syntaxList = tsNode.getChildAtIndex(2);
             const funcArgs = await this.getFuncArgs(syntaxList, astNodeContext);
             if (funcArgs.isFailure) {
                 return Result.fail(`this.getFuncArgs(): ${funcArgs.errorTitle}`, funcArgs.errorDescription);
@@ -102,7 +101,7 @@ let FunctionCall = (() => {
         };
         getFuncArgs = async (syntaxList, astNodeContext) => {
             const funcArgs = [];
-            const children = syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+            const children = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
             for (let funcArg of children) {
                 // Debug.push(`FuncArg: ValueLevel.identifyValue()`, {tsNode: funcArg.getText()});
                 let result = await ValueLevel.identifyValue(funcArg, {}, astNodeContext);

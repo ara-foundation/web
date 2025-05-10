@@ -1,10 +1,10 @@
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { Result, ObjectTraits, AraLink, Debug } from "@ara-web/p-hintjens";
-import { ValueTypeString } from "./ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "./ts-node.js";
-import type { TypedData } from "./ast-node.js";
+import { Result, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
+import { ValueTypeString } from "./code-piece-types.js";
+import { type AstNodeFilter } from "./ast-node-traits.js";
+import type { TypedData } from "./code-piece.js";
 import { type ValueLevelInterface } from "./value-level-interface.js";
-import type { AstNodeContext } from "./ast-node-context.js";
+import type { CodePieceContext } from "./code-piece-context.js";
 import { ReflectLink } from "./reflect-link.js";
 import { ValueLevel } from "./value-level/index.js";
 
@@ -17,12 +17,11 @@ export class Identifier {
         return "Identifier"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof TsIdentifier;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, parentNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, parentNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!Identifier.isA(tsNode)) {
             return Result.fail(`TS Node is not identifier`, 'Please pass the correct TS Node')
         }

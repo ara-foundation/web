@@ -1,5 +1,5 @@
 import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
-import { AstNode } from "./ast-node.js";
+import { CodePiece } from "./code-piece.js";
 /**
  * Collection of the variables, functions that are available for the Ast Node.
  * Ast Nodes have three layers of the memories:
@@ -7,7 +7,7 @@ import { AstNode } from "./ast-node.js";
  * - Module memory, where this ast node is called.
  * - Project memory including all the third party libraries, built-in NodeJS libraries.
  */
-export class AstNodeContext {
+export class CodePieceContext {
     _localDefined;
     _pageIdentifiers;
     _projectMemory;
@@ -17,7 +17,7 @@ export class AstNodeContext {
         this._projectMemory = projectMemory;
     }
     clone(additionalLocals, skipIdentifiers) {
-        const context = new AstNodeContext(additionalLocals, {}, this._projectMemory);
+        const context = new CodePieceContext(additionalLocals, {}, this._projectMemory);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];
@@ -70,7 +70,7 @@ export class AstNodeContext {
         if (identified instanceof AraLink) {
             return this.getIdentifier(identified);
         }
-        else if (identified instanceof AstNode) {
+        else if (identified instanceof CodePiece) {
             return identified;
         }
         return undefined;

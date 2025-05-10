@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { ArrayLiteralExpression, Node } from "ts-morph";
 import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
-import { TsNode, AstNodeContext, ValueLevel } from "../index.js";
+import { AstNodeTraits, AstNodeContext, ValueLevel } from "../index.js";
 /**
  * Literal class identifies the object literals
  */
@@ -54,12 +54,11 @@ let ArrayLiteral = (() => {
         static get name() {
             return "array-level/ArrayLiteral";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof ArrayLiteralExpression;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+            const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
             if (syntaxLists.length !== 1) {
                 return Result.fail('The Ts Node expected to have syntax list', `The '${tsNode.getText()}' has '${syntaxLists.length}' syntax list only`);
             }
@@ -86,7 +85,7 @@ let ArrayLiteral = (() => {
             }
             const data = [];
             const elementType = typedData.dataType[0];
-            const children = syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+            const children = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
             for (let elementIndex = 0; elementIndex < children.length; elementIndex++) {
                 const element = children[elementIndex];
                 const identified = await ValueLevel.identifyValue(element, { dataType: elementType }, astNodeContext);

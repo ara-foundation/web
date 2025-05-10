@@ -1,5 +1,6 @@
+import { Node } from "ts-morph";
 import { AraLink, Debug, Result } from "@ara-web/p-hintjens";
-import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString, TsNode, AstNode, AstNodeContext, ReflectLink } from "../index.js";
+import { IntersectedUnionType, UserTypeDeclaration, UnionTypeDeclaration, ValueTypeString, CodePiece, AstNodeContext, ReflectLink } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
 import { TypeDeclaration as TypeDeclarationTraits } from "./type-declaration.js";
 export class TypeLevel {
@@ -21,8 +22,8 @@ export class TypeLevel {
         return { [this.GENERIC_VALUES_LINK_PROPERTY]: values };
     };
     /**
-     * Identify the TsNode as the DataType of the `AstNode`.
-     * Use this method if you want to identify the value of `AstNode.dataType` property.
+     * Identify the AstNodeTraits as the DataType of the `CodePiece`.
+     * Use this method if you want to identify the value of `CodePiece.dataType` property.
      * @param child
      * @returns
      */
@@ -101,7 +102,7 @@ export class TypeLevel {
             }
             return Result.ok(typedData);
         }
-        if (typedData.dataType instanceof TypeDeclaration) {
+        if (typedData.dataType instanceof UserTypeDeclaration) {
             const identified = typedData.dataType.identifyData(typedData.data);
             if (identified.isFailure) {
                 return Result.fail(`TypeDeclaration.identifyData(): ${identified.errorTitle}`, identified.errorDescription);
@@ -195,7 +196,7 @@ export class TypeLevel {
      * We need to lint the data. The node has no scope memory yet.
      *
      * First, we lint the memory itself if any.
-     * By passing: AstNode with empty Memory, Page Memory, and Project Memory
+     * By passing: CodePiece with empty Memory, Page Memory, and Project Memory
      *
      * Then, we loop over the project data.
      * For each project data, we need to get the scope by adding ast node memory to the local scope
@@ -287,7 +288,7 @@ export class TypeLevel {
                             identifiedData.putOrPost(record);
                         }
                     }
-                    else if (identifiedLink.getValue().data instanceof TypeDeclaration) {
+                    else if (identifiedLink.getValue().data instanceof UserTypeDeclaration) {
                         for (let key in identifiedLink.getValue().data.records) {
                             const record = {
                                 [key]: identifiedLink.getValue().data.records[key]
@@ -338,8 +339,8 @@ export class TypeLevel {
             }
             return Result.ok({ data: identifiedData, dataType: ValueTypeString.object });
         }
-        else if (data instanceof TypeDeclaration) {
-            const identifiedData = new TypeDeclaration();
+        else if (data instanceof UserTypeDeclaration) {
+            const identifiedData = new UserTypeDeclaration();
             const records = data.records;
             for (let key in records) {
                 const dataElement = records[key];
@@ -368,7 +369,7 @@ export class TypeLevel {
         }
         return Result.ok(identifiedData.getValue());
     };
-    // If the AstNode.data is AraLink
+    // If the CodePiece.data is AraLink
     static lintAraLinkData = (data, nodeContext) => {
         if (!ReflectLink.isIdentifierLink(data)) {
             return Result.fail(`isAraIdentifierLink(araLink='${data.toString()}') is not a link to identifier`, `Only support the ara identifiers for now, update the lintTypeDeclarations()`);

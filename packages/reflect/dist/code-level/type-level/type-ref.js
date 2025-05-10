@@ -2,18 +2,16 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { TypeReferenceNode } from "ts-morph";
+import { TypeReferenceNode, Node } from "ts-morph";
 import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
-import { Identifier, ReflectLink, TsNode, TypeLevel } from "../index.js";
+import { Identifier, ReflectLink, AstNodeTraits, TypeLevel } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
-export class TypeRef extends TsNode {
+export class TypeRef {
     _tsNode;
     constructor(tsNode) {
-        super(tsNode);
-        this._tsNode = tsNode.getNode();
+        this._tsNode = tsNode;
     }
-    static isTypeRef = (child) => {
-        const node = child.getNode();
+    static isTypeRef = (node) => {
         return node instanceof TypeReferenceNode;
     };
     static fromTsNode(tsNode) {
@@ -25,28 +23,28 @@ export class TypeRef extends TsNode {
     }
     /**
      * Checks does the given node has '<SyntaxList>' generic declaration syntax
-     * @requires TsNode.node is TypeReferenceNode
+     * @requires Node as TypeReferenceNode
      * @param tsNode
      * @returns
      */
     isGenericRefType = () => {
-        const children = this.getChildren([], [TsNode.isNonImportant]);
+        const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isNonImportant]);
         if (children.length !== 4) {
             return false;
         }
         return (children[1].getText() === "<" && children[3].getText() === ">");
     };
     /**
-     * Returns the syntax list as TsNode that is between '<' and '>' in Typescript
+     * Returns the syntax list as Node that is between '<' and '>' in Typescript
      * @param typeRefNode
      * @requires the tsNode.node must be TypeReferenceNode
      * @returns
      */
     genericRefValueNodes = () => {
-        if (!this.isChildExist(2)) {
+        if (!AstNodeTraits.isChildExist(this._tsNode, 2)) {
             return [];
         }
-        return this.getChild(2).getChildren([], [TsNode.isNonImportant], [","]);
+        return AstNodeTraits.getChildren(this._tsNode.getChildAtIndex(2), [], [AstNodeTraits.isNonImportant], [","]);
     };
     /**
      *
@@ -61,21 +59,21 @@ export class TypeRef extends TsNode {
             const node = nodes[nodeIndex];
             const nodeValue = await TypeValueTraits.identifyTypeValue(node);
             if (nodeValue.isFailure) {
-                return Result.fail(`Generic key ${nodeIndex}) TypeValueTraits.identifyTypeValue(expression: '${this.getText()}'): ${nodeValue.errorTitle}`, nodeValue.errorDescription);
+                return Result.fail(`Generic key ${nodeIndex}) TypeValueTraits.identifyTypeValue(expression: '${this._tsNode.getText()}'): ${nodeValue.errorTitle}`, nodeValue.errorDescription);
             }
             nodeValues.push(nodeValue.getValue());
         }
         const genericValuesProperty = TypeLevel.genericValuesToLinkProperty(nodeValues);
         return Result.ok(typeLink.copyWithProperties(genericValuesProperty));
     };
-    // TsNode is TypeReferenceNode>
+    // Node is TypeReferenceNode>
     getAraLink = async () => {
-        if (!this.isChildExist(0)) {
+        if (!AstNodeTraits.isChildExist(this._tsNode, 0)) {
             return Result.fail(`The Node expected to have child`, `But referenced type node doesn't have child at index '0'`);
         }
-        const identifierNode = this.getChild(0);
+        const identifierNode = this._tsNode.getChildAtIndex(0);
         if (!Identifier.isA(identifierNode)) {
-            const err = Debug.error(`The property value type is a type reference, but the '${this.getText()}' doesn't support it`, `Ara Web supports Identifiers as type ref nodes, update getAraLink() to support it`, identifierNode);
+            const err = Debug.error(`The property value type is a type reference, but the '${this._tsNode.getText()}' doesn't support it`, `Ara Web supports Identifiers as type ref nodes, update getAraLink() to support it`, identifierNode);
             return Result.fail(err);
         }
         const typeRefAraLink = ReflectLink.linkToIdentifier(identifierNode.getText());

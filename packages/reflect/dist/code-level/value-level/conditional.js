@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { ConditionalExpression, Node } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { TsNode, AstNodeContext, ValueLevel, ValueTypeString } from "../index.js";
+import { AstNodeTraits, AstNodeContext, ValueLevel, ValueTypeString } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
@@ -54,17 +54,16 @@ let Conditional = (() => {
         static get name() {
             return "Conditional";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof ConditionalExpression;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            if (!tsNode.isChildExist(4)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 4)) {
                 return Result.fail(`The ts node must have four children at least`, `Parenthesized expression must have four children`);
             }
-            const condition = tsNode.getChild(0);
-            const trueExpression = tsNode.getChild(2);
-            const falseExpression = tsNode.getChild(4);
+            const condition = tsNode.getChildAtIndex(0);
+            const trueExpression = tsNode.getChildAtIndex(2);
+            const falseExpression = tsNode.getChildAtIndex(4);
             // Debug.push(`this.identifyValue('${condition.getText()}')`)
             const conditionResult = await ValueLevel.identifyValue(condition, { dataType: ValueTypeString.boolean }, astNodeContext);
             // Debug.pop();

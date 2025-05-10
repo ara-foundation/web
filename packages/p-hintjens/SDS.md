@@ -8,6 +8,20 @@ In essence, SDS is intended for apps where you expect third parties or even for 
 
 Check out the [Reflect](../reflect/README.md) for real-world implementation.
 
+### SDS Architecture
+Modules such as scripting files has three rules. A module can:
+* Import it's siblings in the same directory.
+* Import it's children index.
+* Importing child module other than index is prohibited.
+* Importing sub children not allowed.
+* Import it's parent index.
+* Importing named parent module is prohibited.
+* Importing grand parent is prohibited.
+
+Group of modules is a package. A package interaction:
+* If package is called by any module, then define it as NPM Package.
+* Other packages must be either an extension or a proxy.
+
 ## Tutorial
 
 By following this tutorial, you can build an app that is a plug-&-play, turning your application into a more dynamic and community-driven project.

@@ -3,10 +3,10 @@
  *
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
-import { ImportDeclaration as TsImportDeclaration } from "ts-morph";
+import { ImportDeclaration as TsImportDeclaration, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { type AstIdentifiers, TsNode, type TsNodeValidator } from "../index.js";
-export declare class ImportDeclaration extends TsNode {
+import { type CodePieceRecord, type AstNodeFilter } from "../index.js";
+export declare class ImportDeclaration {
     private _importClause;
     private _defaultIdentifier?;
     private _identfiers;
@@ -14,10 +14,10 @@ export declare class ImportDeclaration extends TsNode {
     private constructor();
     get importClause(): string;
     get defaultIdentifier(): string | undefined;
-    get astIdentifiers(): AstIdentifiers;
-    static fromTsNode(tsNode: TsNode): Promise<Result<ImportDeclaration>>;
-    static isImportClause: TsNodeValidator;
-    static isImportDeclaration: TsNodeValidator;
+    get codePieces(): CodePieceRecord;
+    static fromTsNode(tsNode: Node): Promise<Result<ImportDeclaration>>;
+    static isImportClause: AstNodeFilter;
+    static isImportDeclaration: AstNodeFilter;
     private getNamedImports;
     /**
      * Creates a link that this import declaration imports from.
@@ -47,7 +47,7 @@ export declare class ImportDeclaration extends TsNode {
      * Import declarations could be default if it's a single literal.
      *
      * import DefaultName from "string-literla-path"
-     * @returns {AstIdentifiers}
+     * @returns {CodePieceRecord}
     */
     private getIdentifiers;
 }

@@ -1,15 +1,16 @@
+import { Node } from "ts-morph";
 import type { Result } from "@ara-web/p-hintjens";
-import type { AstNodeContext } from "./ast-node-context.js";
-import type { TsNode, TsNodeValidator } from "./ts-node.js";
-import type { TypedData } from "./ast-node.js";
+import type { CodePieceContext } from "./code-piece-context.js";
+import type { AstNodeFilter } from "./ast-node-traits.js";
+import type { TypedData } from "./code-piece.js";
 export interface ValueIdentifierInterface {
-    identifyValue(tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>>;
+    identifyValue(tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>>;
 }
 /**
- * The ValueInterface to make sure that any TsNode follow the same rule
+ * The ValueInterface to make sure that any Node follow the same rule
  */
 export interface ValueLevelInterface {
     new (): ValueIdentifierInterface;
     name: string;
-    isA: TsNodeValidator;
+    isA: AstNodeFilter;
 }

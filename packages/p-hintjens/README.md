@@ -26,6 +26,7 @@ URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-
 
 # Roadmap
 
+* Add arbitrary amount of data in the Debug.log();
 * Create a script that can generate the SDS in interactive form through `pnpm create sds`.
 
 * A REST operation to replace anything

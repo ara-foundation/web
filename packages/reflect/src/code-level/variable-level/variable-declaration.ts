@@ -3,33 +3,32 @@
  * 
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
-import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration } from "ts-morph";
+import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration, Node } from "ts-morph";
 import { Debug, Result, AraLink } from "@ara-web/p-hintjens";
 import {
-    AstNode, 
-    AstNodeType, 
-    type AstIdentifiers, 
+    CodePiece, 
+    CodePieceType, 
+    type CodePieceRecord, 
     type TypedData,
     ReflectLink,
     Identifier,
-    TsNode, 
-    type TsNodeValidator,
-    TypeLevel
+    type AstNodeFilter,
+    TypeLevel,
+    AstNodeTraits
 } from "../index.js";
 
-export class VariableDeclaration extends TsNode {
+export class VariableDeclaration {
     protected _tsNode: TsVariableDeclaration;
     private _publicFlag: boolean;
     private _constantFlag: boolean;
 
-    private constructor (tsNode: TsNode, flags: {public: boolean, constant: boolean}) {
-        super(tsNode);
-        this._tsNode = tsNode.getNode<TsVariableDeclaration>()!;
+    private constructor (tsNode: Node, flags: {public: boolean, constant: boolean}) {
+        this._tsNode = tsNode as TsVariableDeclaration;
         this._constantFlag = flags.constant;
         this._publicFlag = flags.public;
     }
 
-    public static fromTsNode(tsNode: TsNode, flags: {public: boolean, constant: boolean}): Result<VariableDeclaration> {
+    public static fromTsNode(tsNode: Node, flags: {public: boolean, constant: boolean}): Result<VariableDeclaration> {
         if (!this.isVariableDeclaration(tsNode)) {
             return Result.fail(
                 `The given node is not a variable declaration`,
@@ -41,25 +40,23 @@ export class VariableDeclaration extends TsNode {
         return Result.ok(varStatement)
     }
 
-    public static isVariableDeclaration: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isVariableDeclaration: AstNodeFilter = (node: Node): boolean => {
         return node instanceof TsVariableDeclaration;
     }
 
-    public static isObjectBindingPattern: TsNodeValidator = (child: TsNode): boolean => {
-            const node = child.getNode<Node>();
-            return node instanceof ObjectBindingPattern;
+    public static isObjectBindingPattern: AstNodeFilter = (node: Node): boolean => {
+        return node instanceof ObjectBindingPattern;
     }
 
     /**
      * Returns the variable's identifier
      */
     public getIdentifier = (): Result<string> => {
-        const children = this.getChildren([Identifier.isA])
+        const children = AstNodeTraits.getChildren(this._tsNode, [Identifier.isA])
         if (children.length === 0) {
             return Result.fail(
                 `The variable statement has no identifier`,
-                `Please update the VariableStatement class to support '${this.getText()}' variable statement identifier fetching`
+                `Please update the VariableStatement class to support '${this._tsNode.getText()}' variable statement identifier fetching`
             )
         }
 
@@ -69,18 +66,18 @@ export class VariableDeclaration extends TsNode {
     // Variable declaration comes as "var <declaration>" or "let <declaration>"
     /**
      * Parses this variable declaration into the list of AST Nodes.
-     * @returns {AstIdentifiers}
+     * @returns {CodePieceRecord}
      */
-    public getAstIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
-        const identifiers: AstIdentifiers = {};
-        const identifierNode = AstNode.fromTsNode(this._tsNode as unknown as TsNode);
-        identifierNode.nodeType = AstNodeType.Variable;
+    public getAstIdentifiers = async (): Promise<Result<CodePieceRecord>> => {
+        const identifiers: CodePieceRecord = {};
+        const identifierNode = CodePiece.fromTsNode(this._tsNode);
+        identifierNode.nodeType = CodePieceType.Variable;
         identifierNode.public = this._publicFlag;
         identifierNode.constant = this._constantFlag;
         
-        if (!this.isChildExist(0)) {
+        if (!AstNodeTraits.isChildExist(this._tsNode, 0)) {
             return Result.fail(
-                `The '${this.getText()}' is empty`,
+                `The '${this._tsNode.getText()}' is empty`,
                 `Please update to have the data in the variable statement`
             )
         }
@@ -93,7 +90,7 @@ export class VariableDeclaration extends TsNode {
             )
         }
 
-        const identifier = this.getChild(0)!;
+        const identifier = this._tsNode.getChildAtIndex(0)!;
         if (!Identifier.isA(identifier)) {
             if (VariableDeclaration.isObjectBindingPattern(identifier)) {
                 if (!(typedData.getValue().data instanceof AraLink)) {
@@ -104,14 +101,14 @@ export class VariableDeclaration extends TsNode {
                 }
                 const data = typedData.getValue().data as AraLink<string>;
                 
-                const syntaxLists = identifier.getChildren([TsNode.isSyntaxList]);
+                const syntaxLists = AstNodeTraits.getChildren(identifier, [AstNodeTraits.isSyntaxList]);
                 if (syntaxLists.length !== 1) {
                     return Result.fail(`Identifier is object binding pattern, but no syntax list given`, 'Please pass correct TS Node');
                 }
 
-                const objectBindings = syntaxLists[0].getChildren([], [], [","]);
+                const objectBindings = AstNodeTraits.getChildren(syntaxLists[0], [], [], [","]);
                 for (let i = 0; i < objectBindings.length; i++) {
-                    const binding = objectBindings[i].getChildren([Identifier.isA]);
+                    const binding = AstNodeTraits.getChildren(objectBindings[i], [Identifier.isA]);
                     if (binding.length < 1) {
                         const err = Debug.error(
                             `The first child of object binding pattern is not identifier`,
@@ -128,19 +125,19 @@ export class VariableDeclaration extends TsNode {
                         )
                     }
 
-                    const refNode: AstNode = AstNode.fromTsNode(binding[0]);
-                    refNode.nodeType = AstNodeType.Property;
+                    const refNode: CodePiece = CodePiece.fromTsNode(binding[0]);
+                    refNode.nodeType = CodePieceType.Property;
                     refNode.dataType = typedData.getValue().dataType;
                     refNode.data = data;
                     refNode.identifier = binding[0].getText();
 
-                    let bindingNode = AstNode.fromTsNode(binding[0]);
+                    let bindingNode = CodePiece.fromTsNode(binding[0]);
                     bindingNode.identifier = binding[0].getText();
                     if (binding.length === 2) {
-                        bindingNode = AstNode.fromTsNode(binding[1]);
+                        bindingNode = CodePiece.fromTsNode(binding[1]);
                         bindingNode.identifier = binding[1].getText();
                     }
-                    bindingNode.nodeType = AstNodeType.Variable;
+                    bindingNode.nodeType = CodePieceType.Variable;
                     bindingNode.public = this._publicFlag;
                     bindingNode.constant = this._constantFlag;
                     bindingNode.putMemoryData(refNode);
@@ -177,7 +174,7 @@ export class VariableDeclaration extends TsNode {
     }
 
     private getTypedData = async (): Promise<Result<TypedData>> => {
-        const children = this.getChildren([], [TsNode.isNonImportant])
+        const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isNonImportant])
         children.shift(); // The first element is the identifier that we identified already
     
         const typedData: TypedData = {};
@@ -185,7 +182,7 @@ export class VariableDeclaration extends TsNode {
         for (let j = 0; j < children.length; j++) {
             let child = children[j];
             // Define the variable type
-            if (TsNode.isKeyword(child, ":")) {
+            if (AstNodeTraits.isKeyword(child, ":")) {
                 j++;
                 child = children[j];
                 
@@ -199,7 +196,7 @@ export class VariableDeclaration extends TsNode {
                     return Result.fail(err)
                 }
                 typedData.dataType = dataType.getValue();
-            } else if (TsNode.isKeyword(child, "=")) {
+            } else if (AstNodeTraits.isKeyword(child, "=")) {
                 j++;
                 child = children[j];
                 const expressionRefAraLink = ReflectLink.linkToTsNode(child);

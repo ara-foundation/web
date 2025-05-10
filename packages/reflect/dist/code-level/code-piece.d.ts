@@ -1,7 +1,7 @@
+import { Node } from "ts-morph";
 import { ModuleLink, Result } from "@ara-web/p-hintjens";
-import type { TsNode } from "./ts-node.js";
-import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
-export declare enum AstNodeType {
+import type { IdentifiedNodeDataType, ValueType } from "./code-piece-types.js";
+export declare enum CodePieceType {
     Variable = "variable",
     Enum = "enum",
     Function = "function",
@@ -16,15 +16,13 @@ export declare enum AstNodeType {
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
-export type AstIdentifiers = {
-    [key: string]: AstNode;
-};
-export type AstNodeValidator = (astNode: AstNode) => boolean;
-export type GenericHandler = (astNode: AstNode, values: ValueType[]) => Result<AstNode>;
-export type TypedData = Pick<AstNode, "data" | "dataType">;
-export declare class AstNode {
+export type CodePieceRecord = Record<string, CodePiece>;
+export type CodePieceFilter = (astNode: CodePiece) => boolean;
+export type GenericHandler = (astNode: CodePiece, values: ValueType[]) => Result<CodePiece>;
+export type TypedData = Pick<CodePiece, "data" | "dataType">;
+export declare class CodePiece {
     static readonly GenericNodeLength = 3;
-    nodeType?: AstNodeType;
+    nodeType?: CodePieceType;
     constant?: boolean;
     public?: boolean;
     dataType?: IdentifiedNodeDataType;
@@ -34,29 +32,29 @@ export declare class AstNode {
     private _genericHandler?;
     private _nodeMemory?;
     private _tsNode;
-    get tsNode(): TsNode;
-    protected constructor(tsNode: TsNode);
-    static fromTsNode(tsNode: TsNode): AstNode;
+    get tsNode(): Node;
+    protected constructor(tsNode: Node);
+    static fromTsNode(tsNode: Node): CodePiece;
     isObjectBinding(): boolean;
-    getBindedObject(): AstNode | undefined;
+    getBindedObject(): CodePiece | undefined;
     putBindedObjectData(data: ValueType): void;
     get typedData(): TypedData;
     set typedData(_typedData: TypedData);
     get isGenericHandlerExist(): boolean;
-    handleGeneric: (genericValues: ValueType[]) => Result<AstNode>;
+    handleGeneric: (genericValues: ValueType[]) => Result<CodePiece>;
     putGenericHandler: (genericHandler: GenericHandler) => void;
     /**
      * Put internal memory. Wrong, it should be postMemory.
      * @param astNode
      * @returns
      */
-    putMemoryData(astNode: AstNode): void;
+    putMemoryData(astNode: CodePiece): void;
     /**
      * Post internal memory data. it should be putMemmory.
      * @param index
      * @param astNode
      */
-    postMemoryData(index: number, astNode?: AstNode): void;
+    postMemoryData(index: number, astNode?: CodePiece): void;
     /**
      * How many internal memory data is assigned to this node?
      * @returns
@@ -67,13 +65,13 @@ export declare class AstNode {
      * @param skippedIdentifiers
      * @returns
      */
-    getAllMemoryData(skippedIdentifiers?: string[]): AstNode[];
+    getAllMemoryData(skippedIdentifiers?: string[]): CodePiece[];
     /**
      * Get the memory data by index.
      * @param index
      * @returns
      */
-    getMemoryData(index: number): AstNode | undefined;
+    getMemoryData(index: number): CodePiece | undefined;
     /**
      * Delete the memory data by index.
      * @param index
@@ -85,36 +83,36 @@ export declare class AstNode {
      * @param child
      * @returns
      */
-    static isDefinedInOtherModule: AstNodeValidator;
+    static isDefinedInOtherModule: CodePieceFilter;
     /**
      * This node was defined in the same module, therefore it has no import path.
      * @param child
      * @returns
      */
-    static isDefinedInLocal: AstNodeValidator;
+    static isDefinedInLocal: CodePieceFilter;
     /**
      * This node has a data? It can't be literal value.
      * It must be a link, non-empty array or object.
      * @param child
      * @returns
      */
-    static isDataNotEmpty: AstNodeValidator;
+    static isDataNotEmpty: CodePieceFilter;
     /**
      * Is node data value is a link to another node?
      * @param child
      * @returns
      */
-    static isDataLink: AstNodeValidator;
+    static isDataLink: CodePieceFilter;
     /**
      * Is it a type declaration?
      * @param child
      * @returns
      */
-    static isTypeDeclaration: AstNodeValidator;
+    static isTypeDeclaration: CodePieceFilter;
     /**
      * Is it a variable declaration?
      * @param child
      * @returns
      */
-    static isVariableDeclaration: AstNodeValidator;
+    static isVariableDeclaration: CodePieceFilter;
 }

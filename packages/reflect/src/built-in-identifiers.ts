@@ -1,19 +1,19 @@
+import { Node } from "ts-morph";
 import { ModuleLink, Result } from "@ara-web/p-hintjens";
 import { 
-    AstNode, 
-    AstNodeType, 
-    type AstIdentifiers, 
-    type AstNodeValidator, 
+    CodePiece, 
+    CodePieceType, 
+    type CodePieceRecord, 
+    type CodePieceFilter, 
     type GenericHandler,
     ValueTypeString, 
     type ValueType,
     Code,
-    TsNode,
     VariableLevel
 } from "./code-level/index.js";
 
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
-const arrayGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType[]): Result<AstNode> => {
+const arrayGenericHandler: GenericHandler = (astNode: CodePiece, values: ValueType[]): Result<CodePiece> => {
     if (values.length !== 1) {
         return Result.fail(
             `The Array Generic accepts only 1 argument`,
@@ -26,7 +26,7 @@ const arrayGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType
 }
 
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
-const recordGenericHandler: GenericHandler = (astNode: AstNode, values: ValueType[]): Result<AstNode> => {
+const recordGenericHandler: GenericHandler = (astNode: CodePiece, values: ValueType[]): Result<CodePiece> => {
     if (values.length !== 2) {
         return Result.fail(
             `The Array Generic accepts only 2 argument`,
@@ -49,20 +49,20 @@ export class BuiltInIdentifiers {
         export const ${this.prefix}${this.identifiers[1]} = {key: '', value: {}};
     `;
 
-    private static _identifiers: AstIdentifiers|undefined = undefined;
+    private static _identifiers: CodePieceRecord|undefined = undefined;
 
-    public static isBuiltInIdentifier: AstNodeValidator = (child: AstNode): boolean => {
+    public static isBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.identifier === undefined) {
             return false;
         }
         return this.identifiers.includes(child.identifier)
     }
 
-    public static isNonBuiltInIdentifier: AstNodeValidator = (child: AstNode): boolean => {
+    public static isNonBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         return !this.isBuiltInIdentifier(child);
     }
 
-    private static getVariableAstNode = async (identifier: string, tsNodes: TsNode[]): Promise<Result<AstNode>> => {
+    private static getVariableAstNode = async (identifier: string, tsNodes: Node[]): Promise<Result<CodePiece>> => {
         const varIdentifiers = await VariableLevel.getVariableIdentifiers(tsNodes);
         if (varIdentifiers.isFailure) {
             return Result.fail(
@@ -72,9 +72,9 @@ export class BuiltInIdentifiers {
         }
         for (let _identifier in varIdentifiers.getValue()) {
             if (_identifier === identifier) {
-                // We are sure, that the returned data is AstNode, not a link,
+                // We are sure, that the returned data is CodePiece, not a link,
                 // Since the script is here as well.
-                return Result.ok(varIdentifiers.getValue()[_identifier] as AstNode);
+                return Result.ok(varIdentifiers.getValue()[_identifier] as CodePiece);
             }
         }
     
@@ -84,11 +84,11 @@ export class BuiltInIdentifiers {
         )
     }
 
-    public static getBuiltInIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
+    public static getBuiltInIdentifiers = async (): Promise<Result<CodePieceRecord>> => {
         if (this._identifiers !== undefined) {
             return Result.ok(this._identifiers);
         }
-        let identifiers: AstIdentifiers = {};
+        let identifiers: CodePieceRecord = {};
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
     
         const varStatements = code.getTsNodes()
@@ -125,7 +125,7 @@ export class BuiltInIdentifiers {
     //------------------------------------------------------------------
 
 
-    private static identifyArrayAstNode = async (varStatements: TsNode[]): Promise<Result<AstNode>> => {
+    private static identifyArrayAstNode = async (varStatements: Node[]): Promise<Result<CodePiece>> => {
         const astNode = await this.getVariableAstNode(this.prefix + this.identifiers[0], varStatements)
         if (astNode.isFailure) {
             return Result.fail(
@@ -135,7 +135,7 @@ export class BuiltInIdentifiers {
         }
 
         astNode.getValue().identifier = this.identifiers[0];
-        astNode.getValue().nodeType = AstNodeType.Type;
+        astNode.getValue().nodeType = CodePieceType.Type;
         astNode.getValue().data = [{}];
         astNode.getValue().public = true;
         astNode.getValue().constant = true;
@@ -145,7 +145,7 @@ export class BuiltInIdentifiers {
         return Result.ok(astNode.getValue());
     }
 
-    private static identifyRecordAstNode = async (varStatements: TsNode[]): Promise<Result<AstNode>> => {
+    private static identifyRecordAstNode = async (varStatements: Node[]): Promise<Result<CodePiece>> => {
         const astNode = await this.getVariableAstNode(this.prefix + this.identifiers[1], varStatements)
         if (astNode.isFailure) {
             return Result.fail(
@@ -155,7 +155,7 @@ export class BuiltInIdentifiers {
         }
 
         astNode.getValue().identifier = this.identifiers[1];
-        astNode.getValue().nodeType = AstNodeType.Type;
+        astNode.getValue().nodeType = CodePieceType.Type;
         astNode.getValue().data = {key: "", value: {}};
         astNode.getValue().public = true;
         astNode.getValue().constant = true;
@@ -171,12 +171,12 @@ export class BuiltInIdentifiers {
     //
     //------------------------------------------------------------------
 
-    public static getNodejsModuleByPath = async (path: string): Promise<AstNode|undefined> => {
+    public static getNodejsModuleByPath = async (path: string): Promise<CodePiece|undefined> => {
         const nodeJsModules = await this.getBuiltInIdentifiers();
         for (let nodeJsModule in nodeJsModules.getValue()) {
             const exist = nodeJsModule.indexOf(path) > -1;
             if (exist) {
-                return nodeJsModules.getValue()[nodeJsModule] as AstNode;
+                return nodeJsModules.getValue()[nodeJsModule] as CodePiece;
             }
         }
 

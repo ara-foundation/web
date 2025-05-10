@@ -5,14 +5,13 @@
  */
 import { VariableStatement as TsVariableStatement, VariableDeclarationList, Node } from "ts-morph";
 import { Debug, Result } from "@ara-web/p-hintjens";
-import { TsNode } from "../index.js";
+import { AstNodeTraits } from "../index.js";
 import { VariableDeclaration } from "./variable-declaration.js";
-export class VariableStatement extends TsNode {
+export class VariableStatement {
     _tsNode;
     _astNodes = {};
     constructor(tsNode) {
-        super(tsNode);
-        this._tsNode = tsNode.getNode();
+        this._tsNode = tsNode;
     }
     static async fromTsNode(tsNode) {
         if (!this.isVariableStatement(tsNode)) {
@@ -26,16 +25,14 @@ export class VariableStatement extends TsNode {
         varStatement._astNodes = astNodes.getValue();
         return Result.ok(varStatement);
     }
-    static isVariableStatement = (child) => {
-        const node = child.getNode();
+    static isVariableStatement = (node) => {
         return node instanceof TsVariableStatement;
     };
-    static isVariableDeclarationList = (child) => {
-        const node = child.getNode();
+    static isVariableDeclarationList = (node) => {
         return node instanceof VariableDeclarationList;
     };
-    static isNonImportantKeyword = (child) => {
-        return ["var", "let"].includes(child.getText());
+    static isNonImportantKeyword = (node) => {
+        return ["var", "let"].includes(node.getText());
     };
     /**
      * Returns the variable's identifier
@@ -51,7 +48,7 @@ export class VariableStatement extends TsNode {
      */
     identifyVariableDeclarationList = async (tsNode, publicFlag) => {
         let identifiers = {};
-        const children = tsNode.getChildren([], [TsNode.isNonImportant, VariableStatement.isNonImportantKeyword]);
+        const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant, VariableStatement.isNonImportantKeyword]);
         const childCount = children.length;
         let nodeFlags = {
             public: publicFlag,
@@ -59,15 +56,15 @@ export class VariableStatement extends TsNode {
         };
         for (let i = 0; i < childCount; i++) {
             const varChild = children[i];
-            if (TsNode.isConstKeyword(varChild)) {
+            if (AstNodeTraits.isConstKeyword(varChild)) {
                 nodeFlags.constant = true;
                 continue;
             }
-            else if (!TsNode.isSyntaxList(varChild)) {
+            else if (!AstNodeTraits.isSyntaxList(varChild)) {
                 const err = Debug.error(`Unsupported ${i}/${childCount - 1} child`, `The variable declaration's ${i}/${childCount - 1} child '${varChild.getText()}' is not supported by Ara Web, update identifyVariableDeclarationList()`, varChild);
                 return Result.fail(err);
             }
-            const syntaxList = varChild.getChildren([], [TsNode.isNonImportant], [","]);
+            const syntaxList = AstNodeTraits.getChildren(varChild, [], [AstNodeTraits.isNonImportant], [","]);
             if (syntaxList.length === 0) {
                 return Result.fail(`The syntax list of variable declaration list is empty`, `Probably one of the variable declaration statement's child nodes didn't have the 'continue', 'return' or 'break' and it passes to here. Update the identifyVariableDeclarationList()`);
             }
@@ -84,7 +81,7 @@ export class VariableStatement extends TsNode {
                 }
                 const astNodes = await varDeclaration.getValue().getAstIdentifiers();
                 if (astNodes.isFailure) {
-                    return Result.fail(`varDeclaration('${varDeclaration.getValue().getText()}').getAstIdentifiers(): ${astNodes.errorTitle}`, astNodes.errorDescription);
+                    return Result.fail(`varDeclaration('${varDeclarationTsNode.getText()}').getAstIdentifiers(): ${astNodes.errorTitle}`, astNodes.errorDescription);
                 }
                 identifiers = { ...identifiers, ...astNodes.getValue() };
             }
@@ -99,11 +96,11 @@ export class VariableStatement extends TsNode {
      */
     identifyAstNodes = async () => {
         let publicFlag = false;
-        const children = this.getChildren([], [TsNode.isNonImportant]);
+        const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isNonImportant]);
         const childCount = children.length;
         for (let i = 0; i < childCount; i++) {
             const varChild = children[i];
-            if (TsNode.isExportKeyword(varChild)) {
+            if (AstNodeTraits.isExportKeyword(varChild)) {
                 publicFlag = true;
             }
             else if (VariableStatement.isVariableDeclarationList(varChild)) {

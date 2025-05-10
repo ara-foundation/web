@@ -2,7 +2,8 @@
  * The script that works with the code by turning it into the 
  * AST (Abstract Syntax Tree)
  */
-import { 
+import {
+    Node,
     ArrayTypeNode, 
     Expression, 
     IntersectionTypeNode, 
@@ -15,9 +16,9 @@ import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
 import {
     Identifier, 
     Literal, 
-    TsNode, 
-    type TsNodeValidator,
-    TypeDeclaration, 
+    AstNodeTraits, 
+    type AstNodeFilter,
+    UserTypeDeclaration, 
     ValueTypeString, 
     UnionTypeDeclaration, 
     IntersectedUnionType,
@@ -29,7 +30,7 @@ import { TypeRef } from "./type-ref.js";
 export type PossibleTypeValue = 
     ValueTypeString | 
     AraLink<string> | 
-    TypeDeclaration | 
+    UserTypeDeclaration | 
     Array<IdentifiedNodeDataType> |
     LiteralType |
     UnionTypeDeclaration
@@ -53,38 +54,32 @@ export class TypeValueTraits {
         }
     
         return data instanceof IntersectedUnionType || data instanceof UnionTypeDeclaration ||
-            data instanceof TypeDeclaration;
+            data instanceof UserTypeDeclaration;
         // return ["object"].includes(typeof data)
     }
 
-    public static isTypeLiteral: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isTypeLiteral: AstNodeFilter = (node: Node): boolean => {
         return node instanceof TypeLiteralNode;
     }
 
-    public static isArrayTypeDeclaration = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isArrayTypeDeclaration = (node: Node): boolean => {
         return node instanceof ArrayTypeNode;
     }
 
-    public static isUnionType = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isUnionType = (node: Node): boolean => {
         return node instanceof UnionTypeNode;
     }
 
     // The node is a literal value
-    public static isLiteralType: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isLiteralType: AstNodeFilter = (node: Node): boolean => {
         return node instanceof LiteralTypeNode;
     }
 
-    public static isParenthesizedType: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isParenthesizedType: AstNodeFilter = (node: Node): boolean => {
         return node instanceof ParenthesizedTypeNode;
     }
 
-    public static isIntersectionType: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isIntersectionType: AstNodeFilter = (node: Node): boolean => {
         return node instanceof IntersectionTypeNode;
     }
 
@@ -96,7 +91,7 @@ export class TypeValueTraits {
      * @param tsNode 
      * @returns {[IdentifiedNodeDataType] } either a link to 
      */
-    public static identifyArrayType = async (tsNode: TsNode): Promise<Result<Array<IdentifiedNodeDataType>>> => {
+    public static identifyArrayType = async (tsNode: Node): Promise<Result<Array<IdentifiedNodeDataType>>> => {
         if (!TypeValueTraits.isArrayTypeDeclaration(tsNode)) {
             return Result.fail(
                 `The variable '${tsNode.getText()}' type is expected to be Array Type Declaration.`,
@@ -104,7 +99,7 @@ export class TypeValueTraits {
             )
         }
 
-        if (!tsNode.isChildExist(2)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(
                 `The variable '${tsNode.getText()}' type is doesn't have 3 elements.`,
                 `Ara supports One Dimensional array type declaration only, update identifyArrayType()`
@@ -112,7 +107,7 @@ export class TypeValueTraits {
         }
 
         // Debug.push(`this.identifyTypeValue()`, {identifier: '_array_index', tsNode: tsNode.getText()});
-        const arrayType = await this.identifyTypeValue(tsNode.getChild(0)!)
+        const arrayType = await this.identifyTypeValue(tsNode.getChildAtIndex(0)!)
         // Debug.pop()
         if (arrayType.isFailure) {
             return Result.fail(
@@ -124,14 +119,14 @@ export class TypeValueTraits {
         return Result.ok([arrayType.getValue()] as Array<IdentifiedNodeDataType>)
     }
 
-    private static identifyExpression = (tsNode: TsNode): Result<ValueTypeString> => {
-        if (!TsNode.isExpression(tsNode)) {
+    private static identifyExpression = (tsNode: Node): Result<ValueTypeString> => {
+        if (!AstNodeTraits.isExpression(tsNode)) {
             return Result.fail(
                 `identifyExpression requires Expression, but '${tsNode.getText()}' isn't`,
                 `Update the identifyExpression()`
             )
         }
-        const expression = tsNode.getNode<Expression>();
+        const expression = tsNode as Expression;
         const expCount = expression.getChildCount();
         if (expCount !== 0) {
             return Result.fail(
@@ -161,7 +156,7 @@ export class TypeValueTraits {
         }
     }
 
-    private static identifyLiteralType = async (tsNode: TsNode): Promise<Result<LiteralType>> => {
+    private static identifyLiteralType = async (tsNode: Node): Promise<Result<LiteralType>> => {
         if (!this.isLiteralType(tsNode)) {
             return Result.fail(
                 `this.isLiteralType('${tsNode.getText()}'): false`,
@@ -169,7 +164,7 @@ export class TypeValueTraits {
             )
         }
 
-        const children = tsNode.getChildren([], [TsNode.isNonImportant]);
+        const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant]);
 
         if (children.length !== 1) {
             return Result.fail(
@@ -192,7 +187,7 @@ export class TypeValueTraits {
         return Result.ok(identifiedValue.getValue().data! as LiteralType)
     }
 
-    private static identifyParenthesizedType = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
+    private static identifyParenthesizedType = async (tsNode: Node): Promise<Result<PossibleTypeValue>> => {
         if (!this.isParenthesizedType(tsNode)) {
             return Result.fail(
                 `this.isParenthesizedType('${tsNode.getText()}'): false`,
@@ -200,7 +195,7 @@ export class TypeValueTraits {
             )
         }
 
-        const children = tsNode.getChildren([], [TsNode.isNonImportant], ["(", ")"]);
+        const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant], ["(", ")"]);
 
         if (children.length !== 1) {
             return Result.fail(
@@ -223,7 +218,7 @@ export class TypeValueTraits {
         return Result.ok(identifiedValue.getValue())
     }
 
-    private static identifyIntersectionType = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
+    private static identifyIntersectionType = async (tsNode: Node): Promise<Result<PossibleTypeValue>> => {
         if (!this.isIntersectionType(tsNode)) {
             return Result.fail(
                 `this.isIntersectionType('${tsNode.getText()}'): false`,
@@ -233,14 +228,14 @@ export class TypeValueTraits {
 
         let object: IntersectedUnionType = new IntersectedUnionType();
 
-        const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+        const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail(
                 `tsNode.getChildren().length: to identify parenthesized types the ParenthesizedTypeNode must have one child`,
                 `Please update identifyParenthesizedType() to support '${tsNode.getText()}' with '${syntaxLists.length}' elements`
             )
         }
-        const children = syntaxLists[0].getChildren([], [TsNode.isNonImportant], ["&"])
+        const children = AstNodeTraits.getChildren(syntaxLists[0], [], [AstNodeTraits.isNonImportant], ["&"])
         for (let intersectedIndex = 0; intersectedIndex < children.length; intersectedIndex++) {
             const intersectionChild = children[intersectedIndex];
 
@@ -278,8 +273,8 @@ export class TypeValueTraits {
             if (object instanceof IntersectedUnionType) {
                 if (identifiedValue.getValue() instanceof UnionTypeDeclaration) {
                     object.putOrPostUnion((identifiedValue.getValue() as UnionTypeDeclaration).union);
-                } else if (identifiedValue.getValue() instanceof TypeDeclaration) {
-                    object.putOrPost((identifiedValue.getValue() as TypeDeclaration).records);
+                } else if (identifiedValue.getValue() instanceof UserTypeDeclaration) {
+                    object.putOrPost((identifiedValue.getValue() as UserTypeDeclaration).records);
                 } else if (identifiedValue.getValue() instanceof AraLink) {
                     object.postAraLink(identifiedValue.getValue() as AraLink<string>);
                 } else {
@@ -298,11 +293,11 @@ export class TypeValueTraits {
         return Result.ok(object)
     }
 
-    public static identifyTypeValue = async (tsNode: TsNode): Promise<Result<PossibleTypeValue>> => {
+    public static identifyTypeValue = async (tsNode: Node): Promise<Result<PossibleTypeValue>> => {
         // Expressions such as type keywords 'string', 'number', etc
         // Hold only one key
         // returns ValueTypeString
-        if (TsNode.isExpression(tsNode)) {
+        if (AstNodeTraits.isExpression(tsNode)) {
             const identifedExpression = this.identifyExpression(tsNode);
             if (identifedExpression.isFailure) {
                 return Result.fail(
@@ -411,7 +406,7 @@ export class TypeValueTraits {
 
     // Type is defined as property and its value.
     // How come it returns type declaration? TypeDeclaration is from AstNode.
-    private static identifyTypeLiteral = async (tsNode: TsNode): Promise<Result<TypeDeclaration>> => {
+    private static identifyTypeLiteral = async (tsNode: Node): Promise<Result<UserTypeDeclaration>> => {
         if (!this.isTypeLiteral(tsNode)) {
             return Result.fail(
                 `The node is not a type literal`,
@@ -419,23 +414,23 @@ export class TypeValueTraits {
             )
         }
     
-        if (!tsNode.isChildExist(1)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 1)) {
             return Result.fail("The second element of type literal body is missing", `Please update Reflect to support '${tsNode.getText()}' expression as type data`)
         }
     
-        const syntaxList = tsNode.getChild(1)!;
-        if (!TsNode.isSyntaxList(syntaxList)) {
+        const syntaxList = tsNode.getChildAtIndex(1)!;
+        if (!AstNodeTraits.isSyntaxList(syntaxList)) {
             return Result.fail("The second element of type literal body not a syntax list", `Please update Reflect to support '${tsNode.getText()}' expression as type data`)
         }
         
         // Working with the type literal
-        let typeDeclaration: TypeDeclaration = new TypeDeclaration();
-        const typeLiteralSyntaxList =  syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+        let typeDeclaration: UserTypeDeclaration = new UserTypeDeclaration();
+        const typeLiteralSyntaxList =  AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
         const typeLiteralNodesCount = typeLiteralSyntaxList.length;
                 
             for (let typeLiteralIndex = 0; typeLiteralIndex < typeLiteralNodesCount; typeLiteralIndex++) {
                 const typeLiteralNode = typeLiteralSyntaxList[typeLiteralIndex];
-                if (!(TsNode.isPropertySignature(typeLiteralNode))) {
+                if (!(AstNodeTraits.isPropertySignature(typeLiteralNode))) {
                     const err = Debug.error(
                         `The type literal node expects the property signature`,
                         `The '${typeLiteralNode.getText()}' is not a property signature, update the identifyTypeLiteral()`,
@@ -465,7 +460,7 @@ export class TypeValueTraits {
             return Result.ok(typeDeclaration);
     }
 
-    private static identifyUnionType = async (tsNode: TsNode): Promise<Result<UnionTypeDeclaration>> => {
+    private static identifyUnionType = async (tsNode: Node): Promise<Result<UnionTypeDeclaration>> => {
         if (!this.isUnionType(tsNode)) {
             const err = Debug.error(
                 `this.isUnionType(tsNode: '${tsNode.getText()}'): Not valid`,
@@ -475,7 +470,7 @@ export class TypeValueTraits {
             return Result.fail(err)
         }
     
-        const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+        const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail(
                 `Union type '${tsNode.getText()}' expected to have a syntax list child`,
@@ -483,7 +478,7 @@ export class TypeValueTraits {
             )
         }
 
-        const children = syntaxLists[0].getChildren([], [TsNode.isNonImportant], ["|"]);
+        const children = AstNodeTraits.getChildren(syntaxLists[0], [], [AstNodeTraits.isNonImportant], ["|"]);
         
         // Working with the type literal
         let typeDeclaration: UnionTypeDeclaration = new UnionTypeDeclaration();
@@ -507,20 +502,20 @@ export class TypeValueTraits {
     }
 
 
-    private static propertySignatureToTypeDeclaration = async (tsNode: TsNode): Promise<Result<TypeDeclaration>> => {
-        if (!TsNode.isPropertySignature(tsNode)) {
+    private static propertySignatureToTypeDeclaration = async (tsNode: Node): Promise<Result<UserTypeDeclaration>> => {
+        if (!AstNodeTraits.isPropertySignature(tsNode)) {
             return Result.fail(
                 `The node is not a property signature`,
                 `Please pass the correct data to propertySignatureToTypeDeclaration(), or update Ara Web to support '${tsNode.getText()}'`
             )
         }
     
-        if (!tsNode.isChildExist(0)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`The property signature is missing the first child`, `Please pass the valid data to property signature to type declaration`)
         }
     
-        const typeDeclaration: TypeDeclaration = new TypeDeclaration();
-        const propertySignatureIdentifier = tsNode.getChild(0)!
+        const typeDeclaration: UserTypeDeclaration = new UserTypeDeclaration();
+        const propertySignatureIdentifier = tsNode.getChildAtIndex(0)!
                 
         if (!Identifier.isA(propertySignatureIdentifier)) {
             const err = Debug.error(
@@ -533,9 +528,9 @@ export class TypeValueTraits {
         
         const propertyIdentifier = propertySignatureIdentifier.getText();
     
-        const propertySignatureChildren = tsNode.getChildren(
+        const propertySignatureChildren = AstNodeTraits.getChildren(tsNode,
             [], 
-            [TsNode.isNonImportant, Identifier.isA], 
+            [AstNodeTraits.isNonImportant, Identifier.isA], 
             [":", ",", "?"] // ? at the end of the property indicates it's optional.
         )
         const propertySignatureCount = propertySignatureChildren.length;

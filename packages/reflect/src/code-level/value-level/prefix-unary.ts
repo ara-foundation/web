@@ -4,12 +4,12 @@ import {
     ValueTypeString, 
     type IdentifiedNodeDataType, 
     type ValueType,
-    TsNode, 
-    type TsNodeValidator,
+    type AstNodeFilter,
     type TypedData,
     AstNodeContext,
     ValueLevel,
-    type ValueLevelInterface
+    type ValueLevelInterface,
+    AstNodeTraits
 } from "../index.js";
 
 /**
@@ -21,11 +21,11 @@ export class PrefixUnary {
         return "PrefixUnary"
     }
 
-    private static isSupportedPrefix: TsNodeValidator = (child: TsNode): boolean => {
+    private static isSupportedPrefix: AstNodeFilter = (child: Node): boolean => {
         return ["!", "+", "-", "++", "--"].includes(child.getText())
     }
 
-    private static getPrefixType = (child: TsNode): ValueTypeString => {
+    private static getPrefixType = (child: Node): ValueTypeString => {
         const prefix = child.getText();
         if (prefix === "!") {
             return ValueTypeString.boolean;
@@ -78,29 +78,28 @@ export class PrefixUnary {
         return Result.fail(`The '${dataType}' is not expected`, `Prefix for '${prefixType}' expected, pass correct code`)
     }
 
-    public static isPrefixUnary: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isPrefixUnary: AstNodeFilter = (node: Node): boolean => {
         return node instanceof PrefixUnaryExpression;
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        return this.isPrefixUnary(child);
+    public static isA: AstNodeFilter = (node: Node): boolean => {
+        return this.isPrefixUnary(node);
     }
 
-    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
         if (!PrefixUnary.isA(tsNode)) {
             return Result.fail(`The TS Node is not a prefix unary`, `Please pass the correct value instead '${tsNode.getText()}'`)
         }
 
-        if (!tsNode.isChildExist(0)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Prefix is missing`, `Please pass the first element of property assignment`)
         }
-        if (!tsNode.isChildExist(1)) {
+        if (!AstNodeTraits.isChildExist(tsNode, 1)) {
             return Result.fail(`Prefixed node is missing`, `Please pass the second element of property assignment`)
         }
 
-        const prefix = tsNode.getChild(0)!;
-        const value = tsNode.getChild(1)!;
+        const prefix = tsNode.getChildAtIndex(0)!;
+        const value = tsNode.getChildAtIndex(1)!;
 
         if (!PrefixUnary.isSupportedPrefix(prefix)) {
             return Result.fail(`The '${prefix.getText()}' not supported prefix`, `Please update PrefixUnary.identifyValue() to support new prefix type`)

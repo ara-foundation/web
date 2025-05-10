@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, PropertyAssignment } from "ts-morph";
 import { ObjectTraits, Result, Debug } from "@ara-web/p-hintjens";
-import { ValueTypeString, TsNode, AstNodeContext, ValueLevel, Identifier, Literal } from "../index.js";
+import { ValueTypeString, AstNodeContext, ValueLevel, Identifier, Literal, AstNodeTraits } from "../index.js";
 /**
  * Property assignment such as Property: <expression> in the context of the object literals
  */
@@ -54,19 +54,18 @@ let PropertyLiteral = (() => {
         static get name() {
             return "object-level/PropertyLiteral";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof PropertyAssignment;
         };
         identifyValue = async (tsNode, _, astNodeContext) => {
-            if (!tsNode.isChildExist(0)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 0)) {
                 return Result.fail(`Property assignment has no first value`, `Please pass the first element of property assignment`);
             }
-            if (!tsNode.isChildExist(2)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 2)) {
                 return Result.fail(`Property assignment has no third value`, `Please pass the third element of property assignment`);
             }
-            const property = tsNode.getChild(0);
-            const value = tsNode.getChild(2);
+            const property = tsNode.getChildAtIndex(0);
+            const value = tsNode.getChildAtIndex(2);
             if (!Identifier.isA(property) && !Literal.isStringLiteral(property)) {
                 const err = Debug.error(`The property '${property.getText()}' is not identifier nor a string literal`, `Ara Web supports identifiers as the property for now, please update it.`, property);
                 return Result.fail(err);

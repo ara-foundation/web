@@ -2,16 +2,16 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { Project, SourceFile as TsSourceFile } from "ts-morph";
+import { Project, SourceFile as TsSourceFile, Node } from "ts-morph";
 import { Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
 import { VariableLevel } from "./variable-level/index.js";
 import { ImportLevel } from "./import-level/index.js";
 import { TypeLevel } from "./type-level/index.js";
-import { AstNode, AstNodeType } from "./ast-node.js";
-import { ValueTypeString } from "./ast-node-data.js";
-import { TsNode } from "./ts-node.js";
-import { AstNodeContext } from "./ast-node-context.js";
+import { CodePiece, CodePieceType } from "./code-piece.js";
+import { ValueTypeString } from "./code-piece-types.js";
+import { AstNodeTraits } from "./ast-node-traits.js";
+import { CodePieceContext } from "./code-piece-context.js";
 import { ValueLevel } from "./value-level/index.js";
 export class Code {
     _ast;
@@ -38,12 +38,12 @@ export class Code {
      * AST's children at the root level are list of code pieces.
      * Instead parsing at the AST level, we check in the sub child level.
      * @param filters
-     * @returns {TsNode[]}
+     * @returns {Node[]}
      */
     getTsNodes = (filters) => {
         const nodes = [];
         for (let child of this._ast.getChildren()) {
-            const children = new TsNode(child).getChildren(filters);
+            const children = AstNodeTraits.getChildren(child, filters);
             nodes.push(...children);
         }
         return nodes;
@@ -115,7 +115,7 @@ export class Code {
     setImportPaths = (importModuleLink, defaultIdentifier, astIdentifiers) => {
         for (let ast in astIdentifiers) {
             const astNode = astIdentifiers[ast];
-            if (!(astNode instanceof AstNode)) {
+            if (!(astNode instanceof CodePiece)) {
                 continue;
             }
             astNode.importPath = importModuleLink;
@@ -140,7 +140,7 @@ export class Code {
      * @returns
      */
     getLintedImportIdentifiers = async (moduleMemory, projectMemory) => {
-        const identifiers = moduleMemory.getIdentifiers([AstNode.isDefinedInOtherModule]);
+        const identifiers = moduleMemory.getIdentifiers([CodePiece.isDefinedInOtherModule]);
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
             const identifiedValue = await this.identifyImportedIdentifier(node, projectMemory);
@@ -169,7 +169,7 @@ export class Code {
         if (identifiedNode.identifier === undefined) {
             return Result.fail(`The identifier property is missing`, `Set the identifier property before calling identifyImportedIdentifier()`);
         }
-        if (identifiedNode.nodeType === AstNodeType.Type) {
+        if (identifiedNode.nodeType === CodePieceType.Type) {
             identifiedNode.data = {};
             return Result.ok(identifiedNode);
         }
@@ -206,11 +206,11 @@ export class Code {
             if (identifiedNode.dataType === ValueTypeString.number ||
                 identifiedNode.dataType === ValueTypeString.boolean ||
                 identifiedNode.dataType === ValueTypeString.string) {
-                identifiedNode.nodeType = AstNodeType.Literal;
+                identifiedNode.nodeType = CodePieceType.Literal;
             }
         }
         if (typeof identifiedNode.data === "function") {
-            identifiedNode.nodeType = AstNodeType.Function;
+            identifiedNode.nodeType = CodePieceType.Function;
         }
         return Result.ok(identifiedNode);
     };
@@ -221,8 +221,8 @@ export class Code {
     /////////////////////////////////////////////////////////////////////////////////////////////
     getLintedTypeIdentifiers = async (memory, projectMemory) => {
         const localTypeFilters = [
-            AstNode.isDefinedInLocal,
-            AstNode.isTypeDeclaration,
+            CodePiece.isDefinedInLocal,
+            CodePiece.isTypeDeclaration,
             BuiltInIdentifiers.isNonBuiltInIdentifier,
         ];
         const typesToLint = memory.getIdentifiers(localTypeFilters);
@@ -231,7 +231,7 @@ export class Code {
             return Result.ok(memory.getIdentifiers());
         }
         const moduleTypeFilters = [
-            AstNode.isTypeDeclaration,
+            CodePiece.isTypeDeclaration,
         ];
         for (let identifier in typesToLint) {
             let node = typesToLint[identifier];
@@ -240,7 +240,7 @@ export class Code {
                 continue;
             }
             const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
-            const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
+            const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
             const lintedNode = TypeLevel.lintType(node, memoryContext);
             if (lintedNode.isFailure) {
                 return Result.fail(`TypeLevel.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
@@ -276,8 +276,8 @@ export class Code {
     };
     getLintedVariableIdentifiers = async (memory, projectMemory) => {
         const localTypeFilters = [
-            AstNode.isDefinedInLocal,
-            AstNode.isVariableDeclaration,
+            CodePiece.isDefinedInLocal,
+            CodePiece.isVariableDeclaration,
             BuiltInIdentifiers.isNonBuiltInIdentifier,
         ];
         const varsToLint = memory.getIdentifiers(localTypeFilters);
@@ -292,7 +292,7 @@ export class Code {
                 continue;
             }
             const moduleIdentifiers = memory.getIdentifiers([], [identifier]);
-            const memoryContext = new AstNodeContext([], moduleIdentifiers, projectMemory);
+            const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
             const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
             if (lintedVariable.isFailure) {
                 return Result.fail(`ValueLevel.identifyAstNodeData(node: '${identifier}'): ${lintedVariable.errorTitle}`, lintedVariable.errorDescription);

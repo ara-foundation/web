@@ -1,15 +1,14 @@
 /**
  * Handles the AST Node's values
  */
-
+import{ Node } from "ts-morph"
 import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString, 
     type IdentifiedNodeDataType, 
     type ValueType,
-    TsNode,
-    AstNodeType, 
-    AstNode, 
+    CodePieceType, 
+    CodePiece, 
     type TypedData,
     AstNodeContext,
     type ValueLevelInterface,
@@ -133,7 +132,7 @@ export class ValueLevel {
      * @param tsNode 
      * @returns 
      */
-    public static getValueTypeString = (tsNode: TsNode): Result<ValueTypeString> => {
+    public static getValueTypeString = (tsNode: Node): Result<ValueTypeString> => {
         if (tsNode.getText() === "undefined") {
             return Result.ok(ValueTypeString.undefined);
         }
@@ -203,7 +202,7 @@ export class ValueLevel {
      * Identify the value of the {tsNode}, and update the ast node.
      * @returns 
      */
-    public static identifyValue = async (tsNode: TsNode, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    public static identifyValue = async (tsNode: Node, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         const supportedValueLevels: ValueLevelInterface[] = [
             Literal,          // "literal" | 12.2 | false
             FunctionCall,     // fooBar()
@@ -265,7 +264,7 @@ export class ValueLevel {
                     `Data type '${dataTypeLink.toString()}' not found`,
                     `Add the type into AstNodeContext`
                 )
-            } else if (dataType.nodeType !== AstNodeType.Type) {
+            } else if (dataType.nodeType !== CodePieceType.Type) {
                 return Result.fail(
                     `Data type is not a type`,
                     `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`
@@ -315,7 +314,7 @@ export class ValueLevel {
      * @limitation Only supports AST Nodes that are Links to the expressions.
      * @returns 
      */
-    public static identifyAstNodeData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    public static identifyAstNodeData = async (astNode: CodePiece, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         const identifiedData = this.identifyDataType(astNode.dataType, astNodeContext);
         if (identifiedData.isFailure) {
             return Result.fail(
@@ -351,7 +350,7 @@ export class ValueLevel {
      * @param astNode
      * @returns 
      */
-    private static identifyExpressionLinkData = async (astNode: AstNode, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private static identifyExpressionLinkData = async (astNode: CodePiece, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
         if (astNode.isObjectBinding()) {
             const objectBinding = astNode.getBindedObject()!;
             if (ReflectLink.isTsNodeLink(objectBinding.data)) {

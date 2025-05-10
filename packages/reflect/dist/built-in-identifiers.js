@@ -1,5 +1,6 @@
+import { Node } from "ts-morph";
 import { ModuleLink, Result } from "@ara-web/p-hintjens";
-import { AstNode, AstNodeType, ValueTypeString, Code, TsNode, VariableLevel } from "./code-level/index.js";
+import { CodePiece, CodePieceType, ValueTypeString, Code, VariableLevel } from "./code-level/index.js";
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler = (astNode, values) => {
     if (values.length !== 1) {
@@ -43,7 +44,7 @@ export class BuiltInIdentifiers {
         }
         for (let _identifier in varIdentifiers.getValue()) {
             if (_identifier === identifier) {
-                // We are sure, that the returned data is AstNode, not a link,
+                // We are sure, that the returned data is CodePiece, not a link,
                 // Since the script is here as well.
                 return Result.ok(varIdentifiers.getValue()[_identifier]);
             }
@@ -85,7 +86,7 @@ export class BuiltInIdentifiers {
             return Result.fail(`getVariableAstNode(identifier: '${this.prefix + this.identifiers[0]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`, astNode.errorDescription);
         }
         astNode.getValue().identifier = this.identifiers[0];
-        astNode.getValue().nodeType = AstNodeType.Type;
+        astNode.getValue().nodeType = CodePieceType.Type;
         astNode.getValue().data = [{}];
         astNode.getValue().public = true;
         astNode.getValue().constant = true;
@@ -99,7 +100,7 @@ export class BuiltInIdentifiers {
             return Result.fail(`getVariableAstNode(identifier: '${this.prefix + this.identifiers[1]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`, astNode.errorDescription);
         }
         astNode.getValue().identifier = this.identifiers[1];
-        astNode.getValue().nodeType = AstNodeType.Type;
+        astNode.getValue().nodeType = CodePieceType.Type;
         astNode.getValue().data = { key: "", value: {} };
         astNode.getValue().public = true;
         astNode.getValue().constant = true;

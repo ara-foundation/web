@@ -1,12 +1,12 @@
 import { Node, ParenthesizedExpression } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    type AstNodeFilter,
     type TypedData,
     AstNodeContext,
     ValueLevel,
-    type ValueLevelInterface
+    type ValueLevelInterface,
+    AstNodeTraits
 } from "../index.js";
 
 /**
@@ -18,23 +18,22 @@ export class Parenthesis {
         return "Parenthesis"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof ParenthesizedExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(2)) {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(
                 `The ts node must have three children`,
                 `Parenthesized expression must have 3 children`,
             )    
         }
     
-        const result = await ValueLevel.identifyValue(tsNode.getChild(1)!, typedData!, astNodeContext!);
+        const result = await ValueLevel.identifyValue(tsNode.getChildAtIndex(1)!, typedData!, astNodeContext!);
         if (result.isFailure) {
             return Result.fail(
-                `this.identifyValue('${tsNode.getChild(1)!.getText()}'): ${result.errorTitle}`,
+                `this.identifyValue('${tsNode.getChildAtIndex(1)!.getText()}'): ${result.errorTitle}`,
                 result.errorDescription!
             )
         }

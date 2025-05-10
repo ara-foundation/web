@@ -2,12 +2,12 @@
  * The script that works with the code by turning it into the
  * AST (Abstract Syntax Tree)
  */
-import { Project } from "ts-morph";
+import { Project, Node } from "ts-morph";
 import { Result, ModuleLink } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "../index.js";
-import { type AstIdentifiers, type TypedData } from "./ast-node.js";
-import { type ValueType } from "./ast-node-data.js";
-import { TsNode, type TsNodeValidator } from "./ts-node.js";
+import { type CodePieceRecord, type TypedData } from "./code-piece.js";
+import { type ValueType } from "./code-piece-types.js";
+import { type AstNodeFilter } from "./ast-node-traits.js";
 export type Object = {
     [key: string]: ValueType;
 };
@@ -28,9 +28,9 @@ export declare class Code {
      * AST's children at the root level are list of code pieces.
      * Instead parsing at the AST level, we check in the sub child level.
      * @param filters
-     * @returns {TsNode[]}
+     * @returns {Node[]}
      */
-    getTsNodes: (filters?: TsNodeValidator[]) => TsNode[];
+    getTsNodes: (filters?: AstNodeFilter[]) => Node[];
     /**
      * Parses the entire code for any import clauses. If any import clause,
      * then, using `./import-declarations.ts` will turn them into the import identifiers.
@@ -38,7 +38,7 @@ export declare class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    getImportedIdentifiers: (projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
+    getImportedIdentifiers: (projectMemory: ProjectMemory) => Promise<Result<CodePieceRecord>>;
     /**
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
@@ -52,7 +52,7 @@ export declare class Code {
      * @param projectMemory {Lint from all modules}
      * @returns
      */
-    getLintedImportIdentifiers: <T>(moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
+    getLintedImportIdentifiers: <T>(moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePieceRecord>>;
     /**
      * If the node type is a Type, then it simply sets the {} empty object and leaves as it is.
      *
@@ -64,19 +64,19 @@ export declare class Code {
      * @returns
      */
     private identifyImportedIdentifier;
-    getLintedTypeIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
+    getLintedTypeIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePieceRecord>>;
     /**
      * Returns all the types defined in this code.
      * @param memory
      * @returns
      */
-    getTypeIdentifiers: () => Promise<Result<AstIdentifiers>>;
-    getVariableIdentifiers: () => Promise<Result<AstIdentifiers>>;
-    getLintedVariableIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<AstIdentifiers>>;
+    getTypeIdentifiers: () => Promise<Result<CodePieceRecord>>;
+    getVariableIdentifiers: () => Promise<Result<CodePieceRecord>>;
+    getLintedVariableIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePieceRecord>>;
     /**
      * Find the result of the expression, by setting it as a variable declaration.
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: AstIdentifiers) => Promise<Result<TypedData>>;
+    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: CodePieceRecord) => Promise<Result<TypedData>>;
 }

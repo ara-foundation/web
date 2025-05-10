@@ -4,8 +4,8 @@
  * - Ts Nodes (to parse or connect between ts node tree)
  * - Expressions
  */
+import { Node } from "ts-morph";
 import { AraLink } from "@ara-web/p-hintjens";
-import { TsNode } from "./ts-node.js";
 export const ReflectProtocol = "reflect";
 export const IdentifierSlugs = ["id"];
 export const TsNodeSlugs = ["tsnode"];
@@ -57,7 +57,7 @@ export class ReflectLink {
         if (!araLink.isCorrectPath(ReflectProtocol, TsNodeSlugs)) {
             return false;
         }
-        return (araLink.resource instanceof TsNode);
+        return (araLink.resource instanceof Node);
     };
     static getResourceAsIdentifier = (araLink) => {
         if (araLink === undefined) {
@@ -81,9 +81,9 @@ export class ReflectLink {
         return undefined;
     };
     /**
-     * Returns the TsNode from the AraLink.
+     * Returns the Node from the AraLink.
      * @param araLink
-     * @returns {TsNode|undefined}
+     * @returns {undefined}
      */
     static getResourceAsTsNode = (araLink) => {
         if (araLink === undefined) {

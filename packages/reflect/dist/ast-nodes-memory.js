@@ -1,5 +1,5 @@
 import { AraLink, Debug } from "@ara-web/p-hintjens";
-import { AstNodeType, AstNode } from "./code-level/index.js";
+import { CodePieceType, CodePiece } from "./code-level/index.js";
 export class AstIdentifierMemory {
     _identifiers = {};
     constructor() {

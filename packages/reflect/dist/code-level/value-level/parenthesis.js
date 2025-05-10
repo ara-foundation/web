@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, ParenthesizedExpression } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { TsNode, AstNodeContext, ValueLevel } from "../index.js";
+import { AstNodeContext, ValueLevel, AstNodeTraits } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
@@ -54,17 +54,16 @@ let Parenthesis = (() => {
         static get name() {
             return "Parenthesis";
         }
-        static isA = (child) => {
-            const node = child.getNode();
+        static isA = (node) => {
             return node instanceof ParenthesizedExpression;
         };
         identifyValue = async (tsNode, typedData, astNodeContext) => {
-            if (!tsNode.isChildExist(2)) {
+            if (!AstNodeTraits.isChildExist(tsNode, 2)) {
                 return Result.fail(`The ts node must have three children`, `Parenthesized expression must have 3 children`);
             }
-            const result = await ValueLevel.identifyValue(tsNode.getChild(1), typedData, astNodeContext);
+            const result = await ValueLevel.identifyValue(tsNode.getChildAtIndex(1), typedData, astNodeContext);
             if (result.isFailure) {
-                return Result.fail(`this.identifyValue('${tsNode.getChild(1).getText()}'): ${result.errorTitle}`, result.errorDescription);
+                return Result.fail(`this.identifyValue('${tsNode.getChildAtIndex(1).getText()}'): ${result.errorTitle}`, result.errorDescription);
             }
             return Result.ok(result.getValue());
         };

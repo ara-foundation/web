@@ -1,8 +1,8 @@
 ---
-// const {id, text}: {id: string, text: string} = Astro.props;
+const {id, text}: {id: string, text: string} = Astro.props;
 
 ---
 
-<div id="sub-component-id" class="boxes">
-	Sub component text
+<div id={id} class="boxes">
+	Sub component text {text}
 </div>

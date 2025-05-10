@@ -4,13 +4,12 @@
  */
 import { Node, TypeAliasDeclaration, TypeParameterDeclaration, } from "ts-morph";
 import { Result, Debug, StringTraits } from "@ara-web/p-hintjens";
-import { ValueTypeString, AstNode, AstNodeType, TsNode, Identifier, } from "../index.js";
+import { ValueTypeString, CodePiece, CodePieceType, AstNodeTraits, Identifier, } from "../index.js";
 import { TypeValueTraits } from "./type-value-traits.js";
-export class TypeDeclaration extends TsNode {
+export class TypeDeclaration {
     _tsNode;
     constructor(tsNode) {
-        super(tsNode);
-        this._tsNode = tsNode.getNode();
+        this._tsNode = tsNode;
     }
     static fromTsNode(tsNode) {
         if (!this.isTypeDeclaration(tsNode)) {
@@ -19,38 +18,39 @@ export class TypeDeclaration extends TsNode {
         const importDeclaration = new TypeDeclaration(tsNode);
         return Result.ok(importDeclaration);
     }
+    getText() {
+        return this._tsNode.getText();
+    }
     /////////////////////////////////////////////////////////////////////////////////////////////
     //
     // Type Declarations
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
     static isTypeDeclaration = (child) => {
-        const node = child.getNode();
-        return node instanceof TypeAliasDeclaration;
+        return child instanceof TypeAliasDeclaration;
     };
     static isTypeParameterDeclaration = (child) => {
-        const node = child.getNode();
-        return node instanceof TypeParameterDeclaration;
+        return child instanceof TypeParameterDeclaration;
     };
     identifyGenericDeclaration = async (genericNode) => {
-        const nodes = genericNode.getChildren([], [TsNode.isNonImportant], []);
+        const nodes = AstNodeTraits.getChildren(genericNode, [], [AstNodeTraits.isNonImportant], []);
         const paramCount = nodes.length;
         if (paramCount === 0) {
             return Result.fail(`The '${genericNode.getText()}' doesn't have any node`, `Please pass the correct type parameter declaration, or help to improve Medet's misclick`);
         }
         if (!Identifier.isA(nodes[0])) {
-            const err = Debug.error(`The first node '${nodes[0].getText()}' is not identifier`, `Please update the Ara Web to support this feature or perhaps you made a mistake in your syntax? ;)`, nodes[0].getNode());
+            const err = Debug.error(`The first node '${nodes[0].getText()}' is not identifier`, `Please update the Ara Web to support this feature or perhaps you made a mistake in your syntax? ;)`, nodes[0]);
             return Result.fail(err);
         }
-        let identifiedNode = AstNode.fromTsNode(genericNode);
+        let identifiedNode = CodePiece.fromTsNode(genericNode);
         identifiedNode.constant = true;
-        identifiedNode.nodeType = AstNodeType.Type;
+        identifiedNode.nodeType = CodePieceType.Type;
         identifiedNode.identifier = nodes[0].getText();
         identifiedNode.data = {};
         identifiedNode.dataType = ValueTypeString.object;
         for (let paramCounter = 1; paramCounter < paramCount; paramCounter++) {
             const paramNode = nodes[paramCounter];
-            if (!TsNode.isKeyword(paramNode, ["extends"])) {
+            if (!AstNodeTraits.isKeyword(paramNode, ["extends"])) {
                 const err = Debug.error(`The second parameter of generic declaration is not 'extends'`, `Ara Web doesn't support the '${paramNode.getText()}' as the ${paramCounter + 1} node. Please update identifyGeneric()`, paramNode);
                 return Result.fail(err);
             }
@@ -77,10 +77,10 @@ export class TypeDeclaration extends TsNode {
      */
     static getGenericNodesAfterOpeningClause = (openingClause) => {
         const syntaxList = openingClause.getNextSibling();
-        if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
+        if (syntaxList === undefined || !AstNodeTraits.isSyntaxList(syntaxList)) {
             return [];
         }
-        return syntaxList.getChildren([], [TsNode.isNonImportant], [","]);
+        return AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
     };
     /**
          *
@@ -92,27 +92,27 @@ export class TypeDeclaration extends TsNode {
             return false;
         }
         const syntaxList = openingClause.getNextSibling();
-        if (syntaxList === undefined || !TsNode.isSyntaxList(syntaxList)) {
+        if (syntaxList === undefined || !AstNodeTraits.isSyntaxList(syntaxList)) {
             return false;
         }
         const closingClause = syntaxList.getNextSibling();
-        if (closingClause === undefined || !TsNode.isKeyword(closingClause, ">")) {
+        if (closingClause === undefined || !AstNodeTraits.isKeyword(closingClause, ">")) {
             return false;
         }
         return true;
     };
     getAstNode = async () => {
-        let identifiedNode = AstNode.fromTsNode(this);
+        let identifiedNode = CodePiece.fromTsNode(this._tsNode);
         identifiedNode.constant = true;
-        identifiedNode.nodeType = AstNodeType.Type;
+        identifiedNode.nodeType = CodePieceType.Type;
         identifiedNode.data = undefined;
         let identifier = '';
         // Type declaration has 'type' keyword and '=' sign to skip.
-        const children = this.getChildren([], [TsNode.isTypeKeyword, TsNode.isNonImportant], ["="]);
+        const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isTypeKeyword, AstNodeTraits.isNonImportant], ["="]);
         // Child = 0 is the keyword
         for (let i = 0; i < children.length; i++) {
             const typeChild = children[i];
-            if (TsNode.isExportKeyword(typeChild)) {
+            if (AstNodeTraits.isExportKeyword(typeChild)) {
                 identifiedNode.public = true;
                 continue;
             }
@@ -133,7 +133,7 @@ export class TypeDeclaration extends TsNode {
                     }
                     identifiedNode.putMemoryData(identifiedData.getValue());
                 }
-                i += AstNode.GenericNodeLength - 1;
+                i += CodePiece.GenericNodeLength - 1;
                 continue;
             }
             else {

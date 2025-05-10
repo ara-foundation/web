@@ -1,10 +1,10 @@
-export { AstNode, AstNodeType } from "./ast-node.js";
+export { CodePiece, CodePieceType } from "./code-piece.js";
 export { ReflectLink } from "./reflect-link.js";
-export { TsNode } from "./ts-node.js";
+export { AstNodeTraits } from "./ast-node-traits.js";
 export { Identifier } from "./idenitifier.js";
-export { TypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "./ast-node-data.js";
+export { UserTypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "./code-piece-types.js";
 export { Literal } from "./literal.js";
-export { AstNodeContext } from "./ast-node-context.js";
+export { CodePieceContext as AstNodeContext } from "./code-piece-context.js";
 export { ValueLevel } from "./value-level/index.js";
 export { Code } from "./code.js";
 export { VariableLevel } from "./variable-level/index.js";

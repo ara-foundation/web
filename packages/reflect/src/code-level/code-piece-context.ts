@@ -1,6 +1,6 @@
 import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import type { MemoryOperations } from "../index.js";
-import { AstNode, type AstIdentifiers } from "./ast-node.js";
+import { CodePiece, type CodePieceRecord } from "./code-piece.js";
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -9,19 +9,19 @@ import { AstNode, type AstIdentifiers } from "./ast-node.js";
  * - Module memory, where this ast node is called.
  * - Project memory including all the third party libraries, built-in NodeJS libraries.
  */
-export class AstNodeContext {
-    private _localDefined: AstNode[];
-    private _pageIdentifiers: AstIdentifiers; 
+export class CodePieceContext {
+    private _localDefined: CodePiece[];
+    private _pageIdentifiers: CodePieceRecord; 
     private _projectMemory: MemoryOperations;
 
-    constructor(localDefined: AstNode[], pageIdentifiers: AstIdentifiers, projectMemory: MemoryOperations) {
+    constructor(localDefined: CodePiece[], pageIdentifiers: CodePieceRecord, projectMemory: MemoryOperations) {
         this._localDefined = localDefined;
         this._pageIdentifiers = pageIdentifiers;
         this._projectMemory = projectMemory;
     }
 
-    public clone(additionalLocals: AstNode[], skipIdentifiers?: string[]): AstNodeContext {
-        const context = new AstNodeContext(additionalLocals, {}, this._projectMemory);
+    public clone(additionalLocals: CodePiece[], skipIdentifiers?: string[]): CodePieceContext {
+        const context = new CodePieceContext(additionalLocals, {}, this._projectMemory);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];
@@ -51,11 +51,11 @@ export class AstNodeContext {
         return this._localDefined.length;
     }
 
-    public post(localDefined: AstNode[]): void {
+    public post(localDefined: CodePiece[]): void {
         this._localDefined = [...this._localDefined, ...localDefined];
     }
 
-    private getLocal = (identifier: string): AstNode|undefined => {
+    private getLocal = (identifier: string): CodePiece|undefined => {
         if (this._localDefined === undefined || this._localDefined.length === 0) {
             return undefined;
         }
@@ -73,7 +73,7 @@ export class AstNodeContext {
         return this.getLocal(identifier) !== undefined;
     }
 
-    private getPageIdentifier = (identifier: string): AstNode|undefined => {
+    private getPageIdentifier = (identifier: string): CodePiece|undefined => {
         if (this._pageIdentifiers === undefined || Object.keys(this._pageIdentifiers).indexOf(identifier) === -1) {
             return undefined;
         }
@@ -82,13 +82,13 @@ export class AstNodeContext {
 
         if (identified instanceof AraLink) {
             return this.getIdentifier(identified)
-        } else if (identified instanceof AstNode) {
+        } else if (identified instanceof CodePiece) {
             return identified;
         }
         return undefined;
     }
 
-    public getIdentifier = (data: AraLink<string>|string): AstNode|undefined => {
+    public getIdentifier = (data: AraLink<string>|string): CodePiece|undefined => {
         let identifier: string;
         if (typeof data !== "string") {
             identifier = data.resource;
@@ -96,7 +96,7 @@ export class AstNodeContext {
             identifier = data;
         }
 
-        let astNode: AstNode|undefined = undefined;
+        let astNode: CodePiece|undefined = undefined;
 
         if (this.isLocal(identifier)) {
             astNode = this.getLocal(identifier);

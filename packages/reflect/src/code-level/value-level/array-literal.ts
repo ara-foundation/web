@@ -1,8 +1,8 @@
 import { ArrayLiteralExpression, Node } from "ts-morph";
 import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    AstNodeTraits, 
+    type AstNodeFilter,
     AstNodeContext,
     ValueLevel,
     type ValueType,
@@ -19,13 +19,12 @@ export class ArrayLiteral {
         return "array-level/ArrayLiteral"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof ArrayLiteralExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        const syntaxLists = tsNode.getChildren([TsNode.isSyntaxList]);
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail('The Ts Node expected to have syntax list', `The '${tsNode.getText()}' has '${syntaxLists.length}' syntax list only`)
         }
@@ -50,7 +49,7 @@ export class ArrayLiteral {
          * @child {SyntaxList} anything
          * @child Node '}'
          */
-    private identifyArrayLiteral = async (syntaxList: TsNode, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<ValueType[]>> => {
+    private identifyArrayLiteral = async (syntaxList: Node, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<ValueType[]>> => {
         if (!Array.isArray(typedData.dataType)) {
             const err = Debug.error(
                 `Data is not an array when expression is array literal`,
@@ -67,7 +66,7 @@ export class ArrayLiteral {
         const data: ValueType[] = [];
         const elementType = (typedData.dataType as any)[0];
 
-        const children = syntaxList.getChildren([], [TsNode.isNonImportant], [","])
+        const children = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","])
         for (let elementIndex = 0; elementIndex < children.length; elementIndex++) {
             const element = children[elementIndex];
             const identified = await ValueLevel.identifyValue(element, {dataType: elementType}, astNodeContext);

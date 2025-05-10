@@ -1,17 +1,18 @@
+import { Node } from "ts-morph";
 import { AraLink, ModuleLink, Result } from "@ara-web/p-hintjens";
-export var AstNodeType;
-(function (AstNodeType) {
-    AstNodeType["Variable"] = "variable";
-    AstNodeType["Enum"] = "enum";
-    AstNodeType["Function"] = "function";
-    AstNodeType["Class"] = "class";
-    AstNodeType["Object"] = "object";
-    AstNodeType["Property"] = "property";
-    AstNodeType["Type"] = "type";
-    AstNodeType["Array"] = "array";
-    AstNodeType["Literal"] = "literal";
-})(AstNodeType || (AstNodeType = {}));
-export class AstNode {
+export var CodePieceType;
+(function (CodePieceType) {
+    CodePieceType["Variable"] = "variable";
+    CodePieceType["Enum"] = "enum";
+    CodePieceType["Function"] = "function";
+    CodePieceType["Class"] = "class";
+    CodePieceType["Object"] = "object";
+    CodePieceType["Property"] = "property";
+    CodePieceType["Type"] = "type";
+    CodePieceType["Array"] = "array";
+    CodePieceType["Literal"] = "literal";
+})(CodePieceType || (CodePieceType = {}));
+export class CodePiece {
     static GenericNodeLength = 3;
     nodeType;
     constant;
@@ -27,16 +28,19 @@ export class AstNode {
     get tsNode() {
         return this._tsNode;
     }
+    // So that people won't create an instance of this class
+    // directly, but use the static method instead.
+    // Because most of the methods are depending on the node.
     constructor(tsNode) {
         this._tsNode = tsNode;
     }
     static fromTsNode(tsNode) {
-        const astNode = new AstNode(tsNode);
+        const astNode = new CodePiece(tsNode);
         return astNode;
     }
     isObjectBinding() {
         if (this.memoryDataLength() > 0) {
-            return this.getMemoryData(0)?.nodeType === AstNodeType.Property;
+            return this.getMemoryData(0)?.nodeType === CodePieceType.Property;
         }
         return false;
     }
@@ -253,7 +257,7 @@ export class AstNode {
      * @returns
      */
     static isTypeDeclaration = (child) => {
-        return (child.nodeType === AstNodeType.Type);
+        return (child.nodeType === CodePieceType.Type);
     };
     /**
      * Is it a variable declaration?
@@ -261,6 +265,6 @@ export class AstNode {
      * @returns
      */
     static isVariableDeclaration = (child) => {
-        return (child.nodeType === AstNodeType.Variable);
+        return (child.nodeType === CodePieceType.Variable);
     };
 }

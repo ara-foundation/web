@@ -1,8 +1,8 @@
+import { Node } from "ts-morph"
 import { AraLink, ModuleLink, Result } from "@ara-web/p-hintjens";
-import type { TsNode } from "./ts-node.js";
-import type { IdentifiedNodeDataType, ValueType } from "./ast-node-data.js";
+import type { IdentifiedNodeDataType, ValueType } from "./code-piece-types.js";
 
-export enum AstNodeType {
+export enum CodePieceType {
     Variable = "variable",
     Enum = "enum",
     Function = "function",
@@ -18,19 +18,19 @@ export enum AstNodeType {
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
-export type AstIdentifiers = {[key: string]: AstNode};
+export type CodePieceRecord = Record<string, CodePiece>;
 
-export type AstNodeValidator = (astNode: AstNode) => boolean;
+export type CodePieceFilter = (astNode: CodePiece) => boolean;
 
 // If the AST Node has generic values in typescript it's between < and >.
-export type GenericHandler = (astNode: AstNode, values: ValueType[]) => Result<AstNode>;
+export type GenericHandler = (astNode: CodePiece, values: ValueType[]) => Result<CodePiece>;
 
-export type TypedData = Pick<AstNode, "data" | "dataType">
+export type TypedData = Pick<CodePiece, "data" | "dataType">
 
-export class AstNode {
+export class CodePiece {
     public static readonly GenericNodeLength = 3;
 
-    public nodeType?: AstNodeType;
+    public nodeType?: CodePieceType;
     public constant?: boolean;
     public public?: boolean;   // If the module exposes it
     public dataType?: IdentifiedNodeDataType;    // Identify the value in the future
@@ -39,30 +39,33 @@ export class AstNode {
     public identifier?: string;              // If the ast node has an alias, then alias is the second parameter
     // If the ast node has a Generic Handler, then use this function to overwrite
     private _genericHandler?: GenericHandler;
-    private _nodeMemory?: AstNode[];                  // Anything defined and available within the Ast Node, means ast data
-    private _tsNode: TsNode;
+    private _nodeMemory?: CodePiece[];                  // Anything defined and available within the Ast Node, means ast data
+    private _tsNode: Node;
 
-    public get tsNode(): TsNode {
+    public get tsNode(): Node {
         return this._tsNode;
     }
 
-    protected constructor(tsNode: TsNode) {
+    // So that people won't create an instance of this class
+    // directly, but use the static method instead.
+    // Because most of the methods are depending on the node.
+    protected constructor(tsNode: Node) {
         this._tsNode = tsNode;
     }
 
-    public static fromTsNode(tsNode: TsNode): AstNode {
-        const astNode = new AstNode(tsNode);
+    public static fromTsNode(tsNode: Node): CodePiece {
+        const astNode = new CodePiece(tsNode);
         return astNode;
     }
 
     public isObjectBinding(): boolean {
         if (this.memoryDataLength() > 0) {
-            return this.getMemoryData(0)?.nodeType === AstNodeType.Property;
+            return this.getMemoryData(0)?.nodeType === CodePieceType.Property;
         }
         return false;
     }
 
-    public getBindedObject(): AstNode|undefined {
+    public getBindedObject(): CodePiece|undefined {
         if (this.isObjectBinding()) {
             return this.getMemoryData(0);
         }
@@ -102,7 +105,7 @@ export class AstNode {
         return this._genericHandler !== undefined;
     }
 
-    public handleGeneric = (genericValues: ValueType[]): Result<AstNode> => {
+    public handleGeneric = (genericValues: ValueType[]): Result<CodePiece> => {
         if (!this.isGenericHandlerExist) {
             return Result.fail(
                 `this.isGenericHandlerExist: not found`,
@@ -140,7 +143,7 @@ export class AstNode {
      * @param astNode 
      * @returns 
      */
-    public putMemoryData(astNode: AstNode): void {
+    public putMemoryData(astNode: CodePiece): void {
         if (this._nodeMemory === undefined) {
             this._nodeMemory = [astNode];
             return;
@@ -154,7 +157,7 @@ export class AstNode {
      * @param index 
      * @param astNode 
      */
-    public postMemoryData(index: number, astNode?: AstNode): void {
+    public postMemoryData(index: number, astNode?: CodePiece): void {
         if (this._nodeMemory === undefined) {
             if (astNode !== undefined) {
                 this._nodeMemory = [astNode];
@@ -186,7 +189,7 @@ export class AstNode {
      * @param skippedIdentifiers 
      * @returns 
      */
-    public getAllMemoryData(skippedIdentifiers?: string[]): AstNode[] {
+    public getAllMemoryData(skippedIdentifiers?: string[]): CodePiece[] {
         if (this._nodeMemory === undefined) {
             return []
         }
@@ -194,7 +197,7 @@ export class AstNode {
         if (skippedIdentifiers === undefined) {
             return this._nodeMemory;
         }
-        const nodes: AstNode[] = [];
+        const nodes: CodePiece[] = [];
 
         for (let node of this._nodeMemory) {
             if (node.identifier === undefined) {
@@ -214,7 +217,7 @@ export class AstNode {
      * @param index 
      * @returns 
      */
-    public getMemoryData(index: number): AstNode|undefined {
+    public getMemoryData(index: number): CodePiece|undefined {
         if (index < 0) {
             return undefined;
         }
@@ -254,7 +257,7 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isDefinedInOtherModule: AstNodeValidator = (child: AstNode): boolean => {
+    public static isDefinedInOtherModule: CodePieceFilter = (child: CodePiece): boolean => {
         return (child.importPath !== undefined)
     }
 
@@ -263,7 +266,7 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isDefinedInLocal: AstNodeValidator = (child: AstNode): boolean => {
+    public static isDefinedInLocal: CodePieceFilter = (child: CodePiece): boolean => {
         return (child.importPath === undefined)
     }
 
@@ -273,7 +276,7 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isDataNotEmpty: AstNodeValidator = (child: AstNode): boolean => {
+    public static isDataNotEmpty: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.data === undefined) {
             return false;
         }
@@ -296,7 +299,7 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isDataLink: AstNodeValidator = (child: AstNode): boolean => {
+    public static isDataLink: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.data === undefined) {
             return false;
         }
@@ -309,8 +312,8 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isTypeDeclaration: AstNodeValidator = (child: AstNode): boolean => {
-        return (child.nodeType === AstNodeType.Type);
+    public static isTypeDeclaration: CodePieceFilter = (child: CodePiece): boolean => {
+        return (child.nodeType === CodePieceType.Type);
     }
 
     /**
@@ -318,8 +321,8 @@ export class AstNode {
      * @param child 
      * @returns 
      */
-    public static isVariableDeclaration: AstNodeValidator = (child: AstNode): boolean => {
-        return (child.nodeType === AstNodeType.Variable);
+    public static isVariableDeclaration: CodePieceFilter = (child: CodePiece): boolean => {
+        return (child.nodeType === CodePieceType.Variable);
     }
     
 }

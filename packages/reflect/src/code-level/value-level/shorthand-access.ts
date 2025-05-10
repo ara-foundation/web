@@ -1,14 +1,14 @@
 import { Node, ShorthandPropertyAssignment } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
-    TsNode, 
-    type TsNodeValidator,
+    type AstNodeFilter,
     ValueTypeString,
     type TypedData,
     AstNodeContext,
     ValueLevel,
     Identifier,
-    type ValueLevelInterface
+    type ValueLevelInterface,
+    AstNodeTraits
 } from "../index.js";
 
 /**
@@ -20,16 +20,15 @@ export class ShorthandAccess {
         return "object-level/ShorthandAccess"
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof ShorthandPropertyAssignment;
     }
 
-    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(0)) {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
         }
-        const property = tsNode.getChild(0)!;
+        const property = tsNode.getChildAtIndex(0)!;
         
         if (!Identifier.isA(property)) {
             return Result.fail(`Property expected to be identifier`, `Please update ShorthandAccess.identifyValue() to support '${property.getText()}'`);

@@ -34,8 +34,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { NumericLiteral, StringLiteral, TrueLiteral, FalseLiteral, Node } from "ts-morph";
 import { Debug, Result, ObjectTraits, StringTraits } from "@ara-web/p-hintjens";
-import { ValueTypeString } from "./ast-node-data.js";
-import { TsNode } from "./ts-node.js";
+import { ValueTypeString } from "./code-piece-types.js";
+import {} from "./ast-node-traits.js";
 import {} from "./value-level-interface.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
@@ -57,19 +57,16 @@ let Literal = (() => {
             return "Literal";
         }
         static isStringLiteral = (child) => {
-            const node = child.getNode();
-            return node instanceof StringLiteral;
+            return child instanceof StringLiteral;
         };
         static isNumericLiteral = (child) => {
-            const node = child.getNode();
-            return node instanceof NumericLiteral;
+            return child instanceof NumericLiteral;
         };
         static isBooleanLiteral = (child) => {
-            const node = child.getNode();
-            if (node instanceof TrueLiteral) {
+            if (child instanceof TrueLiteral) {
                 return true;
             }
-            if (node instanceof FalseLiteral) {
+            if (child instanceof FalseLiteral) {
                 return true;
             }
             return false;

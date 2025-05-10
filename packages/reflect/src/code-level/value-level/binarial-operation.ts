@@ -1,8 +1,8 @@
 import { BinaryExpression, Node } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import {
-    TsNode, 
-    type TsNodeValidator,
+    AstNodeTraits, 
+    type AstNodeFilter,
     AstNodeContext,
     ValueLevel,
     ValueTypeString, 
@@ -20,13 +20,13 @@ export class BinarialOperation {
         return "BinarialOperation"
     }
 
-    private static isSupportedOperation: TsNodeValidator = (child: TsNode): boolean => {
+    private static isSupportedOperation: AstNodeFilter = (child: Node): boolean => {
         const op = child.getText();
         return this.isBooleanOperation(op) || 
             this.isArithmeticOperation(op);
     }
     
-    private static getBinarialType = (child: TsNode): ValueTypeString => {
+    private static getBinarialType = (child: Node): ValueTypeString => {
         const op = child.getText();
         if (this.isBooleanOperation(op)) {
             return ValueTypeString.boolean;
@@ -108,28 +108,27 @@ export class BinarialOperation {
                 return false;
     }
 
-    public static isA: TsNodeValidator = (child: TsNode): boolean => {
-        const node = child.getNode<Node>();
+    public static isA: AstNodeFilter = (node: Node): boolean => {
         return node instanceof BinaryExpression;
     }
 
-    public identifyValue = async (tsNode: TsNode, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
-        if (!tsNode.isChildExist(2)) {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+        if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(
                 `The ts node must have three children at least`,
-                `TsNode must have children`,
+                `Node must have children`,
             )    
         }
 
-        const op = tsNode.getChild(1)!;
+        const op = tsNode.getChildAtIndex(1)!;
         if (!BinarialOperation.isSupportedOperation(op)) {
             return Result.fail(`BinarialOperation.isSupportedOperation('${op.getText()}'): false`, `Unsupported operation, update Ara Web to support the operation`)
         }
 
         const opType = BinarialOperation.getBinarialType(op);
 
-        const leftSide = tsNode.getChild(0)!;
-        const rightSide = tsNode.getChild(2)!;
+        const leftSide = tsNode.getChildAtIndex(0)!;
+        const rightSide = tsNode.getChildAtIndex(2)!;
                 
         // Debug.push(`Left: this.identifyValue('${leftSide.getText()}')`)
         const leftValue = await ValueLevel.identifyValue(leftSide, {dataType: ValueTypeString.default}, astNodeContext!);

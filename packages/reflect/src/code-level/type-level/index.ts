@@ -1,17 +1,17 @@
+import { Node } from "ts-morph";
 import { AraLink, Debug, Result } from "@ara-web/p-hintjens";
 import {
     type TypedData,
     IntersectedUnionType, 
-    TypeDeclaration, 
+    UserTypeDeclaration, 
     UnionTypeDeclaration, 
     ValueTypeString,
-    TsNode,
-    AstNode,
+    CodePiece,
     AstNodeContext,
     ReflectLink,
     type IdentifiedNodeDataType,
     type ValueType,
-    type AstIdentifiers
+    type CodePieceRecord
  } from "../index.js";
 import { TypeValueTraits, type PossibleTypeValue } from "./type-value-traits.js";
 import { TypeDeclaration as TypeDeclarationTraits } from "./type-declaration.js";
@@ -40,12 +40,12 @@ export class TypeLevel {
     }
 
     /**
-     * Identify the TsNode as the DataType of the `AstNode`.
-     * Use this method if you want to identify the value of `AstNode.dataType` property.
+     * Identify the AstNodeTraits as the DataType of the `CodePiece`.
+     * Use this method if you want to identify the value of `CodePiece.dataType` property.
      * @param child 
      * @returns 
      */
-    public static identifyType = async (child: TsNode): Promise<Result<PossibleTypeValue>> => {
+    public static identifyType = async (child: Node): Promise<Result<PossibleTypeValue>> => {
         const dataType = await TypeValueTraits.identifyTypeValue(child);
         if (dataType.isFailure) {
             return Result.fail(
@@ -137,7 +137,7 @@ export class TypeLevel {
             return Result.ok(typedData);
         }
 
-        if (typedData.dataType instanceof TypeDeclaration) {
+        if (typedData.dataType instanceof UserTypeDeclaration) {
             const identified = typedData.dataType.identifyData(typedData.data);
             if (identified.isFailure) {
                 return Result.fail(`TypeDeclaration.identifyData(): ${identified.errorTitle}`, identified.errorDescription!)
@@ -155,9 +155,9 @@ export class TypeLevel {
         return Result.ok(typedData);
     }
 
-    public static getTypeIdentifiers = async (tsNodes: TsNode[]): Promise<Result<AstIdentifiers>> => {
+    public static getTypeIdentifiers = async (tsNodes: Node[]): Promise<Result<CodePieceRecord>> => {
         const typeStatements = tsNodes.filter((tsNode) => (TypeDeclarationTraits.isTypeDeclaration(tsNode)))
-        let identifiers: AstIdentifiers = {};
+        let identifiers: CodePieceRecord = {};
             
         for (let tsNode of typeStatements) {
             var typeStatement = TypeDeclarationTraits.fromTsNode(tsNode);
@@ -195,9 +195,9 @@ export class TypeLevel {
      * @returns 
      */
     public static lintType = (
-        node: AstNode|AraLink<string>,
+        node: CodePiece|AraLink<string>,
         parentNodeContext: AstNodeContext,
-    ): Result<AstNode> => {
+    ): Result<CodePiece> => {
         if (node instanceof AraLink) {
             if (!ReflectLink.isIdentifierLink(node)) {
                 return Result.fail(`The node is an ara link, but doesn't link to the identifier`, `Please pass correct link or update TypeDeclaration.lintType() to support '${node.toString()}'`)
@@ -226,7 +226,7 @@ export class TypeLevel {
             node = memoryLintResult.getValue();
             nodeContext.post(node.getAllMemoryData())
         }
-        const astNode = node as AstNode;
+        const astNode = node as CodePiece;
         if (astNode.data === undefined) {
             return Result.fail(
                 `The AST Node '${astNode.tsNode.getText()}' data is empty`,
@@ -263,7 +263,7 @@ export class TypeLevel {
      * We need to lint the data. The node has no scope memory yet.
      * 
      * First, we lint the memory itself if any.
-     * By passing: AstNode with empty Memory, Page Memory, and Project Memory
+     * By passing: CodePiece with empty Memory, Page Memory, and Project Memory
      * 
      * Then, we loop over the project data.
      * For each project data, we need to get the scope by adding ast node memory to the local scope
@@ -274,9 +274,9 @@ export class TypeLevel {
      * @returns 
      */
     public static lintAstNodeMemory = (
-        node: AstNode,
+        node: CodePiece,
         nodeContext: AstNodeContext,
-    ): Result<AstNode> => {
+    ): Result<CodePiece> => {
         if (node.memoryDataLength() === 0) {
             return Result.ok(node);
         }
@@ -384,10 +384,10 @@ export class TypeLevel {
                             }
                             identifiedData.putOrPost(record)
                         }
-                    } else if (identifiedLink.getValue().data instanceof TypeDeclaration) {
-                        for (let key in (identifiedLink.getValue().data as TypeDeclaration).records) {
+                    } else if (identifiedLink.getValue().data instanceof UserTypeDeclaration) {
+                        for (let key in (identifiedLink.getValue().data as UserTypeDeclaration).records) {
                             const record: Record<string, IdentifiedNodeDataType> = {
-                                [key]: (identifiedLink.getValue().data as TypeDeclaration).records[key]
+                                [key]: (identifiedLink.getValue().data as UserTypeDeclaration).records[key]
                             }
                             identifiedData.putOrPost(record)
                         }
@@ -450,8 +450,8 @@ export class TypeLevel {
             }
 
             return Result.ok({data: identifiedData, dataType: ValueTypeString.object})
-        } else if (data instanceof TypeDeclaration) {
-            const identifiedData = new TypeDeclaration();
+        } else if (data instanceof UserTypeDeclaration) {
+            const identifiedData = new UserTypeDeclaration();
 
             const records = data.records;
 
@@ -499,7 +499,7 @@ export class TypeLevel {
         return Result.ok(identifiedData.getValue())
     }
 
-    // If the AstNode.data is AraLink
+    // If the CodePiece.data is AraLink
     private static lintAraLinkData = (
         data: AraLink<string>,
         nodeContext: AstNodeContext,
