@@ -197,10 +197,8 @@ export class ValueLevel {
         ];
         for (let supported of supportedValueLevels) {
             if (supported.isA(tsNode)) {
-                // Debug.push(supported.name, {tsNode: tsNode.getText()})
                 const supportedIdentifier = new supported();
                 const identified = await supportedIdentifier.identifyValue(tsNode, typedData, astNodeContext);
-                // Debug.pop();
                 if (identified.isFailure) {
                     return Result.fail(`${supported.name}: identifyValue: ${identified.errorTitle}`, identified.errorDescription);
                 }
@@ -312,7 +310,7 @@ export class ValueLevel {
             }
             const bindedObj = objectBinding.data;
             if (!(astNode.identifier in bindedObj)) {
-                return Result.fail(`ObjectBinding('${objectBinding.identifier}'): '${astNode.identifier}' not found property not found`, `Add the property into the object binding`);
+                return Result.ok({ data: {}, dataType: ValueTypeString.default });
             }
             return Result.ok({ data: bindedObj[astNode.identifier], dataType: ValueTypeString.default });
         }
@@ -321,17 +319,13 @@ export class ValueLevel {
         }
         const expTsNode = ReflectLink.getResourceAsTsNode(astNode.data);
         if (astNode.dataType === undefined) {
-            // Debug.push(`this.getValueTypeString(expTsNode='${expTsNode?.getText()}')`)
             const identifiedDataType = ValueLevel.getValueTypeString(expTsNode);
-            // Debug.pop();
             if (identifiedDataType.isFailure) {
                 return Result.fail(`this.getValueTypeString('${expTsNode?.getText()}'): ${identifiedDataType.errorTitle}`, identifiedDataType.errorDescription);
             }
             astNode.dataType = identifiedDataType.getValue();
         }
-        // Debug.push(`this.identifyValue()`, {tsNode: expTsNode.getText()})
         const identifiedValue = await ValueLevel.identifyValue(expTsNode, astNode.typedData, astNodeContext);
-        // Debug.pop();
         if (identifiedValue.isFailure) {
             return Result.fail(`this.identifyValue(): ${identifiedValue.errorTitle}`, identifiedValue.errorDescription);
         }

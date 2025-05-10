@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
 import { AstNode, AstNodeType } from "../src/code-level/ast-node.js";
 import { IntersectedUnionType, TypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/ast-node-data.js";
-import { AraLink, Debug, ModuleLink } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { Reflect } from "../src/reflect.js"
 import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
