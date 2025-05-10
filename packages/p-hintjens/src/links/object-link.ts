@@ -16,6 +16,7 @@
  * - `?resource-link=<resource-link>` is the resource that machine could understand and locate.
  */
 import type { ModuleLink, ModuleURL } from "./module-link.js";
+import { Debug } from "../index.js";
 
 export type Selector = string;
 export type ResourceURL = string;
@@ -28,18 +29,20 @@ export type ObjectURL = `obj://${Selector}` | `obj://${Selector}?` |
 type Tagged = {tag?: string, id?: string|number, classes?: string[]};
 const ALL_LINK = "*";
 
-// First component when defined
-// componentLink = ComponentLevel.getObjectLinkOf<Component>(component, moduleURL);
-// creates obj://layout#index.astro?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
-// When identifying attributes of the component
-// componentLink.getObjectLinkOf<Attributes>(attribute, moduleURL);
-// creates obj://layout#index[attribute_name=1]
-// nested components are added by calling
-// componentLink.getObjectLinkOf<Component>(component, moduleURL);
-// in this case:
-// creates obj://layout#index[attribute_name=1]>component#componentName[proppertyName]?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
-// The slots are added as:
-// creates obj://slot#slotName>component#componentName[proppertyName]?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
+
+/* First component when defined
+ * componentLink = ComponentLevel.getObjectLinkOf<Component>(component, moduleURL);
+ * creates obj://layout#index.astro?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
+ * When identifying attributes of the component
+ * componentLink.getObjectLinkOf<Attributes>(attribute, moduleURL);
+ * creates obj://layout#index[attribute_name=1]
+ * nested components are added by calling
+ * componentLink.getObjectLinkOf<Component>(component, moduleURL);
+ * in this case:
+ * creates obj://layout#index[attribute_name=1]>component#componentName[proppertyName]?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
+ * The slots are added as:
+ * creates obj://slot#slotName>component#componentName[proppertyName]?module-link=pkg:npm/@ara-web/reflect-astro-ext?category=layouts#/src/layouts/AraWebLayout.astro&resource-link=this
+*/
 export class ObjectLink {
     private _selectors: Tagged[];
     private _moduleLink?: ModuleLink;
@@ -196,4 +199,6 @@ export class ObjectLink {
         }
         return url as ObjectURL;
     }
+
+    
 }

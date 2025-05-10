@@ -25,11 +25,14 @@
     }
   },
   "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "jsdom": "^26.1.0",
     "typescript": "~5.7.3",
     "vitest": "2.1.6"
   },
   "dependencies": {
     "@types/node": "^20.10.5",
+    "css-select": "workspace:*",
     "packageurl-js": "^2.0.1"
   }
 }

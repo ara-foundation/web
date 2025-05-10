@@ -1,7 +1,16 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectLink } from "../src";
+import { JSDOM } from "jsdom";
+import { NodeAdapter } from "./node-adapter"
+import cssSelect from "css-select"
+import { Debug, ModuleLink, ObjectLink } from "../src";
 
 const moduleLink = ModuleLink.newFileURL("./test-app/src/components/Welcome.astro");
+var html = "<main><div></div><div class=\"apple\"></div><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></main>";
+var adapter = new NodeAdapter()
+
+function getBody(html: string): HTMLBodyElement | null {
+	return new JSDOM(html).window.document.querySelector("body");
+}
 
 test('Simply creating an empty object', async () => {
     const emptyObjectLink = new ObjectLink(moduleLink);
@@ -13,7 +22,6 @@ test('Simply creating an empty object', async () => {
     expect(emptyObjectLink.toString().startsWith("obj://*?module-link=")).toBe(true);
     expect(emptyObjectLink.toString().endsWith("/test-app/src/components/Welcome.astro")).toBe(true);
 });
-
 
 test('Simply creating an enumareted and tagged', async () => {
     const emptyObjectLink = new ObjectLink(moduleLink);
@@ -40,4 +48,30 @@ test('Simply creating an enumareted and tagged', async () => {
     expect(child2.getId()).toBe(1);
     expect(child2.toString().startsWith("obj://text:nth-child(1)?module-link")).toBe(true);
 
+})
+
+test('Simply the node-adapter testing', async () => {
+    var body = getBody(html);
+    expect(adapter.isTag(body as Node)).toBe(true);
+
+    // Exists one
+    var divs = body!.querySelectorAll("div");
+    var arr = Array.from(divs);
+
+    var hasDiv = adapter.existsOne((node: HTMLElement) => {
+		return node.classList.contains("apple");
+	}, arr);
+
+    Debug.log(`Has Div?`)
+    Debug.log(hasDiv)
+
+    expect(hasDiv !== null).toBe(true)
+})
+
+test(`Simply testing css-select with adapter`, async() => {
+    const options = {adapter};
+    const body = getBody(html)
+    // get child
+    let child = cssSelect("main > div", [body!], options);
+    expect(child).toHaveLength(2);
 })

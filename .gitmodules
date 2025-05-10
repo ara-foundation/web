@@ -1,0 +1,3 @@
+[submodule "packages/css-select"]
+	path = packages/css-select
+	url = https://github.com/fb55/css-select.git
