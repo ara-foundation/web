@@ -28,6 +28,10 @@ converts the `Attribute`.
 At the end, when all data is pre-defined, the module will make sure
 to lint the data between modules.
 
+## Astro Adapter & page-level/PageAdapter
+Adapters are converting Astro and Page JSON into object nodes compatible with the `css-select` package.
+Using REST or LinkTraits, you can look up for an object using `CSS Selectors`.
+
 # Roadmap
 * Add REST Api to walk in the page
 * Remove `PageLevel.walk` after installing REST operator.

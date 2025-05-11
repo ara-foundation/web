@@ -1,6 +1,6 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
-import { Code, type AstIdentifiers } from "@ara-web/reflect/code-level";
+import { Code, type CodePieceRecord } from "@ara-web/reflect/code-level";
 import { Comment } from "./comment.js";
 import type { Meta } from "../index.js";
 import type { ValueType } from "@ara-web/reflect/code-level";
@@ -113,7 +113,7 @@ export class CodeLevel {
     //
     // Import clauses identifies on which modules the source code depends on.
     //
-    private static identifyImports = async (code: Code, projectMemory: ProjectMemory): Promise<Result<AstIdentifiers>> => {
+    private static identifyImports = async (code: Code, projectMemory: ProjectMemory): Promise<Result<CodePieceRecord>> => {
         const importIdentifiers = await code.getImportedIdentifiers(projectMemory);
         if (importIdentifiers.isFailure) {
             return Result.fail(
@@ -187,7 +187,7 @@ export class CodeLevel {
      * @param projectMemory 
      * @returns 
      */
-    private static identifyTypes = async (code: Code): Promise<Result<AstIdentifiers>> => {
+    private static identifyTypes = async (code: Code): Promise<Result<CodePieceRecord>> => {
         const identifiers = await code.getTypeIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(

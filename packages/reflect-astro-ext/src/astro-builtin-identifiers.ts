@@ -1,15 +1,15 @@
 import { ModuleLink, Result } from "@ara-web/p-hintjens";
 import { 
-    AstNode, 
-    AstNodeType, 
-    type AstIdentifiers, 
-    type AstNodeValidator, 
+    CodePiece, 
+    type CodePieceRecord, 
+    type CodePieceFilter, 
     type GenericHandler,
     ValueTypeString, 
     type ValueType,
     Code,
     TsNode,
-    VariableLevel
+    VariableLevel,
+    CodePieceType
 } from "@ara-web/reflect/code-level";
 import type { AstroCookies, AstroGlobal, AstroInstance, MarkdownInstance, RewritePayload } from "astro";
 
@@ -111,7 +111,7 @@ const data: Omit<AstroGlobal,
     isPrerendered: false,
 };
 
-const astroGenericHandler: GenericHandler = (_: AstNode, values: ValueType[]): Result<AstNode> => {
+const astroGenericHandler: GenericHandler = (_: CodePiece, values: ValueType[]): Result<CodePiece> => {
     if (values.length !== 0) {
         return Result.fail(
             `Generic not supported for the Astro yet.`,
@@ -133,20 +133,20 @@ export class AstroBuiltInIdentifiers {
         export const ${this.prefix}${this.identifiers[0]} = {};
     `;
 
-    private static _identifiers: AstIdentifiers|undefined = undefined;
+    private static _identifiers: CodePieceRecord|undefined = undefined;
 
-    public static isBuiltInIdentifier: AstNodeValidator = (child: AstNode): boolean => {
+    public static isBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.identifier === undefined) {
             return false;
         }
         return this.identifiers.includes(child.identifier)
     }
 
-    public static isNonBuiltInIdentifier: AstNodeValidator = (child: AstNode): boolean => {
+    public static isNonBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         return !this.isBuiltInIdentifier(child);
     }
 
-    private static getVariableAstNode = async (identifier: string, tsNodes: TsNode[]): Promise<Result<AstNode>> => {
+    private static getVariableAstNode = async (identifier: string, tsNodes: TsNode[]): Promise<Result<CodePiece>> => {
         const varIdentifiers = await VariableLevel.getVariableIdentifiers(tsNodes);
         if (varIdentifiers.isFailure) {
             return Result.fail(
@@ -167,11 +167,11 @@ export class AstroBuiltInIdentifiers {
         )
     }
 
-    public static getBuiltInIdentifiers = async (): Promise<Result<AstIdentifiers>> => {
+    public static getBuiltInIdentifiers = async (): Promise<Result<CodePieceRecord>> => {
         if (this._identifiers !== undefined) {
             return Result.ok(this._identifiers);
         }
-        const identifiers: AstIdentifiers = {};
+        const identifiers: CodePieceRecord = {};
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
     
         const varStatements = code.getTsNodes()
@@ -197,7 +197,7 @@ export class AstroBuiltInIdentifiers {
     //
     //------------------------------------------------------------------
 
-    private static identifyAstroAstNode = async (varStatements: TsNode[]): Promise<Result<AstNode>> => {
+    private static identifyAstroAstNode = async (varStatements: TsNode[]): Promise<Result<CodePiece>> => {
         const astNode = await this.getVariableAstNode(this.prefix + this.identifiers[0], varStatements)
         if (astNode.isFailure) {
             return Result.fail(
@@ -207,7 +207,7 @@ export class AstroBuiltInIdentifiers {
         }
 
         astNode.getValue().identifier = new URL(this.identifiers[0], 'http://localhost').toString();
-        astNode.getValue().nodeType = AstNodeType.Variable;
+        astNode.getValue().nodeType = CodePieceType.Variable;
         astNode.getValue().data = data;
         astNode.getValue().public = true;
         astNode.getValue().constant = true;

@@ -1,5 +1,5 @@
 import { Result } from "@ara-web/p-hintjens";
-import { type AstIdentifiers, type AstNodeValidator } from "@ara-web/reflect/code-level";
+import { type CodePieceRecord, type CodePieceFilter } from "@ara-web/reflect/code-level";
 /**
  * Adds the global variables available in Astro framework, such
  * as `Astro` variable.
@@ -9,9 +9,9 @@ export declare class AstroBuiltInIdentifiers {
     private static identifiers;
     private static builtInSrc;
     private static _identifiers;
-    static isBuiltInIdentifier: AstNodeValidator;
-    static isNonBuiltInIdentifier: AstNodeValidator;
+    static isBuiltInIdentifier: CodePieceFilter;
+    static isNonBuiltInIdentifier: CodePieceFilter;
     private static getVariableAstNode;
-    static getBuiltInIdentifiers: () => Promise<Result<AstIdentifiers>>;
+    static getBuiltInIdentifiers: () => Promise<Result<CodePieceRecord>>;
     private static identifyAstroAstNode;
 }

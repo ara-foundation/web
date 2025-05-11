@@ -1,5 +1,5 @@
 import { ModuleLink, Result } from "@ara-web/p-hintjens";
-import { AstNode, AstNodeType, ValueTypeString, Code, TsNode, VariableLevel } from "@ara-web/reflect/code-level";
+import { CodePiece, ValueTypeString, Code, TsNode, VariableLevel, CodePieceType } from "@ara-web/reflect/code-level";
 // Create a default AstroGlobal object
 const data = {
     url: new URL("http://localhost"),
@@ -129,7 +129,7 @@ export class AstroBuiltInIdentifiers {
             return Result.fail(`getVariableAstNode('${this.prefix + this.identifiers[0]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`, astNode.errorDescription);
         }
         astNode.getValue().identifier = new URL(this.identifiers[0], 'http://localhost').toString();
-        astNode.getValue().nodeType = AstNodeType.Variable;
+        astNode.getValue().nodeType = CodePieceType.Variable;
         astNode.getValue().data = data;
         astNode.getValue().public = true;
         astNode.getValue().constant = true;
