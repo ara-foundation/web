@@ -12,8 +12,7 @@ import {
     type WalkFilter
 } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
-export { PageObjectNode } from "./page-object-node.js";
-export { PageObjectAdapter, pageToObjectNodes } from "./page-object-adapter.js";
+export { pageToNodeTree } from "./page-css-object-tree.js";
 
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
