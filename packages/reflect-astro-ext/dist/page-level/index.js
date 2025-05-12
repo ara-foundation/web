@@ -35,8 +35,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
 import { FileExtension, ComponentLevel, CodeLevel } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
-export { PageObjectNode } from "./page-object-node.js";
-export { PageObjectAdapter, pageToObjectNodes } from "./page-object-adapter.js";
+export { pageToNodeTree } from "./page-css-object-tree.js";
 /**
  * Ontologically, `PageLevel` supports translation of modules into `Page` data
  */

@@ -21,7 +21,7 @@ export {
     AstroNode
 } from "./astro-node.js"
 export {
-    astroNodesToObjectNodes, AstroObjectNode, AstroNodeAdapter
+    astroToNodeTree, astroElementOps
 } from "./astro-adapter.js"
 export {
     NodeAdapter
@@ -30,7 +30,7 @@ export {
     CodeLevel
 } from "./code-level/index.js"
 export {
-    PageLevel, PageObjectAdapter, pageToObjectNodes, PageObjectNode
+    PageLevel, pageToNodeTree
 } from "./page-level/index.js"
 export {
     ComponentLevel

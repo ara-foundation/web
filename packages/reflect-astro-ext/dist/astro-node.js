@@ -38,6 +38,14 @@ export class AstroNode {
     get attributes() {
         return AstroNode.nodeAttributes(this._node);
     }
+    setAttributes(attrs) {
+        if (!("attributes" in this._node)) {
+            Object.assign(this._node, { "attributes": attrs });
+        }
+        else {
+            this._node.attributes = attrs;
+        }
+    }
     get isComponent() {
         return this._node.type === "component";
     }

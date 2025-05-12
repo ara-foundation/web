@@ -58,6 +58,14 @@ export class AstroNode {
         return AstroNode.nodeAttributes(this._node);
     }
 
+    public setAttributes(attrs: AttributeNode[]) {
+        if (!("attributes" in this._node)) {
+            Object.assign(this._node, {"attributes": attrs})
+        } else {
+            this._node.attributes = attrs;
+        }
+    }
+
     public get isComponent (): boolean {
         return this._node.type === "component";
     }

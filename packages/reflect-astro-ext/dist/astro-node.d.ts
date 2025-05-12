@@ -11,6 +11,7 @@ export declare class AstroNode {
      */
     get children(): AstroNode[];
     get attributes(): AttributeNode[];
+    setAttributes(attrs: AttributeNode[]): void;
     get isComponent(): boolean;
     get isHTMLElement(): boolean;
     get isExpression(): boolean;

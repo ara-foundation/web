@@ -5,11 +5,10 @@
 
 import { expect, test } from "vitest";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
-import { CodeLevel, Component, FileExtension, ModuleCategory, ModulePartitioner, Page, PageLevel } from "../src";
+import { CodeLevel, Component, FileExtension, ModuleCategory, ModulePartitioner, Page, PageLevel, SlotElement } from "../src";
 import { ModuleMemory } from "@ara-web/reflect";
-import { PageObjectNode } from "../src/page-level/page-object-node";
-import { Debug, LinkTraits, ObjectNode } from "@ara-web/p-hintjens";
-import { PageObjectAdapter, pageToObjectNodes } from "../src/page-level/page-object-adapter";
+import { LinkTraits, ObjectNodeInterface, ObjectNode, CSSObjectAdapter } from "@ara-web/p-hintjens";
+import { pageToNodeTree } from "../src/page-level/page-css-object-tree";
 
 test(`Make sure the that object links are correct`, async () => {
     const modules = getImportRecords()
@@ -49,18 +48,12 @@ test(`Make sure the that object links are correct`, async () => {
         // Uncomment to see the object links.
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
         const child = page.getValue().slots["default"][0] as Component;
         expect(child.link.getId()).toBe("container");
         for (let subChild of child.slots["default"]) {
-            Debug.log(`The child ${child.link.selector} with id '${child.link.getId()}' > sub ${subChild.link.selector} as ${subChild.link.getId() === "container"}`)
             if (subChild.link.getId() === 'background') {
-                Debug.log(`\tsubchild ${subChild.link.getId()} as ${subChild.link.selector}`)
-                Debug.log(`\t\tThe background child entered`)
                 const img = subChild as Component;
                 expect(img.attributes["src"]).toBeDefined();
-                Debug.log(`\t\tThe image ${img.attributes["src"]} is defined ${img.attributes["src"]}:`)
-                Debug.log(img.attributes["src"])
                 break;
             }
         }
@@ -102,7 +95,6 @@ test(`Make sure that slots are attributed`, async () => {
         // Uncomment to see the object links.
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
         const layout = page.getValue().slots["default"][0] as Component;
         const slotNames = Object.keys(layout.slots);
         expect(slotNames.length).toBe(3);
@@ -152,9 +144,7 @@ test(`Make sure that object looking works and object linking components work`, a
         // Uncomment to see the object links.
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
         const layout = page.getValue().slots["default"][0] as Component;
-        Debug.log(`The layout object link: '${layout.link.selector}'`)
         const slotNames = Object.keys(layout.slots);
         expect(slotNames.length).toBe(3);
         
@@ -164,7 +154,6 @@ test(`Make sure that object looking works and object linking components work`, a
         
         expect(layout.slots[slotNames[0]].length).toBeGreaterThan(0);
         const firstLayoutElement = layout.slots[slotNames[0]][0];
-        Debug.log(`The selector of first element in the 'layout' default slot: ${firstLayoutElement.link.selector}`)
         // The selector of first element in the 'layout':
         // > Layout.astro>Welcome.astro
         // Test as returning Welcome:
@@ -175,42 +164,42 @@ test(`Make sure that object looking works and object linking components work`, a
         // .astro > Welcome
         // .astro > .Welcome
         // const pageNodes = PageLevel.getPageObjectNodes(page.getValue());
-        const pageObjectNodes = pageToObjectNodes(page.getValue().slots)
-        const query1 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout', pageObjectNodes,
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query1 !== null).toBe(true)
 
-        const query2 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout Welcome', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const query2 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout Welcome', pageObjectNodes,
+            {adapter: new CSSObjectAdapter()}
         )
         expect(query2 !== null).toBe(true)
 
         
-        const query3 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout > Welcome', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const query3 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout > Welcome', pageObjectNodes,
+            {adapter: new CSSObjectAdapter()}
         )
         expect(query3 !== null).toBe(true)
 
-        const query4 = LinkTraits.getAll<ObjectNode, PageObjectNode>('Layout li', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const query4 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout li', pageObjectNodes,
+            {adapter: new CSSObjectAdapter()}
         )
         expect(query4).toHaveLength(4)
 
-        const query5 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout li:first-child', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const query5 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout li:first-child', pageObjectNodes,
+            {adapter: new CSSObjectAdapter()}
         )
         expect(query5 === query4[0]).toBe(true)
 
-        const query6 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout > p > code', pageObjectNodes,
-            {adapter: new PageObjectAdapter()}
+        const query6 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout > p > code', pageObjectNodes,
+            {adapter: new CSSObjectAdapter()}
         )
         expect(query6 !== null).toBe(true)
     }
 })
 
 test(`Linking page components by the classes`, async () => {
-    const options = {adapter: new PageObjectAdapter()}
+    const options = {adapter: new CSSObjectAdapter<SlotElement>()}
     const modules = getImportRecords()
       
     const reflectExtension = await getNewAstroReflect();
@@ -245,30 +234,27 @@ test(`Linking page components by the classes`, async () => {
         // Uncomment to see the object links.
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
         const layout = page.getValue().slots["default"][0] as Component;
-        Debug.log(`The layout object link: '${layout.link.selector}'`)
         const slotNames = Object.keys(layout.slots);
         expect(slotNames.length).toBe(3);
         
         expect(layout.slots[slotNames[0]].length).toBeGreaterThan(0);
         const firstLayoutElement = layout.slots[slotNames[0]][0];
-        Debug.log(`The selector of first element in the 'layout' default slot: ${firstLayoutElement.link.selector}`)
 
-        const pageObjectNodes = pageToObjectNodes(page.getValue().slots)
-        const query1 = LinkTraits.get<ObjectNode, PageObjectNode>('Layout.astro', pageObjectNodes, options)
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout.astro', pageObjectNodes, options)
         expect(query1 !== null).toBe(true)
 
-        const query2 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.astro', pageObjectNodes, options)
+        const query2 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('.astro', pageObjectNodes, options)
         expect(query2).toHaveLength(2)
 
-        const query3 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.astro > ul > li', pageObjectNodes, options)
+        const query3 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('.astro > ul > li', pageObjectNodes, options)
         expect(query3).toHaveLength(4)
     }
 })
 
 test(`Linking page components by the attributes and id`, async () => {
-    const options = {adapter: new PageObjectAdapter()}
+    const options = {adapter: new CSSObjectAdapter<SlotElement>()}
     const modules = getImportRecords()
       
     const reflectExtension = await getNewAstroReflect();
@@ -308,37 +294,35 @@ test(`Linking page components by the attributes and id`, async () => {
         // Uncomment to see the object links.
         const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
         expect(page.isSuccess).toBe(true);
-        Debug.log(`The page ${page.getValue().title} has ${page.getValue().slots["default"].length} children:`)
         const layout = page.getValue().slots["default"][0] as Component;
-        Debug.log(`The layout object link: '${layout.link.selector}'`)
         
-        const pageObjectNodes = pageToObjectNodes(page.getValue().slots)
-        const query1 = LinkTraits.get<ObjectNode, PageObjectNode>('#container', pageObjectNodes, options)
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('#container', pageObjectNodes, options)
         expect(query1 !== null).toBe(true)
 
-        const query2 = LinkTraits.getAll<ObjectNode, PageObjectNode>('[id="container"]', pageObjectNodes, options)
+        const query2 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('[id="container"]', pageObjectNodes, options)
         expect(query2).toHaveLength(1)
 
-        const query4 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.htme#container> img[src]', pageObjectNodes, options)
+        const query4 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('.htme#container> img[src]', pageObjectNodes, options)
         expect(query4).toHaveLength(1)
         expect(query4[0].getAttribute("src")).toBeDefined();
 
-        const query5 = LinkTraits.getAll<ObjectNode, PageObjectNode>('.htme#container .astro', pageObjectNodes, options)
+        const query5 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('.htme#container .astro', pageObjectNodes, options)
         expect(query5).toHaveLength(1)
 
-        const query6 = LinkTraits.getAll<ObjectNode, PageObjectNode>('a.htme', pageObjectNodes, options)
+        const query6 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('a.htme', pageObjectNodes, options)
         expect(query6).toHaveLength(4)
 
-        const query7 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent", pageObjectNodes, options)
+        const query7 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>("#subcomponent", pageObjectNodes, options)
         expect(query7 !== null).toBe(true)
 
-        const query8 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent[noAttr]", pageObjectNodes, options)
+        const query8 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>("#subcomponent[noAttr]", pageObjectNodes, options)
         expect(query8 === null).toBe(true)
 
-        const query9 = LinkTraits.get<ObjectNode, PageObjectNode>("#subcomponent[text]", pageObjectNodes, options)
+        const query9 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>("#subcomponent[text]", pageObjectNodes, options)
         expect(query9 !== null).toBe(true)
 
-        const query10 = LinkTraits.get<ObjectNode, PageObjectNode>(".astro[text=\"hello-world\"]", pageObjectNodes, options)
+        const query10 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>(".astro[text=\"hello-world\"]", pageObjectNodes, options)
         expect(query10 !== null).toBe(true)
         expect(query10 === query9).toBe(true);
     }
