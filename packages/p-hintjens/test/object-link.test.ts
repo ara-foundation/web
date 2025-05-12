@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
 import cssSelect from "css-select"
-import { Debug, ModuleLink, ObjectLink } from "../src";
+import { Debug, LinkTraits, ModuleLink, ObjectLink } from "../src";
 
 const moduleLink = ModuleLink.newFileURL("./test-app/src/components/Welcome.astro");
 var html = "<main><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></main>";
@@ -108,4 +108,19 @@ test(`Test fetching css selector by attribute`, async() => {
     expect(notExactLinks).toHaveLength(0);
     let divs3 = cssSelect("main [class=\"pear potato\"]", [body!], options);
     expect(divs3).toHaveLength(1);
+})
+
+test(`Test Selector Parser of LintTraits`, async() => {
+    const query1 = `main > div:nth-child`;
+    const selectors1 = LinkTraits.parseSelector(query1);
+    Debug.log(selectors1);
+
+    const query2 = `main > div:nth-child(2) > div[data-link]`
+    const selectors2 = LinkTraits.parseSelector(query2);
+    Debug.log(selectors2);
+    expect(LinkTraits.isAttributeSelector(query1)).toBe(false);
+    expect(LinkTraits.isAttributeSelector(query2)).toBe(true);
+    expect(LinkTraits.getAttributeName(query2)).toEqual('data-link');
+    const trimmedAttr = LinkTraits.trimAttribute(query2);
+    expect(trimmedAttr).toEqual(`main > div:nth-child(2) > div`)
 })

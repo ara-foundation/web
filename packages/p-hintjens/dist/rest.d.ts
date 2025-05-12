@@ -1,43 +1,49 @@
-import { type SDSExtensionInterface, SDSService, type SDSSetup } from "#sds";
+import { type SDSExtensionInterface, SDSService, type SDSSetup } from "./sds/index.js";
 import { OkResult } from "./result.js";
-import type { Adapter } from "./traits/index.js";
+import { ObjectNode, type ObjectToNodeTree } from "./traits/index.js";
 export interface RestExtensionInterface extends SDSExtensionInterface {
 }
-export declare class Rest<CSSNode, TreeNode extends CSSNode, CSSAdapter extends Adapter<CSSNode, TreeNode>> extends SDSService<Rest<CSSNode, TreeNode, CSSAdapter>, RestExtensionInterface> {
+/**
+ * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
+ */
+export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface> {
     private _options;
     private _nodes;
-    constructor(setup: SDSSetup<RestExtensionInterface>, adapter: CSSAdapter, treeNodes: TreeNode[]);
+    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface>);
     /**
      * Retreive a resource node.
      * @param selector
      */
-    get(selector: string): TreeNode | null;
+    get?(selector: string): ObjectNode<ElementType> | null;
+    getAll?(selector: string): ObjectNode<ElementType>[];
     /**
-     * Create a new resource.
+     * Create a new resource. By default the
+     * resource is created at the selector.
      *
-     * If provided a selector, then it will be assigning the
-     * data into the attribute value.
+     * If `options.lilBro` option put as `True` then
+     * it will post the resource next after the `selector`.
      * @param selector
      * @param data
      */
-    post<AttrType>(selector: string, data: TreeNode | AttrType): OkResult;
+    post?(selector: string, data: ObjectNode<ElementType>, options?: {
+        lilBro: boolean;
+    }): OkResult;
     /**
-     * Update a resource, requires the selector to be
-     * without any attributes.
+     * Update a resource. The selector can not be #document. Which means it must have a parent.
      * @param selector
      * @param data
      */
-    put(selector: string, data: TreeNode): OkResult;
+    put?(selector: string, data: ObjectNode<ElementType>): OkResult;
     /**
      * Make a partial update of a resource.
      * Requires the selector to be with attribute.
      * @param selector
      * @param data
      */
-    patch<DataType, AttrType>(selector: string, data: DataType): OkResult;
+    patch?<AttrType>(attrSelector: string, data: AttrType): OkResult;
     /**
-     * Delete a resource
+     * Delete a resource. If resource not match, then return as it's ok
      * @param selector
      */
-    delete<DataType>(selector: string): OkResult;
+    delete?(selector: string): OkResult;
 }

@@ -25,7 +25,7 @@ The `staticImplements` allows creating interfaces with the static methods.
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
 
 # Roadmap
-
+* Create a vice-versa, from Object Tree, to Page, basically opposite through RestExtension.
 * Add arbitrary amount of data in the Debug.log();
 * Create a script that can generate the SDS in interactive form through `pnpm create sds`.
 

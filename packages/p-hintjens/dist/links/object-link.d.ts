@@ -54,6 +54,7 @@ export declare class ObjectLink {
      * The getClass method returns the object's first class.
      */
     getClass(index?: number): string[] | string;
+    setClasses(classes: string[], index?: number): void;
     /**
      * The getAsChildLink method creates and returns
      * a new ObjectLink instance that copies the current instance's module and resource links
