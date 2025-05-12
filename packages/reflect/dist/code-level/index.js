@@ -10,3 +10,4 @@ export { Code } from "./code.js";
 export { VariableLevel } from "./variable-level/index.js";
 export { TypeLevel } from "./type-level/index.js";
 export {} from "./value-level-interface.js";
+export { Node as TsNode } from "ts-morph";

@@ -10,7 +10,7 @@ import {
 
 
 /**
- * A method type to define method that validates the `TsNode`.
+ * A method type to define method that validates the `Node`.
  * Use this module to when creating various Ast Parser modules to filter the necessary data for
  * your need.
  */
