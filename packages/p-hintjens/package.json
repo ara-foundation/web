@@ -11,9 +11,6 @@
     "_chore": "pnpm i",
     "test": "vitest -r ./"
   },
-  "imports": {
-    "#sds": "./src/sds/index.ts"
-  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
