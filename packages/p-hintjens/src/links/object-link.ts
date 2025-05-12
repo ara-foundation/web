@@ -156,6 +156,24 @@ export class ObjectLink {
         return lastSelector.classes[index];
     }
 
+    public setClasses(classes: string[], index?: number): void {
+        if (this._selectors.length === 0) {
+            return;
+        }
+        const lastIndex = this._selectors.length - 1;
+        const lastSelector = this._selectors[lastIndex];
+        if (lastSelector.classes === undefined || lastSelector.classes.length === 0) {
+            return;
+        }
+        if (index === undefined) {
+            this._selectors[lastIndex].classes = classes;
+        }
+        if (index! >= lastSelector.classes.length) {
+            return;
+        }
+        this._selectors[index!].classes = classes;
+    }
+
     /**
      * The getAsChildLink method creates and returns
      * a new ObjectLink instance that copies the current instance's module and resource links
