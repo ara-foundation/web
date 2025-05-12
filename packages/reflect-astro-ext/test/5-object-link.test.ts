@@ -5,8 +5,10 @@ import { astroToNodeTree } from "../src/astro-adapter";
 import { CSSObjectAdapter, Debug, ObjectNode, Rest } from "@ara-web/p-hintjens";
 import {NodeAdapter} from "../src/node-adapter";
 import { JSDOM } from "jsdom";
-import { AstroNode } from "../src";
+import { AstroNode, CodeLevel, FileExtension, ModuleCategory, Page, PageLevel } from "../src";
 import { AttributeNode } from "@astrojs/compiler/types";
+import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { ModuleMemory } from "@ara-web/reflect";
 
 var html = 
     "<main>" + 
@@ -162,4 +164,84 @@ test(`Simply testing css-select with node adapter`, async() => {
 
     let childWithAttr = cssSelect(`main > span[dataLink]`, [body!], options);
     expect(childWithAttr).toHaveLength(1);
+})
+
+test(`Page's Rest operations work`, async () => {
+    const modules = getImportRecords()
+      
+    const reflectExtension = await getNewAstroReflect();
+    const validated = await reflectExtension.putModules(modules);
+    expect(validated.isSuccess).toBe(true);
+    // Make sure they are all no content moduled
+    const projectMemory = getNewProjectMemory(reflectExtension);
+    
+    const moduleMemories = projectMemory.getModules();
+    expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
+    for (let moduleMemory of moduleMemories) {
+        if (!([
+                ModuleCategory.Component, 
+                ModuleCategory.Layout,
+                ModuleCategory.Page
+            ].includes(moduleMemory.moduleCategory as ModuleCategory))) {
+            continue;
+        }
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
+        expect(moduleParts.isSuccess).toBe(true);
+    
+        if (moduleParts.getValue().fileExtension !== FileExtension.Astro) {
+            continue;
+        } 
+        // Only Component
+        if (moduleMemory.moduleCategory !== ModuleCategory.Component) {
+            continue;
+        }
+        
+        if (moduleMemory.moduleLink.toFilePath.indexOf("Welcome") === -1) {
+            continue;
+        }
+
+        const identifiedSourceCode = await CodeLevel.identifySourceCode<Page>(moduleParts.getValue().source, moduleMemory as ModuleMemory<Page>, projectMemory);
+        expect(identifiedSourceCode.isSuccess).toBe(true);
+        // Test by using ObjectLinkSelector.
+        // Uncomment to see the object links.
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedSourceCode.getValue(), projectMemory);
+        expect(page.isSuccess).toBe(true);
+        const pageRest = PageLevel.rest(page.getValue());
+        
+        const query1 = pageRest.get!('#container')
+        expect(query1 !== null).toBe(true)
+
+        const query2 = pageRest.getAll!('[id="container"]')
+        expect(query2).toHaveLength(1)
+
+        const query4 = pageRest.getAll!('.htme#container> img[src]')
+        expect(query4).toHaveLength(1)
+        expect(query4[0].getAttribute("src")).toBeDefined();
+
+        const query5 = pageRest.getAll!('.htme#container .astro')
+        expect(query5).toHaveLength(1)
+
+        const query6 = pageRest.getAll!('a.htme')
+        expect(query6).toHaveLength(4)
+
+        const query7 = pageRest.get!("#subcomponent")
+        expect(query7 !== null).toBe(true)
+
+        const query8 = pageRest.get!("#subcomponent[noAttr]")
+        expect(query8 === null).toBe(true)
+
+        const query9 = pageRest.get!("#subcomponent[text]")
+        expect(query9 !== null).toBe(true)
+
+        const query10 = pageRest.get!(".astro[text=\"hello-world\"]")
+        expect(query10 !== null).toBe(true)
+        expect(query10 === query9).toBe(true);
+
+        // Manipulation
+        const patched = pageRest.patch!<string>("#subcomponent[text]", "updated-value");
+        expect(patched.isSuccess).toBe(true);
+        const query11 = pageRest.get!(".astro[text]");
+        expect(query11 !== null).toBe(true);
+        expect(query11?.getAttribute("text")).toEqual("updated-value")
+    }
 })

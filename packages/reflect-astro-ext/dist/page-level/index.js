@@ -32,8 +32,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
-import { FileExtension, ComponentLevel, CodeLevel } from "../index.js";
+import { OkResult, Result, ObjectTraits, Debug, ObjectLink, Rest } from "@ara-web/p-hintjens";
+import { FileExtension, ComponentLevel, CodeLevel, pageToNodeTree } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
 export { pageToNodeTree } from "./page-css-object-tree.js";
 /**
@@ -138,6 +138,10 @@ let PageLevel = (() => {
                 }
             }
             return undefined;
+        };
+        static rest = (page) => {
+            const rest = new Rest({ slots: page.slots }, pageToNodeTree);
+            return rest;
         };
         static {
             __runInitializers(_classThis, _classExtraInitializers);

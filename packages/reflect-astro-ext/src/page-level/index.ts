@@ -1,4 +1,4 @@
-import { OkResult, Result, ObjectTraits, Debug, ObjectLink } from "@ara-web/p-hintjens";
+import { OkResult, Result, ObjectTraits, Debug, ObjectLink, Rest } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
 import {
     FileExtension, 
@@ -9,7 +9,8 @@ import {
     ComponentLevel,
     CodeLevel,
     type SlotElement,
-    type WalkFilter
+    type WalkFilter,
+    pageToNodeTree
 } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
 export { pageToNodeTree } from "./page-css-object-tree.js";
@@ -125,5 +126,10 @@ export class PageLevel {
         }
 
         return undefined;
+    }
+
+    public static rest = (page: Page): Rest<SlotElement> => {
+        const rest = new Rest<SlotElement>({slots: page.slots} as SlotElement, pageToNodeTree);
+        return rest;
     }
 }

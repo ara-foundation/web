@@ -1,6 +1,6 @@
-import { Result } from "@ara-web/p-hintjens";
+import { Result, Rest } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "@ara-web/reflect";
-import { type ModuleParts, type Slots, type SlotElement, type WalkFilter } from "../index.js";
+import { type ModuleParts, type Page, type Slots, type SlotElement, type WalkFilter } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
 export { pageToNodeTree } from "./page-css-object-tree.js";
 /**
@@ -20,4 +20,5 @@ export declare class PageLevel {
      */
     private static identifySlots;
     static walk: (slots: Slots, walkFilter: WalkFilter) => SlotElement | undefined;
+    static rest: (page: Page) => Rest<SlotElement>;
 }
