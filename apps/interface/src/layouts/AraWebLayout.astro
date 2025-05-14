@@ -6,16 +6,18 @@
  * Meanwhile the footer is populated by Sever AI, optionally an action.
  * And for the content, it's left is filled with the SideNavigation.
  */
-import EmptyBodyLayout from "@layouts/EmptyBodyLayout.astro";
-import {
-	RowSlug,
-	ColumnSlug,
-	type LayoutProps,
-	slugsToLayoutPath,
-	contentLeftPath,
-	contentRightPath
-} from "@ara-web/ts-enhancement";
-import SideNavigation, {type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
+import EmptyBodyLayout from "./EmptyBodyLayout.astro";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
+import SideNavigation, {type SideNavigationProps} from "../components/lungta/SideNavigation.astro";
 
 // HEADER
 // import Login from "@components/auth/Login"
@@ -34,76 +36,76 @@ interface Props {
 	footerAction?: FooterAction,
 	sideNavigation?: SideNavigationProps,
 	title?: string,
-	layoutProps?: LayoutProps,
+	// layoutProps?: LayoutProps,
 }
 
 let { 
 	footerAction,
 	sideNavigation,
 	title,
-	layoutProps,
+	// layoutProps,
 } = Astro.props;
 
-layoutProps ??= {}
-layoutProps.header ??= {}
-layoutProps.header.fix ??= {};
-layoutProps.header.columnClasses ??= {};
-layoutProps.content ??= {};
-layoutProps.content.columnClasses ??= {};
-layoutProps.footer ??= {}
-layoutProps.footer.fix ??= {};
-layoutProps.footer.columnClasses ??= {};
+// layoutProps ??= {}
+// layoutProps.header ??= {}
+// layoutProps.header.fix ??= {};
+// layoutProps.header.columnClasses ??= {};
+// layoutProps.content ??= {};
+// layoutProps.content.columnClasses ??= {};
+// layoutProps.footer ??= {}
+// layoutProps.footer.fix ??= {};
+// layoutProps.footer.columnClasses ??= {};
 
-// Add Ara Web's default parameters to the Layout
-if (layoutProps?.header?.fix?.header === undefined) {
-	layoutProps.header.fix.header = true;
-}
-if (layoutProps?.header?.columnClasses?.center === undefined) {
-	layoutProps!.header!.columnClasses!.center = "flex justify-center"
-} 
+// // Add Ara Web's default parameters to the Layout
+// if (layoutProps?.header?.fix?.header === undefined) {
+// 	layoutProps.header.fix.header = true;
+// }
+// if (layoutProps?.header?.columnClasses?.center === undefined) {
+// 	layoutProps!.header!.columnClasses!.center = "flex justify-center"
+// } 
 
-if (layoutProps?.content?.columnClasses?.left === undefined) {
-	layoutProps.content!.columnClasses.left = "mt-20"
-} 
-if (layoutProps?.content?.columnClasses?.center === undefined) {
-	layoutProps.content.columnClasses!.center = "mt-20"
-} 
-if (layoutProps?.content?.columnClasses?.right === undefined) {
-	layoutProps.content.columnClasses!.right = "mt-20"
-} 
+// if (layoutProps?.content?.columnClasses?.left === undefined) {
+// 	layoutProps.content!.columnClasses.left = "mt-20"
+// } 
+// if (layoutProps?.content?.columnClasses?.center === undefined) {
+// 	layoutProps.content.columnClasses!.center = "mt-20"
+// } 
+// if (layoutProps?.content?.columnClasses?.right === undefined) {
+// 	layoutProps.content.columnClasses!.right = "mt-20"
+// } 
 
-if (layoutProps?.footer?.fix?.footer === undefined) {
-	layoutProps!.footer!.fix.footer = true;
-}
-if (layoutProps?.footer?.columnClasses?.center === undefined) {
-	layoutProps.footer.columnClasses.center = "flex justify-center"
-}
+// if (layoutProps?.footer?.fix?.footer === undefined) {
+// 	layoutProps!.footer!.fix.footer = true;
+// }
+// if (layoutProps?.footer?.columnClasses?.center === undefined) {
+// 	layoutProps.footer.columnClasses.center = "flex justify-center"
+// }
 
-const headerLeftSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Left);
-const headerCenterSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Center);
-const headerRightSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Right);
+// const headerLeftSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Left);
+// const headerCenterSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Center);
+// const headerRightSlug = slugsToLayoutPath(RowSlug.Header, ColumnSlug.Right);
 
-const footerCenterSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Center);
-const footerRightSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Right);
+// const footerCenterSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Center);
+// const footerRightSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Right);
 ---
 
-<EmptyBodyLayout rows={layoutProps} title={title}>
+<EmptyBodyLayout title={title}>
 	<!-- HEADER -->
-	<Logo slot={headerLeftSlug} />
+	<!-- <Logo slot={headerLeftSlug} />
 	<Notification text="Exclusive Early Adoper Version!" slot={headerCenterSlug} />
 	<Login client:only slot={headerRightSlug} />
 
 	<!-- CONTENT -->
-	<SideNavigation subNavigation={sideNavigation && sideNavigation.subNavigation} selectedPath={sideNavigation && sideNavigation.selectedPath} slot={contentLeftPath} />
+	<!-- <SideNavigation subNavigation={sideNavigation && sideNavigation.subNavigation} selectedPath={sideNavigation && sideNavigation.selectedPath} slot={contentLeftPath} /> -->
 	<!-- anything after side navigation, to show on the left side -->
-	<slot name="content-left" slot={contentLeftPath} />
+	<!-- <slot name="content-left" slot={contentLeftPath} /> -->
 	
-	<slot slot="content-center" />
-	<slot name="content-right" slot={contentRightPath} />
+	<!-- <slot slot="content-center" /> -->
+	<!-- <slot name="content-right" slot={contentRightPath} /> --> -->
 
 	<!-- FOOTER -->
-	{footerAction && 
-	<a 
+	<!-- {footerAction &&  -->
+	<!-- <a 
 		href={footerAction.url} 
 		class="btn btn-primary py-6 px-10 mb-4" 
 		slot={footerCenterSlug}
@@ -111,7 +113,7 @@ const footerRightSlug = slugsToLayoutPath(RowSlug.Footer, ColumnSlug.Right);
 		{footerAction.label}
 	</a>
 	}
-	<AraContact client:load slot={footerRightSlug} />
+	<AraContact client:load slot={footerRightSlug} /> -->
 </EmptyBodyLayout>
 
 <script>

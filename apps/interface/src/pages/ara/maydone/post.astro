@@ -8,23 +8,32 @@ import type { SideNavigationProps } from "@components/lungta/SideNavigation.astr
 import AraWebLayout, {type FooterAction} from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { ColumnSlug, RowSlug, type LayoutProps, slugsToLayoutPath } from "@ara-web/ts-enhancement";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
 
 const footerAction: FooterAction = {
     url: "/ara/sangha/post",
     label: "Set Budget"
 }
 
-const layoutProps: LayoutProps = {
-    content: {
-        columnClasses: {
-            center: "flex flex-col px-4 h-full mt-20",
-            right: "pr-4 mt-20"
-        }
-    },
-}
+// const layoutProps: LayoutProps = {
+//     content: {
+//         columnClasses: {
+//             center: "flex flex-col px-4 h-full mt-20",
+//             right: "pr-4 mt-20"
+//         }
+//     },
+// }
 
-const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+// const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 const subNavigation: SubNavigation = {
     projectSlug: AraProjectSlug,
@@ -42,7 +51,6 @@ const sideNavigationProps: SideNavigationProps = {
 <AraWebLayout 
     title="Set Project Budget" 
     footerAction={footerAction}
-    layoutProps={layoutProps}
     sideNavigation={sideNavigationProps}
 >
     <section>
@@ -50,8 +58,8 @@ const sideNavigationProps: SideNavigationProps = {
         <input type="number" placeholder="Budget" class="input input-bordered w-full mb-2" />
         <textarea class="textarea textarea-bordered textarea-lg w-full min-h-80" placeholder="Describe how do you spend the budget"></textarea>
     </section>
-    <section slot={cancelSlug}>
+    <!-- <section slot={cancelSlug}>
         <a href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
         <a href="/ara/logos/post" class="btn btn-outline btn-neutral w-full">Previous</a>
-    </section>
+    </section> -->
 </AraWebLayout>

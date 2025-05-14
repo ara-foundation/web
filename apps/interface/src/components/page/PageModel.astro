@@ -2,19 +2,18 @@
 /**
  * The page model represents the page itself in the miniature way
  */
-import BodyLayout, { type RowsProps } from "@components/page/BodyLayout.astro";
-import { ColumnSlug, RowSlug, type Page, slugsToLayoutPath } from "@ara-web/ts-enhancement"
+import BodyLayout, { /*type RowsProps*/ } from "@components/page/BodyLayout.astro";
 import { rpcBySlug } from "@ara-web/rpc-engine";
-import { PageTraits } from "@ara-web/reflect";
+// import { PageTraits } from "@ara-web/reflect";
 
 interface Props {
-  	rows?: RowsProps,
-    page?: Page
+  	// rows?: RowsProps,
+    // page?: Page
 }
 
 let { 
-	rows,
-    page,
+	// rows,
+    // page,
 } = Astro.props;
 
 const headerHeight = "min-h-12"
@@ -22,21 +21,21 @@ const contentHeight = "min-h-48"
 const footerHeight = "min-h-12"
 const rpcsHeight = "min-h-24"
 
-rows = rows !== undefined ? rows : {};
+// rows = rows !== undefined ? rows : {};
 
-rows.header = rows.header !== undefined ? rows.header : {}
-rows.header.rowClass = rows.header.rowClass !== undefined ? `${rows.header.rowClass} ${headerHeight}` : headerHeight;
+// rows.header = rows.header !== undefined ? rows.header : {}
+// rows.header.rowClass = rows.header.rowClass !== undefined ? `${rows.header.rowClass} ${headerHeight}` : headerHeight;
 
-rows.content = rows.content !== undefined ? rows.content : {}
-rows.content.rowClass = rows.content.rowClass !== undefined ? `${rows.content.rowClass} ${contentHeight}` : contentHeight;
+// rows.content = rows.content !== undefined ? rows.content : {}
+// rows.content.rowClass = rows.content.rowClass !== undefined ? `${rows.content.rowClass} ${contentHeight}` : contentHeight;
 
-rows.footer = rows.footer !== undefined ? rows.footer : {}
-rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowClass} ${footerHeight}` : footerHeight;
+// rows.footer = rows.footer !== undefined ? rows.footer : {}
+// rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowClass} ${footerHeight}` : footerHeight;
 
 ---
 
-<BodyLayout rows={rows}>
-    <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Left)}>
+<!-- <BodyLayout rows={rows}>
+    <!-- <div class="text-gray-500" slot={slugsToLayoutPath(RowSlug.Header,ColumnSlug.Left)}>
         {page?.components?.header?.left !== undefined && page.components.header.left.map((componentNode) => (
             <div class="">{PageTraits.componentName(componentNode)}</div>
         ))}
@@ -91,7 +90,7 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
             <div class="text-gray-100" >{PageTraits.componentName(componentNode)}</div>
         ))}
         {page?.components?.footer?.right === undefined && "Footer Right"}
-    </div>
+    </div> --><!--
 </BodyLayout>
 
 <div class={"flex flex-row p-2 " + rpcsHeight}>
@@ -130,4 +129,4 @@ rows.footer.rowClass = rows.footer.rowClass !== undefined ? `${rows.footer.rowCl
             ))}
         </ul>
     </div>
-</div>
+</div> -->

@@ -30,9 +30,6 @@ importers:
 
   apps/interface:
     dependencies:
-      '@ara-web/astro-ara-web-services':
-        specifier: workspace:*
-        version: link:../../packages/astro-ara-web-services
       '@ara-web/p-hintjens':
         specifier: workspace:^
         version: link:../../packages/p-hintjens
@@ -42,6 +39,9 @@ importers:
       '@ara-web/reflect-astro-ext':
         specifier: workspace:*
         version: link:../../packages/reflect-astro-ext
+      '@ara-web/reflect-astro-plugins':
+        specifier: workspace:*
+        version: link:../../packages/reflect-astro-plugins
       '@ara-web/rpc-engine':
         specifier: workspace:*
         version: link:../../packages/rpc-engine
@@ -214,37 +214,6 @@ importers:
       astro:
         specifier: ^5.7.10
         version: 5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0)
-
-  packages/astro-ara-web-services:
-    dependencies:
-      '@ara-web/p-hintjens':
-        specifier: workspace:*
-        version: link:../p-hintjens
-      '@ara-web/reflect':
-        specifier: workspace:*
-        version: link:../reflect
-      '@ara-web/reflect-astro-ext':
-        specifier: workspace:*
-        version: link:../reflect-astro-ext
-      '@astrojs/compiler':
-        specifier: ^2.11.0
-        version: 2.11.0
-      react:
-        specifier: ^19.0.0
-        version: 19.0.0
-    devDependencies:
-      '@types/react':
-        specifier: ^19.0.10
-        version: 19.0.10
-      astro:
-        specifier: ^5.7.5
-        version: 5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0)
-      vite:
-        specifier: ^5.2.11
-        version: 5.4.14(@types/node@22.15.17)(lightningcss@1.29.2)(terser@5.37.0)
-      vitest:
-        specifier: 2.1.6
-        version: 2.1.6(@types/node@22.15.17)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
 
   packages/contracts:
     devDependencies:
@@ -507,6 +476,37 @@ importers:
       typescript-eslint:
         specifier: ^8.31.1
         version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.7.3)
+
+  packages/reflect-astro-plugins:
+    dependencies:
+      '@ara-web/p-hintjens':
+        specifier: workspace:*
+        version: link:../p-hintjens
+      '@ara-web/reflect':
+        specifier: workspace:*
+        version: link:../reflect
+      '@ara-web/reflect-astro-ext':
+        specifier: workspace:*
+        version: link:../reflect-astro-ext
+      '@astrojs/compiler':
+        specifier: ^2.11.0
+        version: 2.11.0
+      react:
+        specifier: ^19.0.0
+        version: 19.0.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.10
+        version: 19.0.10
+      astro:
+        specifier: ^5.7.5
+        version: 5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0)
+      vite:
+        specifier: ^5.2.11
+        version: 5.4.14(@types/node@22.15.17)(lightningcss@1.29.2)(terser@5.37.0)
+      vitest:
+        specifier: 2.1.6
+        version: 2.1.6(@types/node@22.15.17)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
 
   packages/reflect-eslint-proxy:
     dependencies:

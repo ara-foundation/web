@@ -10,7 +10,16 @@ import {faCrown, faPenRuler, faPen, faGlobe} from "@fortawesome/free-solid-svg-i
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import DoneModal from "@components/lungta/DoneModal.astro"
 import ThankYou from "@components/lungta/ThankYou"
-import {type LayoutProps, RowSlug, ColumnSlug, slugsToLayoutPath} from "@ara-web/ts-enhancement"
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Header = "top",
+    Content = "content",
+    Footer = "bottom"
+}
 import { type SideNavigationProps} from "@components/lungta/SideNavigation.astro";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes, type SampleType as Type2 } from "@scripts/lungtaTypes";
@@ -42,16 +51,16 @@ const tokens: Token[] = [
     }
 ];
 
-const layoutProps: LayoutProps = {
-    content: {
-        columnClasses: {
-            center: "flex flex-col px-4 h-full mt-20",
-            right: "pr-4 mt-20"
-        }
-    },
-}
+// const layoutProps: LayoutProps = {
+//     content: {
+//         columnClasses: {
+//             center: "flex flex-col px-4 h-full mt-20",
+//             right: "pr-4 mt-20"
+//         }
+//     },
+// }
 
-const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+// const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 const subNavigation: SubNavigation = {
     projectSlug: AraProjectSlug,
@@ -68,7 +77,7 @@ const sideNavigationProps: SideNavigationProps = {
 
 <AraWebLayout 
     title="Create Community managing tokens" 
-    layoutProps={layoutProps} 
+    
     sideNavigation={sideNavigationProps}
 >
     <section>
@@ -129,7 +138,7 @@ const sideNavigationProps: SideNavigationProps = {
             <button class="btn btn-primary px-4 py-2" onclick="done_modal.showModal()">Set Token Settings</button>
         </div>
     </section>
-    <section slot={(!cancelSlug).toString()}>
+    <!-- <section slot={(!cancelSlug).toString()}> -->
     <!-- <section slot={cancelSlug && "center-valid"}> -->
     <!-- <section slot={"center-" + cancelSlug}> -->
     <!-- <section slot={cancelSlug != undefined ? "center-" + cancelSlug: "data"}> -->

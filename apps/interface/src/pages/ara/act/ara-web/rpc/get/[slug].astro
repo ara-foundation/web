@@ -5,13 +5,23 @@
  * @param {string} Description A page with the details of the action
  */
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { ColumnSlug, RowSlug, slugsToLayoutPath } from "@ara-web/ts-enhancement";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
 import {AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
-import { getRpcs, AstroComponentRpcCard, rpcBySlug } from "@ara-web/rpc-engine";
+import { getRpcs, rpcBySlug } from "@ara-web/rpc-engine";
+// import AstroComponentRpcCard from "@ara-web/rpc-engine/AstroComponentRpcCard";
 
-const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+// const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 type DynamicParam = {
     params: {
@@ -90,9 +100,9 @@ const sideNavigationProps: SideNavigationProps = {
     <div>
         <h2>{rpc.name}</h2>
         <p>{rpc.description}</p>
-        <AstroComponentRpcCard rpc={rpc} />
+        <!-- <AstroComponentRpcCard rpc={rpc} /> -->
     </div>
-    <section slot={cancelSlug}>
+    <!-- <section slot={cancelSlug}>
         <a href={parentUrl} class="btn btn-outline btn-error w-full mb-4">Back to List of RPCs</a>
-    </section>
+    </section> -->
 </AraWebLayout>

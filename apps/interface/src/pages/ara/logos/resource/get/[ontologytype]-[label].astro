@@ -10,7 +10,6 @@ import { elementToNode, newAraProject, RestNavigationKey, newRestElement, type N
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import AraWebLayout from "@layouts/AraWebLayout.astro"
 import Resource from "@components/resource/Resource";
-import { StringTraits } from "@ara-web/ts-enhancement";
 
 type DynamicParam = {
     params: {
@@ -49,7 +48,7 @@ if (link === undefined) {
 
 
 const resourceNavigationElement: NavigationElement = {
-    title: `${StringTraits.capitalizeFirstLetter(label)} (${StringTraits.capitalizeFirstLetter(ontologytype)})`,
+    title: `${label} (${ontologytype})`,
     slug: label,
     color: ontologytype === 'class' ? 'primary' : 'secondary',
     visible: true,

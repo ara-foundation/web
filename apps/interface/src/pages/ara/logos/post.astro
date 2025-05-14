@@ -7,42 +7,49 @@
 import AraWebLayout, {type FooterAction} from "@layouts/AraWebLayout.astro"
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import { AraProjectSlug, newRestNode, RestNavigationKey, type SubNavigation } from "@scripts/navigation";
-import { RowSlug, ColumnSlug, type LayoutProps, slugsToLayoutPath } from "@ara-web/ts-enhancement";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 
-const footerAction: FooterAction = {
-    url: "/ara/maydone/post",
-    label: "Create Project",
-}
+// const footerAction: FooterAction = {
+//     url: "/ara/maydone/post",
+//     label: "Create Project",
+// }
 
-const layoutProps: LayoutProps = {
-    content: {
-        columnClasses: {
-            center: "flex flex-col px-4 h-full mt-20",
-            right: "pr-4 mt-20"
-        }
-    },
-}
+// const layoutProps: LayoutProps = {
+//     content: {
+//         columnClasses: {
+//             center: "flex flex-col px-4 h-full mt-20",
+//             right: "pr-4 mt-20"
+//         }
+//     },
+// }
 
-const subNavigation: SubNavigation = {
-    projectSlug: AraProjectSlug,
-    lungta: LungtaTypes.Logos,
-    element: newRestNode(RestNavigationKey.post),
-}
+// const subNavigation: SubNavigation = {
+//     projectSlug: AraProjectSlug,
+//     lungta: LungtaTypes.Logos,
+//     element: newRestNode(RestNavigationKey.post),
+// }
 
-const sideNavigationProps: SideNavigationProps = {
-    subNavigation: subNavigation,
-    selectedPath: "/ara/logos/post",
-}
+// const sideNavigationProps: SideNavigationProps = {
+//     subNavigation: subNavigation,
+//     selectedPath: "/ara/logos/post",
+// }
 
-const rightContentSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+// const rightContentSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 ---
 
 <AraWebLayout 
     title="New Logos" 
-    footerAction={footerAction} 
-    layoutProps={layoutProps}
-    sideNavigation={sideNavigationProps}
+ -->
 >
     <section>
         <h2>Project Parameters</h2>
@@ -50,5 +57,5 @@ const rightContentSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
         <input type="text" placeholder="Project Name" class="input input-bordered w-full mb-2" />
         <textarea class="textarea textarea-bordered textarea-lg w-full min-h-80" placeholder="Description"></textarea>
     </section>
-    <a slot={rightContentSlug} href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a>
+    <!-- <a slot={rightContentSlug} href="/" class="btn btn-outline btn-error w-full mb-4">Cancel</a> -->
 </AraWebLayout>

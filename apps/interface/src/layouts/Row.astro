@@ -3,9 +3,19 @@
  * Row Component defines the Row Layout which is composed of three columns.
  * The web page is the list of the Row components
  */
-import { type RowProps } from "@ara-web/ts-enhancement";
 
-interface Props extends RowProps {}
+interface Props {
+    rowClass: string,
+    fix: {
+        footer: "footer",
+        header: "header",
+    },
+    columnClasses: {
+        left: "left",
+        center: "center",
+        right: "right",
+    }
+}
 
 let { rowClass, fix, columnClasses } = Astro.props;
 

@@ -1,6 +1,6 @@
 {
   "name": "@ara-web/interface",
-  "description": "Ara Web Client &ndash; World of Softwares",
+  "description": "Ara Web Client &ndash; Open-Source Softwares as a living organism",
   "version": "1.0.1",
   "private": true,
   "type": "module",
@@ -14,11 +14,11 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@ara-web/component-engine": "workspace:*",
+    "@ara-web/reflect-astro-plugins": "workspace:*",
     "@ara-web/reflect": "workspace:*",
     "@ara-web/reflect-astro-ext": "workspace:*",
     "@ara-web/rpc-engine": "workspace:*",
-    "@ara-web/ts-enhancement": "workspace:^",
+    "@ara-web/p-hintjens": "workspace:^",
     "@astrojs/compiler": "^2.11.0",
     "@astrojs/mdx": "^4.0.7",
     "@astrojs/react": "^4.2.0",

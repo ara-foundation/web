@@ -15,7 +15,7 @@ import { LungtaTypes } from "@scripts/lungtaTypes";
 import { type SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 import Reflect from "@scripts/reflect";
 import PageModel from "@components/page/PageModel.astro";
-import { Debug } from "@ara-web/ts-enhancement";
+import { ModuleCategory, type Page } from "@ara-web/reflect-astro-ext";
 
 const araWebNavigation = newAraWebNavigationNode();
 
@@ -40,47 +40,42 @@ const sideNavigation: SideNavigationProps = {
     selectedPath: "ara/act/ara-web/page/get"
 }
 
-Debug.push("Reflect.getPages()")
-const pages = await Reflect.getPages();
-Debug.pop();
-
+const pages = await Reflect.get!<Page>(ModuleCategory.Page);
 ---
 
 <AraWebLayout 
     title="List of Web Pages"
     sideNavigation={sideNavigation}
 >
+{
+    pages.isFailure ? 
+    (
+        <div class="bg-red-100">
+            <h1>{pages.errorTitle!}</h1>
+            <div>{pages.errorDescription!}</div>
+        </div>
+    ) :
+    <h1>List of Ara Web Pages</h1>
+    <ul class="mt-4 ml-10">
     {
-        pages.isFailure ? 
-        (
-            <div class="bg-red-100">
-                <h1>{pages.errorTitle!}</h1>
-                <div>
-                    {pages.errorDescription!}
+        pages.getValue().map((page) => (
+            <li class="m-4">
+                <div class="card w-full bg-base-100 card-sm shadow-sm ">
+                <div class="card-body relative">
+                    <h2 class="card-title">
+                        {page.title}
+                    </h2>
+                    <p>{page.description}</p>
+                    <div class={"absolute top-5 right-5 badge badge-secondary"}>Built-in</div>
+                    <div class={"absolute bottom-1 right-5 badge badge-neutral"}>{page.moduleLink}</div>
+                    <div class="bg-gray-100 w-full">
+                        <PageModel page={page} ></PageModel>
+                    </div>
                 </div>
-            </div>
-        ) :
-            <h1>List of Ara Web Pages</h1>
-            <ul class="mt-4 ml-10">
-                {
-                    pages.getValue().map((page) => (
-                    <li class="m-4">
-                        <div class="card w-full bg-base-100 card-sm shadow-sm ">
-                            <div class="card-body relative">
-                            <h2 class="card-title">
-                                {page.title}
-                            </h2>
-                            <p>{page.description}</p>
-                            <div class={"absolute top-5 right-5 badge badge-secondary"}>Built-in</div>
-                            <div class={"absolute bottom-1 right-5 badge badge-neutral"}>{page.fileName}</div>
-                                <div class="bg-gray-100 w-full">
-                                    <PageModel page={page} ></PageModel>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    ))
-                }
-            </ul>
+                </div>
+            </li>
+        ))
     }
+    </ul>
+}
 </AraWebLayout>

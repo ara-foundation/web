@@ -6,14 +6,23 @@
  */
 import { getActions, getActionBySlug, type Action } from "@scripts/action";
 import AraWebLayout from "@layouts/AraWebLayout.astro"
-import { ColumnSlug, RowSlug, slugsToLayoutPath } from "@ara-web/ts-enhancement";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
 import ActionTrigger from "@components/action/ActionTrigger.astro";
 import ActionPage from "@components/action/ActionPage.astro";
 import { AraProjectSlug, elementToNode, newAraWebNavigationNode, newRestNode, RestNavigationKey, type NavigationElement, type SubNavigation } from "@scripts/navigation";
 import { LungtaTypes } from "@scripts/lungtaTypes";
 import type { SideNavigationProps } from "@components/lungta/SideNavigation.astro";
 
-const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
+// const cancelSlug = slugsToLayoutPath(RowSlug.Content, ColumnSlug.Right);
 
 type DynamicParam = {
     params: {
@@ -105,7 +114,7 @@ const sideNavigationProps: SideNavigationProps = {
             ))}
         </div>
     </div>
-    <section slot={cancelSlug}>
+    <section slot={"/"}>
         <a href={parentUrl} class="btn btn-outline btn-error w-full mb-4">Back to List of Actions</a>
     </section>
 </AraWebLayout>

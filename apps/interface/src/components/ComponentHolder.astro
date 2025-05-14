@@ -1,20 +1,19 @@
 ---
 // Receives the component struct and imports the component by it
-import { type Component } from "@ara-web/ts-enhancement";
 
 interface Props {
-    component?: Component,
+    // component?: Component,
 }
 
-const {component} = Astro.props;
+// const {component} = Astro.props;
 
-const fileName = component === undefined ? "fileName.astro" : `/src/${component.category.slug}${component.fileName}`;
+// const fileName = component === undefined ? "fileName.astro" : `/src/${component.category.slug}${component.fileName}`;
 
-const Element: any = component !== undefined &&  component.glob;
+// const Element: any = component !== undefined &&  component.glob;
 
 ---
 
-{component === undefined ? 
+<!-- {component === undefined ?  -->
 <p>Component Holder</p> :
-<Element.default />
-}
+<!-- <Element.default /> -->
+<!-- } -->

@@ -3,8 +3,16 @@
  * 
  * @requires RPCEngine url(@ara-web/rpc-engine) the RPC Engine
  */
-
-import { ColumnSlug, RowSlug, type IdentifiedComponent } from "@ara-web/ts-enhancement";
+enum ColumnSlug {
+        Left = "left",
+        Center = "center",
+        Right = "right" 
+}
+enum RowSlug {
+    Top = "top",
+    Content = "content",
+    Bottom = "bottom"
+}
 import { rpcCalls } from "@ara-web/rpc-engine";
 import { type RpcCallType } from "@ara-web/rpc-engine";
 
@@ -49,7 +57,7 @@ export type Action = {
     description: string; 
     trigger: Trigger;
     flow: PageWithAction[];
-    nonPageComponents?: IdentifiedComponent[];  // Modals for example to put outside of the web page itself
+    // nonPageComponents?: IdentifiedComponent[];  // Modals for example to put outside of the web page itself
     onSuccess: RpcCallType[]
 }
 
@@ -85,7 +93,7 @@ const logosPostTrigger: Trigger = {
         url: "/ara/maydone/post"
     } as Link,
     layout: {
-        footer: "center" as ColumnSlug
+        // footer: "center" as ColumnSlug
     },
     fix: true,
 }
@@ -95,7 +103,7 @@ const maydonePostTrigger: Trigger = {
         url: "/ara/sangha/post",
     } as Link,
     layout: {
-        footer: "center" as ColumnSlug
+        // footer: "center" as ColumnSlug
     },
     fix: true,
 }
@@ -123,7 +131,7 @@ const createCommunity: Action = {
         view: createCommunityButton,
         onClick: createCommunityClick,
         layout: {
-            footer: "center" as ColumnSlug
+            // footer: "center" as ColumnSlug
         },
         fix: true,
         pages: [
@@ -166,15 +174,15 @@ export const getActionBySlug = (slug: string): Action|undefined => {
 }
 
 export const layoutPathToSlug = (layoutPath: LayoutPath): string => {
-    if (layoutPath.header !== undefined) {
-        return `${RowSlug.Header}/${layoutPath.header}`
-    }
+    // if (layoutPath.header !== undefined) {
+    //     return `${RowSlug.Header}/${layoutPath.header}`
+    // }
     if (layoutPath.content !== undefined) {
         return `${RowSlug.Content}/${layoutPath.content}`
     }
-    if (layoutPath.footer !== undefined) {
-        return `${RowSlug.Footer}/${layoutPath.footer}`
-    }
+    // if (layoutPath.footer !== undefined) {
+    //     return `${RowSlug.Footer}/${layoutPath.footer}`
+    // }
 
     return '';
 }

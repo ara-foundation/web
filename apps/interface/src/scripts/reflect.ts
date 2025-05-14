@@ -7,130 +7,48 @@
  * - RPC etc.
  */
 
-import { Reflect, type CategorizedModuleGlobs, type ModuleGlobs, ModuleType } from "@ara-web/reflect";
+import { Reflect, ModuleLink } from "@ara-web/reflect";
+import { NodejsReflectExtension } from "@ara-web/reflect/nodejs-ext";
+import { ReflectAstroExtension } from "@ara-web/reflect-astro-ext";
+import { Debug, Result } from "@ara-web/p-hintjens";
 
-const importModules = (): CategorizedModuleGlobs => {
-    const moduleGlobs: CategorizedModuleGlobs = {};
+const astroProxy = new ReflectAstroExtension();
+const reflect = new Reflect({extensions: [astroProxy], packageLink: ModuleLink.newPackageURL("@ara-web", "interface")});
 
-    moduleGlobs[ModuleType.NodeJsModule] = getNodeJsModuleGlobs();
-    moduleGlobs[ModuleType.Page] = getPageGlobs();
-    moduleGlobs[ModuleType.Layout] = getLayoutGlobs();
-    moduleGlobs[ModuleType.Component] = getComponentGlobs();
-    moduleGlobs[ModuleType.Script] = getScriptGlobs();
-
-    return moduleGlobs;
+const putPkg = async(nodeJsExt: NodejsReflectExtension, pkgName: string): Promise<Result<ModuleLink>> => {
+    let module = await import(pkgName);
+    let putted = await nodeJsExt.putPackage({importModuleClause: pkgName, module});
+    if (putted.isFailure) {
+        return Result.fail(`nodeJsExt.putPackage('${pkgName}'): ${putted.errorTitle}`, putted.errorDescription!);
+    }
+    return Result.ok(putted.getValue())
 }
 
-const getNodeJsModuleGlobs = (): ModuleGlobs => {
-    const moduleGlobs: ModuleGlobs = {};
-    // Font Awesome's Icons
-    const glob1 = import.meta.glob(
-        './../../node_modules/@fortawesome/free-solid-svg-icons/index.mjs', {eager: true}
-    );
-
-    for (let modulePath in glob1) {
-        moduleGlobs["@fortawesome/free-solid-svg-icons"] = {
-            glob: glob1[modulePath],
+// Add NodeJS Packages
+const putPkgs = async (nodeJsExt: NodejsReflectExtension) => {
+    [
+        '@fortawesome/free-solid-svg-icons', 
+        '@fortawesome/fontawesome-svg-core',
+        '@ara-web/p-hintjens',
+        '@ara-web/rpc-engine'
+    ].forEach(async(pkgName) => {
+        // Font Awesome's Icons
+        let pkgLink = await putPkg(nodeJsExt, pkgName);
+        if (pkgLink.isFailure) {
+            throw Result.fail(`putPkg(): ${pkgLink.errorTitle}`, pkgLink.errorDescription!);
+        } else {
+            Debug.log(`Pkg putted: ${pkgLink.getValue().moduleURL}`)
         }
-    }
-
-    // Font Awesome's Core
-    const glob2 = import.meta.glob(
-        './../../node_modules/@fortawesome/fontawesome-svg-core/index.mjs', {eager: true}
-    );
-
-    for (let modulePath in glob2) {
-        moduleGlobs["@fortawesome/fontawesome-svg-core"] = {
-            glob: glob2[modulePath],
-        }
-    }
-
-    // AraWeb's enhancements
-    const glob3 = import.meta.glob(
-        './../../node_modules/@ara-web/ts-enhancement/dist/index.js', {eager: true}
-    );
-
-    for (let modulePath in glob3) {
-        moduleGlobs["@ara-web/ts-enhancement"] = {
-            glob: glob3[modulePath],
-        }
-    }
-
-    // AraWeb's RPC Engine
-    const glob4 = import.meta.glob(
-        './../../node_modules/@ara-web/rpc-engine/src/index.ts', {eager: true}
-    );
-
-    for (let modulePath in glob4) {
-        moduleGlobs["@ara-web/rpc-engine"] = {
-            glob: glob4[modulePath],
-        }
-    }
-
-    return moduleGlobs;
+    });
 }
+await putPkgs(reflect.nodeJsExt);
 
-const getPageGlobs = (): ModuleGlobs => {
-    const globs = import.meta.glob('../pages/ara/**/*.astro', {eager: true});
-
-    const certainI = 0;
-    let counter = 0;
-
-    const moduleGlobs: ModuleGlobs = {};
-    for (let modulePath in globs) {
-        counter++;
-        if (counter - 1 < certainI) {
-            continue;
-        }
-        moduleGlobs[modulePath] = {
-            glob: globs[modulePath],
-        }
-        if (certainI > -1) {
-            break; // only first page
-        }
-    }
-    return moduleGlobs;
+// Put the Astro Framework
+const astroModules = import.meta.glob('../**/*.{astro,tsx,jsx,ts,js,svg,md}', {eager: true})
+astroModules["./reflect.ts"] = await import("./reflect.js");
+const puttedModules = await astroProxy.putModules({records: astroModules, importMetaFilename: import.meta.filename});
+if (puttedModules.isFailure) {
+    throw puttedModules;
 }
-
-const getComponentGlobs = (moduleType?: ModuleType): ModuleGlobs => {
-    let globs = import.meta.glob('@components/**/*.{astro,tsx,jsx}', {eager: true})
-    const moduleGlobs: ModuleGlobs = {};
-    for (let modulePath in globs) {
-        moduleGlobs[modulePath] = {
-            glob: globs[modulePath],
-        }
-    }
-    return moduleGlobs;
-}
-
-const getLayoutGlobs = (moduleType?: ModuleType): ModuleGlobs => {
-    let globs = import.meta.glob('@layouts/**/*.{astro,tsx,jsx}', {eager: true})//relative to this component file
-    const moduleGlobs: ModuleGlobs = {};
-    for (let modulePath in globs) {
-        moduleGlobs[modulePath] = {
-            glob: globs[modulePath],
-        }
-    }
-    return moduleGlobs;
-}
-
-const getScriptGlobs = (): ModuleGlobs => {
-    let globs = import.meta.glob('@scripts/**/*.ts', {eager: true})//relative to this component file
-    const moduleGlobs: ModuleGlobs = {};
-    for (let modulePath in globs) {
-        const glob = globs[modulePath]
-        if (modulePath.indexOf("reflectCopy.ts") > -1) {
-            modulePath = modulePath.replace("reflectCopy.ts", "reflect.ts")
-        }
-        moduleGlobs[modulePath] = {
-            glob: glob,
-        }
-    }
-
-    return moduleGlobs;
-}
-
-const reflect = new Reflect();
-reflect.putAutoGlobImporter(importModules);
 
 export default reflect;
