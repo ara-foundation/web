@@ -1,3 +1,6 @@
 [submodule "packages/css-select"]
 	path = packages/css-select
 	url = https://github.com/fb55/css-select.git
+[submodule "apps/landing-page"]
+	path = apps/landing-page
+	url = https://github.com/zeon-studio/astroplate.git
