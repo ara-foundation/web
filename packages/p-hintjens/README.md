@@ -10,9 +10,6 @@ Useful scripts you can take from this package:
     * Enum &ndash; `enumValues` and `enumKeys` returns list of values or keys from the defined enum.
     * Object &ndash; `deepCopy` creates a new copy of the object by value.
     * String &ndash; `capitalizeFirstLetter` simply makes the first letter of the string uppercase.
-- 📝 **Ara Link** adds various types of links between objects.
-    * Ara Link &ndash; A generic Link that could link to any resource, not only text value.
-    * Module Link &ndash; either a file url or a Purl. Used to create module IDs.
 - 🛠️ **Debug** Much better version of `console.log` that puts intends as the code flow enters into a new function.
 - 🔌 **Interfaces** various interfaces to cast object into this interface.
     * get-text &ndash; cast object into an interface with `getText() => string` method.
@@ -22,7 +19,4 @@ Useful scripts you can take from this package:
 The `staticImplements` allows creating interfaces with the static methods.
 
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
-
-# Roadmap
-* Add arbitrary amount of data in the Debug.log();
 

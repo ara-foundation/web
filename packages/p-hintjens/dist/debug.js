@@ -17,8 +17,8 @@ export class Debug {
     // public functions
     //
     /////////////////////////////////////////
-    static log = (msg) => {
-        Debug.instance._log(msg);
+    static log = (...msgs) => {
+        msgs.forEach(Debug.instance._log);
     };
     static push = (title, parameters) => {
         if (parameters === undefined) {

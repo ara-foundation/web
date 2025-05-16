@@ -22,8 +22,8 @@ export class Debug {
     // public functions
     //
     /////////////////////////////////////////
-    public static log = (msg: unknown) => {
-        Debug.instance._log(msg);
+    public static log = (...msgs: unknown[]): void => {
+        msgs.forEach(Debug.instance._log);
     }
 
     public static push = (title: string, parameters?: {[key: string]: string}) => {

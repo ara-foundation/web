@@ -4,7 +4,7 @@ export declare class Debug {
     private stack;
     private constructor();
     private static get instance();
-    static log: (msg: unknown) => void;
+    static log: (...msgs: unknown[]) => void;
     static push: (title: string, parameters?: {
         [key: string]: string;
     }) => void;
