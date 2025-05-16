@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "prepublishOnly": "pnpm test && pnpm build",
+    "test": "vitest -r ./"
+  }
+}

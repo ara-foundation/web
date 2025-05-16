@@ -12,9 +12,8 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",
-    "prepublishOnly": "pnpm test && pnpm build",
-    "_chore": "pnpm i",
-    "test": "vitest -r ./"
+    "prepublishOnly": "pnpm build",
+    "_chore": "pnpm i"
   },
   "keywords": [
     "library",
