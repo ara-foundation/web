@@ -8,7 +8,14 @@ import {
     FilePath,
     type SingleRecord,
 } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
+import { 
+    ModuleLink, 
+    type ModuleURL,
+    SDSService, 
+    type SDSExtensionInterface, 
+    type SDSSetup
+} from "@ara-web/sds";
+import { OkResult, Result, EnumTraits } from "@ara-web/p-hintjens";
 import {
     type Asset, type Page, type Module,
     FileExtension
@@ -26,7 +33,6 @@ import {
     ModulePartitioner,
 } from "./module.js"
 import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
-import { SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/p-hintjens/sds";
 
 // Not ReflectExtensionInterface, since it's not an extension of Reflect.
 // But on it's own available for the Astro Extension itself.

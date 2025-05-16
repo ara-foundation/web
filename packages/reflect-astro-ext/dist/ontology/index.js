@@ -1,4 +1,5 @@
-import { ObjectLink, Result } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { ModuleLink, ObjectLink } from "@ara-web/sds";
 import { FileExtension as BaseExtension, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { AstroNode } from "../index.js";
 /**

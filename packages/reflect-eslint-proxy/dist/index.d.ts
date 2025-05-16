@@ -1,4 +1,4 @@
-import { SDSProxy } from "@ara-web/p-hintjens/sds";
+import { SDSProxy } from "@ara-web/sds";
 export declare class ReflectEslintProxy extends SDSProxy {
     private _version;
     private _cwd?;

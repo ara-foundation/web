@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
 import { CodePiece, CodePieceType } from "../src/code-level/code-piece.js";
 import { IntersectedUnionType, UserTypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/code-piece-types.js";
-import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import { Node } from "ts-morph";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { Reflect } from "../src/reflect.js"

@@ -1,10 +1,9 @@
 /**
  * Ara Web Level Reflection that deals with the web components in the modules and their attributes
  */
+import { ModuleLink, ObjectLink } from "@ara-web/sds";
 import { 
-    Result,
-    ModuleLink,
-    ObjectLink,
+    Result
 } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { ReflectLink } from "@ara-web/reflect/code-level";
@@ -120,7 +119,7 @@ export class ComponentLevel {
             link: elementLink,
             slots: {},
             attributes: {...attributes.getValue(), name: element.name},
-            class: htmlPackageURL,
+            componentClass: htmlPackageURL,
             type: ElementType.Component
         }
 
@@ -348,7 +347,7 @@ export class ComponentLevel {
             get: glob,
             slots: children.getValue(),
             attributes: attributes.getValue(),
-            class: ReflectLink.linkToIdentifier(node.name, {caller: nodeLink}).toModuleLink(),
+            componentClass: ReflectLink.linkToIdentifier(node.name, {caller: nodeLink}).toModuleLink(),
             type: ElementType.Component
         }
 

@@ -3,7 +3,8 @@
  * AST (Abstract Syntax Tree)
  */
 import { Project, SourceFile as TsSourceFile, Node } from "ts-morph";
-import { Result, Debug, ModuleLink } from "@ara-web/p-hintjens";
+import { Result, Debug } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 
 import { 
     ModuleMemory, 

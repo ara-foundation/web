@@ -1,4 +1,4 @@
-import { type Adapter, type Predicate } from "@ara-web/p-hintjens";
+import { type Adapter, type Predicate } from "@ara-web/sds";
 
 /**
  * The `NodeAdapter` is an adapter for the DOM Node interface.

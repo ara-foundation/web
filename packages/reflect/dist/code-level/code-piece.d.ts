@@ -1,5 +1,6 @@
 import { Node } from "ts-morph";
-import { ModuleLink, Result } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import type { IdentifiedNodeDataType, ValueType } from "./code-piece-types.js";
 export declare enum CodePieceType {
     Variable = "variable",

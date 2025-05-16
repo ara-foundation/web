@@ -4,7 +4,7 @@ import { CodePiece } from "../src/code-level/code-piece.js";
 import { IntersectedUnionType, UserTypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/code-piece-types.js";
 import { ModuleMemory } from "../src/module-memory.js";
 import { ProjectMemory } from "../src/project-memory.js";
-import { AraLink, ModuleLink } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { BuiltInIdentifiers } from "../src/index.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";

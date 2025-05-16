@@ -3,8 +3,7 @@
  */
 import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
-import { ModuleLink } from "@ara-web/p-hintjens";
-import { SDSProxy } from "@ara-web/p-hintjens/sds";
+import { SDSProxy, ModuleLink } from "@ara-web/sds";
 
 class SampleProxy extends SDSProxy {
     protected _behindData?: Reflect;

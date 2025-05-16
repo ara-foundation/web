@@ -2,7 +2,8 @@ import { expect, test } from "vitest";
 import { ModulePartitioner } from "../src/module";
 import cssSelect from "css-select"
 import { astroToNodeTree } from "../src/astro-adapter";
-import { CSSObjectAdapter, Debug, ObjectNode, Rest } from "@ara-web/p-hintjens";
+import { Debug } from "@ara-web/p-hintjens";
+import { CSSObjectAdapter, ObjectNode, Rest } from "@ara-web/sds";
 import {NodeAdapter} from "../src/node-adapter";
 import { JSDOM } from "jsdom";
 import { AstroNode, CodeLevel, FileExtension, ModuleCategory, Page, PageLevel } from "../src";

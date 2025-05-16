@@ -1,4 +1,5 @@
-import { DOCUMENT_SELECTOR, ObjectNode, OkResult } from "@ara-web/p-hintjens";
+import { OkResult } from "@ara-web/p-hintjens";
+import { DOCUMENT_SELECTOR, ObjectNode } from "@ara-web/sds";
 // {slots: page.slots} as SlotElement
 export const pageToNodeTree = (slotElement) => {
     const doc = new ObjectNode(slotElementOps);
@@ -22,6 +23,14 @@ const getSlotElementName = (_element) => {
 const getSlotElementAttribute = (_element, attrName) => {
     if (_element === undefined) {
         return undefined;
+    }
+    if (attrName === "componentClass") {
+        if ("componentClass" in _element) {
+            return _element.componentClass.moduleURL;
+        }
+        else {
+            return undefined;
+        }
     }
     if (attrName === "class") {
         if (_element && "link" in _element) {
@@ -49,6 +58,16 @@ const getSlotElementAttribute = (_element, attrName) => {
 const setSlotElementAttribute = (_element, attrName, attrValue) => {
     if (_element === undefined) {
         return OkResult.ok();
+    }
+    if (attrName === "componentClass") {
+        if ("componentClass" in _element) {
+            const classComponent = attrValue;
+            _element.componentClass = classComponent;
+            return OkResult.ok();
+        }
+        else {
+            return OkResult.fail(`The element doesn't have 'componentClass'`, `Can not set component class since element doesn't have it`);
+        }
     }
     if (attrName === "class") {
         if (_element && "link" in _element) {

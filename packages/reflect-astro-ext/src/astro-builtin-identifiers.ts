@@ -1,4 +1,5 @@
-import { ModuleLink, Result } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 import { 
     CodePiece, 
     type CodePieceRecord, 

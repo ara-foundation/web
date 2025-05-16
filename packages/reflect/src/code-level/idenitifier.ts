@@ -1,5 +1,6 @@
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { Result, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./code-piece-types.js";
 import { type AstNodeFilter } from "./ast-node-traits.js";
 import type { TypedData } from "./code-piece.js";

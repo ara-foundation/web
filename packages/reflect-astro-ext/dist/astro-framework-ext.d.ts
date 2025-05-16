@@ -1,7 +1,7 @@
 import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory, type SingleRecord } from "@ara-web/reflect";
-import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
+import { ModuleLink, type ModuleURL, SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/sds";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { type Page } from "./ontology/index.js";
-import { SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/p-hintjens/sds";
 export interface AstroExtensionInterface extends SDSExtensionInterface {
     afterPageLvlIdenfication?(moduleCategory: string, module: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<ModuleMemory<Page>>>;
 }

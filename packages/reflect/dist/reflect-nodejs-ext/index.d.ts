@@ -1,7 +1,8 @@
 export declare enum ModuleCategory {
     NodeJsModule = "node_modules"
 }
-import { OkResult, Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
+import { ModuleLink, type ModuleURL } from "@ara-web/sds";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleMemory, type AutoImporter, type ImportedRecords, type ExtensionInterface, ProjectMemory, type SingleRecord } from "../index.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.

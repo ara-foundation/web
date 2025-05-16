@@ -1,4 +1,5 @@
-import { AraLink, Debug } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Debug } from "@ara-web/p-hintjens";
 import { 
     CodePieceType, 
     CodePiece, 

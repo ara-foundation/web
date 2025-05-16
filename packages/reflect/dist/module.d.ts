@@ -1,4 +1,5 @@
-import { Result, ModuleLink, OkResult } from "@ara-web/p-hintjens";
+import { Result, OkResult } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 /**
  * Defualt Module Categories
  */

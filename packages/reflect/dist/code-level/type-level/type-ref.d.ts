@@ -3,7 +3,8 @@
  * AST (Abstract Syntax Tree)
  */
 import { TypeReferenceNode, Node } from "ts-morph";
-import { AraLink, Result } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 export declare class TypeRef {
     protected _tsNode: TypeReferenceNode;
     private constructor();

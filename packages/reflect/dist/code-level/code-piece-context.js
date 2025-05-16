@@ -1,4 +1,5 @@
-import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import { CodePiece } from "./code-piece.js";
 /**
  * Collection of the variables, functions that are available for the Ast Node.

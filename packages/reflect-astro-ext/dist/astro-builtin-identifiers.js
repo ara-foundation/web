@@ -1,4 +1,5 @@
-import { ModuleLink, Result } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 import { CodePiece, ValueTypeString, Code, TsNode, VariableLevel, CodePieceType } from "@ara-web/reflect/code-level";
 // Create a default AstroGlobal object
 const data = {

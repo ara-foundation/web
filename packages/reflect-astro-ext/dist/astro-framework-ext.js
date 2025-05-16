@@ -1,11 +1,11 @@
 import { ModuleMemory, ProjectMemory, FilePath, } from "@ara-web/reflect";
-import { OkResult, Result, EnumTraits, ModuleLink } from "@ara-web/p-hintjens";
+import { ModuleLink, SDSService } from "@ara-web/sds";
+import { OkResult, Result, EnumTraits } from "@ara-web/p-hintjens";
 import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
 import { PageLevel } from "./page-level/index.js";
 import { extractModuleCategory, ModuleCategory, ModuleIdentifier, ModulePartitioner, } from "./module.js";
 import { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";
-import { SDSService } from "@ara-web/p-hintjens/sds";
 /**
  * ReflectExtension adds Astro Framework support.
  */

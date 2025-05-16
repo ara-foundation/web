@@ -1,5 +1,6 @@
 import { Node } from "ts-morph";
-import { AraLink, Debug, Result } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Debug, Result } from "@ara-web/p-hintjens";
 import {
     type TypedData,
     IntersectedUnionType, 

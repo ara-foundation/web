@@ -2,7 +2,8 @@
  * Handles the AST Node's values
  */
 import { Node } from "ts-morph";
-import { Result, Debug, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString, CodePieceType, CodePiece, AstNodeContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
 import { FunctionCall } from "./function-call.js";
 import { ObjectLiteral } from "./object-literal.js";

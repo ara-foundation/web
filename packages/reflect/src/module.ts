@@ -1,6 +1,7 @@
 import PathModule from "node:path"
 import { readFileSync, statSync, writeFileSync } from "node:fs";
-import { Result, ModuleLink, OkResult, Debug } from "@ara-web/p-hintjens";
+import { Result, OkResult, Debug } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 
 /**
  * Defualt Module Categories

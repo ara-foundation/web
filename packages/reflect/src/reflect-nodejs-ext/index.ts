@@ -1,13 +1,13 @@
 export enum ModuleCategory {
     NodeJsModule = "node_modules",
 }
+import { ModuleLink, type ModuleURL } from "@ara-web/sds";
 
 import { 
     EnumTraits,
     OkResult, 
     Result,
-    ModuleLink, 
-    type ModuleURL,
+    Debug,
  } from "@ara-web/p-hintjens";
 import { 
     ModuleMemory,
@@ -141,6 +141,8 @@ export class NodejsReflectExtension implements ExtensionInterface {
     }
 
     public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
+        Debug.log(`Modules:`)
+        Debug.log(Object.keys(this._moduleMemories))
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         if (this._moduleMemories[url] !== undefined) {
             return true;

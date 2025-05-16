@@ -1,5 +1,6 @@
 import { Node } from "ts-morph";
-import { ModuleLink, Result } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import { CodePiece, CodePieceType, ValueTypeString, Code, VariableLevel } from "./code-level/index.js";
 // Array<type> receives the values of 1 length and then sets the value as the first element of the data
 const arrayGenericHandler = (astNode, values) => {

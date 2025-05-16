@@ -3,7 +3,7 @@ import { ProjectMemory } from "./project-memory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import type { ReflectInterface } from "./reflect-interface.js";
-import { SDSService, type SDSSetup } from "@ara-web/p-hintjens/sds";
+import { SDSService, type SDSSetup } from "@ara-web/sds";
 
 export type ReflectSetup = SDSSetup<ExtensionInterface>;
 

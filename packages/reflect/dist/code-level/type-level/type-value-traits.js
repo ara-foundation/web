@@ -3,7 +3,8 @@
  * AST (Abstract Syntax Tree)
  */
 import { Node, ArrayTypeNode, Expression, IntersectionTypeNode, LiteralTypeNode, ParenthesizedTypeNode, TypeLiteralNode, UnionTypeNode } from "ts-morph";
-import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result, Debug } from "@ara-web/p-hintjens";
 import { Identifier, Literal, AstNodeTraits, UserTypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "../index.js";
 import { TypeRef } from "./type-ref.js";
 /**

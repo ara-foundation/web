@@ -1,12 +1,11 @@
 // ModuleCategory => Module Path => Module Memory
 // E.g.
 //  Page -> Index -> memory of index
+import { ModuleLink, type ModuleURL } from "@ara-web/sds";
 
 import { 
     Debug,
-    Result,
-    ModuleLink, 
-    type ModuleURL
+    Result
  } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "./module-memory.js";
 import type { MemoryOperations } from "./extension-interface.js";

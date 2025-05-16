@@ -33,7 +33,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     return useValue ? value : void 0;
 };
 import { Identifier as TsIdentifier, Node } from "ts-morph";
-import { Result, ObjectTraits, AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./code-piece-types.js";
 import {} from "./ast-node-traits.js";
 import {} from "./value-level-interface.js";

@@ -33,7 +33,6 @@ Adapters are converting Astro and Page JSON into object nodes compatible with th
 Using REST or LinkTraits, you can look up for an object using `CSS Selectors`.
 
 # Roadmap
-* Add REST Api to walk in the page
 * Remove `PageLevel.walk` after installing REST operator.
 
 Components

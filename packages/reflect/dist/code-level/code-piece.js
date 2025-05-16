@@ -1,5 +1,6 @@
 import { Node } from "ts-morph";
-import { AraLink, ModuleLink, Result } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 export var CodePieceType;
 (function (CodePieceType) {
     CodePieceType["Variable"] = "variable";

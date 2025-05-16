@@ -3,7 +3,8 @@
  * AST (Abstract Syntax Tree)
  */
 import { Project, Node } from "ts-morph";
-import { Result, ModuleLink } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 import { ModuleMemory, ProjectMemory } from "../index.js";
 import { type CodePieceRecord, type TypedData } from "./code-piece.js";
 import { type ValueType } from "./code-piece-types.js";

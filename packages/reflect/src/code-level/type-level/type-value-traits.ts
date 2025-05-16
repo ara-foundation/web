@@ -12,7 +12,8 @@ import {
     TypeLiteralNode, 
     UnionTypeNode 
 } from "ts-morph";
-import { AraLink, Result, Debug } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result, Debug } from "@ara-web/p-hintjens";
 import {
     Identifier, 
     Literal, 

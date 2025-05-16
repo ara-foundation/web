@@ -1,5 +1,6 @@
-import { DOCUMENT_SELECTOR, type ElementOp, ObjectNode, type ObjectToNodeTree, OkResult } from "@ara-web/p-hintjens";
-import type { SlotElement, Slots } from "../index.js";
+import { OkResult } from "@ara-web/p-hintjens";
+import { DOCUMENT_SELECTOR, type ElementOp, ObjectNode, type ObjectToNodeTree } from "@ara-web/sds";
+import type { ModuleLink, SlotElement, Slots } from "../index.js";
 import type { ReflectLink } from "@ara-web/reflect/code-level";
 import type { ValueType } from "@ara-web/reflect/code-level";
 
@@ -33,6 +34,13 @@ const getSlotElementAttribute = (_element: SlotElement | undefined, attrName: st
 	if (_element === undefined) {
 		return undefined;
 	}
+	if (attrName === "componentClass") {
+		if ("componentClass" in _element) {
+			return _element.componentClass.moduleURL
+		} else {
+			return undefined;
+		}
+	}
 	if (attrName === "class") {
 		if (_element && "link" in _element) {
 			const classes = _element.link.getClass();
@@ -59,6 +67,15 @@ const getSlotElementAttribute = (_element: SlotElement | undefined, attrName: st
 const setSlotElementAttribute = <AttrType>(_element: SlotElement | undefined, attrName: string, attrValue: AttrType): OkResult => {
 	if (_element === undefined) {
 		return OkResult.ok();
+	}
+	if (attrName === "componentClass") {
+		if ("componentClass" in _element) {
+			const classComponent: ModuleLink = attrValue as ModuleLink;
+			_element.componentClass = classComponent;
+			return OkResult.ok();
+		} else {
+			return OkResult.fail(`The element doesn't have 'componentClass'`, `Can not set component class since element doesn't have it`);
+		}
 	}
 	if (attrName === "class") {
 		if (_element && "link" in _element) {

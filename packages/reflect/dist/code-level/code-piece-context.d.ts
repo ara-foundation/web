@@ -1,4 +1,5 @@
-import { Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import type { MemoryOperations } from "../index.js";
 import { CodePiece, type CodePieceRecord } from "./code-piece.js";
 /**

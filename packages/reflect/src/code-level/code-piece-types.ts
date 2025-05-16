@@ -1,4 +1,5 @@
-import { Result, AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import { TypeLevel } from "./type-level/index.js";
 import type { TypedData } from "./code-piece.js";
 

@@ -5,7 +5,7 @@
  * - Expressions
  */
 import { Node } from "ts-morph";
-import { AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
 import type { ValueType } from "./code-piece-types.js";
 
 export const ReflectProtocol = "reflect"

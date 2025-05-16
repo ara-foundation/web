@@ -4,7 +4,8 @@
  * Works with the ImportDeclaration from the ts-morph, that's why this module is inside the code-level.
  */
 import { ObjectBindingPattern, VariableDeclaration as TsVariableDeclaration, Node } from "ts-morph";
-import { Debug, Result, AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Debug, Result } from "@ara-web/p-hintjens";
 import { CodePiece, CodePieceType, ReflectLink, Identifier, TypeLevel, AstNodeTraits } from "../index.js";
 export class VariableDeclaration {
     _tsNode;

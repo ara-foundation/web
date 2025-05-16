@@ -5,8 +5,9 @@ import { ModuleCategory } from "../src/module.js";
 import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-ext/index.js";
 import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
-import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage } from "./shared.js";
-import { ModuleLink } from "@ara-web/p-hintjens";
+import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage, getSamplePackageWithSubModules } from "./shared.js";
+import { Debug } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
@@ -76,4 +77,22 @@ test('Setup auto import and make sure its automatically imported', async () => {
     builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);
     expect(builtIn.isSuccess).toBe(true);
     expect(builtIn.getValue()).toHaveLength(getCategorizedModuleAmount());
+});
+
+
+test('Post packages into the Nodejs Reflect Extension and getting submodule of the package', async () => {
+    const samplePackage = getSamplePackageWithSubModules();
+    Debug.log(`Sample package url: ${samplePackage.importModuleClause}`)
+
+    const reflect = new Reflect({packageLink: reflectingPkgUrl})
+    let builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);
+    expect(builtIn.isSuccess).toBe(true);
+    expect(builtIn.getValue()).toHaveLength(0);
+
+    // After adding the records
+    const posted = await reflect.nodeJsExt.putPackage(samplePackage);
+    expect(posted.isSuccess).toBe(true);
+
+    const foundPkg = reflect.nodeJsExt.getModule(ModuleLink.newPackageURLFromImportClause("@ara-web/p-hintjens"));
+    expect(foundPkg.isSuccess).toBe(true);
 });

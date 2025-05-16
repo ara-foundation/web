@@ -1,4 +1,4 @@
-import {} from "@ara-web/p-hintjens";
+import {} from "@ara-web/sds";
 /**
  * The `NodeAdapter` is an adapter for the DOM Node interface.
  * Interact with the DOM elements using CSS.

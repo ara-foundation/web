@@ -1,4 +1,5 @@
-import  { type Result, AraLink, ModuleLink } from "@ara-web/p-hintjens";
+import  { type Result } from "@ara-web/p-hintjens";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import { CodePiece, CodePieceType, type CodePieceRecord } from "../src/code-level/code-piece.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/code-piece-types.js";
@@ -103,11 +104,11 @@ export const getCategorizedModuleAmount = (): number => {
 }
 
 /**
- * Imports the packageurl-js as a file
+ * Imports
  * @returns 
  */
 export const getImportRecords = (): ImportedRecords => {
-  const imported = import.meta.glob("../node_modules/packageurl-js/**/*.js", {eager: true});
+  const imported = import.meta.glob("../node_modules/@ara-web/p-hintjens/**/*.js", {eager: true});
   
   categorizedModuleAmount = Object.keys(imported).length;
   return {
@@ -126,7 +127,15 @@ export const getSamplePackage = (): SingleRecord => {
 
   return {
     module: Object.values(imported)[0],
-    importMetaFilename: FilePath.getCurrentWorkingDir(),
     importModuleClause: 'packageurl-js'
+  }
+}
+
+export const getSamplePackageWithSubModules = (): SingleRecord => {
+  const imported = import.meta.glob("@ara-web/p-hintjens", {eager: true});
+
+  return {
+    module: Object.values(imported)[0],
+    importModuleClause: `@ara-web/p-hintjens`
   }
 }

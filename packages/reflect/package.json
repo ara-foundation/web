@@ -28,14 +28,14 @@
   },
   "dependencies": {
     "@ara-web/p-hintjens": "workspace:*",
-    "packageurl-js": "^2.0.1",
+    "@ara-web/sds": "workspace:*",
     "ts-morph": "^25.0.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.5",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "vite": "^5.2.11",
+    "@types/node": "^22.15.16",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "vite": "^6.3.3",
     "vitest": "2.1.6"
   }
 }

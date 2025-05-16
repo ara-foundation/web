@@ -7,7 +7,7 @@ import { expect, test } from "vitest";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { CodeLevel, Component, FileExtension, ModuleCategory, ModulePartitioner, Page, PageLevel, SlotElement } from "../src";
 import { ModuleMemory } from "@ara-web/reflect";
-import { LinkTraits, ObjectNodeInterface, ObjectNode, CSSObjectAdapter } from "@ara-web/p-hintjens";
+import { LinkTraits, ObjectNodeInterface, ObjectNode, CSSObjectAdapter } from "@ara-web/sds";
 import { pageToNodeTree } from "../src/page-level/page-css-object-tree";
 
 test(`Make sure the that object links are correct`, async () => {
@@ -171,28 +171,28 @@ test(`Make sure that object looking works and object linking components work`, a
         expect(query1 !== null).toBe(true)
 
         const query2 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout Welcome', pageObjectNodes,
-            {adapter: new CSSObjectAdapter()}
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query2 !== null).toBe(true)
 
         
         const query3 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout > Welcome', pageObjectNodes,
-            {adapter: new CSSObjectAdapter()}
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query3 !== null).toBe(true)
 
         const query4 = LinkTraits.getAll<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout li', pageObjectNodes,
-            {adapter: new CSSObjectAdapter()}
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query4).toHaveLength(4)
 
         const query5 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout li:first-child', pageObjectNodes,
-            {adapter: new CSSObjectAdapter()}
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query5 === query4[0]).toBe(true)
 
         const query6 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout > p > code', pageObjectNodes,
-            {adapter: new CSSObjectAdapter()}
+            {adapter: new CSSObjectAdapter<SlotElement>()}
         )
         expect(query6 !== null).toBe(true)
     }

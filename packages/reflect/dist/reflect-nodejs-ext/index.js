@@ -2,7 +2,8 @@ export var ModuleCategory;
 (function (ModuleCategory) {
     ModuleCategory["NodeJsModule"] = "node_modules";
 })(ModuleCategory || (ModuleCategory = {}));
-import { EnumTraits, OkResult, Result, ModuleLink, } from "@ara-web/p-hintjens";
+import { ModuleLink } from "@ara-web/sds";
+import { EnumTraits, OkResult, Result, Debug, } from "@ara-web/p-hintjens";
 import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
@@ -107,6 +108,8 @@ export class NodejsReflectExtension {
         return moduleMemories;
     }
     isModuleExist(moduleLink) {
+        Debug.log(`Modules:`);
+        Debug.log(Object.keys(this._moduleMemories));
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         if (this._moduleMemories[url] !== undefined) {
             return true;

@@ -1,7 +1,8 @@
 /**
  * Ara Web Level Reflection that deals with the web components in the modules and their attributes
  */
-import { Result, ObjectLink } from "@ara-web/p-hintjens";
+import { ObjectLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "@ara-web/reflect";
 import { type Component, type Expression, type ModuleParts, AstroNode, type Text, type Slots, type SlotElement } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";

@@ -1,5 +1,6 @@
 import { Node } from "ts-morph";
-import { AraLink, Result } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import { type TypedData, CodePiece, AstNodeContext, type ValueType, type CodePieceRecord } from "../index.js";
 import { type PossibleTypeValue } from "./type-value-traits.js";
 export declare class TypeLevel {

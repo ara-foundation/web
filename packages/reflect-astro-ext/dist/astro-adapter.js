@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AstroNode } from "./astro-node.js";
-import { DOCUMENT_SELECTOR, ObjectNode, OkResult } from "@ara-web/p-hintjens";
+import { OkResult } from "@ara-web/p-hintjens";
+import { DOCUMENT_SELECTOR, ObjectNode } from "@ara-web/sds";
 /**
      * For Pages, it returns empty string.
      */

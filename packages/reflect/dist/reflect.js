@@ -1,7 +1,7 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ProjectMemory } from "./project-memory.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import { SDSService } from "@ara-web/p-hintjens/sds";
+import { SDSService } from "@ara-web/sds";
 const setupWithNodeJsExt = (reflectSetup) => {
     if (reflectSetup.extensions === undefined) {
         reflectSetup.extensions = [new NodejsReflectExtension()];

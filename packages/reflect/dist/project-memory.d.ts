@@ -1,4 +1,5 @@
-import { Result, ModuleLink, type ModuleURL } from "@ara-web/p-hintjens";
+import { ModuleLink, type ModuleURL } from "@ara-web/sds";
+import { Result } from "@ara-web/p-hintjens";
 import { ModuleMemory } from "./module-memory.js";
 import type { MemoryOperations } from "./extension-interface.js";
 export type ModuleMemories<T> = {

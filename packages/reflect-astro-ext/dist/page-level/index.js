@@ -32,7 +32,8 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
     }
     return useValue ? value : void 0;
 };
-import { OkResult, Result, ObjectTraits, Debug, ObjectLink, Rest } from "@ara-web/p-hintjens";
+import { OkResult, Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
+import { ObjectLink, Rest } from "@ara-web/sds";
 import { FileExtension, ComponentLevel, CodeLevel, pageToNodeTree } from "../index.js";
 import { ProjectMemory } from "@ara-web/reflect";
 export { pageToNodeTree } from "./page-css-object-tree.js";
@@ -118,26 +119,6 @@ let PageLevel = (() => {
                 slots[slot].push(linted.getValue());
             }
             return Result.ok(slots);
-        };
-        // Pass the page.slots to walk and find a slot that matches the WalkFilter.
-        // TODO: change to use getPageAsObjectTree.
-        static walk = (slots, walkFilter) => {
-            for (const slotName in slots) {
-                const slotElements = slots[slotName];
-                for (const slotElementIndex in slotElements) {
-                    const slotElement = slotElements[slotElementIndex];
-                    if (walkFilter(slotElement)) {
-                        return slotElement;
-                    }
-                    else if ("slots" in slotElement) {
-                        const identified = PageLevel.walk(slotElement.slots, walkFilter);
-                        if (identified !== undefined) {
-                            return identified;
-                        }
-                    }
-                }
-            }
-            return undefined;
         };
         static rest = (page) => {
             const rest = new Rest({ slots: page.slots }, pageToNodeTree);

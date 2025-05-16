@@ -5,7 +5,7 @@
  * - Expressions
  */
 import { Node } from "ts-morph";
-import { AraLink } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
 export const ReflectProtocol = "reflect";
 export const IdentifierSlugs = ["id"];
 export const TsNodeSlugs = ["tsnode"];

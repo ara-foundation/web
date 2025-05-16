@@ -3,7 +3,8 @@
  */
 import { expect, test } from "vitest";
 import { ReflectLink } from "../src/code-level/reflect-link"
-import { AraLink, Debug } from "@ara-web/p-hintjens";
+import { Debug } from "@ara-web/p-hintjens";
+import { AraLink } from "@ara-web/sds";
 
 test('Link to identifier and expression', async () => {
     const id = "varName";

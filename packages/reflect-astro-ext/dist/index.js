@@ -1,11 +1,11 @@
 export { ModuleCategory, ModulePartitioner, extractModuleCategory, ModuleIdentifier } from "./module.js";
-export { FileExtension, DEFAULT_SLOT, ElementType } from "./ontology/index.js";
+export { FileExtension, DEFAULT_SLOT, ElementType, } from "./ontology/index.js";
 export { AstroNode } from "./astro-node.js";
 export { astroToNodeTree, astroElementOps } from "./astro-adapter.js";
 export { NodeAdapter } from "./node-adapter.js";
 export { CodeLevel } from "./code-level/index.js";
 export { PageLevel, pageToNodeTree } from "./page-level/index.js";
 export { ComponentLevel } from "./component-level/index.js";
-export { ModuleLink } from "@ara-web/p-hintjens";
+export { ModuleLink } from "@ara-web/sds";
 export { ReflectAstroExtension } from "./astro-framework-ext.js";
 export { AstroBuiltInIdentifiers } from "./astro-builtin-identifiers.js";

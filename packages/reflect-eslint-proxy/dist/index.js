@@ -1,4 +1,4 @@
-import { SDSProxy } from "@ara-web/p-hintjens/sds";
+import { SDSProxy } from "@ara-web/sds";
 import { FilePath, ModuleLink } from "@ara-web/reflect";
 import { getRule as getSdsModuleImportsRule } from "./rules/sds-module-imports.js";
 const name = "reflect-eslint-proxy";

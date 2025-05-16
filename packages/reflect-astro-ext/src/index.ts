@@ -15,7 +15,6 @@ export {
     type OntologoicalIdentifier,
     type Attributes,
     type SlotElement,
-    type WalkFilter
 } from "./ontology/index.js"
 export {
     AstroNode
@@ -36,7 +35,7 @@ export {
     ComponentLevel
 } from "./component-level/index.js"
 
-export { ModuleLink } from "@ara-web/p-hintjens";
+export { ModuleLink } from "@ara-web/sds";
 
 export { ReflectAstroExtension, type AstroExtensionInterface } from "./astro-framework-ext.js"
 
