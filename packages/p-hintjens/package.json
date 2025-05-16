@@ -1,9 +1,14 @@
 {
   "name": "@ara-web/p-hintjens",
+  "version": "0.1.0",
   "type": "module",
-  "author": "Medet Ahmetson",
-  "license": "ISC",
-  "description": "A package named in Pieter Hintjens honor. Another name that indicates its purpose is `Typescript enhancement`.",
+  "author": "Ara Foundation",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MPL-2.0",
+  "description": "A package with Typescript object traits, Debug, Result",
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",
@@ -11,25 +16,27 @@
     "_chore": "pnpm i",
     "test": "vitest -r ./"
   },
+  "keywords": [
+    "library",
+    "ara"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ara-foundation/web.git",
+    "directory": "packages/p-hintjens"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
-    },
-    "./sds": {
-      "types": "./src/sds/index.ts",
-      "default": "./dist/sds/index.js"
     }
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.7",
-    "jsdom": "^26.1.0",
-    "typescript": "~5.7.3",
+    "@changesets/cli": "^2.27.10",
+    "typescript": "^5.8.3",
     "vitest": "2.1.6"
   },
   "dependencies": {
-    "@types/node": "^20.10.5",
-    "css-select": "workspace:*",
-    "packageurl-js": "^2.0.1"
+    "@types/node": "^22.15.16"
   }
 }
