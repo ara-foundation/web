@@ -1,8 +1,8 @@
 import { ModuleLink } from "@ara-web/sds";
 import { Debug } from "@ara-web/p-hintjens";
-import { AstIdentifierMemory } from "./ast-nodes-memory.js";
+import { CodePieceMemory } from "./code-piece-memory.js";
 
-export class ModuleMemory<T> extends AstIdentifierMemory {
+export class ModuleMemory<T> extends CodePieceMemory {
     private _moduleLink: ModuleLink;
     private _glob: unknown;
     private _content?: T;

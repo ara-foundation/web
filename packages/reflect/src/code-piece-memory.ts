@@ -1,4 +1,4 @@
-import { AraLink } from "@ara-web/sds";
+import { AraLink, Rest } from "@ara-web/sds";
 import { Debug } from "@ara-web/p-hintjens";
 import { 
     CodePieceType, 
@@ -7,7 +7,7 @@ import {
     type CodePieceFilter 
 } from "./code-level/index.js";
 
-export abstract class AstIdentifierMemory {
+export abstract class CodePieceMemory {
     private _identifiers: CodePieceRecord = {};
 
     constructor() {
