@@ -13,7 +13,7 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.27.10
+        specifier: ^2.28.1
         version: 2.28.1
       prettier-plugin-svelte:
         specifier: ^3.2.7
@@ -24,118 +24,6 @@ importers:
       turbo:
         specifier: latest
         version: 2.5.3
-      typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
-
-  apps/astroplate:
-    dependencies:
-      '@astrojs/check':
-        specifier: 0.9.4
-        version: 0.9.4(prettier-plugin-astro@0.14.1)(prettier@3.5.3)(typescript@5.8.3)
-      '@astrojs/mdx':
-        specifier: 4.2.5
-        version: 4.2.5(astro@5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0))
-      '@astrojs/react':
-        specifier: 4.2.5
-        version: 4.2.5(@types/node@22.15.17)(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(jiti@2.4.2)(lightningcss@1.29.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(terser@5.37.0)(yaml@2.7.0)
-      '@astrojs/rss':
-        specifier: 4.0.11
-        version: 4.0.11
-      '@astrojs/sitemap':
-        specifier: 3.3.1
-        version: 3.3.1
-      '@digi4care/astro-google-tagmanager':
-        specifier: ^1.4.0
-        version: 1.6.0(astro@5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0))
-      '@justinribeiro/lite-youtube':
-        specifier: ^1.8.0
-        version: 1.8.1
-      astro:
-        specifier: ^5.7.10
-        version: 5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0)
-      astro-auto-import:
-        specifier: ^0.4.4
-        version: 0.4.4(astro@5.7.10(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(rollup@4.35.0)(terser@5.37.0)(typescript@5.8.3)(yaml@2.7.0))
-      astro-font:
-        specifier: ^1.1.0
-        version: 1.1.0
-      date-fns:
-        specifier: ^4.1.0
-        version: 4.1.0
-      disqus-react:
-        specifier: ^1.1.6
-        version: 1.1.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      github-slugger:
-        specifier: ^2.0.0
-        version: 2.0.0
-      gray-matter:
-        specifier: ^4.0.3
-        version: 4.0.3
-      marked:
-        specifier: ^15.0.11
-        version: 15.0.11
-      prop-types:
-        specifier: ^15.8.1
-        version: 15.8.1
-      react:
-        specifier: ^19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: ^19.1.0
-        version: 19.1.0(react@19.1.0)
-      react-icons:
-        specifier: ^5.5.0
-        version: 5.5.0(react@19.1.0)
-      remark-collapse:
-        specifier: ^0.1.2
-        version: 0.1.2
-      remark-toc:
-        specifier: ^9.0.0
-        version: 9.0.0
-      swiper:
-        specifier: ^11.2.6
-        version: 11.2.6
-      vite:
-        specifier: ^6.3.3
-        version: 6.3.4(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
-    devDependencies:
-      '@tailwindcss/forms':
-        specifier: ^0.5.10
-        version: 0.5.10(tailwindcss@4.1.6)
-      '@tailwindcss/typography':
-        specifier: ^0.5.16
-        version: 0.5.16(tailwindcss@4.1.6)
-      '@tailwindcss/vite':
-        specifier: ^4.1.4
-        version: 4.1.6(vite@6.3.4(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0))
-      '@types/node':
-        specifier: ^22.15.16
-        version: 22.15.17
-      '@types/react':
-        specifier: 19.1.2
-        version: 19.1.2
-      '@types/react-dom':
-        specifier: 19.1.2
-        version: 19.1.2(@types/react@19.1.2)
-      eslint:
-        specifier: ^9.25.1
-        version: 9.25.1(jiti@2.4.2)
-      prettier:
-        specifier: ^3.5.3
-        version: 3.5.3
-      prettier-plugin-astro:
-        specifier: ^0.14.1
-        version: 0.14.1
-      prettier-plugin-tailwindcss:
-        specifier: ^0.6.11
-        version: 0.6.11(prettier-plugin-astro@0.14.1)(prettier-plugin-organize-imports@3.2.4(prettier@3.5.3)(typescript@5.8.3))(prettier-plugin-svelte@3.3.3(prettier@3.5.3)(svelte@5.23.0))(prettier@3.5.3)
-      sharp:
-        specifier: 0.33.5
-        version: 0.33.5
-      tailwindcss:
-        specifier: ^4.1.4
-        version: 4.1.6
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -583,19 +471,10 @@ importers:
       '@types/node':
         specifier: ^22.15.16
         version: 22.15.17
-      css-select:
-        specifier: workspace:*
-        version: link:../css-select
-      packageurl-js:
-        specifier: ^2.0.1
-        version: 2.0.1
     devDependencies:
-      '@types/jsdom':
-        specifier: ^21.1.7
-        version: 21.1.7
-      jsdom:
-        specifier: ^26.1.0
-        version: 26.1.0
+      '@changesets/cli':
+        specifier: ^2.27.10
+        version: 2.28.1
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -608,9 +487,9 @@ importers:
       '@ara-web/p-hintjens':
         specifier: workspace:*
         version: link:../p-hintjens
-      packageurl-js:
-        specifier: ^2.0.1
-        version: 2.0.1
+      '@ara-web/sds':
+        specifier: workspace:*
+        version: link:../sds
       ts-morph:
         specifier: ^25.0.1
         version: 25.0.1
@@ -639,6 +518,9 @@ importers:
       '@ara-web/reflect':
         specifier: workspace:*
         version: link:../reflect
+      '@ara-web/sds':
+        specifier: workspace:*
+        version: link:../sds
       '@astrojs/check':
         specifier: 0.9.4
         version: 0.9.4(prettier-plugin-astro@0.14.1)(prettier@3.5.3)(typescript@5.8.3)
@@ -683,8 +565,8 @@ importers:
         specifier: 19.1.2
         version: 19.1.2
       css-select:
-        specifier: workspace:*
-        version: link:../css-select
+        specifier: ^5.1.0
+        version: 5.1.0
       css-what:
         specifier: ^6.1.0
         version: 6.1.0
@@ -743,6 +625,9 @@ importers:
       '@ara-web/reflect':
         specifier: workspace:*
         version: link:../reflect
+      '@ara-web/sds':
+        specifier: workspace:*
+        version: link:../sds
       '@typescript-eslint/parser':
         specifier: ^8.31.1
         version: 8.31.1(eslint@9.25.1(jiti@2.4.2))(typescript@5.8.3)
@@ -840,6 +725,31 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  packages/sds:
+    dependencies:
+      '@ara-web/p-hintjens':
+        specifier: '*'
+        version: 0.0.1
+      '@types/node':
+        specifier: ^22.15.16
+        version: 22.15.17
+      css-select:
+        specifier: ^5.1.0
+        version: 5.1.0
+      css-what:
+        specifier: ^6.1.0
+        version: 6.1.0
+      packageurl-js:
+        specifier: ^2.0.1
+        version: 2.0.1
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.8.3
+      vitest:
+        specifier: 2.1.6
+        version: 2.1.6(@types/node@22.15.17)(jiti@2.4.2)(jsdom@26.1.0)(lightningcss@1.29.2)(terser@5.37.0)(yaml@2.7.0)
+
   packages/ui:
     dependencies:
       '@metamask/jazzicon':
@@ -936,6 +846,9 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@ara-web/p-hintjens@0.0.1':
+    resolution: {integrity: sha512-pnVVr8+tv0USvzcD/yRACh52cf9HYvkfkjsyXgJpZS1VusBNeyoFhPtu4b3rS5TYA2PQJnOphj+JHarEwJ4foQ==}
 
   '@ark/schema@0.44.4':
     resolution: {integrity: sha512-TsZTX+k5J7xsGABsFjVdRUNgViGDMLv73sikBM8JNxC4STe0suTuMNa1OJ/AFP2N+LpJ1zL9tdWlg28PRqAYhg==}
@@ -2784,9 +2697,6 @@ packages:
   '@types/js-cookie@3.0.6':
     resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
 
-  '@types/jsdom@21.1.7':
-    resolution: {integrity: sha512-yOriVnggzrnQ3a9OKOCxaVuSug3w3/SbOj5i7VwXWZEyUNl3bLF9V3MfxGbZKuwqJOQyRfqXyROBB1CoZLFWzA==}
-
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -2863,9 +2773,6 @@ packages:
 
   '@types/secp256k1@4.0.6':
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
-
-  '@types/tough-cookie@4.0.5':
-    resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
   '@types/ungap__structured-clone@1.2.0':
     resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
@@ -7625,6 +7532,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
 
+  '@ara-web/p-hintjens@0.0.1':
+    dependencies:
+      '@types/node': 22.15.17
+      css-select: 5.1.0
+      packageurl-js: 2.0.1
+
   '@ark/schema@0.44.4':
     dependencies:
       '@ark/util': 0.44.4
@@ -9792,12 +9705,6 @@ snapshots:
 
   '@types/js-cookie@3.0.6': {}
 
-  '@types/jsdom@21.1.7':
-    dependencies:
-      '@types/node': 22.15.17
-      '@types/tough-cookie': 4.0.5
-      parse5: 7.2.1
-
   '@types/json-schema@7.0.15': {}
 
   '@types/lodash-es@4.17.12':
@@ -9871,8 +9778,6 @@ snapshots:
   '@types/secp256k1@4.0.6':
     dependencies:
       '@types/node': 22.15.17
-
-  '@types/tough-cookie@4.0.5': {}
 
   '@types/ungap__structured-clone@1.2.0': {}
 
