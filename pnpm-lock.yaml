@@ -728,8 +728,8 @@ importers:
   packages/sds:
     dependencies:
       '@ara-web/p-hintjens':
-        specifier: '*'
-        version: 0.0.1
+        specifier: workspace:*
+        version: link:../p-hintjens
       '@types/node':
         specifier: ^22.15.16
         version: 22.15.17
@@ -846,9 +846,6 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
-
-  '@ara-web/p-hintjens@0.0.1':
-    resolution: {integrity: sha512-pnVVr8+tv0USvzcD/yRACh52cf9HYvkfkjsyXgJpZS1VusBNeyoFhPtu4b3rS5TYA2PQJnOphj+JHarEwJ4foQ==}
 
   '@ark/schema@0.44.4':
     resolution: {integrity: sha512-TsZTX+k5J7xsGABsFjVdRUNgViGDMLv73sikBM8JNxC4STe0suTuMNa1OJ/AFP2N+LpJ1zL9tdWlg28PRqAYhg==}
@@ -7531,12 +7528,6 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.8
       '@jridgewell/trace-mapping': 0.3.25
-
-  '@ara-web/p-hintjens@0.0.1':
-    dependencies:
-      '@types/node': 22.15.17
-      css-select: 5.1.0
-      packageurl-js: 2.0.1
 
   '@ark/schema@0.44.4':
     dependencies:
