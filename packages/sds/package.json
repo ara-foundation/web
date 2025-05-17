@@ -1,6 +1,6 @@
 {
   "name": "@ara-web/sds",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "author": "Medet Ahmetson",
   "publishConfig": {
@@ -37,7 +37,7 @@
     "vitest": "2.1.6"
   },
   "dependencies": {
-    "@ara-web/p-hintjens": "*",
+    "@ara-web/p-hintjens": "workspace:*",
     "@types/node": "^22.15.16",
     "css-select": "^5.1.0",
     "css-what": "^6.1.0",

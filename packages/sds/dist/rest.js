@@ -1,7 +1,7 @@
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
 import { SDSService } from "./sds.js";
 import { OkResult } from "@ara-web/p-hintjens";
-import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
+import { CSSObjectAdapter, DOCUMENT_SELECTOR, LinkTraits, ObjectNode } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
@@ -9,10 +9,12 @@ import { ModuleLink } from "./links/index.js";
 export class Rest extends SDSService {
     _options;
     _nodes = [];
+    _objectToNodeTree;
     constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("", "name") }) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete"]);
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone"]);
         this._options = { adapter: new CSSObjectAdapter() };
         this._nodes = [objectToTreeNode(object, true)];
+        this._objectToNodeTree = objectToTreeNode;
     }
     /**
      * Retreive a resource node.
@@ -139,5 +141,11 @@ export class Rest extends SDSService {
             el.parent.setChildren(remainingChildren);
         }
         return OkResult.ok();
+    }
+    clone(attrSelector) {
+        const clone = new Rest(this._nodes[0].getElement(), this._objectToNodeTree);
+        clone._nodes = [...this._nodes];
+        clone.delete(attrSelector);
+        return clone;
     }
 }

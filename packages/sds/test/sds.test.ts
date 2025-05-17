@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { ModuleLink } from "../src"
 import { SDSExtensionInterface, SDSProxy, SDSService, type SDSSetup } from "../src/sds";
+import { Debug } from "@ara-web/p-hintjens";
 
 const serviceText = "Hello from the service";
 const proxyText = "Hello from the proxy";

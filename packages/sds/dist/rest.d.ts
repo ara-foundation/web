@@ -9,6 +9,7 @@ export interface RestExtensionInterface extends SDSExtensionInterface {
 export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface> {
     private _options;
     private _nodes;
+    private _objectToNodeTree;
     constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface>);
     /**
      * Retreive a resource node.
@@ -46,4 +47,5 @@ export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, Res
      * @param selector
      */
     delete?(selector: string): OkResult;
+    clone?(attrSelector: string): Rest<ElementType>;
 }

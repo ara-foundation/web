@@ -8,6 +8,12 @@ In essence, SDS is intended for apps where you expect third parties or even for 
 
 Check out the [Reflect](https://github.com/ara-foundation/web/tree/main/packages/reflect/README.md) for real-world implementation.
 
+Additionally, SDS includes:
+- 📝 **Ara Link** adds various types of links between objects.
+    * Ara Link &ndash; A generic Link that could link to any resource, not only text value.
+    * Module Link &ndash; either a file url or a Purl. Used to create module IDs.
+
+
 ### SDS Architecture
 Modules such as scripting files has three rules. A module can:
 * Import it's siblings in the same directory.

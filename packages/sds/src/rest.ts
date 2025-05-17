@@ -8,16 +8,10 @@ import { OkResult } from "@ara-web/p-hintjens";
 import { CSSObjectAdapter, LinkTraits, ObjectNode, type ObjectNodeInterface, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 
-export interface RestExtensionInterface extends SDSExtensionInterface {
-    // What to pass to the backend.
-    // The Astro-Extension's Page for example and page's Post, put, patch, and delete(ObjectLink)
-    // We call it setters.
-
-    //
-    //
-    //
-    
-}
+// What to pass to the backend.
+// The Astro-Extension's Page for example and page's Post, put, patch, and delete(ObjectLink)
+// We call it setters.
+export interface RestExtensionInterface extends SDSExtensionInterface {}
 
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
@@ -29,15 +23,17 @@ export class Rest<ElementType> extends SDSService<
     
     private _options: {adapter: CSSObjectAdapter<ElementType>};
     private _nodes: ObjectNode<ElementType>[] = [];
+    private _objectToNodeTree: ObjectToNodeTree<ElementType>;
 
     constructor(
         object: ElementType,
         objectToTreeNode: ObjectToNodeTree<ElementType>,
         setup: SDSSetup<RestExtensionInterface> = {packageLink: ModuleLink.newPackageURL("", "name")}
     ) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete"]);
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone"]);
         this._options = {adapter: new CSSObjectAdapter()};
         this._nodes = [objectToTreeNode(object, true)];
+        this._objectToNodeTree = objectToTreeNode;
     }
 
     /**
@@ -170,5 +166,12 @@ export class Rest<ElementType> extends SDSService<
             el.parent.setChildren(remainingChildren);
         }
         return OkResult.ok();
+    }
+
+    public clone?(attrSelector: string): Rest<ElementType> {
+        const clone = new Rest<ElementType>(this._nodes[0].getElement()!, this._objectToNodeTree);
+        clone._nodes = [...this._nodes];
+        clone.delete!(attrSelector);
+        return clone;
     }
 }
