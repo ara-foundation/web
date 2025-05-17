@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AstroNode } from "./astro-node.js";
 import { OkResult } from "@ara-web/p-hintjens";
 import { DOCUMENT_SELECTOR, ObjectNode } from "@ara-web/sds";
@@ -58,7 +57,7 @@ export const astroElementOps = {
     getName: getAstroElementName,
     setAttribute: setAstroElementAttribute,
 };
-export const astroToNodeTree = (node, root = true) => {
+export const astroToNodeTree = (node, _parent, root = true) => {
     if (root === false) {
         return new ObjectNode(astroElementOps, node);
     }

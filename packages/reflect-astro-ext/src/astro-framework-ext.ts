@@ -543,8 +543,7 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
                     if (failedPostResult.isFailure) {
                         return;
                     }
-                    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                    const posted = moduleMemory.rest.post!('*', posting);
+                    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
                     if (posted.isFailure) {
                         failedPostResult = posted;
                     }

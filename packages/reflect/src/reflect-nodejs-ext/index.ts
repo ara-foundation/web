@@ -19,7 +19,8 @@ import {
     FilePath,
     type SingleRecord,
     codePieceOps,
-    CodePiece
+    CodePiece,
+    MODULE_SELECTOR
  } from "../index.js";
 
 /**
@@ -238,11 +239,10 @@ export class NodejsReflectExtension implements ExtensionInterface {
         ).forEach(
             (module) => 
             {
-                const parent = module.rest.get!('#document')!;
+                const parent = module.rest.get!('*')!;
                 identifiers.getValue().forEach(
                     (codePiece) => {
-                        const codePieceNode = new ObjectNode<CodePiece>(codePieceOps, codePiece, parent);
-                        module.rest.post!('#document >', codePieceNode)
+                        module.rest.post!(MODULE_SELECTOR, codePiece, {parent})
                     }
                 )
             }

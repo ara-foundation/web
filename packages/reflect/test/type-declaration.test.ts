@@ -37,7 +37,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
     const parent = moduleMemory.rest.get!('*')!
     types.getValue().forEach((importedCodePiece) => {
       const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-      const posted = moduleMemory.rest.post!('*', posting);
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
       expect(posted.isSuccess).toBe(true);
     });
     const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
@@ -85,7 +85,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    const posted = moduleMemory.rest.post!('*', posting)
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent})
     expect(posted.isSuccess).toBe(true);
   });  
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
@@ -136,7 +136,7 @@ test('Support the custom data as part of union such as false, number, float', as
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    moduleMemory.rest.post!('*', posting)
+    moduleMemory.rest.post!('*', importedCodePiece, {parent})
   });
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
@@ -186,7 +186,7 @@ test('Support the literals in the union types', async () => {
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    moduleMemory.rest.post!('*', posting)
+    moduleMemory.rest.post!('*', importedCodePiece, {parent})
   });
   
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
@@ -410,11 +410,11 @@ test('Support the generic types with the nested generic types and union types', 
   const parent = moduleMemory.rest.get!('*')!
   builtInIdentifiers.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    moduleMemory.rest.post!('*', posting)
+    moduleMemory.rest.post!('*', importedCodePiece, {parent})
   });
   types.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    moduleMemory.rest.post!('*', posting)
+    moduleMemory.rest.post!('*', importedCodePiece, {parent})
   });
 
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
@@ -556,7 +556,7 @@ test('Support the type that has another type in the reference defined later than
 
   types.getValue().forEach((importedCodePiece) => {
     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-    moduleMemory.rest.post!('*', posting)
+    moduleMemory.rest.post!('*', importedCodePiece, {parent})
   });
 
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)

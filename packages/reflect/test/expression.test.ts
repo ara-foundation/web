@@ -35,6 +35,5 @@ test('Supports the object literal', async () => {
   let calculated = calculationResult.getValue();
   expect(calculated.dataType).toEqual(ValueTypeString.object);
   expect(calculated.data).toEqual({ slug: 4 });
-
 });
 

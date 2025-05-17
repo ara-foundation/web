@@ -1,6 +1,11 @@
 import { type SDSExtensionInterface, SDSService, type SDSSetup } from "./sds.js";
 import { OkResult } from "@ara-web/p-hintjens";
 import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
+export interface RestOptions<ElementType> {
+    lilBro?: boolean;
+    parent?: ObjectNode<ElementType>;
+    root?: boolean;
+}
 export interface RestExtensionInterface extends SDSExtensionInterface {
 }
 /**
@@ -17,6 +22,7 @@ export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, Res
      */
     get?(selector: string): ObjectNode<ElementType> | null;
     getAll?(selector: string): ObjectNode<ElementType>[];
+    post?(selector: string, data: ElementType, options: RestOptions<ElementType>): OkResult;
     /**
      * Create a new resource. By default the
      * resource is created at the selector.
@@ -26,9 +32,7 @@ export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, Res
      * @param selector
      * @param data
      */
-    post?(selector: string, data: ObjectNode<ElementType>, options?: {
-        lilBro: boolean;
-    }): OkResult;
+    private _post;
     /**
      * Update a resource. The selector can not be #document. Which means it must have a parent.
      * @param selector

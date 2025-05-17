@@ -25,8 +25,7 @@ test(`Make sure the that code is importing`, async () => {
     for (let moduleMemory of moduleMemories) {
         const parent = moduleMemory.rest.get!('*')!
         astroBuiltInIdentifiers.getValue().forEach((importedCodePiece) => {            
-            const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-            const posted = moduleMemory.rest.post!('*', posting);
+            const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
             expect(posted.isSuccess).toBe(true);
         });
         const moduleParts = await ModulePartitioner.partition(moduleMemory);

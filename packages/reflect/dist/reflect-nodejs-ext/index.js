@@ -4,7 +4,7 @@ export var ModuleCategory;
 })(ModuleCategory || (ModuleCategory = {}));
 import { ModuleLink, ObjectNode } from "@ara-web/sds";
 import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
-import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath, codePieceOps, CodePiece } from "../index.js";
+import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath, codePieceOps, CodePiece, MODULE_SELECTOR } from "../index.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
  */
@@ -177,10 +177,9 @@ export class NodejsReflectExtension {
         projectMemory
             .getModules()
             .filter((module) => module.moduleCategory !== ModuleCategory.NodeJsModule).forEach((module) => {
-            const parent = module.rest.get('#document');
+            const parent = module.rest.get('*');
             identifiers.getValue().forEach((codePiece) => {
-                const codePieceNode = new ObjectNode(codePieceOps, codePiece, parent);
-                module.rest.post('#document >', codePieceNode);
+                module.rest.post(MODULE_SELECTOR, codePiece, { parent });
             });
         });
         return Result.ok(projectMemory);

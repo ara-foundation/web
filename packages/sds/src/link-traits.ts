@@ -2,7 +2,7 @@ import * as CSSWhat from "css-what";
 import { Debug, OkResult, ObjectTraits } from "@ara-web/p-hintjens";
 import {type Options as CSSOptions, selectAll as cssGetAll, selectOne as cssGet, is as isCssObjectMatchQuery, compile as cssCompile } from "css-select";
 
-export type ObjectToNodeTree<T>=(obj: T, root: boolean) => ObjectNode<T>;
+export type ObjectToNodeTree<T> = (obj: T, parent?: ObjectNode<T>, root?: boolean) => ObjectNode<T>;
 
 /** 
  * The object is a name for a part of a file, a web page, a spread sheet, or any form of data content.

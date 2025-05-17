@@ -127,7 +127,7 @@ export class AstroBuiltInIdentifiers {
         if (astNode.isFailure) {
             return Result.fail(`getVariableAstNode('${this.prefix + this.identifiers[0]}', varStatements: '${varStatements.length} statements'): ${astNode.errorTitle}`, astNode.errorDescription);
         }
-        astNode.getValue().identifier = new URL(this.identifiers[0], 'http://localhost').toString();
+        astNode.getValue().identifier = this.identifiers[0];
         astNode.getValue().nodeType = CodePieceType.Variable;
         astNode.getValue().data = data;
         astNode.getValue().public = true;

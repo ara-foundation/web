@@ -40,8 +40,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = moduleMemory.rest.post!('*', posting);
+                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -65,8 +64,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = moduleMemory.rest.post!('*', posting);
+                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -107,8 +105,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = moduleMemory.rest.post!('*', posting);
+                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -185,8 +182,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = memory.rest.post!('*', posting);
+                const posted = memory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -216,8 +212,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = memory.rest.post!('*', posting);
+                const posted = memory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -250,8 +245,7 @@ export class CodeLevel {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-                const posted = memory.rest.post!('*', posting);
+                const posted = memory.rest.post!('*', importedCodePiece, {parent});
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }

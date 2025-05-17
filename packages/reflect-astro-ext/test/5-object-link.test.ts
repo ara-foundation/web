@@ -68,7 +68,7 @@ test(`Simply testing css-select with astro adapter`, async() => {
     const options = {adapter};
     const astroObject = await getAstroNode(html)
 
-    let child = cssSelect("main > div", [astroToNodeTree(astroObject!, true)], options);
+    let child = cssSelect("main > div", [astroToNodeTree(astroObject!, undefined, true)], options);
     expect(child).toHaveLength(2);
 })
 
@@ -88,31 +88,29 @@ test(`Simply testing css-select with REST`, async() => {
     expect(lastChild?.children).toHaveLength(0);
 
     // Posting
+    const parent = rest.get!("main > div:last-of-type")!
     const bananaAstNode = (await getAstroNode(element))!.children[0];
-    const bananaObject = astroToNodeTree(bananaAstNode, false);
     // First simply putting as the element in the main > div last of type
-    const posted = rest.post!("main > div:last-of-type", bananaObject);
+    const posted = rest.post!("main > div:last-of-type", bananaAstNode, {parent});
     expect(posted.isSuccess).toBe(true);
+    
     const foundBanana = rest.get!("main > div:last-of-type > div.banana");
     expect(foundBanana !== null).toBe(true);
-    expect(bananaObject == foundBanana).toBe(true);
     const childrenAfterUpdate = rest.getAll!("main > div");
     expect(childrenAfterUpdate).toHaveLength(2)
     
     // Posting as the sibling
     const bananaSiblingAstNode = (await getAstroNode(element))!.children[0];
-    const bananaSiblingObject = astroToNodeTree(bananaSiblingAstNode, false);
-    const lilBroPosted = rest.post!("main > div:last-of-type", bananaSiblingObject, {lilBro: true})
+    const lilBroPosted = rest.post!("main > div:last-of-type", bananaSiblingAstNode, {lilBro: true})
     expect(lilBroPosted.isSuccess).toBe(true);
 
     const childrenIncludingBanana = rest.getAll!("main > div");
     expect(childrenIncludingBanana).toHaveLength(3)
     expect(childrenIncludingBanana[0] === child).toBe(true);
     expect(childrenIncludingBanana[1] === lastChild).toBe(true);
-    expect(childrenIncludingBanana[2] === bananaSiblingObject).toBe(true);
 
     const bananaSibling = rest.get!("main > div:last-of-type");
-    expect(bananaSibling === bananaSiblingObject).toBe(true);
+    expect(bananaSibling !== null).toBe(true);
 
     // Put
     const spanElement = rest.get!('main > span');

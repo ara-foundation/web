@@ -67,7 +67,7 @@ export const astroElementOps: ElementOp<AstroNode> = {
 	setAttribute: setAstroElementAttribute,
 }
 
-export const astroToNodeTree: ObjectToNodeTree<AstroNode> = (node: AstroNode, root: boolean = true): ObjectNode<AstroNode> => {
+export const astroToNodeTree: ObjectToNodeTree<AstroNode> = (node: AstroNode, _parent?: ObjectNode<AstroNode>, root: boolean = true): ObjectNode<AstroNode> => {
 	if (root === false) {
 		return new ObjectNode<AstroNode>(astroElementOps, node);
 	}

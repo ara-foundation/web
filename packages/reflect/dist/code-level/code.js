@@ -323,7 +323,7 @@ export class Code {
         if (optionalIdentifiers !== undefined) {
             const parent = tempMemory.rest.get('*');
             optionalIdentifiers.forEach((codePiece) => {
-                tempMemory.rest.post('*', new ObjectNode(codePieceOps, codePiece, parent));
+                tempMemory.rest.post('*', codePiece, { parent });
             });
         }
         const tempVarName = "__temp_var_";
@@ -335,7 +335,7 @@ export class Code {
         else {
             const parent = tempMemory.rest.get('*');
             vars.getValue().forEach((codePiece) => {
-                tempMemory.rest.post('*', new ObjectNode(codePieceOps, codePiece, parent));
+                tempMemory.rest.post('*', codePiece, { parent });
             });
             const tempVarValue = vars.getValue().find((codePiece) => codePiece.identifier === tempVarName);
             if (tempVarValue === undefined) {

@@ -436,7 +436,7 @@ export class Code {
             const parent = tempMemory.rest.get!('*')!;
             optionalIdentifiers.forEach(
                 (codePiece) => {
-                    tempMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, codePiece, parent))
+                    tempMemory.rest.post!('*', codePiece, {parent})
                 }
             )
         }
@@ -453,7 +453,7 @@ export class Code {
             const parent = tempMemory.rest.get!('*')!;
             vars.getValue().forEach(
                 (codePiece) => {
-                    tempMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, codePiece, parent))
+                    tempMemory.rest.post!('*', codePiece, {parent})
                 }
             )
 

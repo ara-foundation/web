@@ -8,6 +8,12 @@ import { OkResult } from "@ara-web/p-hintjens";
 import { CSSObjectAdapter, LinkTraits, ObjectNode, type ObjectNodeInterface, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 
+export interface RestOptions<ElementType> {
+    lilBro?: boolean;
+    parent?: ObjectNode<ElementType>;
+    root?: boolean;
+}
+
 // What to pass to the backend.
 // The Astro-Extension's Page for example and page's Post, put, patch, and delete(ObjectLink)
 // We call it setters.
@@ -30,9 +36,9 @@ export class Rest<ElementType> extends SDSService<
         objectToTreeNode: ObjectToNodeTree<ElementType>,
         setup: SDSSetup<RestExtensionInterface> = {packageLink: ModuleLink.newPackageURL("", "name")}
     ) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone"]);
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "postByElement"]);
         this._options = {adapter: new CSSObjectAdapter()};
-        this._nodes = [objectToTreeNode(object, true)];
+        this._nodes = [objectToTreeNode(object, undefined, true)];
         this._objectToNodeTree = objectToTreeNode;
     }
 
@@ -48,6 +54,18 @@ export class Rest<ElementType> extends SDSService<
         return cssSelectAll(selector, this._nodes, this._options);
     }
 
+    public post?(selector: string, data: ElementType, options: RestOptions<ElementType>): OkResult {
+        let treeNode: ObjectNode<ElementType>;
+        if (options.root) {
+            treeNode = this._objectToNodeTree(data, undefined, true);
+        } else if (options.parent) {
+            treeNode = this._objectToNodeTree(data, options.parent, false);
+        } else {
+            treeNode = this._objectToNodeTree(data, undefined, false);
+        }
+        return this._post!(selector, treeNode, options);
+    }
+
     /**
      * Create a new resource. By default the
      * resource is created at the selector.
@@ -57,7 +75,7 @@ export class Rest<ElementType> extends SDSService<
      * @param selector 
      * @param data 
      */
-    public post?(selector: string, data: ObjectNode<ElementType>, options: {lilBro: boolean} = {lilBro: false}): OkResult {
+    private _post(selector: string, data: ObjectNode<ElementType>, options: {lilBro?: boolean} = {lilBro: false}): OkResult {
         const elder = this.get!(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);

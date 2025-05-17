@@ -1,7 +1,7 @@
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
 import { SDSService } from "./sds.js";
 import { OkResult } from "@ara-web/p-hintjens";
-import { CSSObjectAdapter, DOCUMENT_SELECTOR, LinkTraits, ObjectNode } from "./link-traits.js";
+import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
@@ -11,9 +11,9 @@ export class Rest extends SDSService {
     _nodes = [];
     _objectToNodeTree;
     constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("", "name") }) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone"]);
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "postByElement"]);
         this._options = { adapter: new CSSObjectAdapter() };
-        this._nodes = [objectToTreeNode(object, true)];
+        this._nodes = [objectToTreeNode(object, undefined, true)];
         this._objectToNodeTree = objectToTreeNode;
     }
     /**
@@ -26,6 +26,19 @@ export class Rest extends SDSService {
     getAll(selector) {
         return cssSelectAll(selector, this._nodes, this._options);
     }
+    post(selector, data, options) {
+        let treeNode;
+        if (options.root) {
+            treeNode = this._objectToNodeTree(data, undefined, true);
+        }
+        else if (options.parent) {
+            treeNode = this._objectToNodeTree(data, options.parent, false);
+        }
+        else {
+            treeNode = this._objectToNodeTree(data, undefined, false);
+        }
+        return this._post(selector, treeNode, options);
+    }
     /**
      * Create a new resource. By default the
      * resource is created at the selector.
@@ -35,7 +48,7 @@ export class Rest extends SDSService {
      * @param selector
      * @param data
      */
-    post(selector, data, options = { lilBro: false }) {
+    _post(selector, data, options = { lilBro: false }) {
         const elder = this.get(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);

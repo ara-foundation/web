@@ -1,7 +1,7 @@
 import * as CSSWhat from "css-what";
 import { OkResult } from "@ara-web/p-hintjens";
 import { type Options as CSSOptions } from "css-select";
-export type ObjectToNodeTree<T> = (obj: T, root: boolean) => ObjectNode<T>;
+export type ObjectToNodeTree<T> = (obj: T, parent?: ObjectNode<T>, root?: boolean) => ObjectNode<T>;
 /**
  * The object is a name for a part of a file, a web page, a spread sheet, or any form of data content.
  * If you want to create an object link to a custom content,
