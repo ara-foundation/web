@@ -7,13 +7,16 @@ import {
     type ModuleMemories,
     FilePath,
     type SingleRecord,
+    CodePiece,
+    codePieceOps,
 } from "@ara-web/reflect";
 import { 
     ModuleLink, 
     type ModuleURL,
     SDSService, 
     type SDSExtensionInterface, 
-    type SDSSetup
+    type SDSSetup,
+    ObjectNode
 } from "@ara-web/sds";
 import { OkResult, Result, EnumTraits } from "@ara-web/p-hintjens";
 import {
@@ -532,8 +535,24 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
             (module) => 
                 ModuleIdentifier.isAstroGeneratedModule(module)
         ).forEach(
-            (module) => 
-            {module.addIdentifiers(identifiers.getValue())}
+            (moduleMemory) => 
+            {
+                let failedPostResult = OkResult.ok();
+                const parent = moduleMemory.rest.get!('*')!
+                identifiers.getValue().forEach((importedCodePiece) => {
+                    if (failedPostResult.isFailure) {
+                        return;
+                    }
+                    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                    const posted = moduleMemory.rest.post!('*', posting);
+                    if (posted.isFailure) {
+                        failedPostResult = posted;
+                    }
+                });
+                if (failedPostResult.isFailure) {
+                    return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+                }
+            }
         );
         return Result.ok(projectMemory);
     }

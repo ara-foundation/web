@@ -1,9 +1,10 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ModuleMemory, ProjectMemory } from "@ara-web/reflect";
-import { Code, type CodePieceRecord } from "@ara-web/reflect/code-level";
+import { codePieceOps, MODULE_SELECTOR, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import { Code } from "@ara-web/reflect/code-level";
 import { Comment } from "./comment.js";
 import type { Meta } from "../index.js";
-import type { ValueType } from "@ara-web/reflect/code-level";
+import type { CodePiece, ValueType } from "@ara-web/reflect/code-level";
+import { ObjectNode } from "@ara-web/sds";
 
 /**
  * Code analyzing
@@ -33,7 +34,21 @@ export class CodeLevel {
                 importsIdentifed.errorDescription!
             )
         } else {
-            moduleMemory.addIdentifiers(importsIdentifed.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = moduleMemory.rest.get!('*')!
+            importsIdentifed.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = moduleMemory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         // The type declarations
@@ -44,7 +59,21 @@ export class CodeLevel {
                 identifiedTypes.errorDescription!
             )
         } else {
-            moduleMemory.addIdentifiers(identifiedTypes.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = moduleMemory.rest.get!('*')!
+            identifiedTypes.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = moduleMemory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         // The Linted import identifiers
@@ -72,7 +101,21 @@ export class CodeLevel {
                 identifiedVariables.errorDescription!
             )
         } else {
-            moduleMemory.addIdentifiers(identifiedVariables.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = moduleMemory.rest.get!('*')!
+            identifiedVariables.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = moduleMemory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         const lintVariables = await this.lintVariables<T>(code, moduleMemory, projectMemory);
@@ -87,7 +130,7 @@ export class CodeLevel {
     }
 
     public static async identifyCodePiece(expression: string, moduleMemory: ModuleMemory<unknown>, projectMemory: ProjectMemory): Promise<Result<ValueType>> {
-        const identifiedResult = await Code.identifyCodePiece(expression, projectMemory, moduleMemory.getIdentifiers());
+        const identifiedResult = await Code.identifyCodePiece(expression, projectMemory, moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!));
         if (identifiedResult.isFailure) {
             return Result.fail(
                 `Code.identifyCodePiece(): ${identifiedResult.errorTitle}`,
@@ -113,7 +156,7 @@ export class CodeLevel {
     //
     // Import clauses identifies on which modules the source code depends on.
     //
-    private static identifyImports = async (code: Code, projectMemory: ProjectMemory): Promise<Result<CodePieceRecord>> => {
+    private static identifyImports = async (code: Code, projectMemory: ProjectMemory): Promise<Result<CodePiece[]>> => {
         const importIdentifiers = await code.getImportedIdentifiers(projectMemory);
         if (importIdentifiers.isFailure) {
             return Result.fail(
@@ -136,7 +179,21 @@ export class CodeLevel {
             
         const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
         if (importIdentifiersCount > 0) {
-            memory.addIdentifiers(depsIdentified.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = memory.rest.get!('*')!
+            depsIdentified.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = memory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         return OkResult.ok();
@@ -153,7 +210,21 @@ export class CodeLevel {
 
         const identified = Object.keys(vars.getValue()).length;
         if (identified > 0) {
-            memory.addIdentifiers(vars.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = memory.rest.get!('*')!
+            vars.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = memory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         return OkResult.ok();
@@ -173,7 +244,21 @@ export class CodeLevel {
 
         const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
         if (importIdentifiersCount > 0) {
-            memory.addIdentifiers(depsIdentified.getValue());
+            let failedPostResult = OkResult.ok();
+            const parent = memory.rest.get!('*')!
+            depsIdentified.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+                const posted = memory.rest.post!('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+            }
         }
 
         return OkResult.ok();
@@ -187,7 +272,7 @@ export class CodeLevel {
      * @param projectMemory 
      * @returns 
      */
-    private static identifyTypes = async (code: Code): Promise<Result<CodePieceRecord>> => {
+    private static identifyTypes = async (code: Code): Promise<Result<CodePiece[]>> => {
         const identifiers = await code.getTypeIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(

@@ -305,15 +305,15 @@ export class ComponentLevel {
     }
 
     public static identifyAstroComponent = async(moduleParts: ModuleParts, memory: ModuleMemory<unknown>, element: AstroNode, elementLink: ObjectLink, projectMemory: ProjectMemory): Promise<Result<Component>> => {
-        const astNode = memory.identifierByName(element.name);
-        if (astNode === undefined) {
+        const astNode = memory.rest.get!(`#${element.name}`);
+        if (astNode === null) {
             return Result.fail(
                 `memory.identifierByName(identifier: '${element.name}'): not found`,
                 'The element not found in the memory, perhaps its not defined yet nor imported?',
             )
         }
 
-        const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.data, elementLink!, projectMemory); 
+        const componentData = await this.astroNodeToComponent(moduleParts, memory, element, astNode.getElement()!.data, elementLink!, projectMemory); 
         if (componentData.isFailure) {
             return Result.fail(
                 `astroNodeToComponent('${element.name}', '${memory.moduleLink.moduleURL}'): ${componentData.errorTitle}`,

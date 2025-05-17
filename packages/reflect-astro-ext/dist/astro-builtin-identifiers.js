@@ -79,7 +79,7 @@ export class AstroBuiltInIdentifiers {
     static builtInSrc = `
         export const ${this.prefix}${this.identifiers[0]} = {};
     `;
-    static _identifiers = undefined;
+    static _identifiers = [];
     static isBuiltInIdentifier = (child) => {
         if (child.identifier === undefined) {
             return false;
@@ -94,19 +94,17 @@ export class AstroBuiltInIdentifiers {
         if (varIdentifiers.isFailure) {
             return Result.fail(`VariableLevel.getVariableIdentifiers(): ${varIdentifiers.errorTitle}`, varIdentifiers.errorDescription);
         }
-        const astNodeKeys = Object.keys(varIdentifiers.getValue()).filter((_id) => {
-            return _id === identifier;
-        });
-        if (astNodeKeys.length > 0) {
-            return Result.ok(varIdentifiers.getValue()[astNodeKeys[0]]);
+        const found = varIdentifiers.getValue().find((codePiece => codePiece.identifier === identifier));
+        if (found !== undefined) {
+            return Result.ok(found);
         }
         return Result.fail(`The '${identifier}' not found in the nodes list`, `Please make sure the code is valid or pass the correct identifier`);
     };
     static getBuiltInIdentifiers = async () => {
-        if (this._identifiers !== undefined) {
+        if (this._identifiers.length > 0) {
             return Result.ok(this._identifiers);
         }
-        const identifiers = {};
+        const identifiers = [];
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
         const varStatements = code.getTsNodes();
         const astNode0 = await this.identifyAstroAstNode(varStatements);
@@ -114,7 +112,7 @@ export class AstroBuiltInIdentifiers {
             return Result.fail(`identifyAstroAstNode('${varStatements[0].getText()}'): ${astNode0.errorTitle}`, astNode0.errorDescription);
         }
         else {
-            identifiers[this.identifiers[0]] = astNode0.getValue();
+            identifiers.push(astNode0.getValue());
         }
         this._identifiers = identifiers;
         return Result.ok(identifiers);

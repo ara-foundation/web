@@ -1,5 +1,5 @@
-import { ModuleMemory, ProjectMemory, FilePath, } from "@ara-web/reflect";
-import { ModuleLink, SDSService } from "@ara-web/sds";
+import { ModuleMemory, ProjectMemory, FilePath, CodePiece, codePieceOps, } from "@ara-web/reflect";
+import { ModuleLink, SDSService, ObjectNode } from "@ara-web/sds";
 import { OkResult, Result, EnumTraits } from "@ara-web/p-hintjens";
 import { FileExtension } from "./ontology/index.js";
 import { CodeLevel } from "./code-level/index.js";
@@ -427,7 +427,23 @@ export class ReflectAstroExtension extends SDSService {
         }
         projectMemory
             .getModules()
-            .filter((module) => ModuleIdentifier.isAstroGeneratedModule(module)).forEach((module) => { module.addIdentifiers(identifiers.getValue()); });
+            .filter((module) => ModuleIdentifier.isAstroGeneratedModule(module)).forEach((moduleMemory) => {
+            let failedPostResult = OkResult.ok();
+            const parent = moduleMemory.rest.get('*');
+            identifiers.getValue().forEach((importedCodePiece) => {
+                if (failedPostResult.isFailure) {
+                    return;
+                }
+                const posting = new ObjectNode(codePieceOps, importedCodePiece, parent);
+                const posted = moduleMemory.rest.post('*', posting);
+                if (posted.isFailure) {
+                    failedPostResult = posted;
+                }
+            });
+            if (failedPostResult.isFailure) {
+                return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription);
+            }
+        });
         return Result.ok(projectMemory);
     };
 }

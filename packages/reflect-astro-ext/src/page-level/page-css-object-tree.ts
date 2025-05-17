@@ -14,7 +14,6 @@ export const pageToNodeTree: ObjectToNodeTree<SlotElement> = (slotElement: SlotE
 	return doc;
 }
 
-
 /**
 	 * For Pages, it returns empty string.
 	 */

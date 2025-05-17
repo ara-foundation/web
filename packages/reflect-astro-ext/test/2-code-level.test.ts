@@ -6,6 +6,9 @@
 import { expect, test } from "vitest";
 import { ModulePartitioner, FileExtension, CodeLevel, AstroBuiltInIdentifiers } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
+import { CodePiece, codePieceOps } from "@ara-web/reflect";
+import { ObjectNode } from "@ara-web/sds";
+import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that code is importing`, async () => {
     const modules = getImportRecords()
@@ -17,11 +20,15 @@ test(`Make sure the that code is importing`, async () => {
     const projectMemory = getNewProjectMemory(reflectExtension);
     const astroBuiltInIdentifiers = await AstroBuiltInIdentifiers.getBuiltInIdentifiers();
     expect(astroBuiltInIdentifiers.isSuccess).toBe(true);
-
     const moduleMemories = projectMemory.getModules();
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
     for (let moduleMemory of moduleMemories) {
-        moduleMemory.addIdentifiers(astroBuiltInIdentifiers.getValue());
+        const parent = moduleMemory.rest.get!('*')!
+        astroBuiltInIdentifiers.getValue().forEach((importedCodePiece) => {            
+            const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+            const posted = moduleMemory.rest.post!('*', posting);
+            expect(posted.isSuccess).toBe(true);
+        });
         const moduleParts = await ModulePartitioner.partition(moduleMemory);
         expect(moduleParts.isSuccess).toBe(true);
     

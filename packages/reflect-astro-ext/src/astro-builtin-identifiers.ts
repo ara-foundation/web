@@ -2,7 +2,6 @@ import { Result } from "@ara-web/p-hintjens";
 import { ModuleLink } from "@ara-web/sds";
 import { 
     CodePiece, 
-    type CodePieceRecord, 
     type CodePieceFilter, 
     type GenericHandler,
     ValueTypeString, 
@@ -134,7 +133,7 @@ export class AstroBuiltInIdentifiers {
         export const ${this.prefix}${this.identifiers[0]} = {};
     `;
 
-    private static _identifiers: CodePieceRecord|undefined = undefined;
+    private static _identifiers: CodePiece[] = [];
 
     public static isBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.identifier === undefined) {
@@ -155,11 +154,9 @@ export class AstroBuiltInIdentifiers {
                 varIdentifiers.errorDescription!
             )
         }
-        const astNodeKeys = Object.keys(varIdentifiers.getValue()).filter((_id) => {
-            return _id === identifier;
-        });
-        if (astNodeKeys.length > 0) {
-            return Result.ok(varIdentifiers.getValue()[astNodeKeys[0]]);
+        const found = varIdentifiers.getValue().find((codePiece => codePiece.identifier === identifier))
+        if (found !== undefined) {
+            return Result.ok(found);
         }
     
         return Result.fail(
@@ -168,11 +165,11 @@ export class AstroBuiltInIdentifiers {
         )
     }
 
-    public static getBuiltInIdentifiers = async (): Promise<Result<CodePieceRecord>> => {
-        if (this._identifiers !== undefined) {
+    public static getBuiltInIdentifiers = async (): Promise<Result<CodePiece[]>> => {
+        if (this._identifiers.length > 0) {
             return Result.ok(this._identifiers);
         }
-        const identifiers: CodePieceRecord = {};
+        const identifiers: CodePiece[] = [];
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
     
         const varStatements = code.getTsNodes()
@@ -184,7 +181,7 @@ export class AstroBuiltInIdentifiers {
                 astNode0.errorDescription!
             )
         } else {
-            identifiers[this.identifiers[0]] = astNode0.getValue();
+            identifiers.push(astNode0.getValue());
         }
     
         this._identifiers = identifiers;
@@ -207,7 +204,7 @@ export class AstroBuiltInIdentifiers {
             )
         }
 
-        astNode.getValue().identifier = new URL(this.identifiers[0], 'http://localhost').toString();
+        astNode.getValue().identifier = this.identifiers[0];
         astNode.getValue().nodeType = CodePieceType.Variable;
         astNode.getValue().data = data;
         astNode.getValue().public = true;

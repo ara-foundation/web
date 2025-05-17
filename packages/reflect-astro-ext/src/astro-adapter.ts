@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AstroNode } from "./astro-node.js";
 import { OkResult } from "@ara-web/p-hintjens";
 import { DOCUMENT_SELECTOR, ObjectNode, type ElementOp, type ObjectToNodeTree } from "@ara-web/sds";
