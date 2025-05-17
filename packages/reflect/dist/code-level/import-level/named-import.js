@@ -51,7 +51,7 @@ export class NamedImport {
      * @returns
      */
     static getIdentifiers = (nodeType, namedChildren) => {
-        let identifiers = {};
+        let identifiers = [];
         const namedImportChildCount = namedChildren.length;
         if (namedImportChildCount === 0) {
             return Result.ok(identifiers);
@@ -63,14 +63,14 @@ export class NamedImport {
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }
-                identifiers = { ...identifiers, ...(namedIdentifiers.getValue()) };
+                identifiers = [...identifiers, ...(namedIdentifiers.getValue())];
             }
             else if (NamedImport.isImportSpecifier(namedChildren[i])) {
                 const namedIdentifiers = NamedImport.getIdentifiers(nodeType, AstNodeTraits.getChildren(namedChildren[i], [], [AstNodeTraits.isNonImportant], [","]));
                 if (namedIdentifiers.isFailure) {
                     return Result.fail(`NamedImport.getIdentifiers('${namedChildren[i].getText()}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
                 }
-                identifiers = { ...identifiers, ...(namedIdentifiers.getValue()) };
+                identifiers = [...identifiers, ...(namedIdentifiers.getValue())];
             }
             else if (Identifier.isA(namedChildren[i])) {
                 const identifier = namedChildren[i].getText();
@@ -100,12 +100,12 @@ export class NamedImport {
                     identifiedNode.putMemoryData(refNode);
                     identifiedNode.identifier = alias.getText();
                     // In case of the alias, we identify the ast node as alias.
-                    identifiers[alias.getText()] = identifiedNode;
+                    identifiers.push(identifiedNode);
                     i += 2;
                 }
                 else {
                     identifiedNode.identifier = identifier;
-                    identifiers[identifier] = identifiedNode;
+                    identifiers.push(identifiedNode);
                 }
             }
             else if (AstNodeTraits.isTypeKeyword(namedChildren[i])) {

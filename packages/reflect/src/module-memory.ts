@@ -1,24 +1,25 @@
-import { ModuleLink } from "@ara-web/sds";
+import { ModuleLink, Rest } from "@ara-web/sds";
 import { Debug } from "@ara-web/p-hintjens";
-import { CodePieceMemory } from "./code-piece-memory.js";
+import type { CodePiece } from "./code-level/index.js";
+import { moduleToObjectTree } from "./code-piece-object-tree.js";
 
-export class ModuleMemory<T> extends CodePieceMemory {
+export class ModuleMemory<T> {
     private _moduleLink: ModuleLink;
     private _glob: unknown;
     private _content?: T;
     private _moduleCategory: string;    // to filter out
+    private _rest: Rest<CodePiece>;
 
     constructor(moduleCategory: string, moduleLink: ModuleLink, glob: unknown) {
-        super()
         this._moduleLink = moduleLink;
         this._moduleCategory = moduleCategory;
         this._glob = glob;
+        this._rest = new Rest<CodePiece>({} as CodePiece, moduleToObjectTree);
     }
 
     public print = (filterKey?: string, filterValue?: any): void => {
         Debug.push(`Module (${this._moduleLink.toString()})`)
         Debug.log(`Printing the Identifiers`)
-        super.print(filterKey, filterValue);
         Debug.pop();
     }
 
@@ -40,6 +41,10 @@ export class ModuleMemory<T> extends CodePieceMemory {
 
     public set content(_content: T) {
         this._content = _content;
+    }
+
+    public get rest (): Rest<CodePiece> {
+        return this._rest;
     }
 
 }

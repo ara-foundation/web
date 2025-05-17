@@ -82,7 +82,6 @@ test('Setup auto import and make sure its automatically imported', async () => {
 
 test('Post packages into the Nodejs Reflect Extension and getting submodule of the package', async () => {
     const samplePackage = getSamplePackageWithSubModules();
-    Debug.log(`Sample package url: ${samplePackage.importModuleClause}`)
 
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
     let builtIn = await reflect.get!(BuiltinModuleCategory.NodeJsModule);

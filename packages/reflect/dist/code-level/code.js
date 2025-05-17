@@ -4,8 +4,8 @@
  */
 import { Project, SourceFile as TsSourceFile, Node } from "ts-morph";
 import { Result, Debug } from "@ara-web/p-hintjens";
-import { ModuleLink } from "@ara-web/sds";
-import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
+import { ModuleLink, ObjectNode } from "@ara-web/sds";
+import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath, codePieceOps, MODULE_SELECTOR } from "../index.js";
 import { VariableLevel } from "./variable-level/index.js";
 import { ImportLevel } from "./import-level/index.js";
 import { TypeLevel } from "./type-level/index.js";
@@ -62,7 +62,7 @@ export class Code {
      * @returns AstIdentifiers
      */
     getImportedIdentifiers = async (projectMemory) => {
-        let identifiers = {};
+        let identifiers = [];
         const tsNodes = this.getTsNodes();
         for (let tsNode of tsNodes) {
             if (!ImportLevel.isImportDeclaration(tsNode)) {
@@ -79,7 +79,7 @@ export class Code {
             let importIdentifiers = (await ImportLevel.getIdentifiers(tsNode)).getValue();
             const defaultIdentifier = (await ImportLevel.getDefaultIdentifier(tsNode)).getValue();
             importIdentifiers = this.setImportPaths(identifiedModuleLink.getValue(), defaultIdentifier, importIdentifiers);
-            identifiers = { ...identifiers, ...importIdentifiers };
+            identifiers = [...identifiers, ...importIdentifiers];
         }
         return Result.ok(identifiers);
     };
@@ -141,7 +141,8 @@ export class Code {
      * @returns
      */
     getLintedImportIdentifiers = async (moduleMemory, projectMemory) => {
-        const identifiers = moduleMemory.getIdentifiers([CodePiece.isDefinedInOtherModule]);
+        const identifierNodes = moduleMemory.rest.getAll(MODULE_SELECTOR);
+        const identifiers = identifierNodes.map(identifierNode => identifierNode.getElement()).filter(codePiece => codePiece !== null && CodePiece.isDefinedInOtherModule(codePiece));
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
             const identifiedValue = await this.identifyImportedIdentifier(node, projectMemory);
@@ -221,32 +222,32 @@ export class Code {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
     getLintedTypeIdentifiers = async (memory, projectMemory) => {
-        const localTypeFilters = [
-            CodePiece.isDefinedInLocal,
-            CodePiece.isTypeDeclaration,
-            BuiltInIdentifiers.isNonBuiltInIdentifier,
-        ];
-        const typesToLint = memory.getIdentifiers(localTypeFilters);
-        const typesCount = Object.keys(typesToLint).length;
+        const identifierNodes = memory.rest.getAll(MODULE_SELECTOR);
+        const typesToLint = identifierNodes
+            .map(identifierNode => identifierNode.getElement())
+            .filter(codePiece => CodePiece.isDefinedInLocal(codePiece))
+            .filter(codePiece => CodePiece.isTypeDeclaration(codePiece))
+            .filter(codePiece => BuiltInIdentifiers.isNonBuiltInIdentifier(codePiece));
+        const typesCount = typesToLint.length;
         if (typesCount == 0) {
-            return Result.ok(memory.getIdentifiers());
+            return Result.ok(memory.rest.getAll(MODULE_SELECTOR).map(node => node.getElement()));
         }
-        const moduleTypeFilters = [
-            CodePiece.isTypeDeclaration,
-        ];
-        for (let identifier in typesToLint) {
-            let node = typesToLint[identifier];
+        typesToLint.forEach((node, index, arr) => {
             if (typeof node.data === "string") {
-                node.dataType = node.data;
-                continue;
+                arr[index].dataType = node.data;
+                return;
             }
-            const moduleIdentifiers = memory.getIdentifiers(moduleTypeFilters, [identifier]);
+            const moduleIdentifiers = identifierNodes
+                .map(identifierNode => identifierNode.getElement())
+                .filter(codePiece => CodePiece.isTypeDeclaration(codePiece))
+                .filter(codePiece => codePiece.identifier !== node.identifier);
             const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
             const lintedNode = TypeLevel.lintType(node, memoryContext);
             if (lintedNode.isFailure) {
-                return Result.fail(`TypeLevel.lintType(node: '${identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
+                return Result.fail(`TypeLevel.lintType(node: '${node.identifier}'): ${lintedNode.errorTitle}`, lintedNode.errorDescription);
             }
-        }
+            arr[index] = lintedNode.getValue();
+        });
         return Result.ok(typesToLint);
     };
     /**
@@ -276,15 +277,15 @@ export class Code {
         return Result.ok(identifiers.getValue());
     };
     getLintedVariableIdentifiers = async (memory, projectMemory) => {
-        const localTypeFilters = [
-            CodePiece.isDefinedInLocal,
-            CodePiece.isVariableDeclaration,
-            BuiltInIdentifiers.isNonBuiltInIdentifier,
-        ];
-        const varsToLint = memory.getIdentifiers(localTypeFilters);
+        const identifierNodes = memory.rest.getAll(MODULE_SELECTOR);
+        const varsToLint = identifierNodes
+            .map(identifierNode => identifierNode.getElement())
+            .filter(codePiece => CodePiece.isDefinedInLocal(codePiece))
+            .filter(codePiece => CodePiece.isVariableDeclaration(codePiece))
+            .filter(codePiece => BuiltInIdentifiers.isNonBuiltInIdentifier(codePiece));
         const typesCount = Object.keys(varsToLint).length;
         if (typesCount == 0) {
-            return Result.ok(memory.getIdentifiers());
+            return Result.ok(memory.rest.getAll(MODULE_SELECTOR).map(node => node.getElement()));
         }
         for (let identifier in varsToLint) {
             let node = varsToLint[identifier];
@@ -292,7 +293,10 @@ export class Code {
                 node.dataType = node.data;
                 continue;
             }
-            const moduleIdentifiers = memory.getIdentifiers([], [identifier]);
+            const identifierNodes = memory.rest.getAll(MODULE_SELECTOR);
+            const moduleIdentifiers = identifierNodes
+                .map(identifierNode => identifierNode.getElement())
+                .filter(codePiece => codePiece.identifier !== identifier);
             const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
             const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
             if (lintedVariable.isFailure) {
@@ -317,7 +321,10 @@ export class Code {
     static identifyCodePiece = async (expression, projectMemory, optionalIdentifiers) => {
         const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
         if (optionalIdentifiers !== undefined) {
-            tempMemory.addIdentifiers(optionalIdentifiers);
+            const parent = tempMemory.rest.get('*');
+            optionalIdentifiers.forEach((codePiece) => {
+                tempMemory.rest.post('*', new ObjectNode(codePieceOps, codePiece, parent));
+            });
         }
         const tempVarName = "__temp_var_";
         const code = new Code(`const ${tempVarName} = ${expression}`, tempMemory.moduleLink);
@@ -326,8 +333,12 @@ export class Code {
             return Result.fail(`code.getVariableIdentifiers(): ${vars.errorTitle}`, vars.errorDescription);
         }
         else {
-            tempMemory.addIdentifiers(vars.getValue());
-            if (vars.getValue()[tempVarName] === undefined) {
+            const parent = tempMemory.rest.get('*');
+            vars.getValue().forEach((codePiece) => {
+                tempMemory.rest.post('*', new ObjectNode(codePieceOps, codePiece, parent));
+            });
+            const tempVarValue = vars.getValue().find((codePiece) => codePiece.identifier === tempVarName);
+            if (tempVarValue === undefined) {
                 return Result.fail(`Failed to retreive temporary variable name`, `The expression '${expression}' is not a valid JS code`);
             }
         }
@@ -335,10 +346,10 @@ export class Code {
         if (expressionIdentified.isFailure) {
             return Result.fail(`code.getLintedVariableIdentifiers(): ${expressionIdentified.errorTitle}`, expressionIdentified.errorDescription);
         }
-        if (expressionIdentified.getValue()[tempVarName] === undefined) {
+        const tempVar = expressionIdentified.getValue().find((codePiece) => codePiece.identifier === tempVarName);
+        if (tempVar === undefined) {
             return Result.fail(`Failed to retreive temporary variable name`, `The expression '${expression}' is not a valid JS code`);
         }
-        const tempVar = expressionIdentified.getValue()[tempVarName];
         return Result.ok({ data: tempVar.data, dataType: tempVar.dataType });
     };
 }

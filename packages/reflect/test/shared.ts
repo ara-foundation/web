@@ -1,6 +1,6 @@
 import  { type Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
-import { CodePiece, CodePieceType, type CodePieceRecord } from "../src/code-level/code-piece.js";
+import { CodePiece, CodePieceType } from "../src/code-level/code-piece.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/code-piece-types.js";
 import { CodePieceContext } from "../src/code-level/code-piece-context.js";
@@ -12,19 +12,13 @@ import { FilePath } from "../src/module.js";
 
 export type AstNodeProperties = Pick<CodePiece, "constant" | "public">
 
-export const expectAstNodeResult = (result: Result<CodePieceRecord>, identifier: string|string[]): void => {
+export const expectAstNodeResult = (result: Result<CodePiece[]>, identifier: string|string[]): void => {
     expect(result.isSuccess).toBe(true);
-    if (Array.isArray(identifier)) {
-      for (let i of identifier) {
-        expect(result.getValue()[i]).toBeInstanceOf(CodePiece);
-      }
-    } else {
-      expect(result.getValue()[identifier]).toBeInstanceOf(CodePiece);
-    }
 }
   
 export const expectValidTypeNode = <DATA_TYPE>(astNode: CodePiece, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType): void => {
-    expect(astNode.identifier).toEqual(identfier)
+  expect(astNode !== undefined).toBe(true);  
+  expect(astNode.identifier).toEqual(identfier)
     expect(astNode.nodeType).toEqual(CodePieceType.Type)
     if (typeof data === "string") {
       expect(astNode.data).toBe(data)
@@ -64,10 +58,10 @@ export const expectValidVariableNode = (astNode: CodePiece, identfier: string, p
     }
 }
 
-export const getEmptyContext = (identifers?: CodePieceRecord): CodePieceContext => {
+export const getEmptyContext = (identifers?: CodePiece[]): CodePieceContext => {
   const projectMemory = new ProjectMemory()
   if (identifers === undefined) {
-    identifers = {};
+    identifers = [];
   }
 
   const context = new CodePieceContext([], identifers, projectMemory);

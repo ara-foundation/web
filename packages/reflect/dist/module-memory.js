@@ -1,21 +1,21 @@
-import { ModuleLink } from "@ara-web/sds";
+import { ModuleLink, Rest } from "@ara-web/sds";
 import { Debug } from "@ara-web/p-hintjens";
-import { AstIdentifierMemory } from "./ast-nodes-memory.js";
-export class ModuleMemory extends AstIdentifierMemory {
+import { moduleToObjectTree } from "./code-piece-object-tree.js";
+export class ModuleMemory {
     _moduleLink;
     _glob;
     _content;
     _moduleCategory; // to filter out
+    _rest;
     constructor(moduleCategory, moduleLink, glob) {
-        super();
         this._moduleLink = moduleLink;
         this._moduleCategory = moduleCategory;
         this._glob = glob;
+        this._rest = new Rest({}, moduleToObjectTree);
     }
     print = (filterKey, filterValue) => {
         Debug.push(`Module (${this._moduleLink.toString()})`);
         Debug.log(`Printing the Identifiers`);
-        super.print(filterKey, filterValue);
         Debug.pop();
     };
     get moduleCategory() {
@@ -32,5 +32,8 @@ export class ModuleMemory extends AstIdentifierMemory {
     }
     set content(_content) {
         this._content = _content;
+    }
+    get rest() {
+        return this._rest;
     }
 }

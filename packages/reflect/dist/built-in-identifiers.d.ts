@@ -1,5 +1,5 @@
 import { Result } from "@ara-web/p-hintjens";
-import { CodePiece, type CodePieceRecord, type CodePieceFilter } from "./code-level/index.js";
+import { CodePiece, type CodePieceFilter } from "./code-level/index.js";
 export declare class BuiltInIdentifiers {
     private static prefix;
     private static identifiers;
@@ -8,7 +8,7 @@ export declare class BuiltInIdentifiers {
     static isBuiltInIdentifier: CodePieceFilter;
     static isNonBuiltInIdentifier: CodePieceFilter;
     private static getVariableAstNode;
-    static getBuiltInIdentifiers: () => Promise<Result<CodePieceRecord>>;
+    static getBuiltInIdentifiers: () => Promise<Result<CodePiece[]>>;
     private static identifyArrayAstNode;
     private static identifyRecordAstNode;
     static getNodejsModuleByPath: (path: string) => Promise<CodePiece | undefined>;

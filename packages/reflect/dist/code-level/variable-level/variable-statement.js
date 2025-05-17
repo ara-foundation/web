@@ -9,7 +9,7 @@ import { AstNodeTraits } from "../index.js";
 import { VariableDeclaration } from "./variable-declaration.js";
 export class VariableStatement {
     _tsNode;
-    _astNodes = {};
+    _astNodes = [];
     constructor(tsNode) {
         this._tsNode = tsNode;
     }
@@ -47,7 +47,7 @@ export class VariableStatement {
      * @returns
      */
     identifyVariableDeclarationList = async (tsNode, publicFlag) => {
-        let identifiers = {};
+        let identifiers = [];
         const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant, VariableStatement.isNonImportantKeyword]);
         const childCount = children.length;
         let nodeFlags = {
@@ -83,7 +83,7 @@ export class VariableStatement {
                 if (astNodes.isFailure) {
                     return Result.fail(`varDeclaration('${varDeclarationTsNode.getText()}').getAstIdentifiers(): ${astNodes.errorTitle}`, astNodes.errorDescription);
                 }
-                identifiers = { ...identifiers, ...astNodes.getValue() };
+                identifiers = [...identifiers, ...astNodes.getValue()];
             }
         }
         return Result.ok(identifiers);

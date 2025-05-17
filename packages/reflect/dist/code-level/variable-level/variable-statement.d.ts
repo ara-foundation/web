@@ -5,7 +5,7 @@
  */
 import { VariableStatement as TsVariableStatement, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { type AstNodeFilter, type CodePieceRecord } from "../index.js";
+import { type AstNodeFilter, type CodePiece } from "../index.js";
 export declare class VariableStatement {
     protected _tsNode: TsVariableStatement;
     private _astNodes;
@@ -17,7 +17,7 @@ export declare class VariableStatement {
     /**
      * Returns the variable's identifier
      */
-    getAstIdentifiers: () => CodePieceRecord;
+    getAstIdentifiers: () => CodePiece[];
     /**
      * Variable declaration comes as "var <declaration>" or "let <declaration>"
      * @param tsNode

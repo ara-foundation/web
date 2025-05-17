@@ -1,13 +1,12 @@
 export enum ModuleCategory {
     NodeJsModule = "node_modules",
 }
-import { ModuleLink, type ModuleURL } from "@ara-web/sds";
+import { ModuleLink, ObjectNode, type ModuleURL } from "@ara-web/sds";
 
 import { 
     EnumTraits,
     OkResult, 
     Result,
-    Debug,
  } from "@ara-web/p-hintjens";
 import { 
     ModuleMemory,
@@ -18,7 +17,9 @@ import {
     type ModuleMemories,
     BuiltInIdentifiers,
     FilePath,
-    type SingleRecord
+    type SingleRecord,
+    codePieceOps,
+    CodePiece
  } from "../index.js";
 
 /**
@@ -141,8 +142,6 @@ export class NodejsReflectExtension implements ExtensionInterface {
     }
 
     public isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean {
-        Debug.log(`Modules:`)
-        Debug.log(Object.keys(this._moduleMemories))
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         if (this._moduleMemories[url] !== undefined) {
             return true;
@@ -238,7 +237,15 @@ export class NodejsReflectExtension implements ExtensionInterface {
             module.moduleCategory !== ModuleCategory.NodeJsModule
         ).forEach(
             (module) => 
-            {module.addIdentifiers(identifiers.getValue())}
+            {
+                const parent = module.rest.get!('#document')!;
+                identifiers.getValue().forEach(
+                    (codePiece) => {
+                        const codePieceNode = new ObjectNode<CodePiece>(codePieceOps, codePiece, parent);
+                        module.rest.post!('#document >', codePieceNode)
+                    }
+                )
+            }
         );
         return Result.ok(projectMemory);
     }

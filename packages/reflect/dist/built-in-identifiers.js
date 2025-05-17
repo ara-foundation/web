@@ -22,13 +22,13 @@ const recordGenericHandler = (astNode, values) => {
     return Result.ok(astNode);
 };
 export class BuiltInIdentifiers {
-    static prefix = '_';
+    static prefix = '';
     static identifiers = ['Array', 'Record'];
     static builtInSrc = `
         export const ${this.prefix}${this.identifiers[0]} = [];
         export const ${this.prefix}${this.identifiers[1]} = {key: '', value: {}};
     `;
-    static _identifiers = undefined;
+    static _identifiers = [];
     static isBuiltInIdentifier = (child) => {
         if (child.identifier === undefined) {
             return false;
@@ -43,20 +43,17 @@ export class BuiltInIdentifiers {
         if (varIdentifiers.isFailure) {
             return Result.fail(`VariableLevel.getVariableIdentifiers(): ${varIdentifiers.errorTitle}`, varIdentifiers.errorDescription);
         }
-        for (let _identifier in varIdentifiers.getValue()) {
-            if (_identifier === identifier) {
-                // We are sure, that the returned data is CodePiece, not a link,
-                // Since the script is here as well.
-                return Result.ok(varIdentifiers.getValue()[_identifier]);
-            }
+        const found = varIdentifiers.getValue().find(codePiece => codePiece.identifier === identifier);
+        if (found !== undefined) {
+            return Result.ok(found);
         }
         return Result.fail(`The '${identifier}' not found in the nodes list`, `Please make sure the code is valid or pass the correct identifier`);
     };
     static getBuiltInIdentifiers = async () => {
-        if (this._identifiers !== undefined) {
+        if (this._identifiers.length > 0) {
             return Result.ok(this._identifiers);
         }
-        let identifiers = {};
+        let identifiers = [];
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
         const varStatements = code.getTsNodes();
         const arrayAstNode = await this.identifyArrayAstNode(varStatements);
@@ -64,14 +61,14 @@ export class BuiltInIdentifiers {
             return Result.fail(`identifyArrayAstNode(varStatements: '${varStatements.length} statements'): ${arrayAstNode.errorTitle}`, arrayAstNode.errorDescription);
         }
         else {
-            identifiers[this.identifiers[0]] = arrayAstNode.getValue();
+            identifiers.push(arrayAstNode.getValue());
         }
         const recordAstNode = await this.identifyRecordAstNode(varStatements);
         if (recordAstNode.isFailure) {
             return Result.fail(`identifyRecordAstNode(varStatements: '${varStatements.length} statements'): ${recordAstNode.errorTitle}`, recordAstNode.errorDescription);
         }
         else {
-            identifiers[this.identifiers[1]] = recordAstNode.getValue();
+            identifiers.push(recordAstNode.getValue());
         }
         this._identifiers = identifiers;
         return Result.ok(identifiers);

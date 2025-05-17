@@ -42,10 +42,10 @@ export class VariableDeclaration {
     // Variable declaration comes as "var <declaration>" or "let <declaration>"
     /**
      * Parses this variable declaration into the list of AST Nodes.
-     * @returns {CodePieceRecord}
+     * @returns {CodePiece[]}
      */
     getAstIdentifiers = async () => {
-        const identifiers = {};
+        const identifiers = [];
         const identifierNode = CodePiece.fromTsNode(this._tsNode);
         identifierNode.nodeType = CodePieceType.Variable;
         identifierNode.public = this._publicFlag;
@@ -97,7 +97,7 @@ export class VariableDeclaration {
                     bindingNode.constant = this._constantFlag;
                     bindingNode.putMemoryData(refNode);
                     bindingNode.data = ReflectLink.linkToIdentifier(refNode.identifier);
-                    identifiers[bindingNode.identifier] = bindingNode;
+                    identifiers.push(bindingNode);
                 }
                 return Result.ok(identifiers);
             }
@@ -114,7 +114,7 @@ export class VariableDeclaration {
         else {
             identifierNode.identifier = identifier.getText();
         }
-        identifiers[identifierNode.identifier] = identifierNode;
+        identifiers.push(identifierNode);
         return Result.ok(identifiers);
     };
     getTypedData = async () => {

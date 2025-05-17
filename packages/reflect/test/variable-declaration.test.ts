@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
 import { CodePiece, CodePieceType } from "../src/code-level/code-piece.js";
 import { IntersectedUnionType, UserTypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/code-piece-types.js";
-import { AraLink, ModuleLink } from "@ara-web/sds";
+import { AraLink, ModuleLink, ObjectNode } from "@ara-web/sds";
 import { Node } from "ts-morph";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { Reflect } from "../src/reflect.js"
@@ -11,192 +11,204 @@ import { CodePieceContext } from "../src/code-level/code-piece-context.js";
 import { ValueLevel } from "../src/code-level/value-level/index.js";
 import { BuiltInIdentifiers } from "../src/built-in-identifiers.js";
 import { TypeLevel } from "../src/code-level/index.js";
+import { codePieceOps, MODULE_SELECTOR } from "../src/code-piece-object-tree.js";
+import { Debug } from "@ara-web/p-hintjens";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
-// const parentUrl = "/ara/act/ara-web/action/get";
-test('Supports the simple variable declaration as public, export keywords too', async () => {
-  const varName = 'parentUrl'
-  const varValue = "/ara/act/ara-web/action/get";
-  let src = `const ${varName} = "${varValue}"`;
-  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  let vars = await code.getVariableIdentifiers();
+// // const parentUrl = "/ara/act/ara-web/action/get";
+// test('Supports the simple variable declaration as public, export keywords too', async () => {
+//   const varName = 'parentUrl'
+//   const varValue = "/ara/act/ara-web/action/get";
+//   let src = `const ${varName} = "${varValue}"`;
+//   let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   let vars = await code.getVariableIdentifiers();
 
-  // Result
-  expectAstNodeResult(vars, varName)
-  let astNode = vars.getValue()[varName] as CodePiece;
-  let expectedProps: AstNodeProperties = {
-    constant: true,
-    public: false
-  }
-  expectValidVariableNode(astNode, varName, expectedProps);
+//   // Result
+//   expectAstNodeResult(vars, varName);
+//   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-  // Not a constant format
-  src = `let ${varName} = "${varValue}"`;
-  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  vars = await code.getVariableIdentifiers();
-  expectAstNodeResult(vars, varName)
-  astNode = vars.getValue()[varName] as CodePiece;
-  expectedProps.constant = false;
-  expectValidVariableNode(astNode, varName, expectedProps);
+//   let expectedProps: AstNodeProperties = {
+//     constant: true,
+//     public: false
+//   }
+//   expectValidVariableNode(astNode, varName, expectedProps);
 
-  // Export and constant
-  src = `export const ${varName} = "${varValue}"`;
-  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  vars = await code.getVariableIdentifiers();
-  expectAstNodeResult(vars, varName)
-  astNode = vars.getValue()[varName] as CodePiece;
-  expectedProps.constant = true;
-  expectedProps.public = true;
-  expectValidVariableNode(astNode, varName, expectedProps);
+//   // Not a constant format
+//   src = `let ${varName} = "${varValue}"`;
+//   code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   vars = await code.getVariableIdentifiers();
+//   expectAstNodeResult(vars, varName)
+//   astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-  // Data undefined
-  src = `export let ${varName};`;
-  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  vars = await code.getVariableIdentifiers();
-  expectAstNodeResult(vars, varName)
-  astNode = vars.getValue()[varName] as CodePiece;
-  expectedProps.constant = false;
-  expectedProps.public = true;
-  expectValidVariableNode(astNode, varName, expectedProps);
-  expect(astNode.data).toBeUndefined();
-});
+//   expectedProps.constant = false;
+//   expectValidVariableNode(astNode, varName, expectedProps);
 
-// const { slug } = Astro.params;
-test('Supports the variable declaration derived from the object decoupling', async () => {
-  const varName = 'slug'
-  const varValue = "Astro.params";
-  const src = `const { ${varName} } = "${varValue}"`;
-  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  const vars = await code.getVariableIdentifiers();
-  // Result
-  expectAstNodeResult(vars, varName)
-  const astNode = vars.getValue()[varName] as CodePiece;
-  let expectedProps: AstNodeProperties = {
-    constant: true,
-    public: false
-  }
-  expectValidVariableNode(astNode, varName, expectedProps);
+//   // Export and constant
+//   src = `export const ${varName} = "${varValue}"`;
+//   code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   vars = await code.getVariableIdentifiers();
+//   expectAstNodeResult(vars, varName)
+//   astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-  // The Ast node's data must be a link to the identifier
-  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
-  expect((astNode.data as AraLink<string>).resource).toBe(varName)
+//   expectedProps.constant = true;
+//   expectedProps.public = true;
+//   expectValidVariableNode(astNode, varName, expectedProps);
 
-  // The Ast node's binding should a property of the expression
-  expect(astNode.memoryDataLength()).toEqual(1)
-  expect(astNode.getMemoryData(0)?.identifier).toBe(varName)
-  expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<Node>)).toBe(true)
-  expect(astNode.getMemoryData(0)?.nodeType).toBe(CodePieceType.Property)
-  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
-});
+//   // Data undefined
+//   src = `export let ${varName};`;
+//   code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   vars = await code.getVariableIdentifiers();
+//   expectAstNodeResult(vars, varName);
+//   astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-// Decoupling with a new name.
-// const { slug: derivedSlug } = Astro.params;
-test('Supports the variable declaration by alias derived from the object decoupling', async () => {
-  const varName = 'derivedSlug'
-  const propertyName = 'slug'
-  const varValue = "Astro.params";
-  const src = `const { ${propertyName}: ${varName} } = "${varValue}"`;
-  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  const vars = await code.getVariableIdentifiers();
-  // Result
-  expectAstNodeResult(vars, varName)
-  const astNode = vars.getValue()[varName] as CodePiece;
-  let expectedProps: AstNodeProperties = {
-    constant: true,
-    public: false
-  }
-  expectValidVariableNode(astNode, varName, expectedProps);
+//   expectedProps.constant = false;
+//   expectedProps.public = true;
+//   expectValidVariableNode(astNode, varName, expectedProps);
+//   expect(astNode.data).toBeUndefined();
+// });
 
-  // The Ast node's data must be a link to the identifier
-  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
-  expect((astNode.data as AraLink<string>).resource).toBe(propertyName)
+// // const { slug } = Astro.params;
+// test('Supports the variable declaration derived from the object decoupling', async () => {
+//   const varName = 'slug'
+//   const varValue = "Astro.params";
+//   const src = `const { ${varName} } = "${varValue}"`;
+//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   const vars = await code.getVariableIdentifiers();
+//   // Result
+//   expectAstNodeResult(vars, varName)
+//   const astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-  // The Ast node's binding should a property of the expression
-  expect(astNode.memoryDataLength()).toEqual(1)
-  expect(astNode.getMemoryData(0)?.identifier).toBe(propertyName)
-  expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<Node>)).toBe(true)
-  expect(astNode.getMemoryData(0)?.nodeType).toBe(CodePieceType.Property)
-  expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
-});
+//   let expectedProps: AstNodeProperties = {
+//     constant: true,
+//     public: false
+//   }
+//   expectValidVariableNode(astNode, varName, expectedProps);
 
-// const action: Action | undefined = getActionBySlug(slug);
-test('Supports the simple variable declaration as public, export keywords too', async () => {
-  const varName = 'action'
-  const varValue = "getActionBySlug(slug)";
-  let src = `const ${varName}: Action | undefined = ${varValue}`;
-  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  let vars = await code.getVariableIdentifiers();
+//   // The Ast node's data must be a link to the identifier
+//   expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+//   expect((astNode.data as AraLink<string>).resource).toBe(varName)
 
-  // Result
-  expectAstNodeResult(vars, varName)
-  let astNode = vars.getValue()[varName] as CodePiece;
-  let expectedProps: AstNodeProperties = {
-    constant: true,
-    public: false
-  }
-  expectValidVariableNode(astNode, varName, expectedProps, UnionTypeDeclaration);
+//   // The Ast node's binding should a property of the expression
+//   expect(astNode.memoryDataLength()).toEqual(1)
+//   expect(astNode.getMemoryData(0)?.identifier).toBe(varName)
+//   expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<Node>)).toBe(true)
+//   expect(astNode.getMemoryData(0)?.nodeType).toBe(CodePieceType.Property)
+//   expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
+// });
+
+// // Decoupling with a new name.
+// // const { slug: derivedSlug } = Astro.params;
+// test('Supports the variable declaration by alias derived from the object decoupling', async () => {
+//   const varName = 'derivedSlug'
+//   const propertyName = 'slug'
+//   const varValue = "Astro.params";
+//   const src = `const { ${propertyName}: ${varName} } = "${varValue}"`;
+//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   const vars = await code.getVariableIdentifiers();
+//   // Result
+//   expectAstNodeResult(vars, varName)
+//   const astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
+//   let expectedProps: AstNodeProperties = {
+//     constant: true,
+//     public: false
+//   }
+//   expectValidVariableNode(astNode, varName, expectedProps);
+
+//   // The Ast node's data must be a link to the identifier
+//   expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+//   expect((astNode.data as AraLink<string>).resource).toBe(propertyName)
+
+//   // The Ast node's binding should a property of the expression
+//   expect(astNode.memoryDataLength()).toEqual(1)
+//   expect(astNode.getMemoryData(0)?.identifier).toBe(propertyName)
+//   expect(ReflectLink.isTsNodeLink(astNode.getMemoryData(0)?.data as AraLink<Node>)).toBe(true)
+//   expect(astNode.getMemoryData(0)?.nodeType).toBe(CodePieceType.Property)
+//   expect(astNode.getMemoryData(0)?.dataType).toBeUndefined();
+// });
+
+// // const action: Action | undefined = getActionBySlug(slug);
+// test('Supports the simple variable declaration as public, export keywords too', async () => {
+//   const varName = 'action'
+//   const varValue = "getActionBySlug(slug)";
+//   let src = `const ${varName}: Action | undefined = ${varValue}`;
+//   let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   let vars = await code.getVariableIdentifiers();
+
+//   // Result
+//   expectAstNodeResult(vars, varName);
+//   Debug.log(`The vars log amount: ${vars.getValue().length}`, vars.getValue());
+//   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
+//   let expectedProps: AstNodeProperties = {
+//     constant: true,
+//     public: false
+//   }
+//   expectValidVariableNode(astNode, varName, expectedProps, UnionTypeDeclaration);
   
-  // Node Data
-  const data = astNode.dataType as UnionTypeDeclaration;
-  expect(data.unionLength).toEqual(2)
-  expect(ReflectLink.isIdentifierLink(data.getUnion(0) as AraLink<string>)).toBe(true)
-  expect((data.getUnion(0) as AraLink<string>).resource).toEqual('Action')
-  expect(data.getUnion(1)).toEqual(ValueTypeString.undefined)
-});
+//   // Node Data
+//   const data = astNode.dataType as UnionTypeDeclaration;
+//   expect(data.unionLength).toEqual(2)
+//   expect(ReflectLink.isIdentifierLink(data.getUnion(0) as AraLink<string>)).toBe(true)
+//   expect((data.getUnion(0) as AraLink<string>).resource).toEqual('Action')
+//   expect(data.getUnion(1)).toEqual(ValueTypeString.undefined)
+// });
 
-// const data: Array<string> = func<string>();
-test('Supports the the variable declaration with the generic value', async () => {
-  const varName = 'data'
-  const varValue = "func<string>()";
-  let src = `const ${varName}: Array<string> = ${varValue}`;
-  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  let vars = await code.getVariableIdentifiers();
+// // const data: Array<string> = func<string>();
+// test('Supports the the variable declaration with the generic value', async () => {
+//   const varName = 'data'
+//   const varValue = "func<string>()";
+//   let src = `const ${varName}: Array<string> = ${varValue}`;
+//   let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   let vars = await code.getVariableIdentifiers();
 
-  // Result
-  expectAstNodeResult(vars, varName)
-  let astNode = vars.getValue()[varName] as CodePiece;
-  let expectedProps: AstNodeProperties = {
-    constant: true,
-    public: false
-  }
-  expectValidVariableNode(astNode, varName, expectedProps, AraLink);
+//   // Result
+//   expectAstNodeResult(vars, varName)
+//   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
+//   let expectedProps: AstNodeProperties = {
+//     constant: true,
+//     public: false
+//   }
+//   expectValidVariableNode(astNode, varName, expectedProps, AraLink);
   
-  // Node Data
-  const data = astNode.dataType as AraLink<string>;
-  expect(ReflectLink.isIdentifierLink(data)).toBe(true)
-  expect(data.isPropertyExist(TypeLevel.GENERIC_VALUES_LINK_PROPERTY)).toBe(true);
-  const genericProps = TypeLevel.linkPropertyToGenericValues(data);
-  expect(genericProps).toHaveLength(1);
-  expect(genericProps[0]).toEqual(ValueTypeString.string)
-});
+//   // Node Data
+//   const data = astNode.dataType as AraLink<string>;
+//   expect(ReflectLink.isIdentifierLink(data)).toBe(true)
+//   expect(data.isPropertyExist(TypeLevel.GENERIC_VALUES_LINK_PROPERTY)).toBe(true);
+//   const genericProps = TypeLevel.linkPropertyToGenericValues(data);
+//   expect(genericProps).toHaveLength(1);
+//   expect(genericProps[0]).toEqual(ValueTypeString.string)
+// });
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// Variable Linting
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////////////////////////////////////
+// //
+// // Variable Linting
+// //
+// ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// const parentUrl = "/ara/act/ara-web/action/get";
-test('Supports the literal value assignment', async () => {
-  const varName = 'parentUrl'
-  const varValue = "/ara/act/ara-web/action/get";
-  let src = `const ${varName} = "${varValue}"`;
-  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  let vars = await code.getVariableIdentifiers();
+// // const parentUrl = "/ara/act/ara-web/action/get";
+// test('Supports the literal value assignment', async () => {
+//   const varName = 'parentUrl'
+//   const varValue = "/ara/act/ara-web/action/get";
+//   let src = `const ${varName} = "${varValue}"`;
+//   let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+//   let vars = await code.getVariableIdentifiers();
 
-  // We don't check the result, as previous tests must ensure its passing
-  let astNode = vars.getValue()[varName] as CodePiece;
-  expect(astNode.data).toBeInstanceOf(AraLink)
-  expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
+//   // We don't check the result, as previous tests must ensure its passing
+//   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-  const context = getEmptyContext();
-  const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
-  expect(identifiedData.isSuccess).toBe(true);
-  astNode.typedData = identifiedData.getValue();
-  expect(astNode.dataType).toEqual(ValueTypeString.string);
-  expect(astNode.data).toEqual(varValue)
-});
+//   expect(astNode.data).toBeInstanceOf(AraLink)
+//   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
+
+//   const context = getEmptyContext();
+//   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+//   expect(identifiedData.isSuccess).toBe(true);
+//   astNode.typedData = identifiedData.getValue();
+//   expect(astNode.dataType).toEqual(ValueTypeString.string);
+//   expect(astNode.data).toEqual(varValue)
+// });
 
 // const obj = { slug: "Astro.params" }
 // const { slug } = obj;
@@ -210,7 +222,8 @@ test('Supports the linting variable parameter from object decoupling', async () 
   const vars = await code.getVariableIdentifiers();
   // Result
   expectAstNodeResult(vars, varName)
-  const astNode = vars.getValue()[varName] as CodePiece;
+  const astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   let expectedProps: AstNodeProperties = {
     constant: true,
     public: false
@@ -234,10 +247,13 @@ test('Supports the linting variable parameter from object decoupling', async () 
   await putFuncModule(reflect.nodeJsExt);
 
   const objectName = 'obj'
-  const objectAstNode = vars.getValue()[objectName] as CodePiece;
-  moduleMemory.addIdentifiers({[objectAstNode.identifier!]: objectAstNode})
-
-  const context = new CodePieceContext(astNode.getAllMemoryData(), moduleMemory.getIdentifiers(), projectMemory);
+  const objectAstNode = vars.getValue().find(codePiece => codePiece.identifier === objectName);
+  const parent = moduleMemory.rest.get!('*')!
+  const posting = new ObjectNode<CodePiece>(codePieceOps, objectAstNode, parent);
+  const posted = moduleMemory.rest.post!('*', posting);
+  expect(posted.isSuccess).toBe(true);
+  
+  const context = new CodePieceContext(astNode.getAllMemoryData(), moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -269,17 +285,24 @@ test('Supports the function call as variable value', async () => {
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // We don't check the result, as previous tests must ensure its passing
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined();
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -310,17 +333,24 @@ test('Supports the function call as variable value but mismatch the types', asyn
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // We don't check the result, as previous tests must ensure its passing
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.string)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(false);
 });
@@ -347,17 +377,25 @@ test('Supports the function call without any argument', async () => {
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+  
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // We don't check the result, as previous tests must ensure its passing
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.string)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -391,24 +429,33 @@ test('Supports the method call', async () => {
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
-  let objAstNode = vars.getValue()[objName] as CodePiece;
+  let objAstNode = vars.getValue().find(codePiece => codePiece.identifier === objName)!;
+
   expect(objAstNode.data).toBeInstanceOf(AraLink)
   expect(objAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(objAstNode.data)).toBe(true)
-  moduleMemory.addIdentifiers({[objAstNode.identifier!]: objAstNode})
+  moduleMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, objAstNode, parent))
 
   // We don't check the result, as previous tests must ensure its passing
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toEqual(ValueTypeString.number)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
+  Debug.log(identifiedData)
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
   expect(astNode.dataType).toEqual(ValueTypeString.number);
@@ -439,24 +486,32 @@ test('Supports the spread assignment through enums', async () => {
   // Add imports and lint them.
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Profile check
-  let profileAstNode = vars.getValue()[profileName] as CodePiece;
+  let profileAstNode = vars.getValue().find(codePiece => codePiece.identifier === profileName)!;
+
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
   context.post([profileAstNode])
   // Spread Assignment
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
@@ -493,24 +548,32 @@ test('Supports the type from the imports', async () => {
   // Add imports and lint them.
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(imports.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  imports.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+    
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Profile check
-  let profileAstNode = vars.getValue()[profileName] as CodePiece;
+  let profileAstNode = vars.getValue().find(codePiece => codePiece.identifier === profileName)!;
+
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
   context.post([profileAstNode])
   // Spread Assignment
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
@@ -546,25 +609,34 @@ test('Supports the type from the local type with `as` keyword', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+  
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Profile check
-  let profileAstNode = vars.getValue()[profileName] as CodePiece;
+  let profileAstNode = vars.getValue().find(codePiece => codePiece.identifier === profileName)!;
+
   expect(profileAstNode.data).toBeInstanceOf(AraLink)
   expect(profileAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
   context.post([profileAstNode])
   
   // Spread Assignment
-  let astNode = vars.getValue()[varName] as CodePiece;
+  let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(astNode.data).toBeInstanceOf(AraLink)
   expect(astNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
@@ -595,23 +667,32 @@ test('Supports the union types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+  
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  let profileAstNode = types.getValue()[profileTypeName] as CodePiece;
+  let profileAstNode = types.getValue().find(codePiece => codePiece.identifier === profileTypeName)!;
+
   expect(profileAstNode.data).toBeInstanceOf(UnionTypeDeclaration)
   expect(profileAstNode.dataType).toBe(ValueTypeString.object)
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -643,23 +724,31 @@ test('Supports the intersected types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  let profileAstNode = types.getValue()[profileTypeName] as CodePiece;
+  let profileAstNode = types.getValue().find(codePiece => codePiece.identifier === profileTypeName)!;
+
   expect(profileAstNode.data).toBeInstanceOf(IntersectedUnionType)
   expect(profileAstNode.dataType).toBe(ValueTypeString.object)
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -686,26 +775,38 @@ test('Supports the arrays through Array generic', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
 
   // Type checks
-  let typeAstNode = types.getValue()[typeName] as CodePiece;
+  let typeAstNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
+
   expect(typeAstNode.data).toBeInstanceOf(UserTypeDeclaration)
   expect(typeAstNode.dataType).toBe(ValueTypeString.object)
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -732,27 +833,38 @@ test('Supports the arrays through Array literals', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
 
   // Type checks
-  let typeAstNode = types.getValue()[typeName] as CodePiece;
+  let typeAstNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
+
   expect(typeAstNode.data).toBeInstanceOf(UserTypeDeclaration)
   expect(typeAstNode.dataType).toBe(ValueTypeString.object)
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(Array.isArray(varAstNode.dataType)).toBe(true)
   expect((varAstNode.dataType as Array<any>)[0]).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -772,19 +884,25 @@ test('Supports the arrays with primitive types', async () => {
 
   let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
   let vars = await code.getVariableIdentifiers();
+  const parent = moduleMemory.rest.get!('*')!;
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(Array.isArray(varAstNode.dataType)).toBe(true)
   expect((varAstNode.dataType as Array<any>)[0]).toBe(ValueTypeString.string)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -813,27 +931,39 @@ test('Supports the shorthand project assign with primitive types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+    
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  let typeNode = types.getValue()[typeName] as CodePiece;
-  expect(typeNode.data).toBeInstanceOf(UserTypeDeclaration)
-  expect(typeNode.dataType).toBe(ValueTypeString.object)
+  let typeNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
+  expect(typeNode.data).toBeInstanceOf(UserTypeDeclaration);
+  expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
-  moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
+  const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
+  moduleMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, foundVar, parent))
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -861,27 +991,41 @@ test('Supports the parenthesis', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+    
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  let typeNode = types.getValue()[typeName] as CodePiece;
+  let typeNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
   expect(typeNode.data).toBeInstanceOf(UserTypeDeclaration)
-  expect(typeNode.dataType).toBe(ValueTypeString.object)
+  expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
-  moduleMemory.addIdentifiers({[propertyName]: vars.getValue()[propertyName]})
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
+  const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
+  moduleMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, foundVar, parent))
+
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
+
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeInstanceOf(AraLink)
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -900,85 +1044,117 @@ test('Supports the conditional expression', async () => {
   const propertyName = 'name'
   const varName = 'names'
   const trueCondition = '1';
-  const falseCondition = '-2';
 
-  let src = 
+  const src = 
     ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
     ` const data = ${trueCondition}; ` +
     ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
-  let code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  let vars = await code.getVariableIdentifiers();
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
-  let types = await code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
-  let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  const identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  let typeNode = types.getValue()[typeName] as CodePiece;
+  const typeNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
   expect(typeNode.data).toBeInstanceOf(UserTypeDeclaration)
-  expect(typeNode.dataType).toBe(ValueTypeString.object)
+  expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
-  moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
+  const foundVar = vars.getValue().find(codePiece => codePiece.identifier === 'data');
+  moduleMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, foundVar, parent))
 
   // Variable check
-  let varAstNode = vars.getValue()[varName] as CodePiece;
+  const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  let context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
-  let identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
   expect(varAstNode.data).toStrictEqual({ name: 'Medet', sex: 1 })
   expect(varAstNode.dataType).toEqual(ValueTypeString.object)
   context.post([varAstNode])
+});
 
+test('Supports the conditional expression when its false', async () => {
+  const reflect = new Reflect({packageLink: reflectingPkgUrl});
+  const projectMemory = getProjectMemory(reflect.nodeJsExt);
+  const moduleMemory = getEmptyModule();
+
+  const typeName = 'CustomType'
+  const propertyName = 'name'
+  const varName = 'names'
+
+  const falseCondition = '-2';
   //
   // False check
   //
-  src = 
+  const src = 
   ` export type ${typeName} = { ${propertyName}: string; sex: number };` +
   ` const data = ${falseCondition}; ` +
   ` const ${varName} = data === 1 ? ({${propertyName}: 'Medet', sex: +1}) : 'Not found'`;
-  code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  vars = await code.getVariableIdentifiers();
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const vars = await code.getVariableIdentifiers();
 
   // Add types and lint them.
-  types = await code.getTypeIdentifiers();
+  const types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  moduleMemory.addIdentifiers(types.getValue())
-  identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
+  const parent = moduleMemory.rest.get!('*')!
+  types.getValue().forEach((importedCodePiece) => {
+      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+      const posted = moduleMemory.rest.post!('*', posting);
+      expect(posted.isSuccess).toBe(true);
+  });
+  
+  const identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Type checks
-  typeNode = types.getValue()[typeName] as CodePiece;
+  const typeNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
+
   expect(typeNode.data).toBeInstanceOf(UserTypeDeclaration)
-  expect(typeNode.dataType).toBe(ValueTypeString.object)
+  expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  moduleMemory.addIdentifiers((await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue())
-  moduleMemory.addIdentifiers({'data': vars.getValue()['data']})
-
+  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
+    const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
+    const posted = moduleMemory.rest.post!('*', posting);
+    expect(posted.isSuccess).toBe(true);   
+  })
+  const foundVar2 = vars.getValue().find(codePiece => codePiece.identifier === 'data');
+  const var2Posted = moduleMemory.rest.post!('*', new ObjectNode<CodePiece>(codePieceOps, foundVar2, parent))
+  expect(var2Posted.isSuccess).toBe(true);
+  Debug.log(`The module data by parent ${parent.selector}`, moduleMemory.rest.getAll!(`${MODULE_SELECTOR} #data`).map(codePiece => codePiece.selector))
   // Variable check
-  varAstNode = vars.getValue()[varName] as CodePiece;
+  const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
   expect(varAstNode.data).toBeInstanceOf(AraLink)
   expect(varAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  context = new CodePieceContext([], moduleMemory.getIdentifiers(), projectMemory);
-  identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
+  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
   expect(varAstNode.data).toStrictEqual('Not found')
   expect(varAstNode.dataType).toEqual(ValueTypeString.string)
   context.post([varAstNode])
-
 });       

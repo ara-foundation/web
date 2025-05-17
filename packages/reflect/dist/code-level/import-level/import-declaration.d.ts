@@ -5,7 +5,7 @@
  */
 import { ImportDeclaration as TsImportDeclaration, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { type CodePieceRecord, type AstNodeFilter } from "../index.js";
+import { CodePiece, type AstNodeFilter } from "../index.js";
 export declare class ImportDeclaration {
     private _importClause;
     private _defaultIdentifier?;
@@ -14,7 +14,7 @@ export declare class ImportDeclaration {
     private constructor();
     get importClause(): string;
     get defaultIdentifier(): string | undefined;
-    get codePieces(): CodePieceRecord;
+    get codePieces(): CodePiece[];
     static fromTsNode(tsNode: Node): Promise<Result<ImportDeclaration>>;
     static isImportClause: AstNodeFilter;
     static isImportDeclaration: AstNodeFilter;
@@ -47,7 +47,7 @@ export declare class ImportDeclaration {
      * Import declarations could be default if it's a single literal.
      *
      * import DefaultName from "string-literla-path"
-     * @returns {CodePieceRecord}
+     * @returns {CodePiece[]}
     */
     private getIdentifiers;
 }

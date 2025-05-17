@@ -4,7 +4,6 @@ import { Result } from "@ara-web/p-hintjens";
 import { 
     CodePiece, 
     CodePieceType, 
-    type CodePieceRecord, 
     type CodePieceFilter, 
     type GenericHandler,
     ValueTypeString, 
@@ -43,14 +42,14 @@ const recordGenericHandler: GenericHandler = (astNode: CodePiece, values: ValueT
 }
 
 export class BuiltInIdentifiers {
-    private static prefix = '_';
+    private static prefix = '';
     private static identifiers = ['Array', 'Record'];
     private static builtInSrc = `
         export const ${this.prefix}${this.identifiers[0]} = [];
         export const ${this.prefix}${this.identifiers[1]} = {key: '', value: {}};
     `;
 
-    private static _identifiers: CodePieceRecord|undefined = undefined;
+    private static _identifiers: CodePiece[] = [];
 
     public static isBuiltInIdentifier: CodePieceFilter = (child: CodePiece): boolean => {
         if (child.identifier === undefined) {
@@ -71,12 +70,9 @@ export class BuiltInIdentifiers {
                 varIdentifiers.errorDescription!
             )
         }
-        for (let _identifier in varIdentifiers.getValue()) {
-            if (_identifier === identifier) {
-                // We are sure, that the returned data is CodePiece, not a link,
-                // Since the script is here as well.
-                return Result.ok(varIdentifiers.getValue()[_identifier] as CodePiece);
-            }
+        const found = varIdentifiers.getValue().find(codePiece => codePiece.identifier === identifier)
+        if (found !== undefined) {
+            return Result.ok(found);
         }
     
         return Result.fail(
@@ -85,15 +81,14 @@ export class BuiltInIdentifiers {
         )
     }
 
-    public static getBuiltInIdentifiers = async (): Promise<Result<CodePieceRecord>> => {
-        if (this._identifiers !== undefined) {
+    public static getBuiltInIdentifiers = async (): Promise<Result<CodePiece[]>> => {
+        if (this._identifiers.length > 0) {
             return Result.ok(this._identifiers);
         }
-        let identifiers: CodePieceRecord = {};
+        let identifiers: CodePiece[] = [];
         const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
     
         const varStatements = code.getTsNodes()
-        
         const arrayAstNode = await this.identifyArrayAstNode(varStatements)
         if (arrayAstNode.isFailure) {
             return Result.fail(
@@ -101,7 +96,7 @@ export class BuiltInIdentifiers {
                 arrayAstNode.errorDescription!
             )
         } else {
-            identifiers[this.identifiers[0]] = arrayAstNode.getValue();
+            identifiers.push(arrayAstNode.getValue());
         }
     
         const recordAstNode = await this.identifyRecordAstNode(varStatements)
@@ -111,7 +106,7 @@ export class BuiltInIdentifiers {
                 recordAstNode.errorDescription!
             )
         } else {
-            identifiers[this.identifiers[1]] = recordAstNode.getValue();
+            identifiers.push(recordAstNode.getValue());
         }
     
         this._identifiers = identifiers;

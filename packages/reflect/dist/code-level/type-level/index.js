@@ -122,7 +122,7 @@ export class TypeLevel {
     };
     static getTypeIdentifiers = async (tsNodes) => {
         const typeStatements = tsNodes.filter((tsNode) => (TypeDeclarationTraits.isTypeDeclaration(tsNode)));
-        let identifiers = {};
+        let identifiers = [];
         for (let tsNode of typeStatements) {
             var typeStatement = TypeDeclarationTraits.fromTsNode(tsNode);
             if (typeStatement.isFailure) {
@@ -133,7 +133,7 @@ export class TypeLevel {
             if (identifiedTypeDeclaration.isFailure) {
                 return Result.fail(`TypeDeclaration('${typeStatement.getValue().getText()}'): getAstNode(): ${identifiedTypeDeclaration.errorTitle}`, identifiedTypeDeclaration.errorDescription);
             }
-            identifiers[identifiedTypeDeclaration.getValue().identifier] = identifiedTypeDeclaration.getValue();
+            identifiers.push(identifiedTypeDeclaration.getValue());
         }
         return Result.ok(identifiers);
     };
@@ -164,9 +164,7 @@ export class TypeLevel {
         }
         let nodeContext = parentNodeContext.clone([]);
         if (node.memoryDataLength() > 0) {
-            // Debug.push(`this.lintAstNodeMemory()`, {node: node.identifier!})
             const memoryLintResult = this.lintAstNodeMemory(node, nodeContext);
-            // Debug.pop();
             if (memoryLintResult.isFailure) {
                 return Result.fail(`this.lintAstNodeMemory(node: '${node.identifier}'): ${memoryLintResult.errorTitle}`, memoryLintResult.errorDescription);
             }
@@ -177,9 +175,7 @@ export class TypeLevel {
         if (astNode.data === undefined) {
             return Result.fail(`The AST Node '${astNode.tsNode.getText()}' data is empty`, `Please, pass the AST Node with the initial data`);
         }
-        // Debug.push(`this.lintTypeData('${astNode.identifier}', nodeContext: ${nodeContext.localScopeLength} local scopes)`)
         const identifiedData = this.lintTypeData(astNode.data, nodeContext);
-        // Debug.pop();
         if (identifiedData.isFailure) {
             return Result.fail(`this.lintTypeData(): ${identifiedData.errorTitle}`, identifiedData.errorDescription);
         }
@@ -221,9 +217,7 @@ export class TypeLevel {
                 return Result.fail(`The node '${node.identifier}' memory node has no identifier`, `Please update the identifyTypes() to fix it`);
             }
             const memoryNodeContext = nodeContext.clone(node.getAllMemoryData([memoryNode.identifier]));
-            // Debug.push(`this.lintType()`, {node: memoryNode.identifier!});
             const lintedMemoryNode = this.lintType(memoryNode, memoryNodeContext);
-            // Debug.pop();
             if (lintedMemoryNode.isFailure) {
                 return Result.fail(`this.lintType(node: '${memoryNode.identifier}'): ${lintedMemoryNode.errorTitle}`, lintedMemoryNode.errorDescription);
             }

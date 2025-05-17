@@ -1,7 +1,7 @@
-import { Result } from "@ara-web/p-hintjens";
+import { Debug, Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
 import type { MemoryOperations } from "../index.js";
-import { CodePiece, type CodePieceRecord } from "./code-piece.js";
+import { CodePiece } from "./code-piece.js";
 
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -12,17 +12,17 @@ import { CodePiece, type CodePieceRecord } from "./code-piece.js";
  */
 export class CodePieceContext {
     private _localDefined: CodePiece[];
-    private _pageIdentifiers: CodePieceRecord; 
+    private _pageIdentifiers: CodePiece[]; 
     private _projectMemory: MemoryOperations;
 
-    constructor(localDefined: CodePiece[], pageIdentifiers: CodePieceRecord, projectMemory: MemoryOperations) {
+    constructor(localDefined: CodePiece[], pageIdentifiers: CodePiece[], projectMemory: MemoryOperations) {
         this._localDefined = localDefined;
         this._pageIdentifiers = pageIdentifiers;
         this._projectMemory = projectMemory;
     }
 
     public clone(additionalLocals: CodePiece[], skipIdentifiers?: string[]): CodePieceContext {
-        const context = new CodePieceContext(additionalLocals, {}, this._projectMemory);
+        const context = new CodePieceContext(additionalLocals, [], this._projectMemory);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];
@@ -75,18 +75,15 @@ export class CodePieceContext {
     }
 
     private getPageIdentifier = (identifier: string): CodePiece|undefined => {
-        if (this._pageIdentifiers === undefined || Object.keys(this._pageIdentifiers).indexOf(identifier) === -1) {
+        if (this._pageIdentifiers === undefined || this._pageIdentifiers.find(codePiece => codePiece.identifier === identifier) === undefined) {
+            return undefined;
+        }
+        const identifiedNode = this._pageIdentifiers.find((codePiece) => codePiece.identifier === identifier);
+        if (identifiedNode === undefined) {
             return undefined;
         }
 
-        const identified = this._pageIdentifiers[identifier];
-
-        if (identified instanceof AraLink) {
-            return this.getIdentifier(identified)
-        } else if (identified instanceof CodePiece) {
-            return identified;
-        }
-        return undefined;
+        return identifiedNode;
     }
 
     public getIdentifier = (data: AraLink<string>|string): CodePiece|undefined => {
@@ -105,7 +102,6 @@ export class CodePieceContext {
                 return astNode;
             }
         }
-
         return this.getPageIdentifier(identifier);
     }
 

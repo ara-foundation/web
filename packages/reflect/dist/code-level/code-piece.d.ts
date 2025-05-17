@@ -17,7 +17,6 @@ export declare enum CodePieceType {
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
-export type CodePieceRecord = Record<string, CodePiece>;
 export type CodePieceFilter = (astNode: CodePiece) => boolean;
 export type GenericHandler = (astNode: CodePiece, values: ValueType[]) => Result<CodePiece>;
 export type TypedData = Pick<CodePiece, "data" | "dataType">;

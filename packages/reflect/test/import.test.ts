@@ -6,6 +6,8 @@ import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { getEmptyModule, getProjectMemory, putFuncModule } from "./shared.js";
 import { Code } from "../src/code-level/code.js";
+import { ObjectNode } from "@ara-web/sds";
+import { CodePiece, codePieceOps } from "../src/index.js";
 
 class TestCode extends Code {
 }
@@ -29,7 +31,9 @@ test('Import with "as" keyword', async () => {
     const testCode = new TestCode(sourceCode, moduleLink);
     const data = await testCode.getImportedIdentifiers(projectMemory);
     expect(data.isSuccess).toBe(true);
-    testModule.addIdentifiers(data.getValue())
+    data.getValue().forEach((importedCodePiece) => {
+      testModule.rest.post!('#document >', new ObjectNode<CodePiece>(codePieceOps, importedCodePiece))
+    })
 
     const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
     expect(identifiers.isSuccess).toBe(true)
@@ -42,8 +46,10 @@ test('Import with type as first node', async () => {
     const testCode = new TestCode(genericTypeCode, moduleLink);
     const data = await testCode.getImportedIdentifiers(projectMemory);
     expect(data.isSuccess).toBe(true);
-    testModule.addIdentifiers(data.getValue())
-
+    data.getValue().forEach((importedCodePiece) => {
+      testModule.rest.post!('#document >', new ObjectNode<CodePiece>(codePieceOps, importedCodePiece))
+    })
+    
     const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
     expect(identifiers.isSuccess).toBe(true)
 });

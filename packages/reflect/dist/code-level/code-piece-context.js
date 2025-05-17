@@ -1,4 +1,4 @@
-import { Result } from "@ara-web/p-hintjens";
+import { Debug, Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
 import { CodePiece } from "./code-piece.js";
 /**
@@ -18,7 +18,7 @@ export class CodePieceContext {
         this._projectMemory = projectMemory;
     }
     clone(additionalLocals, skipIdentifiers) {
-        const context = new CodePieceContext(additionalLocals, {}, this._projectMemory);
+        const context = new CodePieceContext(additionalLocals, [], this._projectMemory);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];
@@ -64,17 +64,14 @@ export class CodePieceContext {
         return this.getLocal(identifier) !== undefined;
     };
     getPageIdentifier = (identifier) => {
-        if (this._pageIdentifiers === undefined || Object.keys(this._pageIdentifiers).indexOf(identifier) === -1) {
+        if (this._pageIdentifiers === undefined || this._pageIdentifiers.find(codePiece => codePiece.identifier === identifier) === undefined) {
             return undefined;
         }
-        const identified = this._pageIdentifiers[identifier];
-        if (identified instanceof AraLink) {
-            return this.getIdentifier(identified);
+        const identifiedNode = this._pageIdentifiers.find((codePiece) => codePiece.identifier === identifier);
+        if (identifiedNode === undefined) {
+            return undefined;
         }
-        else if (identified instanceof CodePiece) {
-            return identified;
-        }
-        return undefined;
+        return identifiedNode;
     };
     getIdentifier = (data) => {
         let identifier;

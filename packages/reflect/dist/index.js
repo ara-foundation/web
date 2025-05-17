@@ -1,4 +1,6 @@
 export { Reflect } from "./reflect.js";
+export { codePieceOps, moduleToObjectTree, MODULE_SELECTOR } from "./code-piece-object-tree.js";
+export { CodePiece } from "./code-level/index.js";
 export { ModuleMemory } from "./module-memory.js";
 export { ProjectMemory } from "./project-memory.js";
 export { BuiltInIdentifiers } from "./built-in-identifiers.js";

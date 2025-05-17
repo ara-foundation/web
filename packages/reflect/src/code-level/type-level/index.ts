@@ -11,8 +11,7 @@ import {
     AstNodeContext,
     ReflectLink,
     type IdentifiedNodeDataType,
-    type ValueType,
-    type CodePieceRecord
+    type ValueType
  } from "../index.js";
 import { TypeValueTraits, type PossibleTypeValue } from "./type-value-traits.js";
 import { TypeDeclaration as TypeDeclarationTraits } from "./type-declaration.js";
@@ -156,9 +155,9 @@ export class TypeLevel {
         return Result.ok(typedData);
     }
 
-    public static getTypeIdentifiers = async (tsNodes: Node[]): Promise<Result<CodePieceRecord>> => {
+    public static getTypeIdentifiers = async (tsNodes: Node[]): Promise<Result<CodePiece[]>> => {
         const typeStatements = tsNodes.filter((tsNode) => (TypeDeclarationTraits.isTypeDeclaration(tsNode)))
-        let identifiers: CodePieceRecord = {};
+        let identifiers: CodePiece[] = [];
             
         for (let tsNode of typeStatements) {
             var typeStatement = TypeDeclarationTraits.fromTsNode(tsNode);
@@ -177,7 +176,7 @@ export class TypeLevel {
                     identifiedTypeDeclaration.errorDescription!
                 )
             }
-            identifiers[identifiedTypeDeclaration.getValue().identifier!] = identifiedTypeDeclaration.getValue();
+            identifiers.push(identifiedTypeDeclaration.getValue());
         }
         
         return Result.ok(identifiers);
@@ -215,9 +214,7 @@ export class TypeLevel {
         
         let nodeContext = parentNodeContext.clone([]);
         if (node.memoryDataLength() > 0) {
-            // Debug.push(`this.lintAstNodeMemory()`, {node: node.identifier!})
             const memoryLintResult = this.lintAstNodeMemory(node, nodeContext);
-            // Debug.pop();
             if (memoryLintResult.isFailure) {
                 return Result.fail(
                     `this.lintAstNodeMemory(node: '${node.identifier}'): ${memoryLintResult.errorTitle}`,
@@ -235,9 +232,7 @@ export class TypeLevel {
             )
         }
 
-        // Debug.push(`this.lintTypeData('${astNode.identifier}', nodeContext: ${nodeContext.localScopeLength} local scopes)`)
         const identifiedData = this.lintTypeData(astNode.data, nodeContext);
-        // Debug.pop();
         if (identifiedData.isFailure) {
             return Result.fail(
                 `this.lintTypeData(): ${identifiedData.errorTitle}`,
@@ -298,9 +293,7 @@ export class TypeLevel {
             
             const memoryNodeContext = nodeContext.clone(node.getAllMemoryData([memoryNode!.identifier!]))
 
-            // Debug.push(`this.lintType()`, {node: memoryNode.identifier!});
             const lintedMemoryNode = this.lintType(memoryNode, memoryNodeContext)
-            // Debug.pop();
             if (lintedMemoryNode.isFailure) {
                 return Result.fail(
                     `this.lintType(node: '${memoryNode.identifier}'): ${lintedMemoryNode.errorTitle}`,

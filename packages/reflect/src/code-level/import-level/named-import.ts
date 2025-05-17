@@ -8,7 +8,6 @@ import { Result, Debug } from "@ara-web/p-hintjens";
 import { 
     CodePiece, 
     CodePieceType, 
-    type CodePieceRecord,
     AstNodeTraits, 
     type AstNodeFilter,
     Identifier
@@ -71,8 +70,8 @@ export class NamedImport {
      * @param importPath 
      * @returns 
      */
-    public static getIdentifiers = (nodeType: CodePieceType, namedChildren: Node[]): Result<CodePieceRecord> => {
-        let identifiers: CodePieceRecord = {};
+    public static getIdentifiers = (nodeType: CodePieceType, namedChildren: Node[]): Result<CodePiece[]> => {
+        let identifiers: CodePiece[] = [];
 
 
         const namedImportChildCount = namedChildren.length;
@@ -90,7 +89,7 @@ export class NamedImport {
                         namedIdentifiers.errorDescription!
                     )
                 }
-                identifiers = {...identifiers, ...(namedIdentifiers.getValue())}
+                identifiers = [...identifiers, ...(namedIdentifiers.getValue())]
             } else if (NamedImport.isImportSpecifier(namedChildren[i])) {
                 const namedIdentifiers = NamedImport.getIdentifiers(nodeType, AstNodeTraits.getChildren(namedChildren[i], [], [AstNodeTraits.isNonImportant], [","]));
                 if (namedIdentifiers.isFailure) {
@@ -99,7 +98,7 @@ export class NamedImport {
                     namedIdentifiers.errorDescription!
                     )
                 }
-                identifiers = {...identifiers, ...(namedIdentifiers.getValue())}
+                identifiers = [...identifiers, ...(namedIdentifiers.getValue())]
             } else if (Identifier.isA(namedChildren[i])) {
                 const identifier = namedChildren[i].getText();
 
@@ -142,12 +141,12 @@ export class NamedImport {
                     identifiedNode.identifier = alias.getText();
 
                     // In case of the alias, we identify the ast node as alias.
-                    identifiers[alias.getText()] = identifiedNode;
+                    identifiers.push(identifiedNode);
 
                     i += 2;
                 } else {
                     identifiedNode.identifier = identifier;
-                    identifiers[identifier] = identifiedNode;
+                    identifiers.push(identifiedNode);
                 }
             } else if (AstNodeTraits.isTypeKeyword(namedChildren[i])) {
                 nodeType = CodePieceType.Type;

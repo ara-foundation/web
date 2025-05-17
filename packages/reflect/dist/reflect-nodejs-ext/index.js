@@ -2,9 +2,9 @@ export var ModuleCategory;
 (function (ModuleCategory) {
     ModuleCategory["NodeJsModule"] = "node_modules";
 })(ModuleCategory || (ModuleCategory = {}));
-import { ModuleLink } from "@ara-web/sds";
-import { EnumTraits, OkResult, Result, Debug, } from "@ara-web/p-hintjens";
-import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath } from "../index.js";
+import { ModuleLink, ObjectNode } from "@ara-web/sds";
+import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
+import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath, codePieceOps, CodePiece } from "../index.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
  */
@@ -108,8 +108,6 @@ export class NodejsReflectExtension {
         return moduleMemories;
     }
     isModuleExist(moduleLink) {
-        Debug.log(`Modules:`);
-        Debug.log(Object.keys(this._moduleMemories));
         let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
         if (this._moduleMemories[url] !== undefined) {
             return true;
@@ -178,7 +176,13 @@ export class NodejsReflectExtension {
         }
         projectMemory
             .getModules()
-            .filter((module) => module.moduleCategory !== ModuleCategory.NodeJsModule).forEach((module) => { module.addIdentifiers(identifiers.getValue()); });
+            .filter((module) => module.moduleCategory !== ModuleCategory.NodeJsModule).forEach((module) => {
+            const parent = module.rest.get('#document');
+            identifiers.getValue().forEach((codePiece) => {
+                const codePieceNode = new ObjectNode(codePieceOps, codePiece, parent);
+                module.rest.post('#document >', codePieceNode);
+            });
+        });
         return Result.ok(projectMemory);
     };
 }

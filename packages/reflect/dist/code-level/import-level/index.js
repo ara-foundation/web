@@ -1,6 +1,6 @@
 import { Node } from "ts-morph";
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import {} from "../index.js";
+import { CodePiece } from "../index.js";
 import { ImportDeclaration } from "./import-declaration.js";
 export class ImportLevel {
     // Caching to fetch the data few times.

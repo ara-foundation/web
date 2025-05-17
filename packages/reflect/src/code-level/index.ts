@@ -1,7 +1,6 @@
 export { 
     CodePiece, 
     CodePieceType, 
-    type CodePieceRecord,
     type TypedData,
     type CodePieceFilter,
     type GenericHandler

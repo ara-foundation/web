@@ -1,7 +1,7 @@
 import { Node } from "ts-morph";
 import { AraLink } from "@ara-web/sds";
 import { Result } from "@ara-web/p-hintjens";
-import { type TypedData, CodePiece, AstNodeContext, type ValueType, type CodePieceRecord } from "../index.js";
+import { type TypedData, CodePiece, AstNodeContext, type ValueType } from "../index.js";
 import { type PossibleTypeValue } from "./type-value-traits.js";
 export declare class TypeLevel {
     static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
@@ -19,7 +19,7 @@ export declare class TypeLevel {
      * @param typedData
      */
     static matchDataToType: (typedData: TypedData) => Result<TypedData>;
-    static getTypeIdentifiers: (tsNodes: Node[]) => Promise<Result<CodePieceRecord>>;
+    static getTypeIdentifiers: (tsNodes: Node[]) => Promise<Result<CodePiece[]>>;
     /**********************************************************************************
      *
      * Linting

@@ -1,4 +1,4 @@
-export { CodePiece, CodePieceType, type CodePieceRecord, type TypedData, type CodePieceFilter, type GenericHandler } from "./code-piece.js";
+export { CodePiece, CodePieceType, type TypedData, type CodePieceFilter, type GenericHandler } from "./code-piece.js";
 export { ReflectLink } from "./reflect-link.js";
 export { type AstNodeFilter, AstNodeTraits } from "./ast-node-traits.js";
 export { Identifier } from "./idenitifier.js";

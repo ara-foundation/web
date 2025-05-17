@@ -1,6 +1,6 @@
 import { Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { type CodePieceRecord, type AstNodeFilter } from "../index.js";
+import { CodePiece, type AstNodeFilter } from "../index.js";
 export declare class ImportLevel {
     private static _lastImportedTsNode;
     private static _lastImportDeclartion;
@@ -12,6 +12,6 @@ export declare class ImportLevel {
      * @returns string literal
      */
     static getImportClause: (tsNode: Node) => Promise<Result<string>>;
-    static getIdentifiers: (tsNode: Node) => Promise<Result<CodePieceRecord>>;
+    static getIdentifiers: (tsNode: Node) => Promise<Result<CodePiece[]>>;
     static getDefaultIdentifier: (tsNode: Node) => Promise<Result<string | undefined>>;
 }

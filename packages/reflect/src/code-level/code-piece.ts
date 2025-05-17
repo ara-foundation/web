@@ -19,7 +19,7 @@ export enum CodePieceType {
  * identity -> AstNode or
  * identity -> AraLink to another identity
  */
-export type CodePieceRecord = Record<string, CodePiece>;
+// export type CodePieceRecord = Record<string, CodePiece>;
 
 export type CodePieceFilter = (astNode: CodePiece) => boolean;
 

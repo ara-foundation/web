@@ -5,7 +5,7 @@
  */
 import { VariableDeclaration as TsVariableDeclaration, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { type CodePieceRecord, type AstNodeFilter } from "../index.js";
+import { CodePiece, type AstNodeFilter } from "../index.js";
 export declare class VariableDeclaration {
     protected _tsNode: TsVariableDeclaration;
     private _publicFlag;
@@ -23,8 +23,8 @@ export declare class VariableDeclaration {
     getIdentifier: () => Result<string>;
     /**
      * Parses this variable declaration into the list of AST Nodes.
-     * @returns {CodePieceRecord}
+     * @returns {CodePiece[]}
      */
-    getAstIdentifiers: () => Promise<Result<CodePieceRecord>>;
+    getAstIdentifiers: () => Promise<Result<CodePiece[]>>;
     private getTypedData;
 }

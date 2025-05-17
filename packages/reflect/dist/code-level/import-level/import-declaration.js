@@ -12,7 +12,7 @@ import { AstNodeTraits } from "../ast-node-traits.js";
 export class ImportDeclaration {
     _importClause;
     _defaultIdentifier;
-    _identfiers = {};
+    _identfiers = [];
     _tsNode;
     constructor(tsNode) {
         this._tsNode = tsNode;
@@ -168,7 +168,7 @@ export class ImportDeclaration {
      * @returns
      */
     identifyNamedImports = () => {
-        let identifiers = {};
+        let identifiers = [];
         // Maybe a component is actually defined outside, so its in the imports?
         const namedImports = this.getNamedImports();
         if (namedImports.length === 0) {
@@ -183,7 +183,7 @@ export class ImportDeclaration {
             if (namedIdentifiers.isFailure) {
                 return Result.fail(`NamedImport.getIdentifiers('').getIdentifiers(nodeType: '${nodeType}'): ${namedIdentifiers.errorTitle}`, namedIdentifiers.errorDescription);
             }
-            identifiers = { ...identifiers, ...namedIdentifiers.getValue() };
+            identifiers = [...identifiers, ...namedIdentifiers.getValue()];
         }
         return Result.ok(identifiers);
     };
@@ -193,23 +193,23 @@ export class ImportDeclaration {
      * Import declarations could be default if it's a single literal.
      *
      * import DefaultName from "string-literla-path"
-     * @returns {CodePieceRecord}
+     * @returns {CodePiece[]}
     */
     getIdentifiers = () => {
-        let identifiers = {};
+        let identifiers = [];
         // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();
         // Debug.pop();
         if (namedImportIdentifiers.isFailure) {
             return Result.fail(`this.identifyNamedImports(tsNode='${this._tsNode.getText()}', importPath='${this._importClause.toString()}'): ${namedImportIdentifiers.errorTitle}`, namedImportIdentifiers.errorDescription);
         }
-        identifiers = { ...identifiers, ...namedImportIdentifiers.getValue() };
+        identifiers = [...identifiers, ...namedImportIdentifiers.getValue()];
         let importIdentifier = this.identifyImportDefaultIdentifier();
         if (importIdentifier.isFailure) {
             return Result.fail(`this.identifyImportDefaultIdentifier('${this._tsNode.getText()}'): ${importIdentifier.errorTitle}`, importIdentifier.errorDescription);
         }
         else if (importIdentifier.getValue() !== undefined) {
-            identifiers[importIdentifier.getValue().identifier] = importIdentifier.getValue();
+            identifiers.push(importIdentifier.getValue());
         }
         return Result.ok(identifiers);
     };

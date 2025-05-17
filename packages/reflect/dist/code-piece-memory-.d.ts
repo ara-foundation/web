@@ -1,9 +1,6 @@
-import { CodePieceType, CodePiece, type CodePieceRecord, type CodePieceFilter } from "./code-level/index.js";
-export declare abstract class AstIdentifierMemory {
-    private _identifiers;
+import { CodePieceType, CodePiece, type CodePieceFilter } from "./code-level/index.js";
+export declare abstract class CodePieceMemory_ {
     constructor();
-    addIdentifiers: (identifiers: CodePieceRecord) => void;
-    identifiersCount: () => number;
     /**Returns the AstNode from memory by given identifier.
      *
      Adviced to call this method, rather than directly fetching data identifier using this._identifiers.
@@ -13,7 +10,7 @@ export declare abstract class AstIdentifierMemory {
     */
     identifierByName: (identifier: string) => CodePiece | undefined;
     identifierByType: (identifier: string) => CodePiece | undefined;
-    getIdentifiers: (filters?: CodePieceFilter[], skippedIdentifiers?: string[]) => CodePieceRecord;
+    getIdentifiers: (filters?: CodePieceFilter[], skippedIdentifiers?: string[]) => CodePiece[];
     identifiersByType: (astNode: CodePieceType) => CodePiece[];
     print(filterKey?: string, filterValue?: any): void;
 }

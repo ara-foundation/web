@@ -5,7 +5,7 @@
  */
 import { NamedImports, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { CodePieceType, type CodePieceRecord, type AstNodeFilter } from "../index.js";
+import { CodePiece, CodePieceType, type AstNodeFilter } from "../index.js";
 export declare class NamedImport {
     protected _tsNode: NamedImports;
     private constructor();
@@ -26,5 +26,5 @@ export declare class NamedImport {
      * @param importPath
      * @returns
      */
-    static getIdentifiers: (nodeType: CodePieceType, namedChildren: Node[]) => Result<CodePieceRecord>;
+    static getIdentifiers: (nodeType: CodePieceType, namedChildren: Node[]) => Result<CodePiece[]>;
 }

@@ -9,12 +9,12 @@ import {
     Node
 } from "ts-morph";
 import { Debug, Result } from "@ara-web/p-hintjens";
-import { AstNodeTraits, type AstNodeFilter, type CodePieceRecord } from "../index.js";
+import { AstNodeTraits, type AstNodeFilter, type CodePiece } from "../index.js";
 import { VariableDeclaration } from "./variable-declaration.js";
 
 export class VariableStatement {
     protected _tsNode: TsVariableStatement;
-    private _astNodes: CodePieceRecord = {};
+    private _astNodes: CodePiece[] = [];
 
     private constructor (tsNode: Node) {
         this._tsNode = tsNode as TsVariableStatement;
@@ -57,7 +57,7 @@ export class VariableStatement {
     /**
      * Returns the variable's identifier
      */
-    public getAstIdentifiers = (): CodePieceRecord => {
+    public getAstIdentifiers = (): CodePiece[] => {
         return this._astNodes;
     }
 
@@ -67,8 +67,8 @@ export class VariableStatement {
      * @param publicFlag Indicates whether the ast nodes are public or not 
      * @returns 
      */
-    private identifyVariableDeclarationList = async (tsNode: Node, publicFlag: boolean): Promise<Result<CodePieceRecord>> => {
-        let identifiers: CodePieceRecord = {};
+    private identifyVariableDeclarationList = async (tsNode: Node, publicFlag: boolean): Promise<Result<CodePiece[]>> => {
+        let identifiers: CodePiece[] = [];
         const children = AstNodeTraits.getChildren(tsNode, [], [AstNodeTraits.isNonImportant, VariableStatement.isNonImportantKeyword])
         const childCount = children.length;
 
@@ -130,7 +130,7 @@ export class VariableStatement {
                     )
                 }
         
-                identifiers = {...identifiers, ...astNodes.getValue()}
+                identifiers = [...identifiers, ...astNodes.getValue()]
             }
         }
     
@@ -143,7 +143,7 @@ export class VariableStatement {
      * @param memory 
      * @returns 
      */
-    private identifyAstNodes = async (): Promise<Result<CodePieceRecord>> => {
+    private identifyAstNodes = async (): Promise<Result<CodePiece[]>> => {
         let publicFlag = false;
         
         const children = AstNodeTraits.getChildren(this._tsNode, [], [AstNodeTraits.isNonImportant]);

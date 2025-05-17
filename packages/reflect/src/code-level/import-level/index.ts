@@ -1,6 +1,6 @@
 import { Node } from "ts-morph";
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { type CodePieceRecord, type AstNodeFilter } from "../index.js";
+import { CodePiece, type AstNodeFilter } from "../index.js";
 import { ImportDeclaration } from "./import-declaration.js";
 
 export class ImportLevel {
@@ -54,7 +54,7 @@ export class ImportLevel {
         return Result.ok(this._lastImportDeclartion.importClause);
     }
 
-    public static getIdentifiers = async (tsNode: Node): Promise<Result<CodePieceRecord>> => {
+    public static getIdentifiers = async (tsNode: Node): Promise<Result<CodePiece[]>> => {
         const putted = await this._putImportDeclaration(tsNode);
         if (putted.isFailure) {
             return Result.fail(

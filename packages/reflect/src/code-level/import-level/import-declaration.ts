@@ -8,7 +8,6 @@ import { OkResult, Result, Debug, StringTraits } from "@ara-web/p-hintjens";
 import { 
     CodePiece, 
     CodePieceType, 
-    type CodePieceRecord,
     type AstNodeFilter,
     Identifier
 } from "../index.js";
@@ -19,7 +18,7 @@ import { AstNodeTraits } from "../ast-node-traits.js";
 export class ImportDeclaration {
     private _importClause: string;
     private _defaultIdentifier?: string;
-    private _identfiers: CodePieceRecord = {};
+    private _identfiers: CodePiece[] = [];
     protected _tsNode: TsImportDeclaration;
 
     private constructor (tsNode: TsImportDeclaration) {
@@ -35,7 +34,7 @@ export class ImportDeclaration {
         return this._defaultIdentifier;
     }
 
-    public get codePieces(): CodePieceRecord {
+    public get codePieces(): CodePiece[] {
         return this._identfiers;
     }
 
@@ -220,8 +219,8 @@ export class ImportDeclaration {
      * @param importPath 
      * @returns 
      */
-    private identifyNamedImports = (): Result<CodePieceRecord> => {
-        let identifiers: CodePieceRecord = {};
+    private identifyNamedImports = (): Result<CodePiece[]> => {
+        let identifiers: CodePiece[] = [];
         // Maybe a component is actually defined outside, so its in the imports?
         const namedImports = this.getNamedImports();
         if (namedImports.length === 0) {
@@ -241,7 +240,7 @@ export class ImportDeclaration {
                     namedIdentifiers.errorDescription!
                 )
             }
-            identifiers = {...identifiers, ...namedIdentifiers.getValue()}
+            identifiers = [...identifiers, ...namedIdentifiers.getValue()]
         }
         
         return Result.ok(identifiers);
@@ -253,10 +252,10 @@ export class ImportDeclaration {
      * Import declarations could be default if it's a single literal.
      * 
      * import DefaultName from "string-literla-path"
-     * @returns {CodePieceRecord}
+     * @returns {CodePiece[]}
     */
-    private getIdentifiers = (): Result<CodePieceRecord> => {
-        let identifiers: CodePieceRecord = {};
+    private getIdentifiers = (): Result<CodePiece[]> => {
+        let identifiers: CodePiece[] = [];
 
         // Debug.push(`this.identifyNamedImports()`)
         const namedImportIdentifiers = this.identifyNamedImports();
@@ -268,7 +267,7 @@ export class ImportDeclaration {
                 )
         }
 
-        identifiers = {...identifiers, ...namedImportIdentifiers.getValue()};
+        identifiers = [...identifiers, ...namedImportIdentifiers.getValue()];
 
         let importIdentifier = this.identifyImportDefaultIdentifier();
         
@@ -278,7 +277,7 @@ export class ImportDeclaration {
                 importIdentifier.errorDescription!
             )
         } else if (importIdentifier.getValue() !== undefined) {
-            identifiers[importIdentifier.getValue()!.identifier!] = importIdentifier.getValue()!;
+            identifiers.push(importIdentifier.getValue()!);
         }
         
         return Result.ok(identifiers);
