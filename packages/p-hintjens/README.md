@@ -19,4 +19,3 @@ Useful scripts you can take from this package:
 The `staticImplements` allows creating interfaces with the static methods.
 
 URL: `@ara-web/p-hintjens?id=ObjectTraits.staticImplements#traits/traits/object-traits`.
-
