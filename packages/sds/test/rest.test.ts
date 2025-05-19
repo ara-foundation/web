@@ -123,3 +123,61 @@ test(`Testing the rest proxifying`, async() => {
     expect(pageNavBar3Arr).toHaveLength(1);
     expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
 })
+
+test(`Testing the rest branching without proxifying`, async() => {
+    const options = {adapter};
+    const footer = getBody(footerHtml, 'footer');
+    let footerFirstDiv = cssSelect("footer > div", footer!, options);
+
+    const pageBody = getBody(pageHtml, 'body');
+    const pageRest = new Rest<HTMLElement>(pageBody!, nodeToObjectTree);
+    const pageBodyPosted = pageRest.post!('*', pageBody!, {});
+    expect(pageBodyPosted.isSuccess).toBe(true);
+    const contentBranch = pageRest.get!('#footer-section');
+    expect(contentBranch !== null).toBe(true);
+
+    // Make sure it's parsing.
+    // Add to the extensions the some modules
+    // Make sure modules are the children of the element
+
+    const footerRest = new Rest<HTMLElement>(footer!, nodeToObjectTree, {packageLink: ModuleLink.newPackageURL('@ara-web', 'rest-side')});
+    footerRest.setRootNode(contentBranch!)
+
+    // Post the body
+    const footerPosted = footerRest.post!('*', footer!, {});
+    expect(footerPosted.isSuccess).toBe(true);
+
+    // Add a data to footer from footerRest, it should be
+    // fetchable from pageRest and footerRest
+    const navBar1Body = getBody(navBar1Html, 'a');
+    expect(navBar1Body !== null).toBe(true);
+    const navBar1Posted = footerRest.post!('*', navBar1Body!, {});
+    expect(navBar1Posted.isSuccess).toBe(true);
+    const navBar1Arr = footerRest.getAll!('#google-link');
+    expect(navBar1Arr).toHaveLength(1);
+    const pageNavBar1Arr = pageRest.getAll!("#google-link");
+    expect(pageNavBar1Arr).toHaveLength(1);
+    expect(pageNavBar1Arr[0]).toEqual(navBar1Arr[0]);
+
+    // Add element from the parent
+    const navBar2Body = getBody(navBar2Html, 'a');
+    expect(navBar2Body !== null).toBe(true);
+    const navBar2Posted = pageRest.post!('footer', navBar2Body!, {});
+    expect(navBar2Posted.isSuccess).toBe(true);
+    const navBar2Arr = footerRest.getAll!('#ara-link');
+    expect(navBar2Arr).toHaveLength(1);
+    const pageNavBar2Arr = pageRest.getAll!("#ara-link");
+    expect(pageNavBar2Arr).toHaveLength(1);
+    expect(pageNavBar2Arr[0]).toEqual(navBar2Arr[0]);
+    
+    // Add after the first child
+    const navBar3Body = getBody(navBar3Html, 'a');
+    expect(navBar3Body !== null).toBe(true);
+    const navBar3Posted = pageRest.post!('footer > a:last-child', navBar3Body!, {lilBro: true});
+    expect(navBar3Posted.isSuccess).toBe(true);
+    const navBar3Arr = footerRest.getAll!('#github-link');
+    expect(navBar3Arr).toHaveLength(1);
+    const pageNavBar3Arr = pageRest.getAll!("#github-link");
+    expect(pageNavBar3Arr).toHaveLength(1);
+    expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
+})
