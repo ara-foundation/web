@@ -37,7 +37,7 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
     private _packageLink: PackageLink;
     private _proxies?: SDSProxy[];
     protected _publicMethods: string[] = [];
-    protected _hidedMethods: object = {};
+    protected _hidedMethods: Record<string, any> = {};
 
     public get publicMethods(): string[] {
         return this._publicMethods;
@@ -74,7 +74,10 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
 
         if ((proxy as SDSProxyInterface).putBehindData !== undefined) {
             // Hided methods are shown back if the data is put behind.
-            const obj: any = {...this, ...this._hidedMethods};
+            let obj: any = Object.create(this);
+            for (let methodName in this._hidedMethods) {
+                obj[methodName] = this._hidedMethods[methodName].bind(obj);
+            }
             (proxy as SDSProxyInterface).putBehindData!(obj);
         }
         proxy.postProxies(this._proxies);
@@ -103,9 +106,8 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
             if ((behindProxy as any)[pubKey] === undefined) {
                 throw `The '${pubKey}' not in the ${behindProxy.packageLink.toString()} SDSProxy inheritance`;
             }
-            (behindProxy._hidedMethods as any)[pubKey] = (behindProxy as any)[pubKey];
+            behindProxy._hidedMethods[pubKey] = (behindProxy as any)[pubKey];
             (behindProxy as any)[pubKey] = undefined;
-            
         }
     }
 }
@@ -121,7 +123,6 @@ export class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension 
         super(setup.packageLink, pubMethods, setup.description);
         const exts = setup.extensions === undefined ? [] : setup.extensions;
         this._extensions = exts;
-
         // In case if it's proxified:
         if (setup.proxies !== undefined && setup.proxies.length > 0) {
             this.postProxies(setup.proxies.reverse());

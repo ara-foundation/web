@@ -1,12 +1,16 @@
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select"
 import { 
-    type SDSExtensionInterface, 
+    SDSProxy,
     SDSService, 
     type SDSSetup
 } from "./sds.js";
-import { OkResult } from "@ara-web/p-hintjens";
-import { CSSObjectAdapter, LinkTraits, ObjectNode, type ObjectNodeInterface, type ObjectToNodeTree } from "./link-traits.js";
-import { ModuleLink } from "./links/index.js";
+import { type ObjectNode, type SDSExtensionInterface, ModuleLink } from "./index.js";
+import { CSSObjectAdapter, LinkTraits, type ObjectNodeInterface, type ObjectToNodeTree } from "./link-traits.js";
+
+
+// We call it setters.
+export interface RestExtensionInterface extends SDSExtensionInterface {}
 
 export interface RestOptions<ElementType> {
     lilBro?: boolean;
@@ -14,10 +18,40 @@ export interface RestOptions<ElementType> {
     root?: boolean;
 }
 
-// What to pass to the backend.
-// The Astro-Extension's Page for example and page's Post, put, patch, and delete(ObjectLink)
-// We call it setters.
-export interface RestExtensionInterface extends SDSExtensionInterface {}
+export class RestBranchProxy<ElementType> extends SDSProxy {
+    protected _behindData?: Rest<ElementType>;
+    private _root: ObjectNode<ElementType>;
+
+    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink, description?: string) {
+        super(moduleLink, ["post", "getAll"], description);
+        this._root = root;
+    }
+
+    public set rootNode(obj: ObjectNode<ElementType>) {
+        if (this._root === undefined) {
+            return;
+        }
+        this._root.children.forEach(child => child.setParent(obj));
+        this._root = obj;
+    }
+
+    public get rootNode(): ObjectNode<ElementType>|undefined {
+        return this._root;
+    }
+
+    public putBehindData?(behindData: Rest<ElementType>): void {
+        this._behindData = behindData;
+        this._behindData.setRootNode(this._root);
+    }
+
+    public getAll?(selector: string): ObjectNode<ElementType>[] {
+        return this._behindData!.getAll!(`${selector}`);
+    }
+
+    public post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult {
+        return this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
+    }
+}
 
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
@@ -28,7 +62,7 @@ export class Rest<ElementType> extends SDSService<
 > {
     
     private _options: {adapter: CSSObjectAdapter<ElementType>};
-    private _nodes: ObjectNode<ElementType>[] = [];
+    private _root: ObjectNode<ElementType>;
     private _objectToNodeTree: ObjectToNodeTree<ElementType>;
 
     constructor(
@@ -36,25 +70,22 @@ export class Rest<ElementType> extends SDSService<
         objectToTreeNode: ObjectToNodeTree<ElementType>,
         setup: SDSSetup<RestExtensionInterface> = {packageLink: ModuleLink.newPackageURL("", "name")}
     ) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "postByElement"]);
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = {adapter: new CSSObjectAdapter()};
-        this._nodes = [objectToTreeNode(object, undefined, true)];
         this._objectToNodeTree = objectToTreeNode;
+        this._root = this._objectToNodeTree(object, undefined, true);
     }
 
-    /**
-     * Retreive a resource node.
-     * @param selector 
-     */
-    public get?(selector: string): ObjectNode<ElementType>|null {
-        return cssSelectOne(selector, this._nodes, this._options);
+    public setRootNode(obj: ObjectNode<ElementType>): void {
+        this._root.children.forEach(child => child.setParent(obj));
+        this._root = obj;
     }
 
-    public getAll?(selector: string): ObjectNode<ElementType>[] {
-        return cssSelectAll(selector, this._nodes, this._options);
+    public get rootNode(): ObjectNode<ElementType> {
+        return this._root;
     }
 
-    public post?(selector: string, data: ElementType, options: RestOptions<ElementType>): OkResult {
+    public elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>> {
         let treeNode: ObjectNode<ElementType>;
         if (options.root) {
             treeNode = this._objectToNodeTree(data, undefined, true);
@@ -63,7 +94,33 @@ export class Rest<ElementType> extends SDSService<
         } else {
             treeNode = this._objectToNodeTree(data, undefined, false);
         }
-        return this._post!(selector, treeNode, options);
+        return Result.ok(treeNode);
+    }
+
+    /**
+     * Retreive a resource node.
+     * @param selector 
+     */
+    public get?(selector: string): ObjectNode<ElementType>|null {
+        return cssSelectOne(selector, [this._root], this._options);
+    }
+
+    public getAll?(selector: string): ObjectNode<ElementType>[] {
+        return cssSelectAll(selector, [this._root], this._options);
+    }
+
+    public post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult {
+        let treeNode: Result<ObjectNode<ElementType>>;
+        if (this.elementToObjectNode) {
+            treeNode = this.elementToObjectNode(data, options);
+        } else {
+            treeNode = (this._hidedMethods as any)["elementToObjectNode"](data, options);
+        }
+        if (treeNode.isFailure) {
+            return OkResult.fail(`this.elementToObjectNode(): ${treeNode.errorTitle}`, treeNode.errorDescription!);
+        }
+        const posted = this._post(selector, treeNode.getValue(), options);
+        return posted;
     }
 
     /**
@@ -76,7 +133,7 @@ export class Rest<ElementType> extends SDSService<
      * @param data 
      */
     private _post(selector: string, data: ObjectNode<ElementType>, options: {lilBro?: boolean} = {lilBro: false}): OkResult {
-        const elder = this.get!(selector);
+        let elder = this.get!(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
         }
@@ -109,10 +166,11 @@ export class Rest<ElementType> extends SDSService<
      * @param data 
      */
     public put?(selector: string, data: ObjectNode<ElementType>): OkResult {
-        const elder = this.get!(selector);
+        let elder = this.get!(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct object selector`);
-        } else if (elder.parent === null) {
+        } 
+        if (elder.parent === null) {
             return OkResult.fail(`Rest.get('${selector}'): parent not found`, `Please pass the correct object selector`);
         }
 
@@ -187,8 +245,8 @@ export class Rest<ElementType> extends SDSService<
     }
 
     public clone?(attrSelector: string): Rest<ElementType> {
-        const clone = new Rest<ElementType>(this._nodes[0].getElement()!, this._objectToNodeTree);
-        clone._nodes = [...this._nodes];
+        const clone = new Rest<ElementType>(this._root.getElement()!, this._objectToNodeTree);
+        clone._root = this._root;
         clone.delete!(attrSelector);
         return clone;
     }

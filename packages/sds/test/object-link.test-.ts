@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
-import { Debug } from "@ara-web/p-hintjens"
 import cssSelect from "css-select"
 import { LinkTraits, ModuleLink, ObjectLink } from "../src";
 
@@ -12,6 +11,12 @@ var adapter = new NodeAdapter()
 function getBody(html: string): HTMLBodyElement | null {
 	return new JSDOM(html).window.document.querySelector("body");
 }
+
+/*********************************************************
+ * 
+ * Object Links
+ * 
+ *********************************************************/
 
 test('Simply creating an empty object', async () => {
     const emptyObjectLink = new ObjectLink(moduleLink);
@@ -49,7 +54,13 @@ test('Simply creating an enumareted and tagged', async () => {
     expect(child2.getId()).toBe(1);
     expect(child2.toString().startsWith("obj://text:nth-child(1)?module-link")).toBe(true);
 
-})
+});
+
+/*********************************************************
+ * 
+ * Adapters
+ * 
+ *********************************************************/
 
 test('Simply the node-adapter testing', async () => {
     var body = getBody(html);
@@ -63,9 +74,6 @@ test('Simply the node-adapter testing', async () => {
 		return node.classList.contains("apple");
 	}, arr);
 
-    Debug.log(`Has Div?`)
-    Debug.log(hasDiv)
-
     expect(hasDiv !== null).toBe(true)
 })
 
@@ -75,7 +83,13 @@ test(`Simply testing css-select with adapter`, async() => {
     // get child
     let child = cssSelect("main > div", [body!], options);
     expect(child).toHaveLength(2);
-})
+});
+
+/*********************************************************
+ * 
+ * Testing CSS Select
+ * 
+ *********************************************************/
 
 test(`Test fetching css selector by classes`, async() => {
     const options = {adapter};
@@ -111,14 +125,18 @@ test(`Test fetching css selector by attribute`, async() => {
     expect(divs3).toHaveLength(1);
 })
 
+/*********************************************************
+ * 
+ * Testing the LintTraits
+ * 
+ *********************************************************/
+
 test(`Test Selector Parser of LintTraits`, async() => {
     const query1 = `main > div:nth-child`;
-    const selectors1 = LinkTraits.parseSelector(query1);
-    Debug.log(selectors1);
+    // const selectors1 = LinkTraits.parseSelector(query1);
 
     const query2 = `main > div:nth-child(2) > div[data-link]`
-    const selectors2 = LinkTraits.parseSelector(query2);
-    Debug.log(selectors2);
+    // const selectors2 = LinkTraits.parseSelector(query2);
     expect(LinkTraits.isAttributeSelector(query1)).toBe(false);
     expect(LinkTraits.isAttributeSelector(query2)).toBe(true);
     expect(LinkTraits.getAttributeName(query2)).toEqual('data-link');

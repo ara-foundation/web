@@ -39,7 +39,10 @@ export class SDSProxy {
         const proxy = this._proxies.shift();
         if (proxy.putBehindData !== undefined) {
             // Hided methods are shown back if the data is put behind.
-            const obj = { ...this, ...this._hidedMethods };
+            let obj = Object.create(this);
+            for (let methodName in this._hidedMethods) {
+                obj[methodName] = this._hidedMethods[methodName].bind(obj);
+            }
             proxy.putBehindData(obj);
         }
         proxy.postProxies(this._proxies);

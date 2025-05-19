@@ -247,3 +247,20 @@ Or shorter version:
 ```typescript
 REST.put<PageREST>(page, selector, value?);
 ```
+
+---
+Rest:
+create document!
+--
+    Available as div -> hello
+--
+pass document as array to look for.
+create new Rest!
+pass the rest as parent of previous rest.
+
+--
+    Available as
+
+    main -> []
+    side -> div -> hello
+--

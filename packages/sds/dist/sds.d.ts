@@ -32,7 +32,7 @@ export declare abstract class SDSProxy implements SDSMetaInterface, SDSProxyInte
     private _packageLink;
     private _proxies?;
     protected _publicMethods: string[];
-    protected _hidedMethods: object;
+    protected _hidedMethods: Record<string, any>;
     get publicMethods(): string[];
     constructor(_moduleLink: PackageLink, _publicMethods: string[], _desc?: string);
     get description(): string;

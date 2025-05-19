@@ -1,28 +1,42 @@
-import { type SDSExtensionInterface, SDSService, type SDSSetup } from "./sds.js";
-import { OkResult } from "@ara-web/p-hintjens";
-import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
+import { OkResult, Result } from "@ara-web/p-hintjens";
+import { SDSProxy, SDSService, type SDSSetup } from "./sds.js";
+import { type ObjectNode, type SDSExtensionInterface, ModuleLink } from "./index.js";
+import { type ObjectToNodeTree } from "./link-traits.js";
+export interface RestExtensionInterface extends SDSExtensionInterface {
+}
 export interface RestOptions<ElementType> {
     lilBro?: boolean;
     parent?: ObjectNode<ElementType>;
     root?: boolean;
 }
-export interface RestExtensionInterface extends SDSExtensionInterface {
+export declare class RestBranchProxy<ElementType> extends SDSProxy {
+    protected _behindData?: Rest<ElementType>;
+    private _root;
+    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink, description?: string);
+    set rootNode(obj: ObjectNode<ElementType>);
+    get rootNode(): ObjectNode<ElementType> | undefined;
+    putBehindData?(behindData: Rest<ElementType>): void;
+    getAll?(selector: string): ObjectNode<ElementType>[];
+    post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult;
 }
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
  */
 export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface> {
     private _options;
-    private _nodes;
+    private _root;
     private _objectToNodeTree;
     constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface>);
+    setRootNode(obj: ObjectNode<ElementType>): void;
+    get rootNode(): ObjectNode<ElementType>;
+    elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     /**
      * Retreive a resource node.
      * @param selector
      */
     get?(selector: string): ObjectNode<ElementType> | null;
     getAll?(selector: string): ObjectNode<ElementType>[];
-    post?(selector: string, data: ElementType, options: RestOptions<ElementType>): OkResult;
+    post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult;
     /**
      * Create a new resource. By default the
      * resource is created at the selector.

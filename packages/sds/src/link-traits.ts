@@ -170,14 +170,12 @@ export class ObjectNode<ElementType> implements ObjectNodeInterface {
         this.elementOp = elementOp;
         this._children = [];
 		this._parent = parent;
-		if (element === undefined) {
-			this.isTag = true;
-		} else {
+        this.isTag = true;
+		if (element !== undefined) {
 			this._element = element;
-			this.isTag = true;
             const children = elementOp.getChildren(element);
             const parentElement: ObjectNode<ElementType> = this;
-            const childNodes = children.map((element) => new ObjectNode(this.elementOp, element, parentElement))
+            const childNodes = children.map((child) => new ObjectNode(this.elementOp, child, parentElement))
 
             this.setChildren(childNodes);
 		}
