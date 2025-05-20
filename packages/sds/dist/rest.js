@@ -74,52 +74,77 @@ export class Rest extends SDSService {
     getAll(selector) {
         return cssSelectAll(selector, [this._root], this._options);
     }
-    post(selector, data, options) {
-        let treeNode;
-        if (this.elementToObjectNode) {
-            treeNode = this.elementToObjectNode(data, options);
+    /**
+     * Post creates a new object node as `selector` child.
+     * The object node's data is passed by `data` argument.
+     *
+     * If `options.lilBro` is set, then `data` is set after `selector` in the same parent.
+     *
+     * Firstly, the method converts the selector into a parent node.
+     * Secondly, the method converts the data along with parent node into an object node.
+     * Thirdly using {@link _appendChild} appends the object node into a parent.
+     *
+     * This method doesn't set the children relationship to the parent.
+     * Letting know that selector is a parent occurs in the ObjectNode instantiation.
+     * @requires Selector to exist, the object must have a parent.
+     * @param selector Parent or a big brother's link if `options.lilBro` is set true.
+     * @param data  Object node's data
+     * @param options Set to little bro if you want to set object after the selector.
+     * @returns
+     */
+    post(selector, data, options = { lilBro: false }) {
+        const parentOrBigBro = this._getParentOrBigBro(selector, options);
+        if (parentOrBigBro.isFailure) {
+            return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription);
+        }
+        const nodeOptions = {};
+        let bigBro;
+        if (options.lilBro) {
+            bigBro = parentOrBigBro.getValue();
+            nodeOptions.parent = bigBro.parent;
         }
         else {
-            treeNode = this._hidedMethods["elementToObjectNode"](data, options);
+            nodeOptions.parent = parentOrBigBro.getValue();
         }
-        if (treeNode.isFailure) {
-            return OkResult.fail(`this.elementToObjectNode(): ${treeNode.errorTitle}`, treeNode.errorDescription);
+        let newBornChild = this.elementToObjectNode(data, nodeOptions);
+        if (newBornChild.isFailure) {
+            return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription);
         }
-        const posted = this._post(selector, treeNode.getValue(), options);
+        const posted = this._appendChild(newBornChild.getValue(), bigBro);
         return posted;
     }
-    /**
-     * Create a new resource. By default the
-     * resource is created at the selector.
-     *
-     * If `options.lilBro` option put as `True` then
-     * it will post the resource next after the `selector`.
-     * @param selector
-     * @param data
-     */
-    _post(selector, data, options = { lilBro: false }) {
-        let elder = this.get(selector);
-        if (elder === null) {
-            return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
+    _getParentOrBigBro(selector, options = { lilBro: false }) {
+        let parentOrBigBro = this.get(selector);
+        if (parentOrBigBro === null) {
+            return Result.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
         }
-        if (!options.lilBro) {
-            data.setParent(elder);
-            elder.appendChild(data);
+        if (options.lilBro) {
+            if (parentOrBigBro.parent === null) {
+                return Result.fail(`Rest('${selector}') is me, and I have no parent to post my lil'bro!`, `Add my parent first. How can I add my sibling if its not my parents.`);
+            }
+        }
+        // not calling lil bro, then its the parents decided to make a love.
+        return Result.ok(parentOrBigBro);
+    }
+    /**
+     * Append the data as the child of a parent by calling `data.parent.appendChild()`
+     * or `data.parent.setChildren()`.
+     * @param newBornChild
+     * @param bigBro
+     */
+    _appendChild(newBornChild, bigBro) {
+        if (bigBro === undefined) {
+            newBornChild.parent.appendChild(newBornChild);
         }
         else {
-            if (elder.parent === null) {
-                return OkResult.fail(`Rest('${selector}') parent not found to post lil'bro!`, `Add my parent first.`);
+            const bigBroIndex = newBornChild.parent.children.findIndex(sibling => sibling.isEqualTo(bigBro));
+            if (bigBroIndex === -1) {
+                return OkResult.fail(`Can not find the big bro`, `Are you sure it works?`);
             }
-            const happyFamily = [];
-            for (let siblingIndex = 0; siblingIndex < elder.parent.children.length; siblingIndex++) {
-                const sibling = elder.parent.children[siblingIndex];
-                happyFamily.push(sibling);
-                if (sibling.isEqualTo(elder)) {
-                    happyFamily.push(data);
-                    data.setParent(elder.parent);
-                }
-            }
-            elder.parent.setChildren(happyFamily);
+            const elderBrothers = newBornChild.parent.children.slice(0, bigBroIndex + 1);
+            const youngerCousins = newBornChild.parent.children.slice(bigBroIndex + 1);
+            const allChildren = [...elderBrothers, newBornChild, ...youngerCousins];
+            newBornChild.parent.setChildren(allChildren);
         }
         return OkResult.ok();
     }

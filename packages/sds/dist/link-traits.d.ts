@@ -140,7 +140,7 @@ export declare class ObjectNode<ElementType> implements ObjectNodeInterface {
     private _children;
     private _parent?;
     private elementOp;
-    constructor(elementOp: ElementOp<ElementType>, element?: ElementType, parent?: ObjectNodeInterface);
+    constructor(elementOp: ElementOp<ElementType>, childToObjectTree: ObjectToNodeTree<ElementType>, element?: ElementType, parent?: ObjectNodeInterface);
     baseURI: string;
     childNodes: NodeListOf<ChildNode>;
     firstChild: ChildNode | null;

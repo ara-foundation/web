@@ -36,17 +36,35 @@ export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, Res
      */
     get?(selector: string): ObjectNode<ElementType> | null;
     getAll?(selector: string): ObjectNode<ElementType>[];
-    post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult;
     /**
-     * Create a new resource. By default the
-     * resource is created at the selector.
+     * Post creates a new object node as `selector` child.
+     * The object node's data is passed by `data` argument.
      *
-     * If `options.lilBro` option put as `True` then
-     * it will post the resource next after the `selector`.
-     * @param selector
-     * @param data
+     * If `options.lilBro` is set, then `data` is set after `selector` in the same parent.
+     *
+     * Firstly, the method converts the selector into a parent node.
+     * Secondly, the method converts the data along with parent node into an object node.
+     * Thirdly using {@link _appendChild} appends the object node into a parent.
+     *
+     * This method doesn't set the children relationship to the parent.
+     * Letting know that selector is a parent occurs in the ObjectNode instantiation.
+     * @requires Selector to exist, the object must have a parent.
+     * @param selector Parent or a big brother's link if `options.lilBro` is set true.
+     * @param data  Object node's data
+     * @param options Set to little bro if you want to set object after the selector.
+     * @returns
      */
-    private _post;
+    post?(selector: string, data: ElementType, options?: {
+        lilBro?: boolean;
+    }): OkResult;
+    private _getParentOrBigBro;
+    /**
+     * Append the data as the child of a parent by calling `data.parent.appendChild()`
+     * or `data.parent.setChildren()`.
+     * @param newBornChild
+     * @param bigBro
+     */
+    private _appendChild;
     /**
      * Update a resource. The selector can not be #document. Which means it must have a parent.
      * @param selector

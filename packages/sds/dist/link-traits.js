@@ -15,7 +15,7 @@ export class ObjectNode {
     _children = [];
     _parent;
     elementOp;
-    constructor(elementOp, element, parent) {
+    constructor(elementOp, childToObjectTree, element, parent) {
         this.elementOp = elementOp;
         this._children = [];
         this._parent = parent;
@@ -24,7 +24,9 @@ export class ObjectNode {
             this._element = element;
             const children = elementOp.getChildren(element);
             const parentElement = this;
-            const childNodes = children.map((child) => new ObjectNode(this.elementOp, child, parentElement));
+            // new ObjectNode() lints this object to it's children
+            const childNodes = children.map((child) => childToObjectTree(child, parentElement));
+            // lint child to this node.
             this.setChildren(childNodes);
         }
     }

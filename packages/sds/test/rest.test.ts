@@ -181,3 +181,4 @@ test(`Testing the rest branching without proxifying`, async() => {
     expect(pageNavBar3Arr).toHaveLength(1);
     expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
 })
+
