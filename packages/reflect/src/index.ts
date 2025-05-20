@@ -19,7 +19,8 @@ export { ModuleMemory } from "./module-memory.js";
 export { ProjectMemory, type ModuleMemories } from "./project-memory.js";
 export { BuiltInIdentifiers } from "./built-in-identifiers.js";
 export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module.js";
-export { 
+export {
+    type ReflectElementType,
     reflectElementToObjectTree, 
     reflectElementOps, 
     MEMOP_SELECTOR, 

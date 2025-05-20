@@ -1,8 +1,22 @@
 import { expect, test } from "vitest";
 import { DOCUMENT_SELECTOR, ModuleLink, Rest } from "@ara-web/sds";
-import { MEMOP_TAG, MODULE_MEMORY_TAG, ModuleMemory, ProjectMemory, Reflect, reflectElementToObjectTree } from "../src/index";
+import { MEMOP_TAG, MODULE_MEMORY_TAG, ModuleMemory, ProjectMemory, Reflect, reflectElementToObjectTree, ReflectElementType } from "../src/index";
 import { getImportRecords as getSampleModuleData } from "./shared.js";
-import { Code } from "../src/code-level/index.js";
+import { Code, CodePiece } from "../src/code-level/index.js";
+
+const elementType = (element: ReflectElementType): string => {
+    if (element instanceof CodePiece) {
+        return `Code Piece('${element.nodeType}#${element.identifier}')`
+    } else if (element instanceof ModuleMemory) {
+        return `Module Memory('${element.moduleLink.moduleURL}')`
+    } else if (element instanceof ProjectMemory) {
+        return `Project Memory('${element.memoryOperatorId}')`
+    } else if ("memoryOperatorId" in element) {
+        return `Extension('${element.memoryOperatorId}')`
+    }
+    return 'unknown'
+}
+
 
 test(`Object Tree building from module operators and modules work`, async() => {
     // Project Memory is the root node of our reflect
