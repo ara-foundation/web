@@ -4,11 +4,11 @@ import { type ObjectToNodeTree, type ElementOp, ObjectNode, DOCUMENT_SELECTOR } 
 export const nodeToObjectTree: ObjectToNodeTree<HTMLElement> = (codePiece: HTMLElement, parent?: ObjectNode<HTMLElement>, root?: boolean): ObjectNode<HTMLElement> => {
     // Creating the root for entire source code that has one or many code pieces.
 	if (root) {
-		return new ObjectNode<HTMLElement>(elementOps);
+		return new ObjectNode<HTMLElement>(elementOps, nodeToObjectTree);
 	} else if (parent !== undefined) {
-	    return new ObjectNode<HTMLElement>(elementOps, codePiece, parent);
+	    return new ObjectNode<HTMLElement>(elementOps, nodeToObjectTree, codePiece, parent);
 	}
-	return new ObjectNode<HTMLElement>(elementOps, codePiece);
+	return new ObjectNode<HTMLElement>(elementOps, nodeToObjectTree, codePiece);
 }
 
 export const MODULE_SELECTOR = '*:nth-child(1) >';

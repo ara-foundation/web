@@ -166,7 +166,10 @@ export class ObjectNode<ElementType> implements ObjectNodeInterface {
 
     constructor(
         elementOp: ElementOp<ElementType>,
-        element?: ElementType, parent?: ObjectNodeInterface) {
+        childToObjectTree: ObjectToNodeTree<ElementType>,
+        element?: ElementType,
+        parent?: ObjectNodeInterface,
+    ) {
         this.elementOp = elementOp;
         this._children = [];
 		this._parent = parent;
@@ -175,8 +178,10 @@ export class ObjectNode<ElementType> implements ObjectNodeInterface {
 			this._element = element;
             const children = elementOp.getChildren(element);
             const parentElement: ObjectNode<ElementType> = this;
-            const childNodes = children.map((child) => new ObjectNode(this.elementOp, child, parentElement))
 
+            // new ObjectNode() lints this object to it's children
+            const childNodes = children.map((child) => childToObjectTree(child, parentElement))
+            // lint child to this node.
             this.setChildren(childNodes);
 		}
     }
