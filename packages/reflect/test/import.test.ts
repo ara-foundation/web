@@ -47,7 +47,7 @@ test('Import with type as first node', async () => {
     const data = await testCode.getImportedIdentifiers(projectMemory);
     expect(data.isSuccess).toBe(true);
     data.getValue().forEach((importedCodePiece) => {
-      testModule.rest.post!('#document >', importedCodePiece, {})
+      testModule.rest.post!('*', importedCodePiece, {})
     })
     
     const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)

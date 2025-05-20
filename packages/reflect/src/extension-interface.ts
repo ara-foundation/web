@@ -34,12 +34,14 @@ export interface MemoryOperations {
      * @param moduleLink 
      */
     getModule: <T>(moduleLink: ModuleLink) => Result<ModuleMemory<T>>;
+
     /**
      * Returns all the modules that match to the category
      * @param moduleCategory? 
      * @returns 
      */
     getModules: <T>(moduleCategory?: ModuleCategory) => ModuleMemory<T>[];
+    
     /**
      * Checks does the module exist in the extension
      * @param moduleLink 

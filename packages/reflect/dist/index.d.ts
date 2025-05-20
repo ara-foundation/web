@@ -6,4 +6,5 @@ export { ModuleMemory } from "./module-memory.js";
 export { ProjectMemory, type ModuleMemories } from "./project-memory.js";
 export { BuiltInIdentifiers } from "./built-in-identifiers.js";
 export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module.js";
+export { reflectElementToObjectTree, reflectElementOps, MEMOP_SELECTOR, MODULE_MEMORY_SELECTOR, MODULE_MEMORY_TAG, MEMOP_TAG, } from "./reflect-object-tree.js";
 export { ModuleLink, AraLink } from "@ara-web/sds";

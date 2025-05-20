@@ -12,6 +12,7 @@ export declare class ProjectMemory implements MemoryOperations {
     private _memOps;
     private _moduleLink;
     constructor();
+    get memOps(): MemoryOperations[];
     /**
      * Return the module file paths from the link
      * @param moduleLink
@@ -36,11 +37,6 @@ export declare class ProjectMemory implements MemoryOperations {
     getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
     /**
-     * Returns all module memories of the moduleType category.
-     * @param moduleType
-     * @returns
-     */
-    /**
      * Returns the modules that doesn't have contents
      * @param moduleCategory
      */
@@ -52,9 +48,9 @@ export declare class ProjectMemory implements MemoryOperations {
      */
     getModuleContents<T>(moduleCategory?: string): T[];
     /**
-         * For debug purpose, dump the reflect to print everything.
-         * @param filterKey
-         * @param filterValue
-         */
+     * For debug purpose, dump the reflect to print everything.
+     * @param filterKey
+     * @param filterValue
+     */
     print: (filteredModuleCategory?: string, filterKey?: string, filterValue?: any) => void;
 }

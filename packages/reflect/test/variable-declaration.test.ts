@@ -250,7 +250,7 @@ test('Supports the linting variable parameter from object decoupling', async () 
   const objectAstNode = vars.getValue().find(codePiece => codePiece.identifier === objectName);
   expect(objectAstNode !== undefined).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
-  const posted = moduleMemory.rest.post!('*', objectAstNode!, {parent});
+  const posted = moduleMemory.rest.post!('*', objectAstNode!, {});
   expect(posted.isSuccess).toBe(true);
   
   const context = new CodePieceContext(astNode.getAllMemoryData(), moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
@@ -288,7 +288,7 @@ test('Supports the function call as variable value', async () => {
   
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
@@ -334,7 +334,7 @@ test('Supports the function call as variable value but mismatch the types', asyn
   expect(imports.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -377,7 +377,7 @@ test('Supports the function call without any argument', async () => {
   expect(imports.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -428,7 +428,7 @@ test('Supports the method call', async () => {
   expect(imports.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -440,7 +440,7 @@ test('Supports the method call', async () => {
   expect(objAstNode.data).toBeInstanceOf(AraLink)
   expect(objAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(objAstNode.data)).toBe(true)
-  moduleMemory.rest.post!('*', objAstNode, {parent})
+  moduleMemory.rest.post!('*', objAstNode, {})
 
   // We don't check the result, as previous tests must ensure its passing
   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -484,7 +484,7 @@ test('Supports the spread assignment through enums', async () => {
   expect(imports.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -545,7 +545,7 @@ test('Supports the type from the imports', async () => {
   expect(imports.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
     
@@ -605,7 +605,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -662,7 +662,7 @@ test('Supports the union types', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -718,7 +718,7 @@ test('Supports the intersected types', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -768,7 +768,7 @@ test('Supports the arrays through Array generic', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -777,7 +777,7 @@ test('Supports the arrays through Array generic', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
   })
 
@@ -824,7 +824,7 @@ test('Supports the arrays through Array literals', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -833,7 +833,7 @@ test('Supports the arrays through Array literals', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
   })
 
@@ -875,7 +875,7 @@ test('Supports the arrays with primitive types', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
   })
 
@@ -919,8 +919,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -935,11 +934,11 @@ test('Supports the shorthand project assign with primitive types', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece);
     expect(posted.isSuccess).toBe(true);   
   })
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
-  moduleMemory.rest.post!('*', foundVar!, {parent})
+  moduleMemory.rest.post!('*', foundVar!)
 
   // Variable check
   let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -978,7 +977,7 @@ test('Supports the parenthesis', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -993,11 +992,11 @@ test('Supports the parenthesis', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece);
     expect(posted.isSuccess).toBe(true);   
   })
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
-  moduleMemory.rest.post!('*', foundVar!, {parent})
+  moduleMemory.rest.post!('*', foundVar!)
 
 
   // Variable check
@@ -1040,7 +1039,7 @@ test('Supports the conditional expression', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
   });
   const identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
@@ -1053,11 +1052,11 @@ test('Supports the conditional expression', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
   })
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === 'data');
-  moduleMemory.rest.post!('*', foundVar!, {parent})
+  moduleMemory.rest.post!('*', foundVar!, {})
 
   // Variable check
   const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -1100,7 +1099,7 @@ test('Supports the conditional expression when its false', async () => {
   expect(types.isSuccess).toBe(true);
   const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
   });
   
@@ -1115,11 +1114,11 @@ test('Supports the conditional expression when its false', async () => {
 
   // Add built in types and lint them
   (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
   })
   const foundVar2 = vars.getValue().find(codePiece => codePiece.identifier === 'data');
-  const var2Posted = moduleMemory.rest.post!('*', foundVar2!, {parent})
+  const var2Posted = moduleMemory.rest.post!('*', foundVar2!, {})
   expect(var2Posted.isSuccess).toBe(true);
   Debug.log(`The module data by parent ${parent.selector}`, moduleMemory.rest.getAll!(`${MODULE_SELECTOR} #data`).map(codePiece => codePiece.selector))
   // Variable check

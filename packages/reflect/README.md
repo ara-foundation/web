@@ -176,8 +176,10 @@ the files if its updated.
 
 # Roadmap
 Ast Node
-* Use REST for the ast memory.
 * Use REST for Reflect module.
+
+Test
+* Enumerate the test files
 
 For variable declarations
 * Check the variable updates

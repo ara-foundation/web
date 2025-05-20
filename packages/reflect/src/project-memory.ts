@@ -24,6 +24,10 @@ export class ProjectMemory implements MemoryOperations {
         const absPath = ModuleLink.newFileURL(import.meta.filename);
         this._moduleLink = ModuleLink.newPackageURL(`@ara-web`, `reflect`, absPath, 'memory/ProjectMemory')
     }
+
+    public get memOps(): MemoryOperations[] {
+        return this._memOps;
+    }
     
     /**
      * Return the module file paths from the link
@@ -100,12 +104,6 @@ export class ProjectMemory implements MemoryOperations {
     }
 
     /**
-     * Returns all module memories of the moduleType category.
-     * @param moduleType 
-     * @returns 
-     */
-
-    /**
      * Returns the modules that doesn't have contents
      * @param moduleCategory 
      */
@@ -133,10 +131,10 @@ export class ProjectMemory implements MemoryOperations {
     }
 
     /**
-         * For debug purpose, dump the reflect to print everything.
-         * @param filterKey 
-         * @param filterValue 
-         */
+     * For debug purpose, dump the reflect to print everything.
+     * @param filterKey 
+     * @param filterValue 
+     */
     public print = (filteredModuleCategory?: string, filterKey?: string, filterValue?: any): void => {
         let categoryModules = this.getModules(filteredModuleCategory);
 

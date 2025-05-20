@@ -1,15 +1,15 @@
-import { OkResult } from "@ara-web/p-hintjens";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 import { type ObjectToNodeTree, type ElementOp, ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
 import { CodePiece } from "./code-level/index.js";
 
 export const moduleToObjectTree: ObjectToNodeTree<CodePiece> = (codePiece: CodePiece, parent?: ObjectNode<CodePiece>, root?: boolean): ObjectNode<CodePiece> => {
     // Creating the root for entire source code that has one or many code pieces.
 	if (root) {
-		return new ObjectNode<CodePiece>(codePieceOps);
+		return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree);
 	} else if (parent !== undefined) {
-	    return new ObjectNode<CodePiece>(codePieceOps, codePiece, parent);
+	    return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, codePiece, parent);
 	}
-	return new ObjectNode<CodePiece>(codePieceOps, codePiece);
+	return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, codePiece);
 }
 
 export const MODULE_SELECTOR = '*:nth-child(1) >';

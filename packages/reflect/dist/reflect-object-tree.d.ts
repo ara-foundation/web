@@ -1,0 +1,12 @@
+import { type ObjectToNodeTree, type ElementOp } from "@ara-web/sds";
+import { ModuleMemory } from "./module-memory.js";
+import type { MemoryOperations } from "./extension-interface.js";
+import { ProjectMemory } from "./project-memory.js";
+import { CodePiece } from "./code-level/index.js";
+export type ReflectElementType = ModuleMemory<unknown> | MemoryOperations | ProjectMemory | CodePiece;
+export declare const MEMOP_TAG = "memop";
+export declare const MODULE_MEMORY_TAG = "module";
+export declare const MODULE_MEMORY_SELECTOR = "*:nth-child(1) module";
+export declare const MEMOP_SELECTOR = "*:nth-child(1) > memop";
+export declare const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType>;
+export declare const reflectElementOps: ElementOp<ReflectElementType>;

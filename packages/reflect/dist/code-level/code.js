@@ -321,9 +321,8 @@ export class Code {
     static identifyCodePiece = async (expression, projectMemory, optionalIdentifiers) => {
         const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
         if (optionalIdentifiers !== undefined) {
-            const parent = tempMemory.rest.get('*');
             optionalIdentifiers.forEach((codePiece) => {
-                tempMemory.rest.post('*', codePiece, { parent });
+                tempMemory.rest.post('*', codePiece, {});
             });
         }
         const tempVarName = "__temp_var_";
@@ -333,9 +332,8 @@ export class Code {
             return Result.fail(`code.getVariableIdentifiers(): ${vars.errorTitle}`, vars.errorDescription);
         }
         else {
-            const parent = tempMemory.rest.get('*');
             vars.getValue().forEach((codePiece) => {
-                tempMemory.rest.post('*', codePiece, { parent });
+                tempMemory.rest.post('*', codePiece, {});
             });
             const tempVarValue = vars.getValue().find((codePiece) => codePiece.identifier === tempVarName);
             if (tempVarValue === undefined) {

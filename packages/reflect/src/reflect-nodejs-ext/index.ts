@@ -239,10 +239,9 @@ export class NodejsReflectExtension implements ExtensionInterface {
         ).forEach(
             (module) => 
             {
-                const parent = module.rest.get!('*')!;
                 identifiers.getValue().forEach(
                     (codePiece) => {
-                        module.rest.post!(MODULE_SELECTOR, codePiece, {parent})
+                        module.rest.post!(MODULE_SELECTOR, codePiece, {})
                     }
                 )
             }

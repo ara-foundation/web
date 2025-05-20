@@ -6,7 +6,6 @@ import { ModuleCategory as BuiltinModuleCategory } from "../src/reflect-nodejs-e
 import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { getCategorizedModuleAmount, getImportRecords as getSampleModuleData, getSamplePackage, getSamplePackageWithSubModules } from "./shared.js";
-import { Debug } from "@ara-web/p-hintjens";
 import { ModuleLink } from "@ara-web/sds";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")

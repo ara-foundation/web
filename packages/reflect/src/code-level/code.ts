@@ -433,10 +433,9 @@ export class Code {
     public static identifyCodePiece = async (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: CodePiece[]): Promise<Result<TypedData>> => {
         const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
         if (optionalIdentifiers !== undefined) {
-            const parent = tempMemory.rest.get!('*')!;
             optionalIdentifiers.forEach(
                 (codePiece) => {
-                    tempMemory.rest.post!('*', codePiece, {parent})
+                    tempMemory.rest.post!('*', codePiece, {})
                 }
             )
         }
@@ -450,10 +449,9 @@ export class Code {
                 vars.errorDescription!
             )
         } else {
-            const parent = tempMemory.rest.get!('*')!;
             vars.getValue().forEach(
                 (codePiece) => {
-                    tempMemory.rest.post!('*', codePiece, {parent})
+                    tempMemory.rest.post!('*', codePiece, {})
                 }
             )
 

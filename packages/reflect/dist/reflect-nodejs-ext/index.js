@@ -177,9 +177,8 @@ export class NodejsReflectExtension {
         projectMemory
             .getModules()
             .filter((module) => module.moduleCategory !== ModuleCategory.NodeJsModule).forEach((module) => {
-            const parent = module.rest.get('*');
             identifiers.getValue().forEach((codePiece) => {
-                module.rest.post(MODULE_SELECTOR, codePiece, { parent });
+                module.rest.post(MODULE_SELECTOR, codePiece, {});
             });
         });
         return Result.ok(projectMemory);
