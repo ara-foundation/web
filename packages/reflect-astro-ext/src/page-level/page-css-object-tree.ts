@@ -5,12 +5,20 @@ import type { ReflectLink } from "@ara-web/reflect/code-level";
 import type { ValueType } from "@ara-web/reflect/code-level";
 
 // {slots: page.slots} as SlotElement
-export const pageToNodeTree: ObjectToNodeTree<SlotElement> = (slotElement: SlotElement): ObjectNode<SlotElement> => {
-	const doc = new ObjectNode<SlotElement>(slotElementOps);
-	const children = slotElementOps.getChildren(slotElement).map((slotEl) => new ObjectNode<SlotElement>(slotElementOps
-		, slotEl, doc
-	));
-	doc.setChildren(children);
+export const pageToNodeTree: ObjectToNodeTree<SlotElement> = (slotElement: SlotElement, parent?: ObjectNode<SlotElement>, root?: boolean): ObjectNode<SlotElement> => {
+	let doc: ObjectNode<SlotElement>;
+	if (root) {
+		doc = new ObjectNode<SlotElement>(slotElementOps, pageToNodeTree);
+		const children = slotElementOps.getChildren(slotElement).map((slotEl) => new ObjectNode<SlotElement>(
+			slotElementOps, pageToNodeTree, slotEl, doc
+		));
+		doc.setChildren(children);
+	} else {
+		if (parent === undefined) {
+			throw `No root object must have parent, parent not passed`
+		}
+		doc = new ObjectNode<SlotElement>(slotElementOps, pageToNodeTree, slotElement, parent);
+	}
 	return doc;
 }
 

@@ -23,9 +23,8 @@ test(`Make sure the that code is importing`, async () => {
     const moduleMemories = projectMemory.getModules();
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
     for (let moduleMemory of moduleMemories) {
-        const parent = moduleMemory.rest.get!('*')!
         astroBuiltInIdentifiers.getValue().forEach((importedCodePiece) => {            
-            const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+            const posted = moduleMemory.rest.post!('*', importedCodePiece);
             expect(posted.isSuccess).toBe(true);
         });
         const moduleParts = await ModulePartitioner.partition(moduleMemory);

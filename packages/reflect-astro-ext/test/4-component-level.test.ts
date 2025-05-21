@@ -9,6 +9,7 @@ import { CodeLevel, Component, FileExtension, ModuleCategory, ModulePartitioner,
 import { ModuleMemory } from "@ara-web/reflect";
 import { LinkTraits, ObjectNodeInterface, ObjectNode, CSSObjectAdapter } from "@ara-web/sds";
 import { pageToNodeTree } from "../src/page-level/page-css-object-tree";
+import { Debug } from "@ara-web/p-hintjens";
 
 test(`Make sure the that object links are correct`, async () => {
     const modules = getImportRecords()
@@ -164,7 +165,7 @@ test(`Make sure that object looking works and object linking components work`, a
         // .astro > Welcome
         // .astro > .Welcome
         // const pageNodes = PageLevel.getPageObjectNodes(page.getValue());
-        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, undefined, true)];
         const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout', pageObjectNodes,
             {adapter: new CSSObjectAdapter<SlotElement>()}
         )
@@ -241,7 +242,7 @@ test(`Linking page components by the classes`, async () => {
         expect(layout.slots[slotNames[0]].length).toBeGreaterThan(0);
         const firstLayoutElement = layout.slots[slotNames[0]][0];
 
-        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, undefined, true)];
         const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('Layout.astro', pageObjectNodes, options)
         expect(query1 !== null).toBe(true)
 
@@ -296,7 +297,7 @@ test(`Linking page components by the attributes and id`, async () => {
         expect(page.isSuccess).toBe(true);
         const layout = page.getValue().slots["default"][0] as Component;
         
-        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, true)];
+        const pageObjectNodes = [pageToNodeTree({slots: page.getValue().slots} as SlotElement, undefined, true)];
         const query1 = LinkTraits.get<ObjectNodeInterface, ObjectNode<SlotElement>>('#container', pageObjectNodes, options)
         expect(query1 !== null).toBe(true)
 

@@ -29,28 +29,6 @@ enum ComponentType {
     HtmlElement = "htme",   // Hyper Text Markup Element
 }
 
-// // The pages traits adds to the Page the following:
-// // -- RPCs and refer to RPC types
-// // -- File Content
-// // -- AST
-// // -- Components
-// // import { type RpcCallType, rpcBySlug, isRpcCallComponentLink } from "@ara-web/rpc-engine";
-// import { type UiContent } from "./ui-content.js";
-// // Make sure that we move the component
-// // import { expressionCategory, type AstroNode, ComponentEngine } from "@ara-web/component-engine";
-// import { attributeByName, identifyAttribute } from "./attribute-level.js";
-// import { AraLink } from "@ara-web/p-hintjens/ara-link";
-// import type { ModuleMemory } from "@ara-web/reflect/memory";
-// import type { AstroNode } from "../component.js";
-
-
-//////////////////////////////////////////////////////////////////////////////////
-//
-// Component specific methods
-//
-//////////////////////////////////////////////////////////////////////////////////
-
-
 /**
  * Ontologically, `ComponentLevel` supports translation of modules into `Component` and `Layout` data
  */

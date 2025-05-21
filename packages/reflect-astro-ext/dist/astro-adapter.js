@@ -1,5 +1,5 @@
 import { AstroNode } from "./astro-node.js";
-import { OkResult } from "@ara-web/p-hintjens";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 import { DOCUMENT_SELECTOR, ObjectNode } from "@ara-web/sds";
 /**
      * For Pages, it returns empty string.
@@ -57,12 +57,15 @@ export const astroElementOps = {
     getName: getAstroElementName,
     setAttribute: setAstroElementAttribute,
 };
-export const astroToNodeTree = (node, _parent, root = true) => {
-    if (root === false) {
-        return new ObjectNode(astroElementOps, node);
+export const astroToNodeTree = (node, parent, root) => {
+    if (root === false || root === undefined) {
+        if (parent === undefined) {
+            throw `Not a root, but parent is missing`;
+        }
+        return new ObjectNode(astroElementOps, astroToNodeTree, node, parent);
     }
-    const parent = new ObjectNode(astroElementOps);
-    const children = node.children.map((astroNode) => new ObjectNode(astroElementOps, astroNode, parent));
-    parent.setChildren(children);
-    return parent;
+    const obj = new ObjectNode(astroElementOps, astroToNodeTree);
+    const children = node.children.map((astroNode) => new ObjectNode(astroElementOps, astroToNodeTree, astroNode, obj));
+    obj.setChildren(children);
+    return obj;
 };

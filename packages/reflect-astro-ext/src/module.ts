@@ -288,7 +288,7 @@ export class ModuleIdentifier {
         return fileExtension === FileExtension.Astro;
     }
 
-    public static isAstroGeneratedModuleCategory = (moduleCategory: ModuleCategory): boolean => {
+    public static isAstroOntologicalCategory = (moduleCategory: string): boolean => {
         return moduleCategory === ModuleCategory.Page || moduleCategory === ModuleCategory.Layout || moduleCategory === ModuleCategory.Component;
     }
 }

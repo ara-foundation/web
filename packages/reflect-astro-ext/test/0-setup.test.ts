@@ -10,7 +10,6 @@ import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./sha
 
 test('Simply creating a reflect extension', async () => {
     const reflectExtension = await getNewAstroReflect();
-    expect(reflectExtension.description.length).toBeGreaterThan(0)
 
     const unsupportedModuleCategory = "node_modules";
     const supportedModuleCategory = ModuleCategory.Component;

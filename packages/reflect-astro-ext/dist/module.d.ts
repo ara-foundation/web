@@ -88,5 +88,5 @@ export declare class ModuleIdentifier {
      */
     static isAstroGeneratedModule: (moduleMemory: ModuleMemory<unknown>) => boolean;
     static isAstroGeneratedModuleByPath: (modulePath: string) => boolean;
-    static isAstroGeneratedModuleCategory: (moduleCategory: ModuleCategory) => boolean;
+    static isAstroOntologicalCategory: (moduleCategory: string) => boolean;
 }

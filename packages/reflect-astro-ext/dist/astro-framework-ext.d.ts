@@ -1,6 +1,7 @@
 import { type AutoImporter, type ExtensionInterface, type ImportedRecords, ModuleMemory, ProjectMemory, type SingleRecord } from "@ara-web/reflect";
-import { ModuleLink, type ModuleURL, SDSService, type SDSExtensionInterface, type SDSSetup } from "@ara-web/sds";
+import { ModuleLink, type ModuleURL, SDSService, type SDSExtensionInterface, type SDSSetup, Rest } from "@ara-web/sds";
 import { OkResult, Result } from "@ara-web/p-hintjens";
+import type { ReflectElementType } from "@ara-web/reflect";
 import { type Page } from "./ontology/index.js";
 export interface AstroExtensionInterface extends SDSExtensionInterface {
     afterPageLvlIdenfication?(moduleCategory: string, module: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<Result<ModuleMemory<Page>>>;
@@ -9,10 +10,12 @@ export interface AstroExtensionInterface extends SDSExtensionInterface {
  * ReflectExtension adds Astro Framework support.
  */
 export declare class ReflectAstroExtension extends SDSService<ReflectAstroExtension, AstroExtensionInterface> implements ExtensionInterface {
+    reflectExtension: boolean;
     private _rootDir;
     private _moduleLink;
     private _moduleMemories;
     private _autoImporter?;
+    protected _untrackedModules: ModuleURL[];
     /**
      * The *rootDir* must be absolute absolute path. Example:
      *
@@ -23,17 +26,16 @@ export declare class ReflectAstroExtension extends SDSService<ReflectAstroExtens
      * @param rootDir
      */
     constructor(rootDir?: ModuleLink, setup?: Omit<SDSSetup<AstroExtensionInterface>, "packageLink">);
+    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
+    get untrackedModuleAmount(): number;
     get memoryOperatorId(): ModuleLink;
     get packageLink(): ModuleLink;
-    get operatorId(): ModuleLink;
     get moduleLink(): ModuleLink;
     get moduleMemories(): ModuleMemory<unknown>[];
-    get description(): string;
     get moduleCategories(): string[];
+    isSupportedModuleCategory(moduleCategory: string): boolean;
     get rootDir(): string;
     get srcDir(): string;
-    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
-    getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[];
     putPackage(_: SingleRecord): Promise<Result<ModuleLink>>;
     /**
      * Put the modules, the Astro Framework's Reflect will require the modules
@@ -58,49 +60,51 @@ export declare class ReflectAstroExtension extends SDSService<ReflectAstroExtens
      * @returns
      */
     getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[];
-    isSupportedModuleCategory(moduleCategory: string): boolean;
-    /**
-     * Called by the `@ara-web/reflect` before fetching anything, so that Astro Framework
-     * could convert the required module from file system for example, and convert that module
-     * into the ontological data.
-     * @param moduleCategory
-     * @param projectMemory
-     * @returns
-     */
-    beforeGet?(moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult>;
-    /**
-     * Identifies the data of the component modules.
-     * @notice Components are not evaluated by internal structures.
-     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
-     */
-    private identifyComponentContents;
-    /**
-     * Identifies the data of the layout modules.
-     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
-     */
-    private postLayoutContents;
+    afterCreation(): OkResult;
+    protected _trackModules: (rest: Rest<ReflectElementType>) => OkResult;
+    /**************************************************
+     *
+     * Hooks
+     *
+     **************************************************/
+    beforePost(_selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+    afterPost(_selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
     /**
      * Check all modules and if no content is given, then return.
      * It also updates the memory by parsing the source code.
      * @param {ProjectMemory} projectMemory is used to identify the dependencies that page depends on.
      * @returns {Result<AraPage[]>}
      */
-    private postPageContents;
+    private identifyContent;
     /**
      * All modules whose file extensions are considered as script (typescript, javascript) are converted
      * into the `Script` ontological data.
      * @returns
      */
-    private postScripts;
+    private identifyScriptContent;
     /**
      * All modules whose file extensions are considered as asset (markdown, react, and svg) are converted
      * into the `Asset` ontological data.
      * @returns
      */
-    private postAssets;
+    private identifyAssetContent;
     /**
      * Returns a page by it's path
      */
     getPageByUrl: (url: string | undefined) => Promise<Page | undefined>;
+    /**
+     * Responsbile with registering built in `Astro` in
+     * the modules that ends with .astro file extension.
+     * @param moduleMemory
+     * @returns
+     */
     private postBuiltInIdentifiers;
+    /**
+     * Before any request, we must import modules.
+     * We must track the untracked modules.
+     * @param rest
+     * @param moduleCategory
+     * @returns
+     */
+    private beforeAny;
 }

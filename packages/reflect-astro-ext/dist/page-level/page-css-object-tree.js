@@ -1,10 +1,19 @@
 import { OkResult } from "@ara-web/p-hintjens";
 import { DOCUMENT_SELECTOR, ObjectNode } from "@ara-web/sds";
 // {slots: page.slots} as SlotElement
-export const pageToNodeTree = (slotElement) => {
-    const doc = new ObjectNode(slotElementOps);
-    const children = slotElementOps.getChildren(slotElement).map((slotEl) => new ObjectNode(slotElementOps, slotEl, doc));
-    doc.setChildren(children);
+export const pageToNodeTree = (slotElement, parent, root) => {
+    let doc;
+    if (root) {
+        doc = new ObjectNode(slotElementOps, pageToNodeTree);
+        const children = slotElementOps.getChildren(slotElement).map((slotEl) => new ObjectNode(slotElementOps, pageToNodeTree, slotEl, doc));
+        doc.setChildren(children);
+    }
+    else {
+        if (parent === undefined) {
+            throw `No root object must have parent, parent not passed`;
+        }
+        doc = new ObjectNode(slotElementOps, pageToNodeTree, slotElement, parent);
+    }
     return doc;
 };
 /**

@@ -1,10 +1,9 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { codePieceOps, MODULE_SELECTOR, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
+import { MODULE_SELECTOR, ModuleMemory, ProjectMemory } from "@ara-web/reflect";
 import { Code } from "@ara-web/reflect/code-level";
 import { Comment } from "./comment.js";
 import type { Meta } from "../index.js";
 import type { CodePiece, ValueType } from "@ara-web/reflect/code-level";
-import { ObjectNode } from "@ara-web/sds";
 
 /**
  * Code analyzing
@@ -35,12 +34,11 @@ export class CodeLevel {
             )
         } else {
             let failedPostResult = OkResult.ok();
-            const parent = moduleMemory.rest.get!('*')!
             importsIdentifed.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+                const posted = moduleMemory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -59,12 +57,11 @@ export class CodeLevel {
             )
         } else {
             let failedPostResult = OkResult.ok();
-            const parent = moduleMemory.rest.get!('*')!
             identifiedTypes.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+                const posted = moduleMemory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -100,12 +97,11 @@ export class CodeLevel {
             )
         } else {
             let failedPostResult = OkResult.ok();
-            const parent = moduleMemory.rest.get!('*')!
             identifiedVariables.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
+                const posted = moduleMemory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -177,12 +173,11 @@ export class CodeLevel {
         const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
         if (importIdentifiersCount > 0) {
             let failedPostResult = OkResult.ok();
-            const parent = memory.rest.get!('*')!
             depsIdentified.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = memory.rest.post!('*', importedCodePiece, {parent});
+                const posted = memory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -207,12 +202,11 @@ export class CodeLevel {
         const identified = Object.keys(vars.getValue()).length;
         if (identified > 0) {
             let failedPostResult = OkResult.ok();
-            const parent = memory.rest.get!('*')!
             vars.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = memory.rest.post!('*', importedCodePiece, {parent});
+                const posted = memory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }
@@ -240,12 +234,11 @@ export class CodeLevel {
         const importIdentifiersCount = Object.keys(depsIdentified.getValue()).length;
         if (importIdentifiersCount > 0) {
             let failedPostResult = OkResult.ok();
-            const parent = memory.rest.get!('*')!
             depsIdentified.getValue().forEach((importedCodePiece) => {
                 if (failedPostResult.isFailure) {
                     return;
                 }
-                const posted = memory.rest.post!('*', importedCodePiece, {parent});
+                const posted = memory.rest.post!('*', importedCodePiece);
                 if (posted.isFailure) {
                     failedPostResult = posted;
                 }

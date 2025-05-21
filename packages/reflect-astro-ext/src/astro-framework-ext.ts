@@ -7,8 +7,7 @@ import {
     type ModuleMemories,
     FilePath,
     type SingleRecord,
-    CodePiece,
-    codePieceOps,
+    escapeId,
 } from "@ara-web/reflect";
 import { 
     ModuleLink, 
@@ -16,9 +15,10 @@ import {
     SDSService, 
     type SDSExtensionInterface, 
     type SDSSetup,
-    ObjectNode
+    Rest,
 } from "@ara-web/sds";
 import { OkResult, Result, EnumTraits } from "@ara-web/p-hintjens";
+import type { ReflectElementType } from "@ara-web/reflect";
 import {
     type Asset, type Page, type Module,
     FileExtension
@@ -48,11 +48,13 @@ export interface AstroExtensionInterface extends SDSExtensionInterface {
  * ReflectExtension adds Astro Framework support.
  */
 export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, AstroExtensionInterface> implements ExtensionInterface {
+    public reflectExtension: boolean = true;
     private _rootDir: ModuleLink;
     private _moduleLink: ModuleLink;
     private _moduleMemories: ModuleMemories<unknown> = {};
     private _autoImporter?: AutoImporter;
-    
+    protected _untrackedModules: ModuleURL[] = [];
+
     /**
      * The *rootDir* must be absolute absolute path. Example:
      * 
@@ -76,41 +78,6 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
         this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-astro-ext", fileModuleLink)
     }
 
-    public get memoryOperatorId(): ModuleLink {
-        return this._rootDir
-    }
-    public get packageLink(): ModuleLink {
-        return this._rootDir
-    }
-    public get operatorId(): ModuleLink {
-        return this.moduleLink;
-    }
-    public get moduleLink(): ModuleLink {
-        return this._moduleLink;
-    }
-
-    public get moduleMemories(): ModuleMemory<unknown>[] {
-        return Object.values(this._moduleMemories);
-    }
-
-    public get description(): string {
-        return "Astro Framework's pages, components reflection";
-    }
-
-    public get moduleCategories(): string[] {
-        return EnumTraits.enumValues(ModuleCategory) as string[];
-    }
-
-    public get rootDir(): string {
-        return this._rootDir.toFilePath;
-    }
-
-    public get srcDir(): string {
-        return FilePath.join([this._rootDir.toFilePath, 'src']);
-    }
-
-    afterGet?: ((moduleCategory: string, projectMemory: ProjectMemory) => Promise<OkResult>) | undefined;
-
     public getModuleWithFileExtensions(moduleLink: ModuleLink): ModuleLink[] {
         if (moduleLink.isPkgURL || FilePath.isFileExtensionExist(moduleLink.toFilePath)) {
             return [];
@@ -120,6 +87,42 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
             .map(
                 (ext) => ModuleLink.newFileURL(moduleLink.toFilePath + ext)
             );
+    }
+
+    public get untrackedModuleAmount(): number {
+        return this._untrackedModules.length;
+    }
+
+    public get memoryOperatorId(): ModuleLink {
+        return this._rootDir
+    }
+
+    public get packageLink(): ModuleLink {
+        return this._rootDir
+    }
+
+    public get moduleLink(): ModuleLink {
+        return this._moduleLink;
+    }
+
+    public get moduleMemories(): ModuleMemory<unknown>[] {
+        return Object.values(this._moduleMemories);
+    }
+
+    public get moduleCategories(): string[] {
+        return EnumTraits.enumValues(ModuleCategory) as string[];
+    }
+
+    public isSupportedModuleCategory(moduleCategory: string): boolean {
+        return this.moduleCategories.includes(moduleCategory);
+    }
+
+    public get rootDir(): string {
+        return this._rootDir.toFilePath;
+    }
+
+    public get srcDir(): string {
+        return FilePath.join([this._rootDir.toFilePath, 'src']);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -152,6 +155,7 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
                     )
                 }
                 this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, importedRecords.records[filePath]);
+                this._untrackedModules.push(moduleLink.moduleURL);
                 moduleLinks.push(moduleLink);
             }
         } else if ("module" in params) {
@@ -170,6 +174,7 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
             }
 
             this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory<unknown>(category.getValue(), moduleLink, singleRecord.module);
+            this._untrackedModules.push(moduleLink.moduleURL);
             moduleLinks.push(moduleLink);
         } else {
             return Result.fail(`Missing records and importModules properties`, `Pass the correct data`);
@@ -243,26 +248,49 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
     
         return moduleMemories.filter((memory) => (memory.content === undefined));
     }
-    
-    public isSupportedModuleCategory(moduleCategory: string): boolean {
-        return this.moduleCategories.includes(moduleCategory);
+
+    public afterCreation(): OkResult {
+        this._untrackedModules = [];
+        return OkResult.ok();
     }
 
-    /**
-     * Called by the `@ara-web/reflect` before fetching anything, so that Astro Framework
-     * could convert the required module from file system for example, and convert that module
-     * into the ontological data.
-     * @param moduleCategory 
-     * @param projectMemory 
-     * @returns 
-     */
-    public async beforeGet?(moduleCategory: string, projectMemory: ProjectMemory): Promise<OkResult> {
-        const result = await this._autoPut(moduleCategory);
-        if (result.isFailure) {
-            return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription!);
+    protected _trackModules = (rest: Rest<ReflectElementType>): OkResult => {
+        if (this._untrackedModules.length === 0) {
+            return OkResult.ok();
         }
-        if (ModuleIdentifier.isAstroGeneratedModuleCategory(moduleCategory as ModuleCategory)) {
-           const builtInIdentified = await this.postBuiltInIdentifiers(projectMemory);
+        
+        let moduleURL: ModuleURL | undefined = this._untrackedModules.shift();
+        while (moduleURL !== undefined) {
+            const posted = rest.post!(`#${escapeId(this._moduleLink.moduleURL)}`, this._moduleMemories[moduleURL]);
+            if (posted.isFailure) {
+                return OkResult.fail(`rest.post(#extension, '${this._moduleLink.moduleURL}'): ${posted.errorTitle}`, posted.errorDescription!);
+            }
+            moduleURL = this._untrackedModules.shift();
+        }
+
+        return OkResult.ok();
+    }
+
+    /**************************************************
+     * 
+     * Hooks
+     * 
+     **************************************************/
+
+    public async beforePost(_selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult> {
+        if (!(data instanceof ModuleMemory)) {
+            return OkResult.ok();
+        }
+
+        const beforeUpdate = await this.beforeAny(rest, data.moduleCategory);
+        if (beforeUpdate.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${beforeUpdate.errorTitle}`, beforeUpdate.errorDescription!);
+        }
+
+        // When posting an astro module, register `Astro` global variable.
+        // Astro modules are the files with the .astro extension.
+        if (ModuleIdentifier.isAstroOntologicalCategory(data.moduleCategory)) {
+            const builtInIdentified = await this.postBuiltInIdentifiers(data);
             if (builtInIdentified.isFailure) {
                 return Result.fail(
                     `this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`,
@@ -270,127 +298,39 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
                 )
             }
         }
-        
-        if (moduleCategory === ModuleCategory.Page) {
-            const contents = await this.postPageContents(projectMemory);
+
+        return OkResult.ok();
+    }
+
+    public async afterPost(_selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult> {
+        if (!(data instanceof ModuleMemory)) {
+            return OkResult.ok();
+        }
+
+        const projectMemoryNode = rest.get!('*');
+        if (projectMemoryNode === null || !(projectMemoryNode.getElement() instanceof ProjectMemory)) {
+            return Result.fail(`rest.get('*'): no elements or root is not a project memory`, `Please pass the correct project memory rest`);
+        }
+        const projectMemory = projectMemoryNode.getElement()! as ProjectMemory;
+
+        if (ModuleIdentifier.isAstroOntologicalCategory(data.moduleCategory)) {
+            const contents = await this.identifyContent(data as ModuleMemory<Page>, projectMemory);
             if (contents.isFailure) {
                 return Result.fail(`this.postPageContents(): ${contents.errorTitle}`, contents.errorDescription!)
             }
             return OkResult.ok()
-        } else if (moduleCategory === ModuleCategory.Component) {
-            const contents = await this.identifyComponentContents(projectMemory);
-            if (contents.isFailure) {
-                return Result.fail(`this.identifyComponentContents(): ${contents.errorTitle}`, contents.errorDescription!)
-            }
-
-            return OkResult.ok()
-        } else if (moduleCategory === ModuleCategory.Layout) {
-            const contents = await this.postLayoutContents(projectMemory);
-            if (contents.isFailure) {
-                return Result.fail(`this.postLayoutContents(): ${contents.errorTitle}`, contents.errorDescription!)
-            }
-
-            return OkResult.ok()
-        } else {
-            const scriptsPosted = await this.postScripts(projectMemory);
+        } else if (data.moduleCategory === ModuleCategory.Script) {
+            const scriptsPosted = await this.identifyScriptContent(data as ModuleMemory<Module>, projectMemory);
             if (scriptsPosted.isFailure) {
-                return Result.fail(`this.postScripts(): ${scriptsPosted.errorTitle}`, scriptsPosted.errorDescription!)
+                return Result.fail(`this.identifyScriptContent(): ${scriptsPosted.errorTitle}`, scriptsPosted.errorDescription!)
             }
-
-            const assetsPosted = await this.postAssets(projectMemory);
+        } else {
+            const assetsPosted = await this.identifyAssetContent(data as ModuleMemory<Asset>, projectMemory);
             if (assetsPosted.isFailure) {
-                return Result.fail(`this.postAssets(): ${assetsPosted.errorTitle}`, assetsPosted.errorDescription!)
+                return Result.fail(`this.identifyAssetContent(): ${assetsPosted.errorTitle}`, assetsPosted.errorDescription!)
             }
         }
 
-        return OkResult.ok();
-    }
-    
-    //****************************************************************
-    // 
-    // REST
-    //
-    //****************************************************************
-
-    /**
-     * Identifies the data of the component modules.
-     * @notice Components are not evaluated by internal structures.
-     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
-     */
-    private identifyComponentContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Component);
-        for (const moduleIndex in noContentModules) {
-            const moduleMemory = noContentModules[moduleIndex];
-            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
-            if (moduleParts.isFailure) {
-                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
-            }
-
-            const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
-            if (identifiedMemory.isFailure) {
-                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
-            }
-
-            const data = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
-            if (data.isFailure) {
-                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
-            }
-
-            moduleMemory.content = data.getValue();
-            if (this._extensions.length > 0) {
-                for (const extension of this._extensions) {
-                    if (extension.afterPageLvlIdenfication !== undefined) {
-                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Component, moduleMemory, projectMemory);
-                        if (identifiedPage.isFailure) {
-                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
-                        } else {
-                            noContentModules[moduleIndex] = identifiedPage.getValue();
-                        }
-                    }
-                }
-            }
-        }
-        
-        return OkResult.ok();
-    }
-
-    /**
-     * Identifies the data of the layout modules.
-     * @param {ProjectMemory} projectMemory is used if the layout depends on another modules
-     */
-    private postLayoutContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Layout);
-        for (const moduleIndex in noContentModules) {
-            const moduleMemory = noContentModules[moduleIndex];
-            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
-            if (moduleParts.isFailure) {
-                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
-            }
-
-            const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
-            if (identifiedMemory.isFailure) {
-                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
-            }
-
-            const data = await PageLevel.identify<Page>( moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
-            if (data.isFailure) {
-                return OkResult.fail(`PageLevel.identify<Page>('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
-            }
-
-            moduleMemory.content = data.getValue();
-            if (this._extensions.length > 0) {
-                for (const extension of this._extensions) {
-                    if (extension.afterPageLvlIdenfication !== undefined) {
-                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Layout, moduleMemory, projectMemory);
-                        if (identifiedPage.isFailure) {
-                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
-                        } else {
-                            noContentModules[moduleIndex] = identifiedPage.getValue();
-                        }
-                    }
-                }
-            }
-        }
         return OkResult.ok();
     }
 
@@ -400,35 +340,31 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
      * @param {ProjectMemory} projectMemory is used to identify the dependencies that page depends on.
      * @returns {Result<AraPage[]>}
      */
-    private postPageContents = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules<Page>(ModuleCategory.Page);
-        for (const moduleIndex in noContentModules) {
-            const moduleMemory = noContentModules[moduleIndex];
-            const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
-            if (moduleParts.isFailure) {
-                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
-            }
+    private identifyContent = async (moduleMemory: ModuleMemory<Page>, projectMemory: ProjectMemory): Promise<OkResult> => {
+        const moduleParts = await ModulePartitioner.partition<Page>(moduleMemory);
+        if (moduleParts.isFailure) {
+            return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
+        }
 
-            const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
-            if (identifiedMemory.isFailure) {
-                return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
-            }
+        const identifiedMemory = await CodeLevel.identifySourceCode(moduleParts.getValue().source, moduleMemory, projectMemory);
+        if (identifiedMemory.isFailure) {
+            return OkResult.fail(`CodeLevel.identifySourceCode('${moduleMemory.moduleLink.moduleURL}'): ${identifiedMemory.errorTitle}`, identifiedMemory.errorDescription!)
+        }
 
-            const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
-            if (page.isFailure) {
-                return OkResult.fail(`PageLevel.identify('${moduleMemory.moduleLink.moduleURL}'): ${page.errorTitle}`, page.errorDescription!)
-            }
+        const page = await PageLevel.identify<Page>(moduleParts.getValue(), identifiedMemory.getValue(), projectMemory);
+        if (page.isFailure) {
+            return OkResult.fail(`PageLevel.identify('${moduleMemory.moduleLink.moduleURL}'): ${page.errorTitle}`, page.errorDescription!)
+        }
 
-            moduleMemory.content = page.getValue();
-            if (this._extensions.length > 0) {
-                for (const extension of this._extensions) {
-                    if (extension.afterPageLvlIdenfication !== undefined) {
-                        const identifiedPage = await extension.afterPageLvlIdenfication(ModuleCategory.Page, moduleMemory, projectMemory);
-                        if (identifiedPage.isFailure) {
-                            return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
-                        } else {
-                            noContentModules[moduleIndex] = identifiedPage.getValue();
-                        }
+        moduleMemory.content = page.getValue();
+        if (this._extensions.length > 0) {
+            for (const extension of this._extensions) {
+                if (extension.afterPageLvlIdenfication !== undefined) {
+                    const identifiedPage = await extension.afterPageLvlIdenfication(moduleMemory.moduleCategory, moduleMemory, projectMemory);
+                    if (identifiedPage.isFailure) {
+                        return Result.fail(`extension('${extension.packageLink.toString}').afterPageLvlIdentification(): ${identifiedPage.errorTitle}`, identifiedPage.errorDescription!)
+                    } else {
+                        moduleMemory.content = identifiedPage.getValue().content!;
                     }
                 }
             }
@@ -441,27 +377,24 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
      * into the `Script` ontological data.
      * @returns 
      */
-    private postScripts = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules();
-        for (const moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition(moduleMemory);
-            if (moduleParts.isFailure) {
-                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
-            }
-
-            const extension = moduleParts.getValue().fileExtension
-            if (!ModuleIdentifier.isScript(extension)) {
-                continue;
-            }
-
-            const data = await ModuleIdentifier.identify<Module>(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>, projectMemory);
-
-            if (data.isFailure) {
-                return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
-            }
-
-            moduleMemory.content = data.getValue();
+    private identifyScriptContent = async(moduleMemory: ModuleMemory<Module>, projectMemory: ProjectMemory): Promise<OkResult> => {
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
+        if (moduleParts.isFailure) {
+            return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
         }
+
+        const extension = moduleParts.getValue().fileExtension
+        if (!ModuleIdentifier.isScript(extension)) {
+            return OkResult.fail(`ModuleIdentifier.isScript('${extension}'): not a script`, `Please pass the .ts or .js files`);
+        }
+
+        const data = await ModuleIdentifier.identify(moduleParts.getValue(), moduleMemory as ModuleMemory<Module>, projectMemory);
+
+        if (data.isFailure) {
+            return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+        }
+
+        moduleMemory.content = data.getValue();
         return OkResult.ok();
     }
 
@@ -470,27 +403,24 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
      * into the `Asset` ontological data.
      * @returns 
      */
-    private postAssets = async (projectMemory: ProjectMemory): Promise<OkResult> => {
-        const noContentModules = this.getNoContentModules();
-        for (const moduleMemory of noContentModules) {
-            const moduleParts = await ModulePartitioner.partition(moduleMemory);
-            if (moduleParts.isFailure) {
-                return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
-            }
-
-            const extension = moduleParts.getValue().fileExtension
-            if (!ModuleIdentifier.isAsset(extension)) {
-                continue;
-            }
-
-            const data = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>, projectMemory);
-
-            if (data.isFailure) {
-                return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
-            }
-
-            moduleMemory.content = data.getValue();
+    private identifyAssetContent = async (moduleMemory: ModuleMemory<Asset>, projectMemory: ProjectMemory): Promise<OkResult> => {
+        const moduleParts = await ModulePartitioner.partition(moduleMemory);
+        if (moduleParts.isFailure) {
+            return OkResult.fail(`ModulePartitioner.partition('${moduleMemory.moduleLink.moduleURL}'): ${moduleParts.errorTitle}`, moduleParts.errorDescription!);
         }
+
+        const extension = moduleParts.getValue().fileExtension
+        if (!ModuleIdentifier.isAsset(extension)) {
+            return OkResult.fail(`ModuleIdentifier.isAsset('${extension}'): not a script`, `Please pass asset file`);
+        }
+
+        const data = await ModuleIdentifier.identify<Asset>(moduleParts.getValue(), moduleMemory as ModuleMemory<Asset>, projectMemory);
+
+        if (data.isFailure) {
+            return OkResult.fail(`ModuleIdentifier.identify('${moduleMemory.moduleLink.moduleURL}'): ${data.errorTitle}`, data.errorDescription!)
+        }
+
+        moduleMemory.content = data.getValue();
         return OkResult.ok();
     }
 
@@ -511,11 +441,13 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
         return undefined;
     }
 
-    //
-    // Adds the Array, Object and other classes, types that are available in the Environment
-    // Except for the NodeJS extension itself.
-    //
-    private postBuiltInIdentifiers = async (projectMemory: ProjectMemory): Promise<Result<ProjectMemory>> => {
+    /**
+     * Responsbile with registering built in `Astro` in
+     * the modules that ends with .astro file extension.
+     * @param moduleMemory 
+     * @returns 
+     */
+    private postBuiltInIdentifiers = async (moduleMemory: ModuleMemory<unknown>): Promise<Result<ModuleMemory<unknown>>> => {
         const identifiers = await AstroBuiltInIdentifiers.getBuiltInIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(
@@ -526,34 +458,44 @@ export class ReflectAstroExtension extends SDSService<ReflectAstroExtension, Ast
 
         const importIdentifiersCount = Object.keys(identifiers.getValue()).length;
         if (importIdentifiersCount === 0) {
-            return Result.ok(projectMemory);
+            return Result.ok(moduleMemory);
         }
-        
-        projectMemory
-        .getModules()
-        .filter(
-            (module) => 
-                ModuleIdentifier.isAstroGeneratedModule(module)
-        ).forEach(
-            (moduleMemory) => 
-            {
-                let failedPostResult = OkResult.ok();
-                const parent = moduleMemory.rest.get!('*')!
-                identifiers.getValue().forEach((importedCodePiece) => {
-                    if (failedPostResult.isFailure) {
-                        return;
-                    }
-                    const posted = moduleMemory.rest.post!('*', importedCodePiece, {parent});
-                    if (posted.isFailure) {
-                        failedPostResult = posted;
-                    }
-                });
-                if (failedPostResult.isFailure) {
-                    return Result.fail(`moduleMemory.rest.post(): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+
+        let failedPostResult = OkResult.ok();
+        identifiers.getValue().forEach(
+            (codePiece) => {
+                if (failedPostResult.isSuccess) {
+                    failedPostResult = moduleMemory.rest.post!('*', codePiece, {})
                 }
             }
-        );
-        return Result.ok(projectMemory);
+        )
+        if (failedPostResult.isFailure) {
+            return Result.fail(`moduleMemory.rest.post(builtInIdentifiers): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+        }
+        return Result.ok(moduleMemory);
+    }
+
+    /**
+     * Before any request, we must import modules.
+     * We must track the untracked modules.
+     * @param rest 
+     * @param moduleCategory 
+     * @returns 
+     */
+    private async beforeAny(rest: Rest<ReflectElementType>, moduleCategory: string): Promise<OkResult> {
+        if (this._autoImporter !== undefined) {
+            const result = await this._autoPut(moduleCategory);
+            if (result.isFailure) {
+                return OkResult.fail(`this._autoPut(): ${result.errorTitle}`, result.errorDescription!);
+            }
+        }
+
+        const tracked = this._trackModules(rest);
+        if (tracked.isFailure) {
+            return OkResult.fail(`this._trackModules(): ${tracked.errorTitle}`, tracked.errorDescription!);
+        }
+
+        return OkResult.ok();
     }
 
 }

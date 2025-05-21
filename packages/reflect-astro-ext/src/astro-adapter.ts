@@ -1,5 +1,5 @@
 import { AstroNode } from "./astro-node.js";
-import { OkResult } from "@ara-web/p-hintjens";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 import { DOCUMENT_SELECTOR, ObjectNode, type ElementOp, type ObjectToNodeTree } from "@ara-web/sds";
 import type { AttributeNode } from "@astrojs/compiler/types";
 
@@ -67,12 +67,15 @@ export const astroElementOps: ElementOp<AstroNode> = {
 	setAttribute: setAstroElementAttribute,
 }
 
-export const astroToNodeTree: ObjectToNodeTree<AstroNode> = (node: AstroNode, _parent?: ObjectNode<AstroNode>, root: boolean = true): ObjectNode<AstroNode> => {
-	if (root === false) {
-		return new ObjectNode<AstroNode>(astroElementOps, node);
+export const astroToNodeTree: ObjectToNodeTree<AstroNode> = (node: AstroNode, parent?: ObjectNode<AstroNode>, root?: boolean): ObjectNode<AstroNode> => {
+	if (root === false || root === undefined) {
+		if (parent === undefined) {
+			throw `Not a root, but parent is missing`;
+		}
+		return new ObjectNode<AstroNode>(astroElementOps, astroToNodeTree, node, parent);
 	}
-	const parent = new ObjectNode<AstroNode>(astroElementOps);
-	const children = node.children.map((astroNode) => new ObjectNode<AstroNode>(astroElementOps, astroNode, parent));
-	parent.setChildren(children)
-	return parent;
+	const obj = new ObjectNode<AstroNode>(astroElementOps, astroToNodeTree);
+	const children = node.children.map((astroNode) => new ObjectNode<AstroNode>(astroElementOps, astroToNodeTree, astroNode, obj));
+	obj.setChildren(children)
+	return obj;
 }

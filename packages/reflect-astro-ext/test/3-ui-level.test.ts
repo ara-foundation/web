@@ -4,10 +4,11 @@
  */
 
 import { expect, test } from "vitest";
-import { ModuleMemory } from "@ara-web/reflect";
+import { ModuleMemory, Reflect, reflectElementToObjectTree, ReflectElementType } from "@ara-web/reflect";
 import { ModuleCategory, ModulePartitioner, CodeLevel, PageLevel, type Page, FileExtension, ModuleIdentifier, Asset, Module } from "../src";
 import { getImportRecords, getNewAstroReflect, getNewProjectMemory } from "./shared";
 import { Debug } from "@ara-web/p-hintjens";
+import { Rest } from "@ara-web/sds";
 
 test(`Make sure the that pages JSON are generated`, async () => {
     const modules = getImportRecords()
@@ -110,6 +111,7 @@ test(`Make sure the that layouts are generated`, async () => {
     expect(validated.isSuccess).toBe(true);
     // Make sure they are all no content moduled
     const projectMemory = getNewProjectMemory(reflectExtension);
+    const projectMemoryRest = new Rest<ReflectElementType>(projectMemory, reflectElementToObjectTree);
         
     const moduleMemories = projectMemory.getModules();
     expect(Object.keys(moduleMemories).length).toBeGreaterThan(0);
@@ -124,10 +126,19 @@ test(`Make sure the that layouts are generated`, async () => {
         if (moduleMemory.moduleCategory !== ModuleCategory.Layout) {
             continue;
         }
-        if (reflectExtension.beforeGet !== undefined) {
-            const posted = await reflectExtension.beforeGet(moduleMemory.moduleCategory, projectMemory);
+        if (reflectExtension.beforePost !== undefined) {
+            const posted = await reflectExtension.beforePost(moduleMemory.moduleCategory, projectMemoryRest, moduleMemory);
             if (posted.isFailure) {
-                Debug.log(`beforeGet() failed: ${posted.errorTitle}`);
+                Debug.log(`beforePost() failed: ${posted.errorTitle}`);
+                Debug.log(posted.errorDescription);
+                return;
+            }
+            expect(posted.isSuccess).toBe(true);
+        }
+        if (reflectExtension.afterPost !== undefined) {
+            const posted = await reflectExtension.afterPost(moduleMemory.moduleCategory, projectMemoryRest, moduleMemory);
+            if (posted.isFailure) {
+                Debug.log(`afterPost() failed: ${posted.errorTitle}`);
                 Debug.log(posted.errorDescription);
                 return;
             }

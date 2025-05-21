@@ -284,7 +284,7 @@ let ModuleIdentifier = (() => {
             const fileExtension = fileExtensionResult.getValue();
             return fileExtension === FileExtension.Astro;
         };
-        static isAstroGeneratedModuleCategory = (moduleCategory) => {
+        static isAstroOntologicalCategory = (moduleCategory) => {
             return moduleCategory === ModuleCategory.Page || moduleCategory === ModuleCategory.Layout || moduleCategory === ModuleCategory.Component;
         };
         static {

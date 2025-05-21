@@ -67,8 +67,8 @@ async function getAstroNode(html: string): Promise<AstroNode|undefined> {
 test(`Simply testing css-select with astro adapter`, async() => {
     const options = {adapter};
     const astroObject = await getAstroNode(html)
-
-    let child = cssSelect("main > div", [astroToNodeTree(astroObject!, undefined, true)], options);
+    const astroNodes = [astroToNodeTree(astroObject!, undefined, true)];
+    let child = cssSelect("main > div", astroNodes, options);
     expect(child).toHaveLength(2);
 })
 
@@ -88,10 +88,9 @@ test(`Simply testing css-select with REST`, async() => {
     expect(lastChild?.children).toHaveLength(0);
 
     // Posting
-    const parent = rest.get!("main > div:last-of-type")!
     const bananaAstNode = (await getAstroNode(element))!.children[0];
     // First simply putting as the element in the main > div last of type
-    const posted = rest.post!("main > div:last-of-type", bananaAstNode, {parent});
+    const posted = rest.post!("main > div:last-of-type", bananaAstNode);
     expect(posted.isSuccess).toBe(true);
     
     const foundBanana = rest.get!("main > div:last-of-type > div.banana");
