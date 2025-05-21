@@ -1,19 +1,17 @@
 # Reflect
-A browser shows the web pages as a tree of web elements.
-But web elements are not quite often revertable back to
-the actual database models or code pieces. Browser's developer
-tools are one way, always from backend to frontend.
-Which makes the development process much harder.
+The Reflect is an NPM package that creates and manipulates the ontological data of the website.
 
-The Reflect package creates a website's ontology in a JSON format
-by linking a web elements to actual code pieces in the source code.
-
-With reflect you can access to the website as a json. And edit
-the JSON, which reflect will handle as the web element. Or in opposite,
-edit the web element and it will convert into a JSON.
+With Reflect
+- Edit your website as a json.
+- Give the JSON to the AI agents to have context of the website in a cheaper way.
+- Edit any nodejs based websites right in the browser.
+- Provide Admin panel/CMS for your websites without creating it.
 
 > In computer science, reflective programming or reflection is the ability of a process to examine, introspect, and modify its own structure and behavior. [Wikipedia Article](https://en.wikipedia.org/wiki/Reflective_programming)
 
+**Follow us to know Reflect release**
+--
+*Subscribe to our [Telegram Channel](t.me/arafoundation) to keep up with the release. Or follow our [@ara_foundation_](twitter.com/ara_foundation_) ex-twitter account.*
 
 ## Tutorial
 Lets reflect on the a simple website by following [Astro's official documentation](https://docs.astro.build/en/install-and-setup/#add-integrations). Astro is one of the popular web frameworks. After completing the tutorial, you would know how to apply Reflect for other frameworks as well.
