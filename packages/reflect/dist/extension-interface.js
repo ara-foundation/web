@@ -1,1 +1,1 @@
-import { ModuleLink } from "@ara-web/sds";
+import { ModuleLink, Rest } from "@ara-web/sds";

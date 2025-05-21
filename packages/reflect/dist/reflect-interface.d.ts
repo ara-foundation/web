@@ -1,5 +1,5 @@
-import type { Result } from "@ara-web/p-hintjens";
 import type { SDSServiceInterface } from "@ara-web/sds";
+import type { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
 export interface ReflectInterface extends SDSServiceInterface {
-    get?<T>(moduleCategory: string): Promise<Result<T[]>>;
+    rest?(): RestReflectHookProxy;
 }

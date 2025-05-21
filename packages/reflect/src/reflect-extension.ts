@@ -19,7 +19,7 @@ import { escapeId } from "./reflect-object-tree.js";
  * Adds the support of the NodeJS built in context such Array, Record generics.
  */
 export class ReflectExtension implements ExtensionInterface {
-    public reflectExtension: true = true;
+    public reflectExtension: boolean = true;
     private _moduleLink: ModuleLink;
 
     /**
@@ -58,6 +58,14 @@ export class ReflectExtension implements ExtensionInterface {
         return Object.values(this._moduleMemories);
     }
 
+    public get moduleCategories(): string[] {
+        return [];
+    }
+
+    public isSupportedModuleCategory(moduleCategory: string): boolean {
+        return this.moduleCategories.includes(moduleCategory);
+    }
+
     public async putPackage({importModuleClause, module, moduleCategory}: SingleRecord & {moduleCategory: string}): Promise<Result<ModuleLink>> {
         const moduleLink = ModuleLink.newPackageURLFromImportClause(importModuleClause);
         const moduleMemory = new ModuleMemory(moduleCategory, moduleLink, module);
@@ -71,7 +79,6 @@ export class ReflectExtension implements ExtensionInterface {
         const moduleLinks: ModuleLink[] = [];
         if ("records" in params) {
             const importedRecords = params as ImportedRecords;
-            let i = 0;
             for (let filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
                 if (!(FilePath.isFileExist(moduleLink))) {
@@ -145,14 +152,6 @@ export class ReflectExtension implements ExtensionInterface {
             return true;
         }
         return false;
-    }
-
-    public get moduleCategories(): string[] {
-        return [];
-    }
-
-    public isSupportedModuleCategory(moduleCategory: string): boolean {
-        return this.moduleCategories.includes(moduleCategory);
     }
 
     public getModuleContents<T>(moduleCategory?: string): T[] {

@@ -1,6 +1,5 @@
 import { ModuleLink, Rest } from "@ara-web/sds";
 import { 
-    Debug,
     EnumTraits,
     OkResult, 
     Result,
@@ -170,11 +169,18 @@ export class NodejsReflectExtension extends ReflectExtension {
             return Result.ok(moduleMemory);
         }
         
+
+        let failedPostResult = OkResult.ok();
         identifiers.getValue().forEach(
             (codePiece) => {
-                moduleMemory.rest.post!('*', codePiece, {})
+                if (failedPostResult.isSuccess) {
+                    failedPostResult = moduleMemory.rest.post!('*', codePiece, {})
+                }
             }
         )
+        if (failedPostResult.isFailure) {
+            return Result.fail(`moduleMemory.rest.post(builtInIdentifiers): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription!)
+        }
         return Result.ok(moduleMemory);
     }
 

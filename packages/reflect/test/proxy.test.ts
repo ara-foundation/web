@@ -18,13 +18,13 @@ class SampleProxy extends SDSProxy {
 
     public helloWorld?(): string {
         const hasReflect = this._behindData !== undefined;
-        const hasGet = hasReflect && this._behindData!.get !== undefined;
+        const hasGet = hasReflect && this._behindData!.rest !== undefined;
         return `Hello world from sample proxy, is reflect (${hasReflect}) behind has get method? ${hasGet}`;
     }
 
     public hasGetMethod?(): boolean {
         const hasReflect = this._behindData !== undefined;
-        const hasGet = hasReflect && this._behindData!.get !== undefined;
+        const hasGet = hasReflect && this._behindData!.rest !== undefined;
         return hasGet;
     }
 }
@@ -33,7 +33,7 @@ test('Simply creating a reflect proxy and trying to fetch data', async () => {
     const sampleLink = ModuleLink.newPackageURL(undefined, "sample-package");
     const sampleProxy = new SampleProxy(sampleLink);
     const reflect = new Reflect({proxies: [sampleProxy], packageLink: sampleLink});
-    expect(reflect.get).toBeUndefined();
+    expect(reflect.rest).toBeUndefined();
     
 
     const proxifiedReflect = reflect.proxifyMe<SampleProxy>();
@@ -50,7 +50,7 @@ test('Check that proxies chain returns the first proxy', async () => {
     const sampleLink2 = ModuleLink.newPackageURL(undefined, "sample-package-2");
     const sampleProxy2 = new SampleProxy(sampleLink2);
     const reflect = new Reflect({proxies: [sampleProxy1, sampleProxy2], packageLink: sampleLink1});
-    expect(reflect.get).toBeUndefined();
+    expect(reflect.rest).toBeUndefined();
 
     const proxifiedReflect = reflect.proxifyMe<SampleProxy>();
     expect(proxifiedReflect.isSuccess).toBe(true);

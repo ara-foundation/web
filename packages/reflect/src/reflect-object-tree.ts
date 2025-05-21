@@ -20,7 +20,17 @@ export const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType> = 
 	// Creating the root for entire source code that has one or many code pieces.
 	let obj: ObjectNode<ReflectElementType>;
 	if (root) {
-		obj = new ObjectNode<ReflectElementType>(reflectElementOps, reflectElementToObjectTree);
+		if (!(element instanceof ProjectMemory)) {
+			throw `Root element must be a project memory`;
+		}
+		obj = new ObjectNode<ReflectElementType>(reflectElementOps, reflectElementToObjectTree, element);
+		for (const memOp of element.memOps) {
+			const ext = memOp as ExtensionInterface;
+			const created = ext.afterCreation!();
+			if (created.isFailure) {
+				throw created;
+			}
+		}
 	} else if (parent !== undefined) {
 		obj = new ObjectNode<ReflectElementType>(reflectElementOps, reflectElementToObjectTree, element, parent);
 	} else {
@@ -29,23 +39,13 @@ export const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType> = 
 
 	if (element instanceof ModuleMemory) {
 		element.rest.setRootNode(obj as any as ObjectNode<CodePiece>);
-	} else if (element instanceof ProjectMemory) {
-		for (const memOp of element.memOps) {
-			const ext = memOp as ExtensionInterface;
-			const extNode = new ObjectNode<ReflectElementType>(reflectElementOps, reflectElementToObjectTree, ext, obj);
-			obj.appendChild(extNode);
-			const created = ext.afterCreation!();
-			if (created.isFailure) {
-				throw created;
-			}
-		}
-	}
+	} 
 	return obj;
 }
 
 const getElementTag = (_element?: ReflectElementType): string => {
 	if (_element === undefined || _element === null || _element instanceof ProjectMemory) {
-		return DOCUMENT_SELECTOR;
+		return '';
 	}
 	if (_element instanceof CodePiece) {
 		return codePieceOps.getName(_element);
@@ -73,7 +73,7 @@ const getElementChildren = (_element: ReflectElementType): ReflectElementType[] 
 const getElementAttribute = (_element: ReflectElementType | undefined, attrName: string): string | undefined => {
 	if (_element === undefined || _element === null || _element instanceof ProjectMemory) {
 		if (attrName === 'id') {
-			return DOCUMENT_SELECTOR;
+			return DOCUMENT_SELECTOR.substring(1);
 		}
 		return undefined;
 	}

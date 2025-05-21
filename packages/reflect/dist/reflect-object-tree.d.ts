@@ -9,4 +9,5 @@ export declare const MODULE_MEMORY_TAG = "module";
 export declare const MODULE_MEMORY_SELECTOR = "*:nth-child(1) module";
 export declare const MEMOP_SELECTOR = "*:nth-child(1) > memop";
 export declare const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType>;
+export declare const escapeId: (path: string) => string;
 export declare const reflectElementOps: ElementOp<ReflectElementType>;

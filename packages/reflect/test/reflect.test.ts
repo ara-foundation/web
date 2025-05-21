@@ -13,13 +13,13 @@ const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-t
 
 test('Simply creating a reflect and trying to fetch data', async () => {
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
-    const data = await reflect.rest.getAll!(`.${ModuleCategory.Untracked}`);
+    const data = await reflect.rest!().getAll!(`.${ModuleCategory.Untracked}`);
     expect(data).toHaveLength(0);
 
-    const builtIn = await reflect.rest.getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
+    const builtIn = await reflect.rest!().getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(0);
 
-    const allData = await reflect.rest.getAll!('*');
+    const allData = await reflect.rest!().getAll!('*');
     expect(allData).toHaveLength(2);
 });
 
@@ -34,7 +34,7 @@ test('Post modules into the Nodejs Reflect Extension', async () => {
     const categorizedModules = getSampleModuleData();
 
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
-    let builtIn = await reflect.rest.getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
+    let builtIn = await reflect.rest!().getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(0);
 
     // After adding the records
@@ -42,7 +42,7 @@ test('Post modules into the Nodejs Reflect Extension', async () => {
     expect(posted.isSuccess).toBe(true);
     expect(reflect.nodeJsExt.untrackedModuleAmount).toEqual(posted.getValue().length)
 
-    builtIn = await reflect.rest.getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
+    builtIn = await reflect.rest!().getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
     expect(reflect.nodeJsExt.untrackedModuleAmount).toEqual(0)
     expect(builtIn).toHaveLength(getCategorizedModuleAmount());
 });
@@ -51,14 +51,14 @@ test('Post packages into the Nodejs Reflect Extension', async () => {
     const samplePackage = getSamplePackage();
 
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
-    let builtIn = await reflect.rest.getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
+    let builtIn = await reflect.rest!().getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(0);
 
     // After adding the records
     const posted = await reflect.nodeJsExt.putPackage(samplePackage);
     expect(posted.isSuccess).toBe(true);
 
-    builtIn = await reflect.rest.getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
+    builtIn = await reflect.rest!().getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(1);
 });
 
@@ -66,13 +66,13 @@ test('Post packages into the Nodejs Reflect Extension', async () => {
 test('Setup auto import and make sure its automatically imported', async () => {
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
     // Has no data yet, so empty
-    let builtIn = await reflect.rest.getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
+    let builtIn = await reflect.rest!().getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(0);
  
     // After adding the records
     reflect.nodeJsExt.watchModules(getSampleModuleData);
 
-    builtIn = await reflect.rest.getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
+    builtIn = await reflect.rest!().getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn).toHaveLength(getCategorizedModuleAmount());
 });
 
@@ -81,7 +81,7 @@ test('Post packages into the Nodejs Reflect Extension and getting submodule of t
     const samplePackage = getSamplePackageWithSubModules();
 
     const reflect = new Reflect({packageLink: reflectingPkgUrl})
-    let builtIn = await reflect.rest.getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
+    let builtIn = await reflect.rest!().getAll!(`${MODULE_MEMORY_TAG}.${BuiltinModuleCategory.NodeJsModule}`);
     expect(builtIn !== null).toBe(true);
     expect(builtIn).toHaveLength(0);
 
@@ -92,7 +92,7 @@ test('Post packages into the Nodejs Reflect Extension and getting submodule of t
     const foundPkg = reflect.nodeJsExt.getModule(ModuleLink.newPackageURLFromImportClause("@ara-web/p-hintjens"));
     expect(foundPkg.isSuccess).toBe(true);
 
-    builtIn = await reflect.rest.getAll!(`*`);
+    builtIn = await reflect.rest!().getAll!(`*`);
     expect(builtIn !== null).toBe(true);
     expect(builtIn).toHaveLength(3);
     expect(builtIn[0].selector).toEqual(DOCUMENT_SELECTOR);

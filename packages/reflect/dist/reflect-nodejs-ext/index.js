@@ -1,118 +1,26 @@
+import { ModuleLink, Rest } from "@ara-web/sds";
+import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
+import { ModuleMemory, BuiltInIdentifiers } from "../index.js";
+import { ReflectExtension } from "../reflect-extension.js";
 export var ModuleCategory;
 (function (ModuleCategory) {
     ModuleCategory["NodeJsModule"] = "node_modules";
 })(ModuleCategory || (ModuleCategory = {}));
-import { ModuleLink, ObjectNode } from "@ara-web/sds";
-import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
-import { ModuleMemory, ProjectMemory, BuiltInIdentifiers, FilePath, codePieceOps, CodePiece, MODULE_SELECTOR } from "../index.js";
 /**
  * Adds the support of the NodeJS built in context such Array, Record generics.
  */
-export class NodejsReflectExtension {
-    _moduleLink;
-    /**
-     * Link such as pkg:npm/lodash -> pkg:npm/lodash?absolutePath=file:///...
-     */
-    _moduleMemories = {};
-    _autoImporter;
+export class NodejsReflectExtension extends ReflectExtension {
     constructor() {
-        const fileModuleLink = ModuleLink.newFileURL(import.meta.filename);
-        this._moduleLink = ModuleLink.newPackageURL("@ara-web", "reflect-nodejs-ext", fileModuleLink);
+        super(ModuleLink.newPackageURL("@ara-web", "reflect-nodejs-ext", ModuleLink.newFileURL(import.meta.filename)));
     }
-    getModuleWithFileExtensions(_) {
-        return [];
+    async putPackage({ importModuleClause, module }) {
+        return await super.putPackage({ importModuleClause, module, moduleCategory: ModuleCategory.NodeJsModule });
     }
-    get memoryOperatorId() {
-        return this._moduleLink;
+    async putModules(params) {
+        return await super.putModules({ ...params, moduleCategory: ModuleCategory.NodeJsModule });
     }
-    get packageLink() {
-        return this.moduleLink;
-    }
-    get moduleLink() {
-        return this._moduleLink;
-    }
-    get moduleMemories() {
-        return Object.values(this._moduleMemories);
-    }
-    get description() {
-        return "Adds support of the Nodejs built in functions and context access";
-    }
-    putPackage = async ({ importModuleClause, module }) => {
-        const moduleLink = ModuleLink.newPackageURLFromImportClause(importModuleClause);
-        const moduleMemory = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, module);
-        this._moduleMemories[moduleLink.moduleURL] = moduleMemory;
-        return Result.ok(moduleLink);
-    };
-    putModules = async (params) => {
-        const importingFilePath = params.importMetaFilename ? params.importMetaFilename : FilePath.getCurrentWorkingDir();
-        const moduleLinks = [];
-        if ("records" in params) {
-            const importedRecords = params;
-            for (let filePath in importedRecords.records) {
-                const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
-                if (!(FilePath.isFileExist(moduleLink))) {
-                    return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`);
-                }
-                this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
-                moduleLinks.push(moduleLink);
-            }
-        }
-        else if ("module" in params) {
-            const singleRecord = params;
-            const moduleLink = FilePath.getFileAbsolutePath(singleRecord.importModuleClause, importingFilePath);
-            if (!(FilePath.isFileExist(moduleLink))) {
-                return Result.fail(`FilePath.isFileExist('${moduleLink.moduleURL}'): not found`, `Make sure absolute path is created from '${singleRecord.importModuleClause}' relative to '${singleRecord.importMetaFilename}' locates to a file`);
-            }
-            this._moduleMemories[moduleLink.moduleURL] = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, singleRecord.module);
-            moduleLinks.push(moduleLink);
-        }
-        else {
-            return Result.fail(`Missing records and importModules properties`, `Pass the correct data`);
-        }
-        if (moduleLinks.length === 0) {
-            return Result.fail(`No record to put in`, `Please pass the correct node`);
-        }
-        return Result.ok(moduleLinks);
-    };
-    watchModules = (autoImporter) => {
-        this._autoImporter = autoImporter;
-    };
-    _autoPut = async (_) => {
-        if (this._autoImporter === undefined) {
-            return Result.ok([]);
-        }
-        const imported = this._autoImporter();
-        const putResult = await this.putModules(imported);
-        if (putResult.isFailure) {
-            return Result.fail(`this.putModules(): ${putResult.errorTitle}`, putResult.errorDescription);
-        }
-        return Result.ok(putResult.getValue());
-    };
-    getModule(moduleLink) {
-        if (typeof moduleLink === "string") {
-            return Result.fail(`${this.moduleLink.moduleURL} accepts module links only`, `Please pass the absolute path`);
-        }
-        if (!this.isModuleExist(moduleLink)) {
-            return Result.errorCode404([this.moduleLink.moduleURL], `this.isModuleExist()`, `The link: ${moduleLink}`);
-        }
-        let module = this._moduleMemories[moduleLink.moduleURL];
-        return Result.ok(module);
-    }
-    getModules(moduleCategory) {
-        const moduleMemories = [];
-        for (let moduleMemory of this.moduleMemories) {
-            if (moduleCategory === undefined || moduleMemory.moduleCategory === moduleCategory) {
-                moduleMemories.push(moduleMemory);
-            }
-        }
-        return moduleMemories;
-    }
-    isModuleExist(moduleLink) {
-        let url = typeof moduleLink === "string" ? moduleLink : moduleLink.moduleURL;
-        if (this._moduleMemories[url] !== undefined) {
-            return true;
-        }
-        return false;
+    get untrackedModuleAmount() {
+        return super.untrackedModuleAmount;
     }
     get moduleCategories() {
         return EnumTraits.enumValues(ModuleCategory);
@@ -120,67 +28,114 @@ export class NodejsReflectExtension {
     isSupportedModuleCategory(moduleCategory) {
         return this.moduleCategories.includes(moduleCategory);
     }
-    /**
-     * NodeJs Extension's hook before the get operation will put the built in Nodejs built in identifiers
-     * into all modules
-     * @param projectMemory
-     * @returns
-     */
-    async beforeGet(moduleCategory, projectMemory) {
-        if (this._autoImporter !== undefined) {
-            const result = await this._autoPut(moduleCategory);
-            if (result.isFailure) {
-                return Result.fail(`this._autoPut('${moduleCategory}'): ${result.errorTitle}`, result.errorDescription);
-            }
-        }
-        const builtInIdentified = await this.postBuiltInIdentifiers(projectMemory);
-        if (builtInIdentified.isFailure) {
-            return Result.fail(`this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`, builtInIdentified.errorDescription);
-        }
-        if (moduleCategory === ModuleCategory.NodeJsModule) {
-            this.postNodeJSContents();
+    //****************************************************************
+    // 
+    // Hooks
+    //
+    //****************************************************************
+    async beforeGet(_selector, rest, _data) {
+        const result = await this.beforeAny(rest);
+        if (result.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${result.errorTitle}`, result.errorDescription);
         }
         return OkResult.ok();
     }
-    getModuleContents(moduleCategory) {
-        const moduleMemories = this.getModules(moduleCategory);
-        return moduleMemories.map((memory) => memory.content);
+    async beforePut(_selector, rest, _data) {
+        const result = await this.beforeAny(rest);
+        if (result.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${result.errorTitle}`, result.errorDescription);
+        }
+        return OkResult.ok();
     }
-    getNoContentModules(moduleCategory) {
-        const moduleMemories = this.getModules(moduleCategory);
-        return moduleMemories.filter((memory) => (memory.content === undefined));
+    async beforeDelete(_selector, rest, _data) {
+        const result = await this.beforeAny(rest);
+        if (result.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${result.errorTitle}`, result.errorDescription);
+        }
+        return OkResult.ok();
+    }
+    async beforePatch(_selector, rest, _data) {
+        const result = await this.beforeAny(rest);
+        if (result.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${result.errorTitle}`, result.errorDescription);
+        }
+        return OkResult.ok();
+    }
+    async beforePost(_selector, rest, data) {
+        const beforeUpdate = await this.beforeAny(rest);
+        if (beforeUpdate.isFailure) {
+            return OkResult.fail(`this.beforeAny(): ${beforeUpdate.errorTitle}`, beforeUpdate.errorDescription);
+        }
+        if (!(data instanceof ModuleMemory)) {
+            return OkResult.ok();
+        }
+        if (data.moduleCategory !== ModuleCategory.NodeJsModule) {
+            const builtInIdentified = await this.postBuiltInIdentifiers(data);
+            if (builtInIdentified.isFailure) {
+                return OkResult.fail(`this.postBuiltInIdentifiers(): ${builtInIdentified.errorTitle}`, builtInIdentified.errorDescription);
+            }
+        }
+        // This hook can be used to perform actions before posting data to modules.
+        // For now, just return OkResult.ok() to satisfy the interface.
+        return OkResult.ok();
+    }
+    async afterPost(_selector, _rest, data) {
+        if (!(data instanceof ModuleMemory)) {
+            return OkResult.ok();
+        }
+        if (data.moduleCategory === ModuleCategory.NodeJsModule) {
+            this.postNodeJSContents(data);
+        }
+        return OkResult.ok();
     }
     //****************************************************************
     // 
     // Internal
     //
     //****************************************************************
-    postNodeJSContents = () => {
-        const modules = this.getNoContentModules(ModuleCategory.NodeJsModule);
-        for (let module of modules) {
-            module.content = module.glob;
+    async beforeAny(rest) {
+        if (this._autoImporter !== undefined) {
+            const result = await this._autoPut(ModuleCategory.NodeJsModule);
+            if (result.isFailure) {
+                return OkResult.fail(`this._autoPut(): ${result.errorTitle}`, result.errorDescription);
+            }
         }
+        const tracked = this._trackModules(rest);
+        if (tracked.isFailure) {
+            return OkResult.fail(`this._trackModules(): ${tracked.errorTitle}`, tracked.errorDescription);
+        }
+        return OkResult.ok();
+    }
+    //****************************************************************
+    // 
+    // Internal
+    //
+    //****************************************************************
+    postNodeJSContents = (module) => {
+        module.content = module.glob;
     };
     //
     // Adds the Array, Object and other classes, types that are available in the Environment
     // Except for the NodeJS extension itself.
     //
-    postBuiltInIdentifiers = async (projectMemory) => {
+    postBuiltInIdentifiers = async (moduleMemory) => {
         const identifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
         if (identifiers.isFailure) {
             return Result.fail(`getBuiltInIdentifiers(): ${identifiers.errorTitle}`, identifiers.errorDescription);
         }
         const importIdentifiersCount = Object.keys(identifiers.getValue()).length;
         if (importIdentifiersCount === 0) {
-            return Result.ok(projectMemory);
+            return Result.ok(moduleMemory);
         }
-        projectMemory
-            .getModules()
-            .filter((module) => module.moduleCategory !== ModuleCategory.NodeJsModule).forEach((module) => {
-            identifiers.getValue().forEach((codePiece) => {
-                module.rest.post(MODULE_SELECTOR, codePiece, {});
-            });
+        let failedPostResult = OkResult.ok();
+        identifiers.getValue().forEach((codePiece) => {
+            if (failedPostResult.isSuccess) {
+                failedPostResult = moduleMemory.rest.post('*', codePiece, {});
+            }
         });
-        return Result.ok(projectMemory);
+        if (failedPostResult.isFailure) {
+            return Result.fail(`moduleMemory.rest.post(builtInIdentifiers): ${failedPostResult.errorTitle}`, failedPostResult.errorDescription);
+        }
+        return Result.ok(moduleMemory);
     };
 }

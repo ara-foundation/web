@@ -64,7 +64,7 @@ export interface MemoryOperations {
  * Extension Interface that all module handlers based on.
  */
 export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterface {
-    reflectExtension: true;
+    reflectExtension?: boolean;
     moduleMemories: ModuleMemory<unknown>[]; // returns module memories that were tracked
     untrackedModuleAmount: number;
 

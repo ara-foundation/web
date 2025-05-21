@@ -30,7 +30,7 @@ export class Reflect extends SDSService<Reflect, ExtensionInterface> implements 
      * @param reflectSetup 
      */
     constructor(reflectSetup: ReflectSetup) {
-        super(setupWithNodeJsExt(reflectSetup), ["get"]);
+        super(setupWithNodeJsExt(reflectSetup), ["rest"]);
         this._memory = new ProjectMemory();
         this._memory.putMemoryOperations(...this._extensions);
         const _proxy = new RestReflectHookProxy();
@@ -46,7 +46,7 @@ export class Reflect extends SDSService<Reflect, ExtensionInterface> implements 
         return this._extensions[0] as NodejsReflectExtension;
     }
 
-    public get rest(): RestReflectHookProxy {
+    public rest?(): RestReflectHookProxy {
         return this._rest;
     }
 }

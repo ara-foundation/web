@@ -1,15 +1,13 @@
 import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
-import { CodePiece } from "../src/code-level/code-piece.js";
 import { IntersectedUnionType, UserTypeDeclaration, UnionTypeDeclaration, ValueTypeString } from "../src/code-level/code-piece-types.js";
 import { ModuleMemory } from "../src/module-memory.js";
 import { ProjectMemory } from "../src/project-memory.js";
-import { AraLink, ModuleLink, ObjectNode } from "@ara-web/sds";
+import { AraLink, ModuleLink } from "@ara-web/sds";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
-import { BuiltInIdentifiers, codePieceOps, MODULE_SELECTOR, moduleToObjectTree } from "../src/index.js";
+import { BuiltInIdentifiers } from "../src/index.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
-import { Debug } from "@ara-web/p-hintjens";
 
 const moduleLink = ModuleLink.newFileURL(import.meta.filename);
 
@@ -34,9 +32,7 @@ test('Supports the union types: type Primary = string | number | boolean', async
     // Linting
     const projectMemory = new ProjectMemory()
     const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-    const parent = moduleMemory.rest.get!('*')!
     types.getValue().forEach((importedCodePiece) => {
-      const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
       const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
     });
@@ -82,9 +78,7 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     const posted = moduleMemory.rest.post!('*', importedCodePiece, {})
     expect(posted.isSuccess).toBe(true);
   });  
@@ -133,9 +127,7 @@ test('Support the custom data as part of union such as false, number, float', as
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     moduleMemory.rest.post!('*', importedCodePiece, {})
   });
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
@@ -183,9 +175,7 @@ test('Support the literals in the union types', async () => {
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  const parent = moduleMemory.rest.get!('*')!
   types.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     moduleMemory.rest.post!('*', importedCodePiece, {})
   });
   
@@ -208,170 +198,162 @@ test('Support the literals in the union types', async () => {
   expect(lintedRecords.get("name")).toEqual(ValueTypeString.string);
 });
 
-// test('Support the literals with union types', async () => {
-//   const varName = `TypeLiteralWithTypeUnion`
-//   const src = `type ${varName} = {name: string, sex: "male" | "female"}`;
-//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-//   const types = await code.getTypeIdentifiers();
+test('Support the literals with union types', async () => {
+  const varName = `TypeLiteralWithTypeUnion`
+  const src = `type ${varName} = {name: string, sex: "male" | "female"}`;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const types = await code.getTypeIdentifiers();
 
-//   // Result
-//   expectAstNodeResult(types, varName)
-//   const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Result
+  expectAstNodeResult(types, varName)
+  const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(astNode, varName, UserTypeDeclaration);
+  expectValidTypeNode(astNode, varName, UserTypeDeclaration);
 
-//   // Node Data
-//   const data = astNode.data as UserTypeDeclaration;
-//   expect(data.length).toEqual(2)
-//   expect(data.get('name')).toEqual(ValueTypeString.string)
-//   expect(data.get('sex')).toBeInstanceOf(UnionTypeDeclaration)
-//   const records = data.get('sex') as UnionTypeDeclaration;
-//   expect(records.unionLength).toEqual(2);
-//   expect(records.getUnion(0)).toEqual("male");
-//   expect(records.getUnion(1)).toEqual("female");
+  // Node Data
+  const data = astNode.data as UserTypeDeclaration;
+  expect(data.length).toEqual(2)
+  expect(data.get('name')).toEqual(ValueTypeString.string)
+  expect(data.get('sex')).toBeInstanceOf(UnionTypeDeclaration)
+  const records = data.get('sex') as UnionTypeDeclaration;
+  expect(records.unionLength).toEqual(2);
+  expect(records.getUnion(0)).toEqual("male");
+  expect(records.getUnion(1)).toEqual("female");
 
-//   // Linting
-//   const projectMemory = new ProjectMemory()
-//   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-//   const parent = moduleMemory.rest.get!('*')!
-//   types.getValue().forEach((importedCodePiece) => {
-//     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-//     moduleMemory.rest.post!('*', posting)
-//   });
-//   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
+  // Linting
+  const projectMemory = new ProjectMemory()
+  const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
+  types.getValue().forEach((importedCodePiece) => {
+    moduleMemory.rest.post!('*', importedCodePiece)
+  });
+  const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
-//   // Linting Result
-//   expectAstNodeResult(linted, varName)
-//   const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Linting Result
+  expectAstNodeResult(linted, varName)
+  const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(lintedNode, varName, UserTypeDeclaration, 'object');
+  expectValidTypeNode(lintedNode, varName, UserTypeDeclaration, 'object');
 
-//   // Linted Node Data
-//   const lintedData = lintedNode.data as UserTypeDeclaration;
-//   expect(lintedData.length).toEqual(2)
-//   expect(lintedData.get('name')).toEqual(ValueTypeString.string)
-//   expect(lintedData.get('sex')).toBeInstanceOf(UnionTypeDeclaration)
-//   const lintedRecords = lintedData.get('sex') as UnionTypeDeclaration;
-//   expect(lintedRecords.unionLength).toEqual(2);
-//   expect(lintedRecords.getUnion(0)).toEqual("male");
-//   expect(lintedRecords.getUnion(1)).toEqual("female");
-// });
+  // Linted Node Data
+  const lintedData = lintedNode.data as UserTypeDeclaration;
+  expect(lintedData.length).toEqual(2)
+  expect(lintedData.get('name')).toEqual(ValueTypeString.string)
+  expect(lintedData.get('sex')).toBeInstanceOf(UnionTypeDeclaration)
+  const lintedRecords = lintedData.get('sex') as UnionTypeDeclaration;
+  expect(lintedRecords.unionLength).toEqual(2);
+  expect(lintedRecords.getUnion(0)).toEqual("male");
+  expect(lintedRecords.getUnion(1)).toEqual("female");
+});
 
-// // Assert Support the Type as non literal nor union, expression
-// // type ExpressionType = string
-// test('Support the expression as a type alias', async () => {
-//   const varName = `ExpressionType`
-//   const src = `type ${varName} = string`;
-//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-//   const types = await code.getTypeIdentifiers();
+// Assert Support the Type as non literal nor union, expression
+// type ExpressionType = string
+test('Support the expression as a type alias', async () => {
+  const varName = `ExpressionType`
+  const src = `type ${varName} = string`;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const types = await code.getTypeIdentifiers();
 
-//   // Result
-//   expectAstNodeResult(types, varName)
-//   const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Result
+  expectAstNodeResult(types, varName)
+  const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(astNode, varName, ValueTypeString.string);
+  expectValidTypeNode(astNode, varName, ValueTypeString.string);
 
-//   // Linting
-//   const projectMemory = new ProjectMemory()
-//   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-//   const parent = moduleMemory.rest.get!('*')!
-//   types.getValue().forEach((importedCodePiece) => {
-//     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-//     moduleMemory.rest.post!('*', posting)
-//   });
-//   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
+  // Linting
+  const projectMemory = new ProjectMemory()
+  const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
+  types.getValue().forEach((importedCodePiece) => {
+    moduleMemory.rest.post!('*', importedCodePiece)
+  });
+  const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
-//   // Linting Result
-//   expectAstNodeResult(linted, varName)
-//   const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Linting Result
+  expectAstNodeResult(linted, varName)
+  const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(lintedNode, varName, ValueTypeString.string, 'string');
-// });
+  expectValidTypeNode(lintedNode, varName, ValueTypeString.string, 'string');
+});
 
-// test('Support the generic types', async () => {
-//   const varName = `Generic`
-//   const genericName = 'T'
-//   const src = `type ${varName}<${genericName}> = ${genericName}`;
-//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-//   const types = await code.getTypeIdentifiers();
+test('Support the generic types', async () => {
+  const varName = `Generic`
+  const genericName = 'T'
+  const src = `type ${varName}<${genericName}> = ${genericName}`;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const types = await code.getTypeIdentifiers();
 
-//   // Result
-//   expectAstNodeResult(types, varName)
-//   const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Result
+  expectAstNodeResult(types, varName)
+  const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(astNode, varName, AraLink);
+  expectValidTypeNode(astNode, varName, AraLink);
 
-//   // The Data
-//   expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
-//   expect((astNode.data as AraLink<string>).resource).toEqual(genericName)
+  // The Data
+  expect(ReflectLink.isIdentifierLink(astNode.data as AraLink<string>)).toBe(true)
+  expect((astNode.data as AraLink<string>).resource).toEqual(genericName)
 
-//   // The generic data
-//   expect(astNode.memoryDataLength()).toEqual(1)
-//   expectValidTypeNode(astNode.getMemoryData(0)!, genericName, undefined, ValueTypeString.object)
+  // The generic data
+  expect(astNode.memoryDataLength()).toEqual(1)
+  expectValidTypeNode(astNode.getMemoryData(0)!, genericName, undefined, ValueTypeString.object)
 
-//   // // Linting
-//   const projectMemory = new ProjectMemory()
-//   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-//   const parent = moduleMemory.rest.get!('*')!
-//   types.getValue().forEach((importedCodePiece) => {
-//     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-//     moduleMemory.rest.post!('*', posting)
-//   });
-//   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
+  // // Linting
+  const projectMemory = new ProjectMemory()
+  const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
+  types.getValue().forEach((importedCodePiece) => {
+    moduleMemory.rest.post!('*', importedCodePiece)
+  });
+  const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
-//   // // Linting Result
-//   expectAstNodeResult(linted, varName)
-//   const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // // Linting Result
+  expectAstNodeResult(linted, varName)
+  const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(lintedNode, varName, undefined, ValueTypeString.object)
-// });
+  expectValidTypeNode(lintedNode, varName, undefined, ValueTypeString.object)
+});
 
-// // type GenericUnion<T extends number> = T | string
-// test('Support the generic union types', async () => {
-//   const varName = `GenericUnion`
-//   const genericName = 'T'
-//   const src = `type ${varName}<${genericName}> = ${genericName} | string`;
-//   const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-//   const types = await code.getTypeIdentifiers();
+// type GenericUnion<T extends number> = T | string
+test('Support the generic union types', async () => {
+  const varName = `GenericUnion`
+  const genericName = 'T'
+  const src = `type ${varName}<${genericName}> = ${genericName} | string`;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const types = await code.getTypeIdentifiers();
 
-//   // Result
-//   expectAstNodeResult(types, varName)
-//   const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Result
+  expectAstNodeResult(types, varName)
+  const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
+  expectValidTypeNode(astNode, varName, UnionTypeDeclaration);
 
-//   // The Data
-//   const unionType = astNode.data as UnionTypeDeclaration;
-//   expect(unionType.unionLength).toBe(2);
-//   expect(unionType.getUnion(0)).toBeInstanceOf(AraLink)
-//   expect((unionType.getUnion(0) as AraLink<string>).resource).toEqual(genericName)
-//   expect(unionType.getUnion(1)).toEqual(ValueTypeString.string)
+  // The Data
+  const unionType = astNode.data as UnionTypeDeclaration;
+  expect(unionType.unionLength).toBe(2);
+  expect(unionType.getUnion(0)).toBeInstanceOf(AraLink)
+  expect((unionType.getUnion(0) as AraLink<string>).resource).toEqual(genericName)
+  expect(unionType.getUnion(1)).toEqual(ValueTypeString.string)
 
-//   // The generic data
-//   expect(astNode.memoryDataLength()).toEqual(1)
-//   expectValidTypeNode(astNode.getMemoryData(0)!, genericName, undefined, ValueTypeString.object)
+  // The generic data
+  expect(astNode.memoryDataLength()).toEqual(1)
+  expectValidTypeNode(astNode.getMemoryData(0)!, genericName, undefined, ValueTypeString.object)
 
-//   // Linting
-//   const projectMemory = new ProjectMemory()
-//   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-//   const parent = moduleMemory.rest.get!('*')!
-//   types.getValue().forEach((importedCodePiece) => {
-//     const posting = new ObjectNode<CodePiece>(codePieceOps, importedCodePiece, parent);
-//     moduleMemory.rest.post!('*', posting)
-//   });
-//   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
+  // Linting
+  const projectMemory = new ProjectMemory()
+  const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
+  types.getValue().forEach((importedCodePiece) => {
+    moduleMemory.rest.post!('*', importedCodePiece)
+  });
+  const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
-//   // Linting Result
-//   expectAstNodeResult(linted, varName)
-//   const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
+  // Linting Result
+  expectAstNodeResult(linted, varName)
+  const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
 
-//   expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, ValueTypeString.object)
+  expectValidTypeNode(lintedNode, varName, UnionTypeDeclaration, ValueTypeString.object)
 
-//   const lintedUnionType = lintedNode.data as UnionTypeDeclaration;
-//   expect(lintedUnionType.unionLength).toBe(2);
-//   expect(lintedUnionType.getUnion(0)).toStrictEqual({})
-//   expect(lintedUnionType.getUnion(1)).toEqual(ValueTypeString.string)
-// });
+  const lintedUnionType = lintedNode.data as UnionTypeDeclaration;
+  expect(lintedUnionType.unionLength).toBe(2);
+  expect(lintedUnionType.getUnion(0)).toStrictEqual({})
+  expect(lintedUnionType.getUnion(1)).toEqual(ValueTypeString.string)
+});
 
 // Assert: Support the generic union in the nested union
 // type GenericToNestedUnion<RecordValue extends Array<number>> = number | Record<string, RecordValue>;
@@ -407,13 +389,10 @@ test('Support the generic types with the nested generic types and union types', 
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
   const builtInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
   expect(builtInIdentifiers.isSuccess).toBe(true);
-  const parent = moduleMemory.rest.get!('*')!
   builtInIdentifiers.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     moduleMemory.rest.post!('*', importedCodePiece, {})
   });
   types.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     moduleMemory.rest.post!('*', importedCodePiece, {})
   });
 
@@ -429,18 +408,18 @@ test('Support the generic types with the nested generic types and union types', 
   expect(lintedUnionType.getUnion(1)).toStrictEqual({key: 'string', value: ['number']}) // Record with Number[] as a value
 });
 
-// // Assert: Conjunction with promitive type is not supported
-// // type IntersectionWithPrimitive = string[] & number & {name: string} // Should fail
-// test('Support the generic types with the nested generic types and union types', async () => {
-//   const varName = `IntersectionWithPrimitive`
-//   const src = `type ${varName} = string[] & number & {name: string}`;
-  // const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
-  // const types = await code.getTypeIdentifiers();
+// Assert: Conjunction with promitive type is not supported
+// type IntersectionWithPrimitive = string[] & number & {name: string} // Should fail
+test('Support the generic types with the nested generic types and union types', async () => {
+  const varName = `IntersectionWithPrimitive`
+  const src = `type ${varName} = string[] & number & {name: string}`;
+  const code = new Code(src, ModuleLink.newFileURL(import.meta.filename));
+  const types = await code.getTypeIdentifiers();
 
   // Result
-  // expect(types.isFailure).toBe(true);
-  // expect(types.errorTitle?.indexOf(TypeValueTraits.ERR_INVALID_INTERSECTION)).toBeGreaterThan(-1)
-// });
+  expect(types.isFailure).toBe(true);
+  expect(types.errorTitle?.indexOf(TypeValueTraits.ERR_INVALID_INTERSECTION)).toBeGreaterThan(-1)
+});
 
 // Assert: Support the Conjunction types
 // type Intersection = {numValue: number} & {name: string}
@@ -552,10 +531,8 @@ test('Support the type that has another type in the reference defined later than
   // Lint
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-    const parent = moduleMemory.rest.get!('*')!
 
   types.getValue().forEach((importedCodePiece) => {
-    const posting = new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, importedCodePiece, parent);
     moduleMemory.rest.post!('*', importedCodePiece, {})
   });
 
