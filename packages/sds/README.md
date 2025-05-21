@@ -225,6 +225,7 @@ Summary
 
 
 # Roadmap
+* Parse the id and serialize it in any rest that calls id.
 * Create a script that can generate the SDS in interactive form through `pnpm create sds`.
 * Create a vice-versa, from Object Tree, to Page, basically opposite through RestExtension.
 * Make description addition as a later call from AI agent.

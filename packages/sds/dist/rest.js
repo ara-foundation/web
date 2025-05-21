@@ -1,8 +1,8 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
 import { SDSProxy, SDSService } from "./sds.js";
-import { ModuleLink } from "./index.js";
-import { CSSObjectAdapter, LinkTraits } from "./link-traits.js";
+import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
+import { ModuleLink } from "./links/index.js";
 export class RestBranchProxy extends SDSProxy {
     _behindData;
     _root;

@@ -1,7 +1,7 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { SDSProxy, SDSService, type SDSSetup } from "./sds.js";
-import { type ObjectNode, type SDSExtensionInterface, ModuleLink } from "./index.js";
-import { type ObjectToNodeTree } from "./link-traits.js";
+import { SDSProxy, SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
+import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
+import { ModuleLink } from "./links/index.js";
 export interface RestExtensionInterface extends SDSExtensionInterface {
 }
 export interface RestOptions<ElementType> {

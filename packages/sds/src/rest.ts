@@ -1,13 +1,22 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select"
+import { 
+    selectOne as cssSelectOne, 
+    selectAll as cssSelectAll 
+} from "css-select";
 import { 
     SDSProxy,
     SDSService, 
+    type SDSExtensionInterface, 
     type SDSSetup
 } from "./sds.js";
-import { type ObjectNode, type SDSExtensionInterface, ModuleLink } from "./index.js";
-import { CSSObjectAdapter, LinkTraits, type ObjectNodeInterface, type ObjectToNodeTree } from "./link-traits.js";
-
+import { 
+    CSSObjectAdapter, 
+    LinkTraits, 
+    ObjectNode, 
+    type ObjectNodeInterface, 
+    type ObjectToNodeTree 
+} from "./link-traits.js";
+import { ModuleLink } from "./links/index.js";
 
 // We call it setters.
 export interface RestExtensionInterface extends SDSExtensionInterface {}
