@@ -175,12 +175,6 @@ the files if its updated.
 * [Writing through extensions and proxies](REFLECT-SDS.md)
 
 # Roadmap
-Ast Node
-* Use REST for Reflect module.
-
-Test
-* Enumerate the test files
-
 For variable declarations
 * Check the variable updates
 * Check the functions that update the variable?
