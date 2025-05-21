@@ -6,13 +6,11 @@ import { AraLink, ModuleLink, ObjectNode } from "@ara-web/sds";
 import { Node } from "ts-morph";
 import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { Reflect } from "../src/reflect.js"
-import { expectAstNodeResult, expectValidVariableNode, getEmptyContext, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
+import { expectAstNodeResult, expectValidVariableNode, getEmptyModule, getProjectMemory, modulePath, putFuncModule, type AstNodeProperties } from "./shared.js";
 import { CodePieceContext } from "../src/code-level/code-piece-context.js";
 import { ValueLevel } from "../src/code-level/value-level/index.js";
 import { BuiltInIdentifiers } from "../src/built-in-identifiers.js";
-import { TypeLevel } from "../src/code-level/index.js";
-import { codePieceOps, MODULE_SELECTOR } from "../src/code-piece-object-tree.js";
-import { Debug } from "@ara-web/p-hintjens";
+import { MODULE_SELECTOR } from "../src/code-piece-object-tree.js";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
@@ -138,7 +136,6 @@ const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-t
 
 //   // Result
 //   expectAstNodeResult(vars, varName);
-//   Debug.log(`The vars log amount: ${vars.getValue().length}`, vars.getValue());
 //   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
 
 //   let expectedProps: AstNodeProperties = {
@@ -451,7 +448,6 @@ test('Supports the method call', async () => {
 
   const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
-  Debug.log(identifiedData)
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
   expect(astNode.dataType).toEqual(ValueTypeString.number);
@@ -1120,7 +1116,6 @@ test('Supports the conditional expression when its false', async () => {
   const foundVar2 = vars.getValue().find(codePiece => codePiece.identifier === 'data');
   const var2Posted = moduleMemory.rest.post!('*', foundVar2!, {})
   expect(var2Posted.isSuccess).toBe(true);
-  Debug.log(`The module data by parent ${parent.selector}`, moduleMemory.rest.getAll!(`${MODULE_SELECTOR} #data`).map(codePiece => codePiece.selector))
   // Variable check
   const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
   expect(varAstNode.data).toBeInstanceOf(AraLink)

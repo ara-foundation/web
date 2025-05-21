@@ -1,7 +1,7 @@
-import { OkResult } from "@ara-web/p-hintjens";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 import { type ObjectToNodeTree, type ElementOp, ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
 import { ModuleMemory } from "./module-memory.js";
-import type { MemoryOperations } from "./extension-interface.js";
+import type { ExtensionInterface, MemoryOperations } from "./extension-interface.js";
 import { codePieceOps, moduleToObjectTree } from "./code-piece-object-tree.js";
 import { ProjectMemory } from "./project-memory.js";
 import { CodePiece } from "./code-level/index.js";
@@ -29,6 +29,16 @@ export const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType> = 
 
 	if (element instanceof ModuleMemory) {
 		element.rest.setRootNode(obj as any as ObjectNode<CodePiece>);
+	} else if (element instanceof ProjectMemory) {
+		for (const memOp of element.memOps) {
+			const ext = memOp as ExtensionInterface;
+			const extNode = new ObjectNode<ReflectElementType>(reflectElementOps, reflectElementToObjectTree, ext, obj);
+			obj.appendChild(extNode);
+			const created = ext.afterCreation!();
+			if (created.isFailure) {
+				throw created;
+			}
+		}
 	}
 	return obj;
 }
@@ -55,7 +65,7 @@ const getElementChildren = (_element: ReflectElementType): ReflectElementType[] 
 	} else if (_element instanceof ProjectMemory) {
 		return _element.memOps;
 	}
-	// For Module operators
+	// For extensions.
 	const moduleMemories = _element.getModules();
 	return moduleMemories
 }
@@ -114,9 +124,9 @@ const setElementAttribute = <AttrType>(_element: ReflectElementType | undefined,
 	}
 }
 
-const escapeId = (path: string): string => {
+export const escapeId = (path: string): string => {
 	// const replaced = path.replaceAll(':', '\\3A').replaceAll('/', '\\2F').replaceAll('@', '\\40');
-	const replaced = path.replaceAll(':', '_-').replaceAll('/', '__-').replaceAll('@', '___-').replaceAll('.', '____-');
+	const replaced = path.replaceAll(':', '_-').replaceAll('/', '__-').replaceAll('@', '___-').replaceAll('.', '____-').replaceAll('%', '_____-').replaceAll('?', '______-').replaceAll('=', '_______-');
 	return replaced;
 }
 

@@ -1,9 +1,10 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ProjectMemory } from "./project-memory.js";
 import type { ExtensionInterface } from "./extension-interface.js";
 import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
 import type { ReflectInterface } from "./reflect-interface.js";
-import { SDSService, type SDSSetup } from "@ara-web/sds";
+import { Rest, SDSService, type SDSSetup } from "@ara-web/sds";
+import { reflectElementToObjectTree, type ReflectElementType } from "./reflect-object-tree.js";
+import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
 
 export type ReflectSetup = SDSSetup<ExtensionInterface>;
 
@@ -22,6 +23,7 @@ const setupWithNodeJsExt = (reflectSetup: ReflectSetup): ReflectSetup => {
 export class Reflect extends SDSService<Reflect, ExtensionInterface> implements ReflectInterface  {    
     // Category => Path => ModuleMemory Instance
     private _memory: ProjectMemory;
+    private _rest: RestReflectHookProxy;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
@@ -31,90 +33,20 @@ export class Reflect extends SDSService<Reflect, ExtensionInterface> implements 
         super(setupWithNodeJsExt(reflectSetup), ["get"]);
         this._memory = new ProjectMemory();
         this._memory.putMemoryOperations(...this._extensions);
+        const _proxy = new RestReflectHookProxy();
+        const rest = new Rest<ReflectElementType>(this._memory, reflectElementToObjectTree, {proxies: [_proxy], packageLink: reflectSetup.packageLink});
+        const proxified = rest.proxifyMe<RestReflectHookProxy>();
+        if (proxified.isFailure) {
+            throw proxified;
+        }
+        this._rest = proxified.getValue();
     }
 
     public get nodeJsExt(): NodejsReflectExtension {
         return this._extensions[0] as NodejsReflectExtension;
     }
 
-    //****************************************************************
-    // 
-    // Modules Imports from the Project and Setting up internal Reflect memory.
-    //
-    //****************************************************************
-
-    /**
-     * Pre-reflection operation to reload all the modules.
-     * Additionally, this operation adds all supported built-in identifiers provided by NodeJS.
-     */
-    private beforeGet = async (moduleCategory: string): Promise<OkResult> => {
-        // This operation is called every time, when in fact it must be called once, if the modules were updated.
-        // To do it, keep track of the Hash of each project update memory.
-        // And the sum of all hashes.
-        // If it changed, then update the extensions.
-        for (const extension of this._extensions) {
-            if (extension.beforeGet !== undefined) {
-                const hooked = await extension.beforeGet(moduleCategory, this._memory);
-                if (hooked.isFailure) {
-                    return OkResult.fail(`extension('${extension.packageLink}'): beforeGet(): ${hooked.errorTitle}`, hooked.errorDescription!)
-                }
-            }
-        }
-
-        return OkResult.ok();
+    public get rest(): RestReflectHookProxy {
+        return this._rest;
     }
-
-    //****************************************************************
-    // 
-    // REST
-    //
-    //****************************************************************
-
-    /**
-     * Get the content by the module category
-     * @param moduleCategory 
-     */
-    public async get? <T>(moduleCategory: string): Promise<Result<T[]>> {
-        const preparationResult = await this.beforeGet(moduleCategory);
-        if (preparationResult.isFailure) {
-            return Result.fail(
-                `this.beforeGet(): ${preparationResult.errorTitle}`,
-                preparationResult.errorDescription!
-            )
-        }
-
-        const moduleMemories = this._memory.getModuleContents<T>(moduleCategory);
-        return Result.ok(moduleMemories)
-    }
-
-    // /**
-    //  * Returns a page by it's path
-    //  */
-    // getPageByUrl = async(url: string | undefined): Promise<Page|undefined> => {
-    //     if (url === undefined) {
-    //         return undefined;
-    //     }
-    //     if (url.length === 0) {
-    //         return undefined;
-    //     }
-    //     if (url[url.length - 1] === "/") {
-    //         url = url.substring(0, url.length - 1);
-    //     }
-
-    //     const pages = await this.getPages();
-
-    //     if (pages.isFailure) {
-    //         return undefined;
-    //     }
-
-    //     for (const page of pages.getValue()) {
-    //         const pageUrl = fileNameToUrl(page.fileName);
-    //         if (url === pageUrl) {
-    //             return page;
-    //         }
-    //     }
-
-    //     return undefined;
-    // }
-
 }

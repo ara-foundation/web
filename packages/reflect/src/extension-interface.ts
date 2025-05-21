@@ -1,7 +1,7 @@
-import { ModuleLink, type ModuleURL, type SDSExtensionInterface } from "@ara-web/sds";
+import { ModuleLink, Rest, type ModuleURL, type SDSExtensionInterface } from "@ara-web/sds";
 import type { OkResult, Result } from "@ara-web/p-hintjens";
 import type { ModuleMemory } from "./module-memory.js";
-import type { ProjectMemory } from "./project-memory.js";
+import type { ReflectElementType } from "./reflect-object-tree.js";
 
 export type Module = unknown;
 export type ModulePath = string;
@@ -64,7 +64,9 @@ export interface MemoryOperations {
  * Extension Interface that all module handlers based on.
  */
 export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterface {
-    moduleMemories: ModuleMemory<unknown>[];
+    reflectExtension: true;
+    moduleMemories: ModuleMemory<unknown>[]; // returns module memories that were tracked
+    untrackedModuleAmount: number;
 
     /**
      * Return the module categories that this extension adds
@@ -103,6 +105,24 @@ export interface ExtensionInterface extends MemoryOperations, SDSExtensionInterf
     /**************************************************************************
      * HOOKS
      **************************************************************************/
-    beforeGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
-    afterGet?(moduleCategory: ModuleCategory, projectMemory: ProjectMemory): Promise<OkResult>;
+    
+    /**
+     * Call this after creating the extension.
+     */
+    afterCreation?(): OkResult;   // Before creation of the method
+
+    beforeGet?(selector: string, rest: Rest<ReflectElementType>): Promise<OkResult>;
+    afterGet?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+
+    beforePut?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+    afterPut?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+
+    beforePost?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+    afterPost?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
+
+    beforePatch?<AttrType>(selector: string, rest: Rest<ReflectElementType>, data?: AttrType): Promise<OkResult>;
+    afterPatch?<AttrType>(selector: string, rest: Rest<ReflectElementType>, data?: AttrType): Promise<OkResult>;
+
+    beforeDelete?(selector: string, rest: Rest<ReflectElementType>): Promise<OkResult>;
+    afterDelete?(selector: string, rest: Rest<ReflectElementType>, data?: ReflectElementType): Promise<OkResult>;
 }
