@@ -1,0 +1,45 @@
+{
+  "name": "@ara-web/reflect-astro-plugins",
+  "description": "An extension of the '@ara-web/reflect-astro-ext' adding Ara Web data",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm _chore && vite dev",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && pnpm build",
+    "_chore": "pnpm i",
+    "test": "vitest -r ./"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./ara-web-ext": {
+      "types": "./src/astro-ara-web-ext.ts",
+      "default": "./dist/astro-ara-web-ext.js"
+    },
+    "./ara-web-proxy": {
+      "types": "./src/astro-ara-web-proxy.ts",
+      "default": "./dist/astro-ara-web-proxy.js"
+    },
+    "./components/call.astro": "./src/components/call.astro",
+    "./components/rpc-card.astro": "./src/components/rcpCard.astro"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.2",
+    "astro": "^5.7.10",
+    "vite": "^6.3.3",
+    "vitest": "2.1.6"
+  },
+  "peerDependencies": {
+    "@ara-web/reflect-astro-ext": "workspace:*",
+    "astro": "^4.0.0 || ^5.0.0"
+  },
+  "dependencies": {
+    "@ara-web/p-hintjens": "workspace:*",
+    "@ara-web/reflect": "workspace:*",
+    "@astrojs/compiler": "^2.11.0",
+    "react": "^19.1.0"
+  }
+}

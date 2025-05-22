@@ -7,9 +7,18 @@ import Reflect from "../scripts/setup-reflect";
 
 const pages = await Reflect.get<Page>("pages");
 console.log(`Reflected pages:`)
-console.log(pages)
+console.log(pages.getValue())
+let slots = pages.getValue()[0].slots;
+for (let slotGroup in slots) {
+	const groupedSlots = slots[slotGroup];
+	for (let slot of groupedSlots) {
+		console.log(`Slot ${slot.url}`)
+		console.log(slot);
+	}
+}
+const varValue = "hello from frontmatter"
 ---
 
-<Layout>
+<Layout title="Hello" dynamicVar={varValue}>
 	<Welcome />
 </Layout>

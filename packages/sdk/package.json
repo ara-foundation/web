@@ -36,8 +36,8 @@
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
     "@types/lodash-es": "^4.17.12",
-    "prettier": "^3.2.5",
-    "typescript": "~5.7.3"
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
   },
   "repository": {
     "type": "git",

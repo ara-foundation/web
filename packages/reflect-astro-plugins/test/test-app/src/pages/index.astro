@@ -1,0 +1,30 @@
+---
+import Welcome from '../components/Welcome.astro';
+import Layout from '../layouts/Layout.astro';
+
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+---
+
+<Layout>
+	<Welcome />
+	<h1>Welcome to Astro!</h1>
+	<p>Get started by editing <code>src/pages/index.astro</code></p>
+	<ul slot="content-left">
+		<li>
+			<a href="https://astro.build/blog">Blog</a> - Read the latest updates and announcements
+		</li>
+		<li>
+			<a href="https://astro.build/docs">Documentation</a> - Learn how to use Astro
+		</li>
+		<li>
+			<a href="https://astro.build/integrations">Integrations</a> - Explore the Astro ecosystem
+		</li>
+		<li>
+			<a href="https://astro.build/chat">Chat with us</a> - Join the community on Discord
+		</li>
+	</ul>
+	<div slot="content-right">
+		Astro is a modern static site generator that allows you to build fast, content-focused websites using your favorite front-end frameworks. It offers a unique approach to rendering, allowing you to mix and match components from different frameworks, while also optimizing for performance and SEO. With Astro, you can create dynamic, interactive sites with ease, while still benefiting from the speed and simplicity of static site generation.
+	</div>
+</Layout>

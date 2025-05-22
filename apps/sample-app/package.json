@@ -9,8 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.7.10",
     "@ara-web/reflect": "workspace:*",
-    "@ara-web/reflect-astro-ext": "workspace: *"
+    "@ara-web/reflect-astro-ext": "workspace: *",
+    "astro": "^5.7.10"
   }
 }

@@ -2,7 +2,7 @@
  * RPCs are stored in the scripts to avoid
  * collision with the Astro Framework's Actions.
  */
-import { AraLink, AraWebModuleSlugs } from "@ara-web/ts-enhancement/ara-link"
+import { AraLink } from "@ara-web/p-hintjens"
 import {
     RpcType,
     type RpcCallType,

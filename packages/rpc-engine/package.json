@@ -19,12 +19,12 @@
     "./AstroComponentRpcCard": "./src/components/rcpCard.astro"
   },
   "dependencies": {
-    "@ara-web/ts-enhancement": "workspace:*"
+    "@ara-web/p-hintjens": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "^19.0.10",
-    "astro": "^5.7.5",
-    "vite": "^5.2.11"
+    "@types/react": "19.1.2",
+    "astro": "^5.7.10",
+    "vite": "^6.3.3"
   },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"

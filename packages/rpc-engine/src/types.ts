@@ -29,3 +29,10 @@ export type InputDescriptions = {
 };
 
 export type RPC = (ExtensionType & InputDescriptions)
+
+// The RPC Engine exposes a proxy that over-writes the Page
+// by adding a new data type: RpcCallType.
+// The proxy of Reflect Astro Extension
+// sits on any astro extension events. And
+// anytime when a user wants to call AstroReflect's data,
+// that data is passed by the RPCCallType.
