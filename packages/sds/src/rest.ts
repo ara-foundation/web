@@ -20,6 +20,20 @@ import { ModuleLink } from "./links/index.js";
 
 // We call it setters.
 export interface RestExtensionInterface extends SDSExtensionInterface {}
+export interface RestInterface<ElementType> {
+    rootNode: ObjectNode<ElementType>|undefined;
+    setRootNode(obj: ObjectNode<ElementType>): void;
+    elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
+    clone?(attrSelector: string): Rest<ElementType>;
+
+    // Hooks
+    get?(selector: string): Promise<ObjectNode<ElementType>|null>;
+    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
+    post?(selector: string, data: ElementType, options?: {lilBro?: boolean}): Promise<OkResult>;
+    put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult>;
+    patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
+    delete?(selector: string): Promise<OkResult>;
+}
 
 export interface RestOptions<ElementType> {
     lilBro?: boolean;
@@ -27,7 +41,7 @@ export interface RestOptions<ElementType> {
     root?: boolean;
 }
 
-export class RestBranchProxy<ElementType> extends SDSProxy {
+export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterface<ElementType> {
     protected _behindData?: Rest<ElementType>;
     private _root: ObjectNode<ElementType>;
 
@@ -36,7 +50,7 @@ export class RestBranchProxy<ElementType> extends SDSProxy {
         this._root = root;
     }
 
-    public set rootNode(obj: ObjectNode<ElementType>) {
+    public setRootNode(obj: ObjectNode<ElementType>) {
         if (this._root === undefined) {
             return;
         }
@@ -53,12 +67,12 @@ export class RestBranchProxy<ElementType> extends SDSProxy {
         this._behindData.setRootNode(this._root);
     }
 
-    public getAll?(selector: string): ObjectNode<ElementType>[] {
-        return this._behindData!.getAll!(`${selector}`);
+    public async getAll?(selector: string): Promise<ObjectNode<ElementType>[]> {
+        return await this._behindData!.getAll!(`${selector}`);
     }
 
-    public post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): OkResult {
-        return this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
+    public async post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): Promise<OkResult> {
+        return await this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
     }
 }
 
@@ -68,7 +82,7 @@ export class RestBranchProxy<ElementType> extends SDSProxy {
 export class Rest<ElementType> extends SDSService<
     Rest<ElementType>, 
     RestExtensionInterface
-> {
+> implements RestInterface<ElementType> {
     
     private _options: {adapter: CSSObjectAdapter<ElementType>};
     private _root: ObjectNode<ElementType>;
@@ -110,11 +124,11 @@ export class Rest<ElementType> extends SDSService<
      * Retreive a resource node.
      * @param selector 
      */
-    public get?(selector: string): ObjectNode<ElementType>|null {
+    public async get?(selector: string): Promise<ObjectNode<ElementType>|null> {
         return cssSelectOne(selector, [this._root], this._options);
     }
 
-    public getAll?(selector: string): ObjectNode<ElementType>[] {
+    public async getAll?(selector: string): Promise<ObjectNode<ElementType>[]> {
         return cssSelectAll(selector, [this._root], this._options);
     }
 
@@ -136,8 +150,8 @@ export class Rest<ElementType> extends SDSService<
      * @param options Set to little bro if you want to set object after the selector.
      * @returns 
      */
-    public post?(selector: string, data: ElementType, options: {lilBro?: boolean} = {lilBro: false}): OkResult {
-        const parentOrBigBro = this._getParentOrBigBro(selector, options);
+    public async post?(selector: string, data: ElementType, options: {lilBro?: boolean} = {lilBro: false}): Promise<OkResult> {
+        const parentOrBigBro = await this._getParentOrBigBro(selector, options);
         if (parentOrBigBro.isFailure) {
             return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription!);
         }
@@ -158,8 +172,8 @@ export class Rest<ElementType> extends SDSService<
         return posted;
     }
 
-    private _getParentOrBigBro(selector: string, options: {lilBro?: boolean} = {lilBro: false}): Result<ObjectNode<ElementType>> {
-        let parentOrBigBro = this.get!(selector);
+    private async _getParentOrBigBro(selector: string, options: {lilBro?: boolean} = {lilBro: false}): Promise<Result<ObjectNode<ElementType>>> {
+        let parentOrBigBro = await this.get!(selector);
         if (parentOrBigBro === null) {
             return Result.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
         }
@@ -200,8 +214,8 @@ export class Rest<ElementType> extends SDSService<
      * @param selector 
      * @param data 
      */
-    public put?(selector: string, data: ObjectNode<ElementType>): OkResult {
-        let elder = this.get!(selector);
+    public async put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult> {
+        let elder = await this.get!(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct object selector`);
         } 
@@ -229,13 +243,13 @@ export class Rest<ElementType> extends SDSService<
      * @param selector 
      * @param data 
      */
-    public patch?<AttrType>(attrSelector: string, data: AttrType): OkResult {
+    public async patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult> {
         if (!LinkTraits.isAttributeSelector(attrSelector)) {
             return OkResult.fail(`LinkTraits.isAttributeSelector('${attrSelector}'): not an attribute`, `pass attribute selector`);
         }
         const attrName = LinkTraits.getAttributeName(attrSelector);
         const selector = LinkTraits.trimAttribute(attrSelector);
-        const elem = this.get!(selector);
+        const elem = await this.get!(selector);
         if (elem === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
@@ -250,8 +264,8 @@ export class Rest<ElementType> extends SDSService<
      * Delete a resource. If resource not match, then return as it's ok
      * @param selector 
      */
-    public delete?(selector: string): OkResult {
-        const els = this.getAll!(selector);
+    public async delete?(selector: string): Promise<OkResult> {
+        const els = await this.getAll!(selector);
         if (els.length === 0) {
             return OkResult.ok();
         }

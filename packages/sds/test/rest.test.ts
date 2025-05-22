@@ -31,18 +31,18 @@ test(`Testing the rest with simple operations`, async() => {
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
     const rest = new Rest<HTMLElement>(footer!, nodeToObjectTree);
-    const elems1 = rest.getAll!('*');
+    const elems1 = await rest.getAll!('*');
     expect(elems1).toHaveLength(1);
 
     // Post the body
-    const bodyPosted = rest.post!('*', footer!, {});
+    const bodyPosted = await rest.post!('*', footer!, {});
     expect(bodyPosted.isSuccess).toBe(true);
 
-    const sameChild = rest.get!('footer > div');
+    const sameChild = await rest.get!('footer > div');
     expect(sameChild !== null).toBe(true);
     expect(sameChild?.getElement() === child[0]).toBe(true);
 
-    const secondChild = rest.get!('footer > div.apple');
+    const secondChild = await rest.get!('footer > div.apple');
     expect(secondChild !== null).toBe(true);
     expect(secondChild?.getElement() === child[1]).toBe(true);
 
@@ -57,7 +57,7 @@ test(`Testing the rest with simple operations`, async() => {
     const second = getBody(secondHtml, 'div');
     expect(second !== null).toBe(true);
 
-    const secondPosted = rest.post!('*', second!, {})
+    const secondPosted = await rest.post!('*', second!, {})
     expect(secondPosted.isSuccess).toBe(true);
     const secondFound = rest.get!('#secondDiv');
     expect(secondFound !== null).toBe(true);
@@ -68,13 +68,14 @@ test(`Testing the rest proxifying`, async() => {
     
     const options = {adapter};
     const footer = getBody(footerHtml, 'footer');
-    let footerFirstDiv = cssSelect("footer > div", footer!, options);
+    let footerFirstDiv = cssSelect("div", footer!, options);
+    expect(footerFirstDiv).toHaveLength(2);
 
     const pageBody = getBody(pageHtml, 'body');
     const pageRest = new Rest<HTMLElement>(pageBody!, nodeToObjectTree);
-    const pageBodyPosted = pageRest.post!('*', pageBody!, {});
+    const pageBodyPosted = await pageRest.post!('*', pageBody!, {});
     expect(pageBodyPosted.isSuccess).toBe(true);
-    const contentBranch = pageRest.get!('#footer-section');
+    const contentBranch = await pageRest.get!('#footer-section');
     expect(contentBranch !== null).toBe(true);
 
     // Make sure it's parsing.
@@ -86,54 +87,52 @@ test(`Testing the rest proxifying`, async() => {
     expect(footerRest.isSuccess).toBe(true);
 
     // Post the body
-    const footerPosted = footerRest.getValue().post!('*', footer!, {});
+    const footerPosted = await footerRest.getValue().post!('*', footer!, {});
     expect(footerPosted.isSuccess).toBe(true);
 
     // Add a data to footer from footerRest, it should be
     // fetchable from pageRest and footerRest
     const navBar1Body = getBody(navBar1Html, 'a');
     expect(navBar1Body !== null).toBe(true);
-    const navBar1Posted = footerRest.getValue().post!('*', navBar1Body!, {});
+    const navBar1Posted = await footerRest.getValue().post!('*', navBar1Body!, {});
     expect(navBar1Posted.isSuccess).toBe(true);
-    const navBar1Arr = footerRest.getValue().getAll!('#google-link');
+    const navBar1Arr = await footerRest.getValue().getAll!('#google-link');
     expect(navBar1Arr).toHaveLength(1);
-    const pageNavBar1Arr = pageRest.getAll!("#google-link");
+    const pageNavBar1Arr = await pageRest.getAll!("#google-link");
     expect(pageNavBar1Arr).toHaveLength(1);
     expect(pageNavBar1Arr[0]).toEqual(navBar1Arr[0]);
 
     // Add element from the parent
     const navBar2Body = getBody(navBar2Html, 'a');
     expect(navBar2Body !== null).toBe(true);
-    const navBar2Posted = pageRest.post!('footer', navBar2Body!, {});
+    const navBar2Posted = await pageRest.post!('footer', navBar2Body!, {});
     expect(navBar2Posted.isSuccess).toBe(true);
-    const navBar2Arr = footerRest.getValue().getAll!('#ara-link');
+    const navBar2Arr = await footerRest.getValue().getAll!('#ara-link');
     expect(navBar2Arr).toHaveLength(1);
-    const pageNavBar2Arr = pageRest.getAll!("#ara-link");
+    const pageNavBar2Arr = await pageRest.getAll!("#ara-link");
     expect(pageNavBar2Arr).toHaveLength(1);
     expect(pageNavBar2Arr[0]).toEqual(navBar2Arr[0]);
     
     // Add after the first child
     const navBar3Body = getBody(navBar3Html, 'a');
     expect(navBar3Body !== null).toBe(true);
-    const navBar3Posted = pageRest.post!('footer > a:last-child', navBar3Body!, {lilBro: true});
+    const navBar3Posted = await pageRest.post!('footer > a:last-child', navBar3Body!, {lilBro: true});
     expect(navBar3Posted.isSuccess).toBe(true);
-    const navBar3Arr = footerRest.getValue().getAll!('#github-link');
+    const navBar3Arr = await footerRest.getValue().getAll!('#github-link');
     expect(navBar3Arr).toHaveLength(1);
-    const pageNavBar3Arr = pageRest.getAll!("#github-link");
+    const pageNavBar3Arr = await pageRest.getAll!("#github-link");
     expect(pageNavBar3Arr).toHaveLength(1);
     expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
 })
 
 test(`Testing the rest branching without proxifying`, async() => {
-    const options = {adapter};
     const footer = getBody(footerHtml, 'footer');
-    let footerFirstDiv = cssSelect("footer > div", footer!, options);
 
     const pageBody = getBody(pageHtml, 'body');
     const pageRest = new Rest<HTMLElement>(pageBody!, nodeToObjectTree);
-    const pageBodyPosted = pageRest.post!('*', pageBody!, {});
+    const pageBodyPosted = await pageRest.post!('*', pageBody!, {});
     expect(pageBodyPosted.isSuccess).toBe(true);
-    const contentBranch = pageRest.get!('#footer-section');
+    const contentBranch = await pageRest.get!('#footer-section');
     expect(contentBranch !== null).toBe(true);
 
     // Make sure it's parsing.
@@ -144,40 +143,40 @@ test(`Testing the rest branching without proxifying`, async() => {
     footerRest.setRootNode(contentBranch!)
 
     // Post the body
-    const footerPosted = footerRest.post!('*', footer!, {});
+    const footerPosted = await footerRest.post!('*', footer!, {});
     expect(footerPosted.isSuccess).toBe(true);
 
     // Add a data to footer from footerRest, it should be
     // fetchable from pageRest and footerRest
     const navBar1Body = getBody(navBar1Html, 'a');
     expect(navBar1Body !== null).toBe(true);
-    const navBar1Posted = footerRest.post!('*', navBar1Body!, {});
+    const navBar1Posted = await footerRest.post!('*', navBar1Body!, {});
     expect(navBar1Posted.isSuccess).toBe(true);
-    const navBar1Arr = footerRest.getAll!('#google-link');
+    const navBar1Arr = await footerRest.getAll!('#google-link');
     expect(navBar1Arr).toHaveLength(1);
-    const pageNavBar1Arr = pageRest.getAll!("#google-link");
+    const pageNavBar1Arr = await pageRest.getAll!("#google-link");
     expect(pageNavBar1Arr).toHaveLength(1);
     expect(pageNavBar1Arr[0]).toEqual(navBar1Arr[0]);
 
     // Add element from the parent
     const navBar2Body = getBody(navBar2Html, 'a');
     expect(navBar2Body !== null).toBe(true);
-    const navBar2Posted = pageRest.post!('footer', navBar2Body!, {});
+    const navBar2Posted = await pageRest.post!('footer', navBar2Body!, {});
     expect(navBar2Posted.isSuccess).toBe(true);
-    const navBar2Arr = footerRest.getAll!('#ara-link');
+    const navBar2Arr = await footerRest.getAll!('#ara-link');
     expect(navBar2Arr).toHaveLength(1);
-    const pageNavBar2Arr = pageRest.getAll!("#ara-link");
+    const pageNavBar2Arr = await pageRest.getAll!("#ara-link");
     expect(pageNavBar2Arr).toHaveLength(1);
     expect(pageNavBar2Arr[0]).toEqual(navBar2Arr[0]);
     
     // Add after the first child
     const navBar3Body = getBody(navBar3Html, 'a');
     expect(navBar3Body !== null).toBe(true);
-    const navBar3Posted = pageRest.post!('footer > a:last-child', navBar3Body!, {lilBro: true});
+    const navBar3Posted = await pageRest.post!('footer > a:last-child', navBar3Body!, {lilBro: true});
     expect(navBar3Posted.isSuccess).toBe(true);
-    const navBar3Arr = footerRest.getAll!('#github-link');
+    const navBar3Arr = await footerRest.getAll!('#github-link');
     expect(navBar3Arr).toHaveLength(1);
-    const pageNavBar3Arr = pageRest.getAll!("#github-link");
+    const pageNavBar3Arr = await pageRest.getAll!("#github-link");
     expect(pageNavBar3Arr).toHaveLength(1);
     expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
 })

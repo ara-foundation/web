@@ -10,7 +10,7 @@ export class RestBranchProxy extends SDSProxy {
         super(moduleLink, ["post", "getAll"], description);
         this._root = root;
     }
-    set rootNode(obj) {
+    setRootNode(obj) {
         if (this._root === undefined) {
             return;
         }
@@ -24,11 +24,11 @@ export class RestBranchProxy extends SDSProxy {
         this._behindData = behindData;
         this._behindData.setRootNode(this._root);
     }
-    getAll(selector) {
-        return this._behindData.getAll(`${selector}`);
+    async getAll(selector) {
+        return await this._behindData.getAll(`${selector}`);
     }
-    post(selector, data, options) {
-        return this._behindData.post.bind(this._behindData, `${selector}`, data, options)();
+    async post(selector, data, options) {
+        return await this._behindData.post.bind(this._behindData, `${selector}`, data, options)();
     }
 }
 /**
@@ -68,10 +68,10 @@ export class Rest extends SDSService {
      * Retreive a resource node.
      * @param selector
      */
-    get(selector) {
+    async get(selector) {
         return cssSelectOne(selector, [this._root], this._options);
     }
-    getAll(selector) {
+    async getAll(selector) {
         return cssSelectAll(selector, [this._root], this._options);
     }
     /**
@@ -92,8 +92,8 @@ export class Rest extends SDSService {
      * @param options Set to little bro if you want to set object after the selector.
      * @returns
      */
-    post(selector, data, options = { lilBro: false }) {
-        const parentOrBigBro = this._getParentOrBigBro(selector, options);
+    async post(selector, data, options = { lilBro: false }) {
+        const parentOrBigBro = await this._getParentOrBigBro(selector, options);
         if (parentOrBigBro.isFailure) {
             return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription);
         }
@@ -113,8 +113,8 @@ export class Rest extends SDSService {
         const posted = this._appendChild(newBornChild.getValue(), bigBro);
         return posted;
     }
-    _getParentOrBigBro(selector, options = { lilBro: false }) {
-        let parentOrBigBro = this.get(selector);
+    async _getParentOrBigBro(selector, options = { lilBro: false }) {
+        let parentOrBigBro = await this.get(selector);
         if (parentOrBigBro === null) {
             return Result.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
         }
@@ -153,8 +153,8 @@ export class Rest extends SDSService {
      * @param selector
      * @param data
      */
-    put(selector, data) {
-        let elder = this.get(selector);
+    async put(selector, data) {
+        let elder = await this.get(selector);
         if (elder === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct object selector`);
         }
@@ -181,13 +181,13 @@ export class Rest extends SDSService {
      * @param selector
      * @param data
      */
-    patch(attrSelector, data) {
+    async patch(attrSelector, data) {
         if (!LinkTraits.isAttributeSelector(attrSelector)) {
             return OkResult.fail(`LinkTraits.isAttributeSelector('${attrSelector}'): not an attribute`, `pass attribute selector`);
         }
         const attrName = LinkTraits.getAttributeName(attrSelector);
         const selector = LinkTraits.trimAttribute(attrSelector);
-        const elem = this.get(selector);
+        const elem = await this.get(selector);
         if (elem === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
@@ -201,8 +201,8 @@ export class Rest extends SDSService {
      * Delete a resource. If resource not match, then return as it's ok
      * @param selector
      */
-    delete(selector) {
-        const els = this.getAll(selector);
+    async delete(selector) {
+        const els = await this.getAll(selector);
         if (els.length === 0) {
             return OkResult.ok();
         }
