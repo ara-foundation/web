@@ -416,6 +416,22 @@ export class LinkTraits {
         return lastToken.type === "attribute";
     }
 
+    public static getTagName(query: string): string|null {
+        const parsed = this.parseSelector(query);
+        if (parsed.length < 1) {
+            return null;
+        }
+        const selectors = parsed[0];
+        for (let i = selectors.length - 1; i >= 0; i--) {
+            const selector = selectors[i];
+            if (selector.type === CSSWhat.SelectorType.Tag) {
+                return selector.name;
+            }
+        }
+
+        return null;
+    }
+
     public static getAttributeName(query: string): string|null {
         const parsed = this.parseSelector(query);
         if (parsed.length < 1) {

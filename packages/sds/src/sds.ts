@@ -1,5 +1,7 @@
-import { Result } from "@ara-web/p-hintjens";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink as PackageLink } from "./links/index.js";
+import type { RestExtensionInterface } from "./rest.js";
+import { DOCUMENT_SELECTOR, LinkTraits, type ObjectNode } from "./link-traits.js";
 
 /**
  * Any package will have a unique package link and description.
@@ -13,6 +15,7 @@ export interface SDSMetaInterface {
  */
 export interface SDSSetup<CustomExtension extends SDSExtensionInterface> extends SDSMetaInterface{
     proxies?: SDSProxy[];
+    extensionTag?: string;
     extensions?: CustomExtension[];
 }
 
@@ -105,8 +108,139 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
     }
 }
 
+export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface> implements RestExtensionInterface<CustomExtension> {
+    private _extensions: CustomExtension[];
+    private _extensionTag: string;
+    packageLink: PackageLink;
+
+    constructor(packageLink: PackageLink, extensionTag: string, extensions: CustomExtension[]) {
+        this.packageLink = packageLink;
+        this._extensions = extensions;
+        this._extensionTag = extensionTag;
+    }
+
+    public get extensions(): Readonly<CustomExtension[]> {
+        return this._extensions;
+    }
+
+    public get extensionCount(): number {
+        return this._extensions.length;
+    }
+
+    private isExtensionTag(selector: string): boolean {
+        return LinkTraits.getTagName(selector)?.toLowerCase() === this._extensionTag.toLowerCase();
+    }
+
+    /**
+     * Registering a new extension in run-time.
+     * If extension exists, then it throws error asking to use Put.
+     * @param parentOrBigBro 
+     * @param node 
+     * @param options 
+     * @returns 
+     */
+    async forwardPost(
+        parentOrBigBro: ObjectNode<CustomExtension>,
+        node: ObjectNode<CustomExtension>,
+        options?: { lilBro: boolean }
+    ): Promise<OkResult> {
+        if (options?.lilBro) {
+            const bigBroTagName = LinkTraits.getTagName(parentOrBigBro.selector);
+            if (bigBroTagName !== this._extensionTag) {
+                return OkResult.ok();
+            }
+        } else {
+            if (parentOrBigBro.selector !== DOCUMENT_SELECTOR) {
+                return OkResult.ok();
+            }
+        }
+
+        // Now, let's make sure it exists
+        if (!this.isExtensionTag(node.selector)) {
+            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extensionTag}`, `The ${node.selector} expected to be an extension`);
+        }
+
+        const ext = node.getElement()!
+        if (ext === null || !("packageLink" in ext)) {
+            return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
+        }
+
+        const extIndex = this._extensions.findIndex((ext) => ext.packageLink.isEqual(node.getElement()!.packageLink))
+        if (extIndex > -1) {
+            return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${node.getElement()!.packageLink}. Call rest.put instead.`);
+        }
+        
+        this._extensions.push(node.getElement()!);
+
+        return OkResult.ok();
+    }
+
+    async forwardPut(
+        selector: string,
+        node: ObjectNode<CustomExtension>,
+        data: CustomExtension
+    ): Promise<OkResult> {
+        // Only children of DOCUMENT_SELECTOR are considered to be extensions.
+        if (node.parent === undefined || node.parent?.selector !== DOCUMENT_SELECTOR) {
+            return OkResult.ok();
+        }
+        // Now, let's make sure it exists
+        if (!this.isExtensionTag(node.selector)) {
+            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extensionTag}`, `The ${node.selector} expected to be an extension`);
+        }
+        
+        const ext = node.getElement()!
+        if (ext === null || !("packageLink" in ext)) {
+            return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the node argument`);
+        }
+        if (!("packageLink" in data)) {
+            return OkResult.fail(`The packageLink in the putting data`, `Please update the 'data' argument`);
+        }
+
+        const extIndex = this._extensions.findIndex((ext) => ext.packageLink.isEqual(node.getElement()!.packageLink))
+        if (extIndex === -1) {
+            return OkResult.fail(`The extension not found`, `The ${node.getElement()!.packageLink} not found. Call rest.post instead.`);
+        }
+
+        this._extensions[extIndex] = data;
+
+        return OkResult.ok();
+    }
+
+    async forwardPatch<AttrType>(
+        selector: string,
+        node: ObjectNode<CustomExtension>,
+        attrValue: AttrType,
+    ): Promise<OkResult> {
+        return OkResult.ok();
+    }
+
+    async forwardDelete(
+        selector: string, nodes: ObjectNode<CustomExtension>[]
+    ): Promise<OkResult> {
+        for (const node of nodes) {
+            if (!this.isExtensionTag(node.selector)) {
+                continue;
+            }
+
+            const element = node.getElement()!
+            if (element === null || !("packageLink" in element)) {
+                return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the ${node.selector} node to be extension`);
+            }
+
+            // Remove the extension from the extensions list
+            const preDelete = this._extensions.length;
+            this._extensions = this._extensions.filter((ext) => !ext.packageLink.isEqual(element.packageLink))
+            if (this._extensions.length - 1 !== preDelete) {
+                return OkResult.fail(`The extension not found`, `The ${element.packageLink} not found. Can not delete it.`);
+            }
+        }
+        return OkResult.ok();
+    }
+}
+
 export class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension extends SDSExtensionInterface> extends SDSProxy implements SDSServiceInterface  {    
-    protected _extensions: CustomExtension[];
+    protected _extensionReceiver: SDSExtensionReceiver<CustomExtension>;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
@@ -114,8 +248,9 @@ export class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension 
      */
     constructor(setup: SDSSetup<CustomExtension>, pubMethods: string[]) {
         super(setup.packageLink, pubMethods);
+        const extTag = setup.extensionTag === undefined ? "memop" : setup.extensionTag;
         const exts = setup.extensions === undefined ? [] : setup.extensions;
-        this._extensions = exts;
+        this._extensionReceiver = new SDSExtensionReceiver(setup.packageLink, extTag, exts);
         // In case if it's proxified:
         if (setup.proxies !== undefined && setup.proxies.length > 0) {
             this.postProxies(setup.proxies.reverse());

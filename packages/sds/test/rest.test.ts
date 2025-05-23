@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestExtensionInterface } from "../src/index.js";
+import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestExtensionInterface, SDSExtensionInterface, SDSExtensionReceiver } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
@@ -27,11 +27,11 @@ class RestExtension implements RestExtensionInterface<HTMLElement> {
         this.packageLink = packageLink;
     }
 
-    async forwardPost?(_selector: string, data: ObjectNode<HTMLElement>): Promise<OkResult> {
-        if (this.objects[data.selector] !== undefined) {
+    async forwardPost?(parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
+        if (this.objects[node.selector] !== undefined) {
             return OkResult.fail(`Already posted`, `Can not import again`);
         } else {
-            this.objects[data.selector] = data;
+            this.objects[node.selector] = node;
         }
         return { isSuccess: true, isFailure: false };
     }
@@ -163,13 +163,11 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Post the body
     const footerPosted = await footerRest.post!('*', footer!, {});
     expect(footerPosted.isSuccess).toBe(true);
-    Debug.log(`Hello`)
 
     // Add a data to footer from footerRest, it should be
     // fetchable from pageRest and footerRest
     const navBar1Body = getBody(navBar1Html, 'a');
     expect(navBar1Body !== null).toBe(true);
-    Debug.log(`Hello2`)
     const navBar1Posted = await footerRest.post!('*', navBar1Body!, {});
     expect(navBar1Posted.isSuccess).toBe(true);
     const navBar1Arr = await footerRest.getAll!('#google-link');
@@ -177,7 +175,6 @@ test(`Testing the rest branching without proxifying`, async() => {
     const pageNavBar1Arr = await pageRest.getAll!("#google-link");
     expect(pageNavBar1Arr).toHaveLength(1);
     expect(pageNavBar1Arr[0]).toEqual(navBar1Arr[0]);
-    Debug.log(`Hello3`)
 
     // Add element from the parent
     const navBar2Body = getBody(navBar2Html, 'a');
@@ -202,3 +199,32 @@ test(`Testing the rest branching without proxifying`, async() => {
     expect(pageNavBar3Arr[0]).toEqual(navBar3Arr[0]);
 })
 
+test(`Testing the forwarding SDS Extension receiver from rest`, async() => {
+    const footer = getBody(footerHtml, 'footer');
+
+    const pageBody = getBody(pageHtml, 'body');
+    const pageNode = nodeToObjectTree(pageBody!, undefined, true);
+    const footerNode = nodeToObjectTree(footer!, pageNode, false);
+    let navBar1Body = getBody(navBar1Html, 'a');
+    navBar1Body = Object.assign(navBar1Body!, {packageLink: ModuleLink.newPackageURL('ara-web', 'nav-bar-1')});
+    const navBar1Node = nodeToObjectTree(navBar1Body!, pageNode, false);
+    const sdsExtReceiver = new SDSExtensionReceiver(ModuleLink.newPackageURL(`@ara-web`, `sds-ext-receiver`), 'a', []);
+    expect((await sdsExtReceiver.forwardPost(
+        footerNode! as unknown as ObjectNode<SDSExtensionInterface>, 
+        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    )).isSuccess).toBe(true);
+    expect(sdsExtReceiver.extensionCount).toBe(0);
+    
+    const posted = await sdsExtReceiver.forwardPost(
+        pageNode! as unknown as ObjectNode<SDSExtensionInterface>, 
+        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    );
+    Debug.log(posted);
+    expect(posted.isSuccess).toBe(true);
+    expect(sdsExtReceiver.extensionCount).toBe(1);
+    
+    expect((await sdsExtReceiver.forwardPost(
+        pageNode! as unknown as ObjectNode<SDSExtensionInterface>, 
+        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    )).isFailure).toBe(true);
+})

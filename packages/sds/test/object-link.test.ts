@@ -133,7 +133,8 @@ test(`Test fetching css selector by attribute`, async() => {
 
 test(`Test Selector Parser of LintTraits`, async() => {
     const query1 = `main > div:nth-child`;
-    // const selectors1 = LinkTraits.parseSelector(query1);
+    const queryForTag = `main > div#hey`;
+    expect(LinkTraits.getTagName(queryForTag)).toEqual('div');
 
     const query2 = `main > div:nth-child(2) > div[data-link]`
     // const selectors2 = LinkTraits.parseSelector(query2);

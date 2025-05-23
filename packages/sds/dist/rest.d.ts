@@ -3,7 +3,9 @@ import { SDSProxy, SDSService, type SDSExtensionInterface, type SDSSetup } from 
 import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
-    forwardPost?(selector: string, node: ObjectNode<ElementType>): Promise<OkResult>;
+    forwardPost?(parentOrBigBro: ObjectNode<ElementType>, node: ObjectNode<ElementType>, options?: {
+        lilBro?: boolean;
+    }): Promise<OkResult>;
     forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
     forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
     forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;

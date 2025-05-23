@@ -240,6 +240,20 @@ export class LinkTraits {
         const lastToken = parsed[0][lastIndex];
         return lastToken.type === "attribute";
     }
+    static getTagName(query) {
+        const parsed = this.parseSelector(query);
+        if (parsed.length < 1) {
+            return null;
+        }
+        const selectors = parsed[0];
+        for (let i = selectors.length - 1; i >= 0; i--) {
+            const selector = selectors[i];
+            if (selector.type === CSSWhat.SelectorType.Tag) {
+                return selector.name;
+            }
+        }
+        return null;
+    }
     static getAttributeName(query) {
         const parsed = this.parseSelector(query);
         if (parsed.length < 1) {

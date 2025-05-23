@@ -110,10 +110,10 @@ export class Rest extends SDSService {
         if (newBornChild.isFailure) {
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription);
         }
-        if (this._extensions.length > 0) {
-            for (const ext of this._extensions) {
+        if (this._extensionReceiver.extensions.length > 0) {
+            for (const ext of this._extensionReceiver.extensions) {
                 if (ext.forwardPost !== undefined) {
-                    const afterPosted = await ext.forwardPost(selector, newBornChild.getValue());
+                    const afterPosted = await ext.forwardPost(parentOrBigBro.getValue(), newBornChild.getValue(), options);
                     if (afterPosted.isFailure) {
                         return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
                     }
@@ -178,7 +178,7 @@ export class Rest extends SDSService {
         if (element !== null && typeof element !== typeof data) {
             return OkResult.fail(`Element type mismatch`);
         }
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardPut !== undefined) {
                 const afterPosted = await ext.forwardPut(selector, node, data);
                 if (afterPosted.isFailure) {
@@ -205,7 +205,7 @@ export class Rest extends SDSService {
         if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardPatch !== undefined) {
                 const forwarded = await ext.forwardPatch(selector, node, data);
                 if (forwarded.isFailure) {
@@ -225,7 +225,7 @@ export class Rest extends SDSService {
      */
     async delete(selector) {
         const nodes = await this.getAll(selector);
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardDelete !== undefined) {
                 const forwarded = await ext.forwardDelete(selector, nodes);
                 if (forwarded.isFailure) {

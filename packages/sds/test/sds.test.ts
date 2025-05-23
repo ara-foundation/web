@@ -24,8 +24,8 @@ class SampleService extends SDSService<SampleService, SampleExtensionInterface> 
     }
 
     public getNumber?(extIndex?: number): number {
-        if (extIndex !== undefined && extIndex >= 0 && extIndex < this._extensions.length) {
-            return this._extensions[extIndex].getDouble();
+        if (extIndex !== undefined && extIndex >= 0 && extIndex < this._extensionReceiver.extensions.length) {
+            return this._extensionReceiver.extensions[extIndex].getDouble();
         }
         return 1;
     }

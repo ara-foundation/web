@@ -20,7 +20,7 @@ import { ModuleLink } from "./links/index.js";
 
 // We call it setters.
 export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
-    forwardPost?(selector: string, node: ObjectNode<ElementType>): Promise<OkResult>;
+    forwardPost?(parentOrBigBro: ObjectNode<ElementType>, node: ObjectNode<ElementType>, options?: {lilBro?: boolean}): Promise<OkResult>;
     forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
     forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
     forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;
@@ -178,10 +178,10 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription!);
         }
 
-        if (this._extensions.length > 0) {
-            for (const ext of this._extensions) {
+        if (this._extensionReceiver.extensions.length > 0) {
+            for (const ext of this._extensionReceiver.extensions) {
                 if (ext.forwardPost !== undefined) {
-                    const afterPosted = await ext.forwardPost!(selector, newBornChild.getValue());
+                    const afterPosted = await ext.forwardPost!(parentOrBigBro.getValue()!, newBornChild.getValue(), options);
                     if (afterPosted.isFailure) {
                         return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
                     }
@@ -251,7 +251,7 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`Element type mismatch`)
         }
 
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardPut !== undefined) {
                 const afterPosted = await ext.forwardPut!(selector, node, data);
                 if (afterPosted.isFailure) {
@@ -281,7 +281,7 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
 
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardPatch !== undefined) {
                 const forwarded = await ext.forwardPatch!(selector, node, data);
                 if (forwarded.isFailure) {
@@ -303,7 +303,7 @@ export class Rest<ElementType> extends SDSService<
      */
     public async delete?(selector: string): Promise<OkResult> {
         const nodes = await this.getAll!(selector);
-        for (const ext of this._extensions) {
+        for (const ext of this._extensionReceiver.extensions) {
             if (ext.forwardDelete !== undefined) {
                 const forwarded = await ext.forwardDelete!(selector, nodes);
                 if (forwarded.isFailure) {

@@ -1,5 +1,7 @@
-import { Result } from "@ara-web/p-hintjens";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink as PackageLink } from "./links/index.js";
+import type { RestExtensionInterface } from "./rest.js";
+import { type ObjectNode } from "./link-traits.js";
 /**
  * Any package will have a unique package link and description.
  */
@@ -11,6 +13,7 @@ export interface SDSMetaInterface {
  */
 export interface SDSSetup<CustomExtension extends SDSExtensionInterface> extends SDSMetaInterface {
     proxies?: SDSProxy[];
+    extensionTag?: string;
     extensions?: CustomExtension[];
 }
 export interface SDSServiceInterface extends SDSMetaInterface {
@@ -46,8 +49,31 @@ export declare abstract class SDSProxy implements SDSMetaInterface, SDSProxyInte
     protected postProxies(proxies: SDSProxy[]): void;
     protected hideByProxy<ProxyInheritance extends SDSProxy>(behindProxy: ProxyInheritance): void;
 }
+export declare class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface> implements RestExtensionInterface<CustomExtension> {
+    private _extensions;
+    private _extensionTag;
+    packageLink: PackageLink;
+    constructor(packageLink: PackageLink, extensionTag: string, extensions: CustomExtension[]);
+    get extensions(): Readonly<CustomExtension[]>;
+    get extensionCount(): number;
+    private isExtensionTag;
+    /**
+     * Registering a new extension in run-time.
+     * If extension exists, then it throws error asking to use Put.
+     * @param parentOrBigBro
+     * @param node
+     * @param options
+     * @returns
+     */
+    forwardPost(parentOrBigBro: ObjectNode<CustomExtension>, node: ObjectNode<CustomExtension>, options?: {
+        lilBro: boolean;
+    }): Promise<OkResult>;
+    forwardPut(selector: string, node: ObjectNode<CustomExtension>, data: CustomExtension): Promise<OkResult>;
+    forwardPatch<AttrType>(selector: string, node: ObjectNode<CustomExtension>, attrValue: AttrType): Promise<OkResult>;
+    forwardDelete(selector: string, nodes: ObjectNode<CustomExtension>[]): Promise<OkResult>;
+}
 export declare class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension extends SDSExtensionInterface> extends SDSProxy implements SDSServiceInterface {
-    protected _extensions: CustomExtension[];
+    protected _extensionReceiver: SDSExtensionReceiver<CustomExtension>;
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup

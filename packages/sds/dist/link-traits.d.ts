@@ -219,6 +219,7 @@ export declare class LinkTraits {
     static compile<ObjectNode, BranchedModuleObject extends ObjectNode>(query: string, options: CSSOptions<ObjectNode, BranchedModuleObject>): void;
     static parseSelector(query: string): CSSWhat.Selector[][];
     static isAttributeSelector(query: string): boolean;
+    static getTagName(query: string): string | null;
     static getAttributeName(query: string): string | null;
     static trimAttribute(query: string): string;
 }
