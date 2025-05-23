@@ -318,6 +318,10 @@ export class ObjectNode<ElementType> implements ObjectNodeInterface {
         return this._element === undefined ? null : this._element;
     }
 
+    public setElement(data: ElementType): void {
+        this._element = data;
+    }
+
     /**
      * For Pages, it returns empty string.
      */
