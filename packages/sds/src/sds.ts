@@ -176,7 +176,7 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
     }
 
     async forwardPut(
-        selector: string,
+        _selector: string,
         node: ObjectNode<CustomExtension>,
         data: CustomExtension
     ): Promise<OkResult> {
@@ -208,15 +208,15 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
     }
 
     async forwardPatch<AttrType>(
-        selector: string,
-        node: ObjectNode<CustomExtension>,
-        attrValue: AttrType,
+        _selector: string,
+        _node: ObjectNode<CustomExtension>,
+        _attrValue: AttrType,
     ): Promise<OkResult> {
         return OkResult.ok();
     }
 
     async forwardDelete(
-        selector: string, nodes: ObjectNode<CustomExtension>[]
+        _selector: string, nodes: ObjectNode<CustomExtension>[]
     ): Promise<OkResult> {
         for (const node of nodes) {
             if (!this.isExtensionTag(node.selector)) {
@@ -227,11 +227,10 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
             if (element === null || !("packageLink" in element)) {
                 return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the ${node.selector} node to be extension`);
             }
-
             // Remove the extension from the extensions list
             const preDelete = this._extensions.length;
             this._extensions = this._extensions.filter((ext) => !ext.packageLink.isEqual(element.packageLink))
-            if (this._extensions.length - 1 !== preDelete) {
+            if (this._extensions.length + 1 !== preDelete) {
                 return OkResult.fail(`The extension not found`, `The ${element.packageLink} not found. Can not delete it.`);
             }
         }

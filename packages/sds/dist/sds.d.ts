@@ -68,9 +68,9 @@ export declare class SDSExtensionReceiver<CustomExtension extends SDSExtensionIn
     forwardPost(parentOrBigBro: ObjectNode<CustomExtension>, node: ObjectNode<CustomExtension>, options?: {
         lilBro: boolean;
     }): Promise<OkResult>;
-    forwardPut(selector: string, node: ObjectNode<CustomExtension>, data: CustomExtension): Promise<OkResult>;
-    forwardPatch<AttrType>(selector: string, node: ObjectNode<CustomExtension>, attrValue: AttrType): Promise<OkResult>;
-    forwardDelete(selector: string, nodes: ObjectNode<CustomExtension>[]): Promise<OkResult>;
+    forwardPut(_selector: string, node: ObjectNode<CustomExtension>, data: CustomExtension): Promise<OkResult>;
+    forwardPatch<AttrType>(_selector: string, _node: ObjectNode<CustomExtension>, _attrValue: AttrType): Promise<OkResult>;
+    forwardDelete(_selector: string, nodes: ObjectNode<CustomExtension>[]): Promise<OkResult>;
 }
 export declare class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension extends SDSExtensionInterface> extends SDSProxy implements SDSServiceInterface {
     protected _extensionReceiver: SDSExtensionReceiver<CustomExtension>;

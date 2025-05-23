@@ -121,7 +121,7 @@ export class SDSExtensionReceiver {
         this._extensions.push(node.getElement());
         return OkResult.ok();
     }
-    async forwardPut(selector, node, data) {
+    async forwardPut(_selector, node, data) {
         // Only children of DOCUMENT_SELECTOR are considered to be extensions.
         if (node.parent === undefined || node.parent?.selector !== DOCUMENT_SELECTOR) {
             return OkResult.ok();
@@ -144,10 +144,10 @@ export class SDSExtensionReceiver {
         this._extensions[extIndex] = data;
         return OkResult.ok();
     }
-    async forwardPatch(selector, node, attrValue) {
+    async forwardPatch(_selector, _node, _attrValue) {
         return OkResult.ok();
     }
-    async forwardDelete(selector, nodes) {
+    async forwardDelete(_selector, nodes) {
         for (const node of nodes) {
             if (!this.isExtensionTag(node.selector)) {
                 continue;
@@ -159,7 +159,7 @@ export class SDSExtensionReceiver {
             // Remove the extension from the extensions list
             const preDelete = this._extensions.length;
             this._extensions = this._extensions.filter((ext) => !ext.packageLink.isEqual(element.packageLink));
-            if (this._extensions.length - 1 !== preDelete) {
+            if (this._extensions.length + 1 !== preDelete) {
                 return OkResult.fail(`The extension not found`, `The ${element.packageLink} not found. Can not delete it.`);
             }
         }
