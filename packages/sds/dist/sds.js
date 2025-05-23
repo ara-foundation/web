@@ -6,7 +6,6 @@ import { ModuleLink as PackageLink } from "./links/index.js";
  *
  *********************************************************/
 export class SDSProxy {
-    _description;
     _packageLink;
     _proxies;
     _publicMethods = [];
@@ -14,13 +13,9 @@ export class SDSProxy {
     get publicMethods() {
         return this._publicMethods;
     }
-    constructor(_moduleLink, _publicMethods, _desc) {
+    constructor(_moduleLink, _publicMethods) {
         this._packageLink = _moduleLink;
         this._publicMethods = _publicMethods;
-        this._description = _desc;
-    }
-    get description() {
-        return this._description === undefined ? "" : this._description;
     }
     get packageLink() {
         return this._packageLink;
@@ -79,7 +74,7 @@ export class SDSService extends SDSProxy {
      * @param setup
      */
     constructor(setup, pubMethods) {
-        super(setup.packageLink, pubMethods, setup.description);
+        super(setup.packageLink, pubMethods);
         const exts = setup.extensions === undefined ? [] : setup.extensions;
         this._extensions = exts;
         // In case if it's proxified:

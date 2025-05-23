@@ -2,19 +2,25 @@ import { OkResult, Result } from "@ara-web/p-hintjens";
 import { SDSProxy, SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
 import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
-export interface RestExtensionInterface extends SDSExtensionInterface {
+export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
+    forwardPost?(selector: string, node: ObjectNode<ElementType>): Promise<OkResult>;
+    forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
+    forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
+    forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;
 }
-export interface RestInterface<ElementType> {
+export interface ReadonlyRestInterface<ElementType> {
     rootNode: ObjectNode<ElementType> | undefined;
+    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
+    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
+}
+export interface RestInterface<ElementType> extends ReadonlyRestInterface<ElementType> {
     setRootNode(obj: ObjectNode<ElementType>): void;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
-    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
     post?(selector: string, data: ElementType, options?: {
         lilBro?: boolean;
     }): Promise<OkResult>;
-    put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult>;
+    put?(selector: string, data: ElementType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
 }
@@ -26,7 +32,7 @@ export interface RestOptions<ElementType> {
 export declare class RestBranchProxy<ElementType> extends SDSProxy implements RestInterface<ElementType> {
     protected _behindData?: Rest<ElementType>;
     private _root;
-    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink, description?: string);
+    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink);
     setRootNode(obj: ObjectNode<ElementType>): void;
     get rootNode(): ObjectNode<ElementType> | undefined;
     putBehindData?(behindData: Rest<ElementType>): void;
@@ -36,11 +42,11 @@ export declare class RestBranchProxy<ElementType> extends SDSProxy implements Re
 /**
  * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
  */
-export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface> implements RestInterface<ElementType> {
+export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface<ElementType>> implements RestInterface<ElementType> {
     private _options;
     private _root;
     private _objectToNodeTree;
-    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface>);
+    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface<ElementType>>);
     setRootNode(obj: ObjectNode<ElementType>): void;
     get rootNode(): ObjectNode<ElementType>;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
@@ -84,7 +90,7 @@ export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, Res
      * @param selector
      * @param data
      */
-    put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult>;
+    put?(selector: string, data: ElementType): Promise<OkResult>;
     /**
      * Make a partial update of a resource.
      * Requires the selector to be with attribute.

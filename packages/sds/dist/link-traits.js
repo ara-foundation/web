@@ -157,6 +157,9 @@ export class ObjectNode {
     getElement() {
         return this._element === undefined ? null : this._element;
     }
+    setElement(data) {
+        this._element = data;
+    }
     /**
      * For Pages, it returns empty string.
      */

@@ -6,8 +6,8 @@ import { ModuleLink } from "./links/index.js";
 export class RestBranchProxy extends SDSProxy {
     _behindData;
     _root;
-    constructor(root, moduleLink, description) {
-        super(moduleLink, ["post", "getAll"], description);
+    constructor(root, moduleLink) {
+        super(moduleLink, ["post", "getAll"]);
         this._root = root;
     }
     setRootNode(obj) {
@@ -110,6 +110,16 @@ export class Rest extends SDSService {
         if (newBornChild.isFailure) {
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription);
         }
+        if (this._extensions.length > 0) {
+            for (const ext of this._extensions) {
+                if (ext.forwardPost !== undefined) {
+                    const afterPosted = await ext.forwardPost(selector, newBornChild.getValue());
+                    if (afterPosted.isFailure) {
+                        return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
+                    }
+                }
+            }
+        }
         const posted = this._appendChild(newBornChild.getValue(), bigBro);
         return posted;
     }
@@ -154,25 +164,29 @@ export class Rest extends SDSService {
      * @param data
      */
     async put(selector, data) {
-        let elder = await this.get(selector);
-        if (elder === null) {
+        if (LinkTraits.isAttributeSelector(selector)) {
+            return OkResult.fail(`LinkTraits.isAttributeSelector('${selector}'): can not put attribute, call patch`, `The selector has the attribute`);
+        }
+        let node = await this.get(selector);
+        if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct object selector`);
         }
-        if (elder.parent === null) {
+        if (node.parent === null) {
             return OkResult.fail(`Rest.get('${selector}'): parent not found`, `Please pass the correct object selector`);
         }
-        const happyFamily = [];
-        for (let siblingIndex = 0; siblingIndex < elder.parent.children.length; siblingIndex++) {
-            const sibling = elder.parent.children[siblingIndex];
-            if (sibling.isEqualTo(elder)) {
-                data.setParent(elder.parent);
-                happyFamily.push(data);
-            }
-            else {
-                happyFamily.push(sibling);
+        const element = node.getElement();
+        if (element !== null && typeof element !== typeof data) {
+            return OkResult.fail(`Element type mismatch`);
+        }
+        for (const ext of this._extensions) {
+            if (ext.forwardPut !== undefined) {
+                const afterPosted = await ext.forwardPut(selector, node, data);
+                if (afterPosted.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardPut(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
+                }
             }
         }
-        elder.parent.setChildren(happyFamily);
+        node.setElement(data);
         return OkResult.ok();
     }
     /**
@@ -187,11 +201,19 @@ export class Rest extends SDSService {
         }
         const attrName = LinkTraits.getAttributeName(attrSelector);
         const selector = LinkTraits.trimAttribute(attrSelector);
-        const elem = await this.get(selector);
-        if (elem === null) {
+        const node = await this.get(selector);
+        if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
-        const attrSetted = elem.setAttribute(attrName, data);
+        for (const ext of this._extensions) {
+            if (ext.forwardPatch !== undefined) {
+                const forwarded = await ext.forwardPatch(selector, node, data);
+                if (forwarded.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardPatch(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription);
+                }
+            }
+        }
+        const attrSetted = node.setAttribute(attrName, data);
         if (attrSetted.isFailure) {
             return OkResult.fail(`Rest.get('${selector}').setAttribute('${attrName}'): ${attrSetted.errorTitle}`, attrSetted.errorDescription);
         }
@@ -202,30 +224,38 @@ export class Rest extends SDSService {
      * @param selector
      */
     async delete(selector) {
-        const els = await this.getAll(selector);
-        if (els.length === 0) {
+        const nodes = await this.getAll(selector);
+        for (const ext of this._extensions) {
+            if (ext.forwardDelete !== undefined) {
+                const forwarded = await ext.forwardDelete(selector, nodes);
+                if (forwarded.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardDelete(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription);
+                }
+            }
+        }
+        if (nodes.length === 0) {
             return OkResult.ok();
         }
-        for (let el of els) {
-            if (el.parent === null || el.parent === undefined) {
+        for (let node of nodes) {
+            if (node.parent === null || node.parent === undefined) {
                 continue;
             }
             // If the element has multiple duplicates, we remove only the first element.
             let filtered = false;
-            const remainingChildren = el.parent.children.filter((child) => {
+            const remainingChildren = node.parent.children.filter((child) => {
                 if (filtered) {
                     return true;
                 }
-                if (child.isEqualTo(el)) {
+                if (child.isEqualTo(node)) {
                     filtered = true;
                     return false;
                 }
                 return true;
             });
-            if (remainingChildren.length !== el.parent.children.length - 1) {
+            if (remainingChildren.length !== node.parent.children.length - 1) {
                 return OkResult.fail(`Invalid cleared parent`, `Parent must have a one less element`);
             }
-            el.parent.setChildren(remainingChildren);
+            node.parent.setChildren(remainingChildren);
         }
         return OkResult.ok();
     }

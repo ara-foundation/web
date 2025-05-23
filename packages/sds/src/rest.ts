@@ -19,18 +19,27 @@ import {
 import { ModuleLink } from "./links/index.js";
 
 // We call it setters.
-export interface RestExtensionInterface extends SDSExtensionInterface {}
-export interface RestInterface<ElementType> {
+export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
+    forwardPost?(selector: string, node: ObjectNode<ElementType>): Promise<OkResult>;
+    forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
+    forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
+    forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;
+}
+
+export interface ReadonlyRestInterface<ElementType> {
     rootNode: ObjectNode<ElementType>|undefined;
+    get?(selector: string): Promise<ObjectNode<ElementType>|null>;
+    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
+}
+
+export interface RestInterface<ElementType> extends ReadonlyRestInterface<ElementType> {
     setRootNode(obj: ObjectNode<ElementType>): void;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
 
     // Hooks
-    get?(selector: string): Promise<ObjectNode<ElementType>|null>;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
     post?(selector: string, data: ElementType, options?: {lilBro?: boolean}): Promise<OkResult>;
-    put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult>;
+    put?(selector: string, data: ElementType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
 }
@@ -45,8 +54,8 @@ export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterf
     protected _behindData?: Rest<ElementType>;
     private _root: ObjectNode<ElementType>;
 
-    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["post", "getAll"], description);
+    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink) {
+        super(moduleLink, ["post", "getAll"]);
         this._root = root;
     }
 
@@ -81,7 +90,7 @@ export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterf
  */
 export class Rest<ElementType> extends SDSService<
     Rest<ElementType>, 
-    RestExtensionInterface
+    RestExtensionInterface<ElementType>
 > implements RestInterface<ElementType> {
     
     private _options: {adapter: CSSObjectAdapter<ElementType>};
@@ -91,7 +100,7 @@ export class Rest<ElementType> extends SDSService<
     constructor(
         object: ElementType,
         objectToTreeNode: ObjectToNodeTree<ElementType>,
-        setup: SDSSetup<RestExtensionInterface> = {packageLink: ModuleLink.newPackageURL("", "name")}
+        setup: SDSSetup<RestExtensionInterface<ElementType>> = {packageLink: ModuleLink.newPackageURL("", "name")}
     ) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = {adapter: new CSSObjectAdapter()};
@@ -168,6 +177,18 @@ export class Rest<ElementType> extends SDSService<
         if (newBornChild.isFailure) {
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription!);
         }
+
+        if (this._extensions.length > 0) {
+            for (const ext of this._extensions) {
+                if (ext.forwardPost !== undefined) {
+                    const afterPosted = await ext.forwardPost!(selector, newBornChild.getValue());
+                    if (afterPosted.isFailure) {
+                        return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
+                    }
+                }
+            }
+        }
+
         const posted = this._appendChild(newBornChild.getValue(), bigBro);
         return posted;
     }
@@ -214,26 +235,32 @@ export class Rest<ElementType> extends SDSService<
      * @param selector 
      * @param data 
      */
-    public async put?(selector: string, data: ObjectNode<ElementType>): Promise<OkResult> {
-        let elder = await this.get!(selector);
-        if (elder === null) {
+    public async put?(selector: string, data: ElementType): Promise<OkResult> {
+        if (LinkTraits.isAttributeSelector(selector)) {
+            return OkResult.fail(`LinkTraits.isAttributeSelector('${selector}'): can not put attribute, call patch`, `The selector has the attribute`)
+        }
+        let node = await this.get!(selector);
+        if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `Please pass the correct object selector`);
         } 
-        if (elder.parent === null) {
+        if (node.parent === null) {
             return OkResult.fail(`Rest.get('${selector}'): parent not found`, `Please pass the correct object selector`);
         }
+        const element = node.getElement();
+        if (element !== null && typeof element !== typeof data) {
+            return OkResult.fail(`Element type mismatch`)
+        }
 
-        const happyFamily: ObjectNodeInterface[] = [];
-        for (let siblingIndex = 0; siblingIndex < elder.parent.children.length; siblingIndex++) {
-            const sibling: ObjectNodeInterface = elder.parent.children[siblingIndex];
-            if (sibling.isEqualTo(elder)) {
-                data.setParent(elder.parent);
-                happyFamily.push(data);
-            } else {
-                happyFamily.push(sibling);
+        for (const ext of this._extensions) {
+            if (ext.forwardPut !== undefined) {
+                const afterPosted = await ext.forwardPut!(selector, node, data);
+                if (afterPosted.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardPut(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
+                }
             }
         }
-        elder.parent.setChildren(happyFamily);
+
+        node.setElement(data);
         return OkResult.ok();
     }
 
@@ -249,11 +276,21 @@ export class Rest<ElementType> extends SDSService<
         }
         const attrName = LinkTraits.getAttributeName(attrSelector);
         const selector = LinkTraits.trimAttribute(attrSelector);
-        const elem = await this.get!(selector);
-        if (elem === null) {
+        const node = await this.get!(selector);
+        if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
-        const attrSetted = elem.setAttribute<AttrType>(attrName!, data);
+
+        for (const ext of this._extensions) {
+            if (ext.forwardPatch !== undefined) {
+                const forwarded = await ext.forwardPatch!(selector, node, data);
+                if (forwarded.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardPatch(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription!);
+                }
+            }
+        }
+
+        const attrSetted = node.setAttribute<AttrType>(attrName!, data);
         if (attrSetted.isFailure) {
             return OkResult.fail(`Rest.get('${selector}').setAttribute('${attrName}'): ${attrSetted.errorTitle}`, attrSetted.errorDescription!);
         }
@@ -265,31 +302,42 @@ export class Rest<ElementType> extends SDSService<
      * @param selector 
      */
     public async delete?(selector: string): Promise<OkResult> {
-        const els = await this.getAll!(selector);
-        if (els.length === 0) {
+        const nodes = await this.getAll!(selector);
+        for (const ext of this._extensions) {
+            if (ext.forwardDelete !== undefined) {
+                const forwarded = await ext.forwardDelete!(selector, nodes);
+                if (forwarded.isFailure) {
+                    return OkResult.fail(`extension('${ext.packageLink}').forwardDelete(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription!);
+                }
+            }
+        }
+        
+        if (nodes.length === 0) {
             return OkResult.ok();
         }
-        for (let el of els) {
-            if (el.parent === null || el.parent === undefined) {
+        
+        for (let node of nodes) {
+            if (node.parent === null || node.parent === undefined) {
                 continue;
             }
             // If the element has multiple duplicates, we remove only the first element.
             let filtered = false;
-            const remainingChildren = el.parent.children.filter((child) => {
+            const remainingChildren = node.parent.children.filter((child) => {
                 if (filtered) {
                     return true;
                 }
-                if (child.isEqualTo(el)) {
+                if (child.isEqualTo(node)) {
                     filtered = true;
                     return false;
                 }
                 return true;
             })
-            if (remainingChildren.length !== el.parent.children.length - 1) {
+            if (remainingChildren.length !== node.parent.children.length - 1) {
                 return OkResult.fail(`Invalid cleared parent`, `Parent must have a one less element`);
             }
-            el.parent.setChildren(remainingChildren);
+            node.parent.setChildren(remainingChildren);
         }
+
         return OkResult.ok();
     }
 

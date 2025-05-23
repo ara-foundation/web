@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestOptions, SDSProxy } from "../src/index.js";
-import { OkResult } from "@ara-web/p-hintjens";
+import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestExtensionInterface } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
 import cssSelect from "css-select"
 import { nodeToObjectTree } from "./node-object-tree.js";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 
 var footerHtml = "<footer><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></footer>";
 var secondHtml = `<div id="secondDiv">Hello and welcome</div>`
@@ -17,6 +17,24 @@ var adapter = new NodeAdapter()
 
 function getBody(html: string, root = 'body'): HTMLBodyElement | null {
     return new JSDOM(html).window.document.querySelector(root);
+}
+
+class RestExtension implements RestExtensionInterface<HTMLElement> {
+    packageLink: ModuleLink;
+    objects: Record<string, ObjectNode<HTMLElement>> = {};
+
+    constructor(packageLink: ModuleLink) {
+        this.packageLink = packageLink;
+    }
+
+    async forwardPost?(_selector: string, data: ObjectNode<HTMLElement>): Promise<OkResult> {
+        if (this.objects[data.selector] !== undefined) {
+            return OkResult.fail(`Already posted`, `Can not import again`);
+        } else {
+            this.objects[data.selector] = data;
+        }
+        return { isSuccess: true, isFailure: false };
+    }
 }
 
 test(`Testing the rest with simple operations`, async() => {
@@ -138,18 +156,20 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Make sure it's parsing.
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
-
-    const footerRest = new Rest<HTMLElement>(footer!, nodeToObjectTree, {packageLink: ModuleLink.newPackageURL('@ara-web', 'rest-side')});
+    const restSaver = new RestExtension(ModuleLink.newPackageURL('@ara-web', 'rest-extension-test'));
+    const footerRest = new Rest<HTMLElement>(footer!, nodeToObjectTree, {packageLink: ModuleLink.newPackageURL('@ara-web', 'rest-side'), extensions: [restSaver]});
     footerRest.setRootNode(contentBranch!)
 
     // Post the body
     const footerPosted = await footerRest.post!('*', footer!, {});
     expect(footerPosted.isSuccess).toBe(true);
+    Debug.log(`Hello`)
 
     // Add a data to footer from footerRest, it should be
     // fetchable from pageRest and footerRest
     const navBar1Body = getBody(navBar1Html, 'a');
     expect(navBar1Body !== null).toBe(true);
+    Debug.log(`Hello2`)
     const navBar1Posted = await footerRest.post!('*', navBar1Body!, {});
     expect(navBar1Posted.isSuccess).toBe(true);
     const navBar1Arr = await footerRest.getAll!('#google-link');
@@ -157,6 +177,7 @@ test(`Testing the rest branching without proxifying`, async() => {
     const pageNavBar1Arr = await pageRest.getAll!("#google-link");
     expect(pageNavBar1Arr).toHaveLength(1);
     expect(pageNavBar1Arr[0]).toEqual(navBar1Arr[0]);
+    Debug.log(`Hello3`)
 
     // Add element from the parent
     const navBar2Body = getBody(navBar2Html, 'a');

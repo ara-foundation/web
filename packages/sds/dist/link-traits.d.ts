@@ -194,6 +194,7 @@ export declare class ObjectNode<ElementType> implements ObjectNodeInterface {
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean): void;
     isEqualTo(node: ObjectNodeInterface | null | undefined): boolean;
     getElement(): ElementType | null;
+    setElement(data: ElementType): void;
     /**
      * For Pages, it returns empty string.
      */

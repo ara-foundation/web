@@ -34,8 +34,8 @@ class SampleService extends SDSService<SampleService, SampleExtensionInterface> 
 class SampleProxy extends SDSProxy {
     protected _behindData?: SampleService;
 
-    constructor(moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["helloProxy", "getDoubleNumber"], description);
+    constructor(moduleLink: ModuleLink) {
+        super(moduleLink, ["helloProxy", "getDoubleNumber"]);
     }
 
     public putBehindData?(behindData: SampleService): void {
@@ -54,8 +54,8 @@ class SampleProxy extends SDSProxy {
 class SampleProxy2 extends SDSProxy {
     protected _behindData?: SampleProxy;
 
-    constructor(moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["helloProxy2", "getTripleNumber"], description);
+    constructor(moduleLink: ModuleLink) {
+        super(moduleLink, ["helloProxy2", "getTripleNumber"]);
     }
 
     public putBehindData?(behindData: SampleProxy): void {
@@ -106,15 +106,13 @@ class Sample6Extension implements SampleExtensionInterface {
 }
 
 test('Creating a proxy', async () => {
-    const proxy = new SampleProxy(proxyLink, "This is a proxy");
-    expect(proxy.description).toBe("This is a proxy");
+    const proxy = new SampleProxy(proxyLink);
     expect(proxy.packageLink).toBe(proxyLink);
     expect(proxy.publicMethods).toEqual(["helloProxy", "getDoubleNumber"]);
     expect(proxy.helloProxy).toBeDefined();
     expect(proxy.helloProxy!()).toBe(proxyText);
 
-    const proxy2 = new SampleProxy2(proxyLink2, "This is a proxy 2");
-    expect(proxy2.description).toBe("This is a proxy 2");
+    const proxy2 = new SampleProxy2(proxyLink2);
     expect(proxy2.packageLink).toBe(proxyLink2);
     expect(proxy2.publicMethods).toEqual(["helloProxy2", "getTripleNumber"]);
     expect(proxy2.helloProxy2).toBeDefined();
@@ -122,11 +120,9 @@ test('Creating a proxy', async () => {
 
     const service = new SampleService({
         packageLink: serviceLink,
-        description: "This is a service",
         proxies: [proxy2, proxy],
         extensions: []
     });
-    expect(service.description).toBe("This is a service");
     expect(service.packageLink).toBe(serviceLink);
     expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService).toBeUndefined();
@@ -150,11 +146,9 @@ test(`Creating an extension`, async () => {
 
     const service = new SampleService({
         packageLink: serviceLink,
-        description: "This is a service",
         proxies: [],
         extensions: [extension6, extension42]
     });
-    expect(service.description).toBe("This is a service");
     expect(service.packageLink).toBe(serviceLink);
     expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService!()).toBe(serviceText);

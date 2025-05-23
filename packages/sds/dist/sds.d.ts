@@ -4,7 +4,6 @@ import { ModuleLink as PackageLink } from "./links/index.js";
  * Any package will have a unique package link and description.
  */
 export interface SDSMetaInterface {
-    description?: string;
     packageLink: PackageLink;
 }
 /**
@@ -28,14 +27,12 @@ export interface SDSExtensionInterface extends SDSMetaInterface {
  *
  *********************************************************/
 export declare abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
-    private _description?;
     private _packageLink;
     private _proxies?;
     protected _publicMethods: string[];
     protected _hidedMethods: Record<string, any>;
     get publicMethods(): string[];
-    constructor(_moduleLink: PackageLink, _publicMethods: string[], _desc?: string);
-    get description(): string;
+    constructor(_moduleLink: PackageLink, _publicMethods: string[]);
     get packageLink(): PackageLink;
     /**
      * Main source to call, proxifyMe will hide the methods of this instance and put behind
