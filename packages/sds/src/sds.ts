@@ -5,7 +5,6 @@ import { ModuleLink as PackageLink } from "./links/index.js";
  * Any package will have a unique package link and description.
  */
 export interface SDSMetaInterface {
-    description?: string;
     packageLink: PackageLink;
 }
 
@@ -33,7 +32,6 @@ export interface SDSExtensionInterface extends SDSMetaInterface {}
  *********************************************************/
 
 export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
-    private _description?: string;
     private _packageLink: PackageLink;
     private _proxies?: SDSProxy[];
     protected _publicMethods: string[] = [];
@@ -43,14 +41,9 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
         return this._publicMethods;
     }
 
-    constructor(_moduleLink: PackageLink, _publicMethods: string[], _desc?: string) {
+    constructor(_moduleLink: PackageLink, _publicMethods: string[]) {
         this._packageLink = _moduleLink;
         this._publicMethods = _publicMethods;
-        this._description = _desc;
-    }
-
-    public get description(): string {
-        return this._description === undefined ? "" : this._description;
     }
 
     public get packageLink(): PackageLink {
@@ -120,7 +113,7 @@ export class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension 
      * @param setup 
      */
     constructor(setup: SDSSetup<CustomExtension>, pubMethods: string[]) {
-        super(setup.packageLink, pubMethods, setup.description);
+        super(setup.packageLink, pubMethods);
         const exts = setup.extensions === undefined ? [] : setup.extensions;
         this._extensions = exts;
         // In case if it's proxified:
