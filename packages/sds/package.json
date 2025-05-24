@@ -8,7 +8,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "license": "MPL-2.0",
-  "description": "Write monolith, turn parts to microservice on demand without hustle",
+  "description": "Write code faster without worry about future debts or scalability in the future",
   "scripts": {
     "dev": "tsc --watch",
     "build": "pnpm _chore && rm -rf dist && tsc",

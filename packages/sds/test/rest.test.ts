@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestDispatcher } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
-import { NodeAdapter } from "./node-adapter"
+import { NodeAdapter } from "./node-adapter.js"
 import cssSelect from "css-select"
 import { nodeToObjectTree } from "./node-object-tree.js";
 import { Debug, OkResult } from "@ara-web/p-hintjens";
@@ -28,11 +28,15 @@ class HTMLRestHandlers {
         this.objects = {};
     }
 
-    async handlePost(_parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, _options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
-        if (this.objects[node.selector] !== undefined) {
+    async handlePost(parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, _options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
+        if (this.objects === undefined) {
+            this.objects = {}
+        }
+        const selector = `${parentOrBigBro.selector} > ${node.selector}`
+        if (this.objects[selector] !== undefined) {
             return OkResult.fail(`Already posted`, `Can not import again`);
         } else {
-            this.objects[node.selector] = node;
+            this.objects[selector] = node;
         }
         return { isSuccess: true, isFailure: false };
     }
@@ -225,15 +229,14 @@ test(`Testing the forwarding SDS Extension receiver from rest`, async() => {
         footerNode!,
         navBar1Node!,
     )).isSuccess).toBe(true);
-    expect(sdsExtReceiver.count).toBe(0);
+    expect(sdsExtReceiver.count).toBe(1);
     
     const posted = await sdsExtReceiver.handlePost(
         pageNode!,
         navBar1Node!,
     );
-    Debug.log(posted);
     expect(posted.isSuccess).toBe(true);
-    expect(sdsExtReceiver.count).toBe(1);
+    expect(sdsExtReceiver.count).toBe(2);
     
     expect((await sdsExtReceiver.handlePost!(
         pageNode!,
