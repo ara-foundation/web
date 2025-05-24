@@ -150,11 +150,11 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
 
     constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag: string = 'memop') {
         initialExts.forEach(ext => {
+            if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
+                throw `Duplicate initial extension '${ext.packageLink.moduleURL}'.`
+            }
             this._extensions[ext.packageLink.moduleURL] = ext;
         });
-        if (initialExts.length !== Object.keys(this._extensions).length) {
-            throw `The duplicate Package Link for the extensions, couldn't add some. Please make sure each extension is unique`;
-        }
         this._extDispatcher = new RestDispatcher(serviceLink, extTag);
         this._extDispatcher.posting = this.handleExtensionAddition;
         this._extDispatcher.putting = this.handleExtensionUpdate;

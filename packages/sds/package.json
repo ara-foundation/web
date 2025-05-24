@@ -1,6 +1,6 @@
 {
   "name": "@ara-web/sds",
-  "version": "0.1.8",
+  "version": "0.1.6",
   "type": "module",
   "author": "Medet Ahmetson",
   "publishConfig": {
