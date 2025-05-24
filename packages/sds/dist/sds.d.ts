@@ -1,5 +1,6 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink, ModuleLink as PackageLink } from "./links/index.js";
+import { RestDispatcher } from "./rest.js";
 /**
  * Any SDS Service will have a meta information such as it's unique ID.
  */
@@ -26,6 +27,7 @@ export interface SDSProxyInterface extends SDSMetaInterface {
  * Any SDS Extension must implement the following interface
  */
 export interface SDSExtensionInterface extends SDSMetaInterface {
+    restHandler?: RestDispatcher<any>;
 }
 /**********************************************************
  *
@@ -86,7 +88,9 @@ export declare abstract class SDSProxy implements SDSProxyInterface {
 export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
     private _extensions;
     private _extDispatcher;
+    private _restDispatcherOperator?;
     constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag?: string);
+    set restDispatcherOperator(operator: typeof this._restDispatcherOperator);
     /*********************************************************************
      *
      * Operator's public methods

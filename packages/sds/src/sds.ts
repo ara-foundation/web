@@ -31,7 +31,9 @@ export interface SDSProxyInterface extends SDSMetaInterface {
 /**
  * Any SDS Extension must implement the following interface
  */
-export interface SDSExtensionInterface extends SDSMetaInterface {}
+export interface SDSExtensionInterface extends SDSMetaInterface {
+    restHandler?: RestDispatcher<any>;
+}
 
 /**********************************************************
  * 
@@ -116,37 +118,10 @@ export abstract class SDSProxy implements SDSProxyInterface {
     }
 }
 
-/**
- * The key difference is scope of responsibility and state management:
- * Operator = Does One Thing
- * Manager = Coordinates Many Things
- * 
- * Database operator will do db operations such as adding data, removing data.
- * Database manager will manage entire database layer, such as connection pools.
- */
-/**
- * The SDS Service's rest forwarder. 
- * When creating the rest api, pass this forwarder as the rest's extension.
- * 
- * It's supposed to be the project memory's forwarder. But instead, it acts as the extension holder.
- * Redesign it, so that it keeps only project memory. Project memory's forwarder then
- * will forward further to the sub forwarders.
- * 
- * The logic of the rest forwarding and extension manager of the sds services should be different.
- * 
- * When adding the extension, add the extension's forwarder to this forwarder's sub-child.
- * The extension's forwarder handles the module memory operations such as writing the files to the file system
- * as well as to keep track of the module operations.
- * 
- * When adding a module memory, add the code-piece forwarder, as the sub-child of the extension's forwarder.
- * The code piece forwarder writes the specific part of the data and finally invokes and edits the data.
- * 
- * When adding an astro framework module, add the page forwarder as the sub-child of the extension's forwarder.
- * Forwarders as the rest nodes, build as a parallel node tree where each forward has children and a parent.
- */
 export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
     private _extensions: Record<ModuleURL, CustomExtension> = {};
     private _extDispatcher: RestDispatcher<CustomExtension>;
+    private _restDispatcherOperator?: SDSExtensionOperator<RestDispatcher<any>>;
 
     constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag: string = 'memop') {
         initialExts.forEach(ext => {
@@ -159,6 +134,10 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
         this._extDispatcher.posting = this.handleExtensionAddition;
         this._extDispatcher.putting = this.handleExtensionUpdate;
         this._extDispatcher.deleting = this.handleExtensionDeletion;
+    }
+
+    public set restDispatcherOperator(operator: typeof this._restDispatcherOperator) {
+        this._restDispatcherOperator = operator;
     }
 
     /*********************************************************************
@@ -193,10 +172,15 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
             return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
         }
         
-        this._extensions[ext.packageLink.moduleURL] = ext!;
-        // TODO: add dispatcher for each module memory to the rest dispatcher.
-        // TODO: when creating SDSExtensionOperator, pass the Rest.sdsExtensionOperator, and put object here
-        // TODO: add extensionInterface.restDispatcher? and if its exist, add it.
+        this._extensions[ext.packageLink.moduleURL] = ext;
+        if (this._restDispatcherOperator) {
+            if (ext.restHandler) {
+                const added = await this._restDispatcherOperator.add(ext.restHandler);
+                if (added.isFailure) {
+                    return OkResult.fail(`restDispatcherOperator.add('${ext.restHandler.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
+                }
+            }
+        }
 
         return OkResult.ok();
     }
@@ -217,7 +201,14 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
  
         // Remove all dispatchers for the extension's modules.
         // Call first the this.delete();
-        this._extensions[ext.packageLink.moduleURL] = ext;
+        const removed = await this.remove([ext]);
+        if (removed.isFailure) {
+            return OkResult.fail(`remove('${ext.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
+        }
+        const added = await this.add(ext);
+        if (added.isFailure) {
+            return OkResult.fail(`add('${ext.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
+        }
 
         return OkResult.ok();
     }
@@ -229,7 +220,16 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
             if (this._extensions[ext.packageLink.moduleURL] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
             }
-            // TODO: firstly, remove all extension's dispatcher and in recursive, all module dispatchers.
+
+            if (this._restDispatcherOperator) {
+                if (ext.restHandler) {
+                    const removed = await this._restDispatcherOperator.remove([ext.restHandler]);
+                    if (removed.isFailure) {
+                        return OkResult.fail(`restDispatcherOperator.remove('${ext.restHandler.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
+                    }
+                }
+            }
+
             delete this._extensions[ext.packageLink.moduleURL];
         }
         return OkResult.ok();

@@ -103,6 +103,7 @@ export class SDSProxy {
 export class SDSExtensionOperator {
     _extensions = {};
     _extDispatcher;
+    _restDispatcherOperator;
     constructor(serviceLink, initialExts, extTag = 'memop') {
         initialExts.forEach(ext => {
             if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
@@ -114,6 +115,9 @@ export class SDSExtensionOperator {
         this._extDispatcher.posting = this.handleExtensionAddition;
         this._extDispatcher.putting = this.handleExtensionUpdate;
         this._extDispatcher.deleting = this.handleExtensionDeletion;
+    }
+    set restDispatcherOperator(operator) {
+        this._restDispatcherOperator = operator;
     }
     /*********************************************************************
      *
@@ -142,9 +146,14 @@ export class SDSExtensionOperator {
             return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
         }
         this._extensions[ext.packageLink.moduleURL] = ext;
-        // TODO: add dispatcher for each module memory to the rest dispatcher.
-        // TODO: when creating SDSExtensionOperator, pass the Rest.sdsExtensionOperator, and put object here
-        // TODO: add extensionInterface.restDispatcher? and if its exist, add it.
+        if (this._restDispatcherOperator) {
+            if (ext.restHandler) {
+                const added = await this._restDispatcherOperator.add(ext.restHandler);
+                if (added.isFailure) {
+                    return OkResult.fail(`restDispatcherOperator.add('${ext.restHandler.packageLink}'): ${added.errorTitle}`, added.errorDescription);
+                }
+            }
+        }
         return OkResult.ok();
     }
     /**
@@ -160,7 +169,14 @@ export class SDSExtensionOperator {
         }
         // Remove all dispatchers for the extension's modules.
         // Call first the this.delete();
-        this._extensions[ext.packageLink.moduleURL] = ext;
+        const removed = await this.remove([ext]);
+        if (removed.isFailure) {
+            return OkResult.fail(`remove('${ext.packageLink}'): ${removed.errorTitle}`, removed.errorDescription);
+        }
+        const added = await this.add(ext);
+        if (added.isFailure) {
+            return OkResult.fail(`add('${ext.packageLink}'): ${added.errorTitle}`, added.errorDescription);
+        }
         return OkResult.ok();
     }
     async remove(exts) {
@@ -168,7 +184,14 @@ export class SDSExtensionOperator {
             if (this._extensions[ext.packageLink.moduleURL] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
             }
-            // TODO: firstly, remove all extension's dispatcher and in recursive, all module dispatchers.
+            if (this._restDispatcherOperator) {
+                if (ext.restHandler) {
+                    const removed = await this._restDispatcherOperator.remove([ext.restHandler]);
+                    if (removed.isFailure) {
+                        return OkResult.fail(`restDispatcherOperator.remove('${ext.restHandler.packageLink}'): ${removed.errorTitle}`, removed.errorDescription);
+                    }
+                }
+            }
             delete this._extensions[ext.packageLink.moduleURL];
         }
         return OkResult.ok();
