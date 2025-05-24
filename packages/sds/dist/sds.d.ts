@@ -57,34 +57,6 @@ export declare abstract class SDSProxy implements SDSProxyInterface {
     protected postProxies(proxies: SDSProxy[]): void;
     protected hideByProxy<ProxyInheritance extends SDSProxy>(behindProxy: ProxyInheritance): void;
 }
-/**
- * The key difference is scope of responsibility and state management:
- * Operator = Does One Thing
- * Manager = Coordinates Many Things
- *
- * Database operator will do db operations such as adding data, removing data.
- * Database manager will manage entire database layer, such as connection pools.
- */
-/**
- * The SDS Service's rest forwarder.
- * When creating the rest api, pass this forwarder as the rest's extension.
- *
- * It's supposed to be the project memory's forwarder. But instead, it acts as the extension holder.
- * Redesign it, so that it keeps only project memory. Project memory's forwarder then
- * will forward further to the sub forwarders.
- *
- * The logic of the rest forwarding and extension manager of the sds services should be different.
- *
- * When adding the extension, add the extension's forwarder to this forwarder's sub-child.
- * The extension's forwarder handles the module memory operations such as writing the files to the file system
- * as well as to keep track of the module operations.
- *
- * When adding a module memory, add the code-piece forwarder, as the sub-child of the extension's forwarder.
- * The code piece forwarder writes the specific part of the data and finally invokes and edits the data.
- *
- * When adding an astro framework module, add the page forwarder as the sub-child of the extension's forwarder.
- * Forwarders as the rest nodes, build as a parallel node tree where each forward has children and a parent.
- */
 export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
     private _extensions;
     private _extDispatcher;
@@ -156,5 +128,5 @@ export declare class SDSService<Ext extends SDSExtensionInterface> extends SDSPr
      * @param setup
      */
     constructor(setup: SDSSetup<Ext>, pubMethods: string[]);
-    get extensionOperator(): Readonly<SDSExtensionOperator<Ext>>;
+    get extensionOperator(): SDSExtensionOperator<Ext>;
 }

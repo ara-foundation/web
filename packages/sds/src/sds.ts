@@ -355,7 +355,7 @@ export class SDSService<Ext extends SDSExtensionInterface> extends SDSProxy {
         }
     }
 
-    public get extensionOperator(): Readonly<SDSExtensionOperator<Ext>> {
+    public get extensionOperator(): SDSExtensionOperator<Ext> {
         return this._extensionOperator;
     }
 }
