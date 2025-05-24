@@ -1,31 +1,36 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ModuleLink as PackageLink } from "./links/index.js";
-import type { RestExtensionInterface } from "./rest.js";
+import { ModuleLink, ModuleLink as PackageLink, type ModuleURL } from "./links/index.js";
+import { RestDispatcher } from "./rest.js";
 import { DOCUMENT_SELECTOR, LinkTraits, type ObjectNode } from "./link-traits.js";
 
 /**
- * Any package will have a unique package link and description.
+ * Any SDS Service will have a meta information such as it's unique ID.
  */
 export interface SDSMetaInterface {
     packageLink: PackageLink;
 }
 
 /**
- * Setup proxies and extensions of the package:
+ * Setup proxies and extensions of the service
  */
-export interface SDSSetup<CustomExtension extends SDSExtensionInterface> extends SDSMetaInterface{
+export interface SDSSetup<Ext extends SDSExtensionInterface> extends SDSMetaInterface {
     proxies?: SDSProxy[];
     extensionTag?: string;
-    extensions?: CustomExtension[];
+    extensions?: Ext[];
 }
 
-export interface SDSServiceInterface extends SDSMetaInterface {}
-
-export interface SDSProxyInterface extends SDSMetaInterface{
+/**
+ * Any SDS Proxy must implement the following interface.
+ * Not recommended to use on it's own, but instead extend {@link SDSProxy}
+ */
+export interface SDSProxyInterface extends SDSMetaInterface {
     putBehindData?: <BehindProxy>(behindData: BehindProxy) => void
     publicMethods: string[];
 }
 
+/**
+ * Any SDS Extension must implement the following interface
+ */
 export interface SDSExtensionInterface extends SDSMetaInterface {}
 
 /**********************************************************
@@ -34,7 +39,10 @@ export interface SDSExtensionInterface extends SDSMetaInterface {}
  * 
  *********************************************************/
 
-export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
+/**
+ * Almost a ready to use SDS Proxy
+ */
+export abstract class SDSProxy implements SDSProxyInterface {
     private _packageLink: PackageLink;
     private _proxies?: SDSProxy[];
     protected _publicMethods: string[] = [];
@@ -108,27 +116,66 @@ export abstract class SDSProxy implements SDSMetaInterface, SDSProxyInterface {
     }
 }
 
-export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface> implements RestExtensionInterface<CustomExtension> {
-    private _extensions: CustomExtension[];
-    private _extensionTag: string;
-    packageLink: PackageLink;
+/**
+ * The key difference is scope of responsibility and state management:
+ * Operator = Does One Thing
+ * Manager = Coordinates Many Things
+ * 
+ * Database operator will do db operations such as adding data, removing data.
+ * Database manager will manage entire database layer, such as connection pools.
+ */
+/**
+ * The SDS Service's rest forwarder. 
+ * When creating the rest api, pass this forwarder as the rest's extension.
+ * 
+ * It's supposed to be the project memory's forwarder. But instead, it acts as the extension holder.
+ * Redesign it, so that it keeps only project memory. Project memory's forwarder then
+ * will forward further to the sub forwarders.
+ * 
+ * The logic of the rest forwarding and extension manager of the sds services should be different.
+ * 
+ * When adding the extension, add the extension's forwarder to this forwarder's sub-child.
+ * The extension's forwarder handles the module memory operations such as writing the files to the file system
+ * as well as to keep track of the module operations.
+ * 
+ * When adding a module memory, add the code-piece forwarder, as the sub-child of the extension's forwarder.
+ * The code piece forwarder writes the specific part of the data and finally invokes and edits the data.
+ * 
+ * When adding an astro framework module, add the page forwarder as the sub-child of the extension's forwarder.
+ * Forwarders as the rest nodes, build as a parallel node tree where each forward has children and a parent.
+ */
+export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
+    private _extensions: Record<ModuleURL, CustomExtension> = {};
+    private _extDispatcher: RestDispatcher<CustomExtension>;
 
-    constructor(packageLink: PackageLink, extensionTag: string, extensions: CustomExtension[]) {
-        this.packageLink = packageLink;
-        this._extensions = extensions;
-        this._extensionTag = extensionTag;
+    constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag: string = 'memop') {
+        initialExts.forEach(ext => {
+            this._extensions[ext.packageLink.moduleURL] = ext;
+        });
+        if (initialExts.length !== Object.keys(this._extensions).length) {
+            throw `The duplicate Package Link for the extensions, couldn't add some. Please make sure each extension is unique`;
+        }
+        this._extDispatcher = new RestDispatcher(serviceLink, extTag);
+        this._extDispatcher.posting = this.handleExtensionAddition;
+        this._extDispatcher.putting = this.handleExtensionUpdate;
+        this._extDispatcher.deleting = this.handleExtensionDeletion;
     }
 
-    public get extensions(): Readonly<CustomExtension[]> {
-        return this._extensions;
+    /*********************************************************************
+     * 
+     * Operator's public methods
+     * 
+     *********************************************************************/
+
+    /**
+     * Return all extensions of the SDS Service
+     */
+    public get all(): Readonly<CustomExtension>[] {
+        return Object.values(this._extensions);
     }
 
     public get extensionCount(): number {
-        return this._extensions.length;
-    }
-
-    private isExtensionTag(selector: string): boolean {
-        return LinkTraits.getTagName(selector)?.toLowerCase() === this._extensionTag.toLowerCase();
+        return Object.keys(this._extensions).length;
     }
 
     /**
@@ -139,14 +186,77 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
      * @param options 
      * @returns 
      */
-    async forwardPost(
+    public async add(
+        ext: CustomExtension,
+    ): Promise<OkResult> {
+        if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
+            return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
+        }
+        
+        this._extensions[ext.packageLink.moduleURL] = ext!;
+        // TODO: add dispatcher for each module memory to the rest dispatcher.
+        // TODO: when creating SDSExtensionOperator, pass the Rest.sdsExtensionOperator, and put object here
+        // TODO: add extensionInterface.restDispatcher? and if its exist, add it.
+
+        return OkResult.ok();
+    }
+
+    /**
+     * Update the extension.
+     * @param _selector 
+     * @param node 
+     * @param data 
+     * @returns 
+     */
+    public async update(
+        ext: CustomExtension
+    ): Promise<OkResult> {
+        if (this._extensions[ext.packageLink.moduleURL] === undefined) {
+            return OkResult.fail(`The extension not found`, `Can not over-write ${ext.packageLink}. Call rest.post instead.`);
+        }
+ 
+        // Remove all dispatchers for the extension's modules.
+        // Call first the this.delete();
+        this._extensions[ext.packageLink.moduleURL] = ext;
+
+        return OkResult.ok();
+    }
+
+    public async remove(
+        exts: CustomExtension[]
+    ): Promise<OkResult> {
+        for (const ext of exts) {
+            if (this._extensions[ext.packageLink.moduleURL] === undefined) {
+                return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
+            }
+            // TODO: firstly, remove all extension's dispatcher and in recursive, all module dispatchers.
+            delete this._extensions[ext.packageLink.moduleURL];
+        }
+        return OkResult.ok();
+    }
+
+    /***************************************************
+     * 
+     * Rest dispatching methods
+     * 
+     ***************************************************/
+
+    /**
+     * Registering a new extension in run-time.
+     * If extension exists, then it throws error asking to use Put.
+     * @param parentOrBigBro 
+     * @param node 
+     * @param options 
+     * @returns 
+     */
+    private async handleExtensionAddition(
         parentOrBigBro: ObjectNode<CustomExtension>,
         node: ObjectNode<CustomExtension>,
-        options?: { lilBro: boolean }
+        options?: { lilBro?: boolean }
     ): Promise<OkResult> {
         if (options?.lilBro) {
             const bigBroTagName = LinkTraits.getTagName(parentOrBigBro.selector);
-            if (bigBroTagName !== this._extensionTag) {
+            if (bigBroTagName !== this._extDispatcher.tag) {
                 return OkResult.ok();
             }
         } else {
@@ -156,8 +266,8 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
         }
 
         // Now, let's make sure it exists
-        if (!this.isExtensionTag(node.selector)) {
-            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extensionTag}`, `The ${node.selector} expected to be an extension`);
+        if (!this._extDispatcher.isMatchingTag(node.selector)) {
+            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extDispatcher.tag}`, `The ${node.selector} expected to be an extension`);
         }
 
         const ext = node.getElement()!
@@ -165,17 +275,17 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
 
-        const extIndex = this._extensions.findIndex((ext) => ext.packageLink.isEqual(node.getElement()!.packageLink))
-        if (extIndex > -1) {
-            return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${node.getElement()!.packageLink}. Call rest.put instead.`);
-        }
-        
-        this._extensions.push(node.getElement()!);
-
-        return OkResult.ok();
+        return await this.add(ext!);
     }
 
-    async forwardPut(
+    /**
+     * Update the extension.
+     * @param _selector 
+     * @param node 
+     * @param data 
+     * @returns 
+     */
+    private async handleExtensionUpdate(
         _selector: string,
         node: ObjectNode<CustomExtension>,
         data: CustomExtension
@@ -185,8 +295,8 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
             return OkResult.ok();
         }
         // Now, let's make sure it exists
-        if (!this.isExtensionTag(node.selector)) {
-            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extensionTag}`, `The ${node.selector} expected to be an extension`);
+        if (!this._extDispatcher.isMatchingTag(node.selector)) {
+            return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extDispatcher.tag}`, `The ${node.selector} expected to be an extension`);
         }
         
         const ext = node.getElement()!
@@ -196,64 +306,56 @@ export class SDSExtensionReceiver<CustomExtension extends SDSExtensionInterface>
         if (!("packageLink" in data)) {
             return OkResult.fail(`The packageLink in the putting data`, `Please update the 'data' argument`);
         }
-
-        const extIndex = this._extensions.findIndex((ext) => ext.packageLink.isEqual(node.getElement()!.packageLink))
-        if (extIndex === -1) {
-            return OkResult.fail(`The extension not found`, `The ${node.getElement()!.packageLink} not found. Call rest.post instead.`);
+        if (ext.packageLink.isEqual(data.packageLink)) {
+            return OkResult.fail(
+                `The data that you are trying to put has incorrect module url`,
+                `The extension you are trying to implement has '${ext.packageLink}', while data to put has '${data.packageLink}', please update your data's package link.`
+            )
         }
 
-        this._extensions[extIndex] = data;
-
-        return OkResult.ok();
+        return await this.update(data);
     }
 
-    async forwardPatch<AttrType>(
-        _selector: string,
-        _node: ObjectNode<CustomExtension>,
-        _attrValue: AttrType,
-    ): Promise<OkResult> {
-        return OkResult.ok();
-    }
-
-    async forwardDelete(
+    private async handleExtensionDeletion(
         _selector: string, nodes: ObjectNode<CustomExtension>[]
     ): Promise<OkResult> {
-        for (const node of nodes) {
-            if (!this.isExtensionTag(node.selector)) {
-                continue;
-            }
-
-            const element = node.getElement()!
-            if (element === null || !("packageLink" in element)) {
-                return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the ${node.selector} node to be extension`);
-            }
-            // Remove the extension from the extensions list
-            const preDelete = this._extensions.length;
-            this._extensions = this._extensions.filter((ext) => !ext.packageLink.isEqual(element.packageLink))
-            if (this._extensions.length + 1 !== preDelete) {
-                return OkResult.fail(`The extension not found`, `The ${element.packageLink} not found. Can not delete it.`);
-            }
+        const exts = nodes
+            .filter(node => this._extDispatcher.isMatchingTag(node.selector))
+            .map(node => node.getElement())
+            .filter(el => el !== null && ("packageLink" in el));
+        if (exts.length === 0) {
+            return OkResult.ok();
         }
-        return OkResult.ok();
+        return await this.remove(exts);
     }
 }
 
-export class SDSService<SDSServiceInheritance extends SDSProxy, CustomExtension extends SDSExtensionInterface> extends SDSProxy implements SDSServiceInterface  {    
-    protected _extensionReceiver: SDSExtensionReceiver<CustomExtension>;
+/**
+ * Independent SDS Service that will have proxies and extensions.
+ * Since, SDS Services can be proxified, they also have some elements of proxies.
+ * 
+ * It comes with the Rest forward.
+ */
+export class SDSService<Ext extends SDSExtensionInterface> extends SDSProxy {
+    private _extensionOperator: SDSExtensionOperator<Ext>;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup 
      */
-    constructor(setup: SDSSetup<CustomExtension>, pubMethods: string[]) {
+    constructor(setup: SDSSetup<Ext>, pubMethods: string[]) {
         super(setup.packageLink, pubMethods);
         const extTag = setup.extensionTag === undefined ? "memop" : setup.extensionTag;
         const exts = setup.extensions === undefined ? [] : setup.extensions;
-        this._extensionReceiver = new SDSExtensionReceiver(setup.packageLink, extTag, exts);
+        this._extensionOperator = new SDSExtensionOperator(setup.packageLink, exts, extTag);
         // In case if it's proxified:
         if (setup.proxies !== undefined && setup.proxies.length > 0) {
             this.postProxies(setup.proxies.reverse());
-            this.hideByProxy<SDSServiceInheritance>(this as unknown as SDSServiceInheritance);
+            this.hideByProxy(this);
         }
+    }
+
+    public get extensionOperator(): Readonly<SDSExtensionOperator<Ext>> {
+        return this._extensionOperator;
     }
 }

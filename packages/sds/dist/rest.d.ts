@@ -2,20 +2,39 @@ import { OkResult, Result } from "@ara-web/p-hintjens";
 import { SDSProxy, SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
 import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
-export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
-    forwardPost?(parentOrBigBro: ObjectNode<ElementType>, node: ObjectNode<ElementType>, options?: {
-        lilBro?: boolean;
-    }): Promise<OkResult>;
-    forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
-    forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
-    forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;
+export type Posting<DataType> = (parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
+    lilBro?: boolean;
+}) => Promise<OkResult>;
+export type Putting<DataType> = (selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
+export type Patching<DataType> = <AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
+export type Deleting<DataType> = (selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
+/**
+ * A Rest Extension that forwards rest to the side.
+ * For example, to save the data in the file system or in the database.
+ */
+export declare class RestDispatcher<DataType> implements SDSExtensionInterface {
+    private _operatorLink;
+    private _tag;
+    constructor(operatorLink: ModuleLink, tag: string);
+    get packageLink(): ModuleLink;
+    get tag(): string;
+    isMatchingTag(selector: string): boolean;
+    posting?: Posting<DataType>;
+    putting?: Putting<DataType>;
+    patching?: Patching<DataType>;
+    deleting?: Deleting<DataType>;
 }
-export interface ReadonlyRestInterface<ElementType> {
+/**
+ * Rest methods. This interface is used to pass the rest object between modules.
+ * If you want to implement your custom rest, then better {@link Rest}
+ */
+export interface RestInterface<ElementType> {
+    /**
+     * A readonly methods of the Rest.
+     */
     rootNode: ObjectNode<ElementType> | undefined;
     get?(selector: string): Promise<ObjectNode<ElementType> | null>;
     getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
-}
-export interface RestInterface<ElementType> extends ReadonlyRestInterface<ElementType> {
     setRootNode(obj: ObjectNode<ElementType>): void;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
@@ -25,6 +44,7 @@ export interface RestInterface<ElementType> extends ReadonlyRestInterface<Elemen
     put?(selector: string, data: ElementType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
+    dispatchers: Readonly<RestDispatcher<any>>[];
 }
 export interface RestOptions<ElementType> {
     lilBro?: boolean;
@@ -40,17 +60,30 @@ export declare class RestBranchProxy<ElementType> extends SDSProxy implements Re
     putBehindData?(behindData: Rest<ElementType>): void;
     getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
     post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): Promise<OkResult>;
+    get dispatchers(): Readonly<RestDispatcher<unknown>>[];
 }
 /**
- * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
+ * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ *
+ * It starts by accepting the JSON object that could be the root node.
+ *
+ * The rest extensions are called forwarders and if given, they will forward the written data to the extension.
+ *
+ * Example to use:
+ *
+ * ```
+ * const rest = new Rest(setup, {slots: page.slots}, pageToTreeNode);
+ * const welcomeComponent = await rest.get!("Layout > Welcome")
+ * ```
  */
-export declare class Rest<ElementType> extends SDSService<Rest<ElementType>, RestExtensionInterface<ElementType>> implements RestInterface<ElementType> {
+export declare class Rest<ElementType> extends SDSService<RestDispatcher<ElementType>> implements RestInterface<ElementType> {
     private _options;
     private _root;
     private _objectToNodeTree;
-    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestExtensionInterface<ElementType>>);
-    setRootNode(obj: ObjectNode<ElementType>): void;
+    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestDispatcher<ElementType>>);
     get rootNode(): ObjectNode<ElementType>;
+    setRootNode(obj: ObjectNode<ElementType>): void;
+    get dispatchers(): Readonly<RestDispatcher<any>>[];
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     /**
      * Retreive a resource node.

@@ -1,8 +1,8 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
 import { 
     selectOne as cssSelectOne, 
     selectAll as cssSelectAll 
 } from "css-select";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { 
     SDSProxy,
     SDSService, 
@@ -18,21 +18,55 @@ import {
 } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 
-// We call it setters.
-export interface RestExtensionInterface<ElementType> extends SDSExtensionInterface {
-    forwardPost?(parentOrBigBro: ObjectNode<ElementType>, node: ObjectNode<ElementType>, options?: {lilBro?: boolean}): Promise<OkResult>;
-    forwardPut?(selector: string, node: ObjectNode<ElementType>, data: ElementType): Promise<OkResult>;
-    forwardPatch?<AttrType>(selector: string, node: ObjectNode<ElementType>, attrValue: AttrType): Promise<OkResult>;
-    forwardDelete?(selector: string, nodes: ObjectNode<ElementType>[]): Promise<OkResult>;
+export type Posting<DataType> = (parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: { lilBro?: boolean }) => Promise<OkResult>;
+export type Putting<DataType> = (selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
+export type Patching<DataType> = <AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
+export type Deleting<DataType> = (selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
+
+/**
+ * A Rest Extension that forwards rest to the side.
+ * For example, to save the data in the file system or in the database.
+ */
+export class RestDispatcher<DataType> implements SDSExtensionInterface {
+    private _operatorLink: ModuleLink;
+    private _tag: string;
+
+    constructor(operatorLink: ModuleLink, tag: string) {
+        this._operatorLink = operatorLink;
+        this._tag = tag;
+    }
+
+    public get packageLink(): ModuleLink {
+        return this._operatorLink;
+    }
+
+    public get tag(): string {
+        return this._tag;
+    }
+
+    public isMatchingTag(selector: string): boolean {
+        return LinkTraits.getTagName(selector)?.toLowerCase() === this._tag.toLowerCase();
+    }
+
+    public posting?: Posting<DataType>;
+    public putting?: Putting<DataType>; 
+    public patching?: Patching<DataType>;
+    public deleting?: Deleting<DataType>;
 }
 
-export interface ReadonlyRestInterface<ElementType> {
+/**
+ * Rest methods. This interface is used to pass the rest object between modules.
+ * If you want to implement your custom rest, then better {@link Rest}
+ */
+export interface RestInterface<ElementType> {
+    /**
+     * A readonly methods of the Rest.
+     */
     rootNode: ObjectNode<ElementType>|undefined;
     get?(selector: string): Promise<ObjectNode<ElementType>|null>;
     getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
-}
 
-export interface RestInterface<ElementType> extends ReadonlyRestInterface<ElementType> {
+    
     setRootNode(obj: ObjectNode<ElementType>): void;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
@@ -42,6 +76,9 @@ export interface RestInterface<ElementType> extends ReadonlyRestInterface<Elemen
     put?(selector: string, data: ElementType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
+
+    // Dispatcher related
+    dispatchers: Readonly<RestDispatcher<any>>[];
 }
 
 export interface RestOptions<ElementType> {
@@ -83,16 +120,27 @@ export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterf
     public async post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): Promise<OkResult> {
         return await this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
     }
+
+    public get dispatchers(): Readonly<RestDispatcher<unknown>>[] {
+        return this._behindData!.dispatchers;
+    }
 }
 
 /**
- * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
+ * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ * 
+ * It starts by accepting the JSON object that could be the root node.
+ * 
+ * The rest extensions are called forwarders and if given, they will forward the written data to the extension.
+ * 
+ * Example to use:
+ * 
+ * ```
+ * const rest = new Rest(setup, {slots: page.slots}, pageToTreeNode);
+ * const welcomeComponent = await rest.get!("Layout > Welcome")
+ * ```
  */
-export class Rest<ElementType> extends SDSService<
-    Rest<ElementType>, 
-    RestExtensionInterface<ElementType>
-> implements RestInterface<ElementType> {
-    
+export class Rest<ElementType> extends SDSService<RestDispatcher<ElementType>> implements RestInterface<ElementType> {
     private _options: {adapter: CSSObjectAdapter<ElementType>};
     private _root: ObjectNode<ElementType>;
     private _objectToNodeTree: ObjectToNodeTree<ElementType>;
@@ -100,7 +148,7 @@ export class Rest<ElementType> extends SDSService<
     constructor(
         object: ElementType,
         objectToTreeNode: ObjectToNodeTree<ElementType>,
-        setup: SDSSetup<RestExtensionInterface<ElementType>> = {packageLink: ModuleLink.newPackageURL("", "name")}
+        setup: SDSSetup<RestDispatcher<ElementType>> = {packageLink: ModuleLink.newPackageURL("@ara-web", "rest")}
     ) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = {adapter: new CSSObjectAdapter()};
@@ -108,13 +156,21 @@ export class Rest<ElementType> extends SDSService<
         this._root = this._objectToNodeTree(object, undefined, true);
     }
 
+    public get rootNode(): ObjectNode<ElementType> {
+        return this._root;
+    }
+
     public setRootNode(obj: ObjectNode<ElementType>): void {
         this._root.children.forEach(child => child.setParent(obj));
         this._root = obj;
     }
 
-    public get rootNode(): ObjectNode<ElementType> {
-        return this._root;
+    public get dispatchers(): Readonly<RestDispatcher<any>>[] {
+        if (this.extensionOperator.extensionCount === 0) {
+            return [];
+        }
+
+        return this.extensionOperator.all
     }
 
     public elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>> {
@@ -178,13 +234,11 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription!);
         }
 
-        if (this._extensionReceiver.extensions.length > 0) {
-            for (const ext of this._extensionReceiver.extensions) {
-                if (ext.forwardPost !== undefined) {
-                    const afterPosted = await ext.forwardPost!(parentOrBigBro.getValue()!, newBornChild.getValue(), options);
-                    if (afterPosted.isFailure) {
-                        return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
-                    }
+        for (const restDispatcher of this.extensionOperator.all) {
+            if (restDispatcher.posting !== undefined) {
+                const afterPosted = await restDispatcher.posting!(parentOrBigBro.getValue()!, newBornChild.getValue(), options);
+                if (afterPosted.isFailure) {
+                    return OkResult.fail(`extension('${restDispatcher.packageLink}').forwardPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
                 }
             }
         }
@@ -251,9 +305,9 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`Element type mismatch`)
         }
 
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardPut !== undefined) {
-                const afterPosted = await ext.forwardPut!(selector, node, data);
+        for (const ext of this.dispatchers) {
+            if (ext.putting !== undefined) {
+                const afterPosted = await ext.putting!(selector, node, data);
                 if (afterPosted.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardPut(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
                 }
@@ -281,9 +335,9 @@ export class Rest<ElementType> extends SDSService<
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
 
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardPatch !== undefined) {
-                const forwarded = await ext.forwardPatch!(selector, node, data);
+        for (const ext of this.dispatchers) {
+            if (ext.patching !== undefined) {
+                const forwarded = await ext.patching!(selector, node, data);
                 if (forwarded.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardPatch(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription!);
                 }
@@ -303,9 +357,9 @@ export class Rest<ElementType> extends SDSService<
      */
     public async delete?(selector: string): Promise<OkResult> {
         const nodes = await this.getAll!(selector);
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardDelete !== undefined) {
-                const forwarded = await ext.forwardDelete!(selector, nodes);
+        for (const ext of this.dispatchers) {
+            if (ext.deleting !== undefined) {
+                const forwarded = await ext.deleting!(selector, nodes);
                 if (forwarded.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardDelete(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription!);
                 }

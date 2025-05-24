@@ -1,8 +1,33 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
+import { OkResult, Result } from "@ara-web/p-hintjens";
 import { SDSProxy, SDSService } from "./sds.js";
 import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
+/**
+ * A Rest Extension that forwards rest to the side.
+ * For example, to save the data in the file system or in the database.
+ */
+export class RestDispatcher {
+    _operatorLink;
+    _tag;
+    constructor(operatorLink, tag) {
+        this._operatorLink = operatorLink;
+        this._tag = tag;
+    }
+    get packageLink() {
+        return this._operatorLink;
+    }
+    get tag() {
+        return this._tag;
+    }
+    isMatchingTag(selector) {
+        return LinkTraits.getTagName(selector)?.toLowerCase() === this._tag.toLowerCase();
+    }
+    posting;
+    putting;
+    patching;
+    deleting;
+}
 export class RestBranchProxy extends SDSProxy {
     _behindData;
     _root;
@@ -30,26 +55,46 @@ export class RestBranchProxy extends SDSProxy {
     async post(selector, data, options) {
         return await this._behindData.post.bind(this._behindData, `${selector}`, data, options)();
     }
+    get dispatchers() {
+        return this._behindData.dispatchers;
+    }
 }
 /**
- * new Rest(setup, {slots: page.slots}, pageToTreeNode).get("Layout > Welcome")
+ * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ *
+ * It starts by accepting the JSON object that could be the root node.
+ *
+ * The rest extensions are called forwarders and if given, they will forward the written data to the extension.
+ *
+ * Example to use:
+ *
+ * ```
+ * const rest = new Rest(setup, {slots: page.slots}, pageToTreeNode);
+ * const welcomeComponent = await rest.get!("Layout > Welcome")
+ * ```
  */
 export class Rest extends SDSService {
     _options;
     _root;
     _objectToNodeTree;
-    constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("", "name") }) {
+    constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("@ara-web", "rest") }) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = { adapter: new CSSObjectAdapter() };
         this._objectToNodeTree = objectToTreeNode;
         this._root = this._objectToNodeTree(object, undefined, true);
     }
+    get rootNode() {
+        return this._root;
+    }
     setRootNode(obj) {
         this._root.children.forEach(child => child.setParent(obj));
         this._root = obj;
     }
-    get rootNode() {
-        return this._root;
+    get dispatchers() {
+        if (this.extensionOperator.extensionCount === 0) {
+            return [];
+        }
+        return this.extensionOperator.all;
     }
     elementToObjectNode(data, options) {
         let treeNode;
@@ -110,13 +155,11 @@ export class Rest extends SDSService {
         if (newBornChild.isFailure) {
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription);
         }
-        if (this._extensionReceiver.extensions.length > 0) {
-            for (const ext of this._extensionReceiver.extensions) {
-                if (ext.forwardPost !== undefined) {
-                    const afterPosted = await ext.forwardPost(parentOrBigBro.getValue(), newBornChild.getValue(), options);
-                    if (afterPosted.isFailure) {
-                        return OkResult.fail(`extension('${ext.packageLink}').afterPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
-                    }
+        for (const restDispatcher of this.extensionOperator.all) {
+            if (restDispatcher.posting !== undefined) {
+                const afterPosted = await restDispatcher.posting(parentOrBigBro.getValue(), newBornChild.getValue(), options);
+                if (afterPosted.isFailure) {
+                    return OkResult.fail(`extension('${restDispatcher.packageLink}').forwardPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
                 }
             }
         }
@@ -178,9 +221,9 @@ export class Rest extends SDSService {
         if (element !== null && typeof element !== typeof data) {
             return OkResult.fail(`Element type mismatch`);
         }
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardPut !== undefined) {
-                const afterPosted = await ext.forwardPut(selector, node, data);
+        for (const ext of this.dispatchers) {
+            if (ext.putting !== undefined) {
+                const afterPosted = await ext.putting(selector, node, data);
                 if (afterPosted.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardPut(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
                 }
@@ -205,9 +248,9 @@ export class Rest extends SDSService {
         if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardPatch !== undefined) {
-                const forwarded = await ext.forwardPatch(selector, node, data);
+        for (const ext of this.dispatchers) {
+            if (ext.patching !== undefined) {
+                const forwarded = await ext.patching(selector, node, data);
                 if (forwarded.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardPatch(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription);
                 }
@@ -225,9 +268,9 @@ export class Rest extends SDSService {
      */
     async delete(selector) {
         const nodes = await this.getAll(selector);
-        for (const ext of this._extensionReceiver.extensions) {
-            if (ext.forwardDelete !== undefined) {
-                const forwarded = await ext.forwardDelete(selector, nodes);
+        for (const ext of this.dispatchers) {
+            if (ext.deleting !== undefined) {
+                const forwarded = await ext.deleting(selector, nodes);
                 if (forwarded.isFailure) {
                     return OkResult.fail(`extension('${ext.packageLink}').forwardDelete(parent: '${selector}'): ${forwarded.errorTitle}`, forwarded.errorDescription);
                 }

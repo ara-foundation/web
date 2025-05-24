@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestExtensionInterface, SDSExtensionInterface, SDSExtensionReceiver } from "../src/index.js";
+import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestDispatcher } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
@@ -19,21 +19,26 @@ function getBody(html: string, root = 'body'): HTMLBodyElement | null {
     return new JSDOM(html).window.document.querySelector(root);
 }
 
-class RestExtension implements RestExtensionInterface<HTMLElement> {
+class HTMLRestHandlers {
     packageLink: ModuleLink;
     objects: Record<string, ObjectNode<HTMLElement>> = {};
 
     constructor(packageLink: ModuleLink) {
         this.packageLink = packageLink;
+        this.objects = {};
     }
 
-    async forwardPost?(parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
+    async handlePost(_parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, _options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
         if (this.objects[node.selector] !== undefined) {
             return OkResult.fail(`Already posted`, `Can not import again`);
         } else {
             this.objects[node.selector] = node;
         }
         return { isSuccess: true, isFailure: false };
+    }
+
+    public get count(): number {
+        return Object.keys(this.objects).length;
     }
 }
 
@@ -156,8 +161,15 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Make sure it's parsing.
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
-    const restSaver = new RestExtension(ModuleLink.newPackageURL('@ara-web', 'rest-extension-test'));
-    const footerRest = new Rest<HTMLElement>(footer!, nodeToObjectTree, {packageLink: ModuleLink.newPackageURL('@ara-web', 'rest-side'), extensions: [restSaver]});
+    const footerPkgLink = ModuleLink.newPackageURL('@ara-web', 'footer-pkg-link');
+    const sampleHandler = new HTMLRestHandlers(footerPkgLink);
+    const sampleDispatcher = new RestDispatcher<HTMLElement>(footerPkgLink, "a");
+    sampleDispatcher.posting = sampleHandler.handlePost!;
+    const footerRestOptions = {
+        packageLink: footerPkgLink, 
+        extensions: [sampleDispatcher]
+    };
+    const footerRest = new Rest<HTMLElement>(footer!, nodeToObjectTree, footerRestOptions);
     footerRest.setRootNode(contentBranch!)
 
     // Post the body
@@ -208,23 +220,23 @@ test(`Testing the forwarding SDS Extension receiver from rest`, async() => {
     let navBar1Body = getBody(navBar1Html, 'a');
     navBar1Body = Object.assign(navBar1Body!, {packageLink: ModuleLink.newPackageURL('ara-web', 'nav-bar-1')});
     const navBar1Node = nodeToObjectTree(navBar1Body!, pageNode, false);
-    const sdsExtReceiver = new SDSExtensionReceiver(ModuleLink.newPackageURL(`@ara-web`, `sds-ext-receiver`), 'a', []);
-    expect((await sdsExtReceiver.forwardPost(
-        footerNode! as unknown as ObjectNode<SDSExtensionInterface>, 
-        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    const sdsExtReceiver = new HTMLRestHandlers(ModuleLink.newPackageURL(`@ara-web`, `sds-ext-receiver`));
+    expect((await sdsExtReceiver.handlePost(
+        footerNode!,
+        navBar1Node!,
     )).isSuccess).toBe(true);
-    expect(sdsExtReceiver.extensionCount).toBe(0);
+    expect(sdsExtReceiver.count).toBe(0);
     
-    const posted = await sdsExtReceiver.forwardPost(
-        pageNode! as unknown as ObjectNode<SDSExtensionInterface>, 
-        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    const posted = await sdsExtReceiver.handlePost(
+        pageNode!,
+        navBar1Node!,
     );
     Debug.log(posted);
     expect(posted.isSuccess).toBe(true);
-    expect(sdsExtReceiver.extensionCount).toBe(1);
+    expect(sdsExtReceiver.count).toBe(1);
     
-    expect((await sdsExtReceiver.forwardPost(
-        pageNode! as unknown as ObjectNode<SDSExtensionInterface>, 
-        navBar1Node! as unknown as ObjectNode<SDSExtensionInterface>,
+    expect((await sdsExtReceiver.handlePost!(
+        pageNode!,
+        navBar1Node!,
     )).isFailure).toBe(true);
 })

@@ -14,7 +14,7 @@ interface SampleExtensionInterface extends SDSExtensionInterface {
     getTriple(): number;
 }
 
-class SampleService extends SDSService<SampleService, SampleExtensionInterface> {
+class SampleService extends SDSService<SampleExtensionInterface> {
     constructor(setup: SDSSetup<SampleExtensionInterface>) {
         super(setup, ["helloService", "getNumber"]);
     }
@@ -24,8 +24,8 @@ class SampleService extends SDSService<SampleService, SampleExtensionInterface> 
     }
 
     public getNumber?(extIndex?: number): number {
-        if (extIndex !== undefined && extIndex >= 0 && extIndex < this._extensionReceiver.extensions.length) {
-            return this._extensionReceiver.extensions[extIndex].getDouble();
+        if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.all.length) {
+            return this.extensionOperator.all[extIndex].getDouble();
         }
         return 1;
     }
@@ -139,9 +139,9 @@ test(`Creating an extension`, async () => {
     expect(extension6.packageLink).toBe(proxyLink);
     expect(extension6.getDouble()).toBe(12)
 
-    const extension42 = new Sample42Extension(proxyLink, "This is an extension");
+    const extension42 = new Sample42Extension(proxyLink2, "This is an extension");
     expect(extension42.description).toBe("This is an extension");
-    expect(extension42.packageLink).toBe(proxyLink);
+    expect(extension42.packageLink).toBe(proxyLink2);
     expect(extension42.getDouble()).toBe(84)
 
     const service = new SampleService({
@@ -152,6 +152,7 @@ test(`Creating an extension`, async () => {
     expect(service.packageLink).toBe(serviceLink);
     expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService!()).toBe(serviceText);
+    expect(service.extensionOperator.extensionCount).toBe(2);
 
     expect(service.getNumber!()).toBe(1);
     expect(service.getNumber!(0)).toBe(12);
