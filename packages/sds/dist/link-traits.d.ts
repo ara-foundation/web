@@ -43,6 +43,7 @@ export interface ObjectNodeInterface extends Node {
     setChildren(children: ObjectNodeInterface[]): void;
     setParent(parent: ObjectNodeInterface): void;
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult;
+    appendChild<T extends Node>(node: T): T;
 }
 /**
  * @link https://github.com/fb55/css-select/blob/1aa44bdd64aaf2ebdfd7f338e2e76bed36521957/src/types.ts#L6-L96

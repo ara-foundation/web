@@ -1,28 +1,67 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { SDSProxy, SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
+import { SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
 import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
-export type Posting<DataType> = (parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
+export type Posting = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
     lilBro?: boolean;
 }) => Promise<OkResult>;
-export type Putting<DataType> = (selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
-export type Patching<DataType> = <AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
-export type Deleting<DataType> = (selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
+export type Putting = <DataType>(selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
+export type Patching = <DataType, AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
+export type Deleting = <DataType>(selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
+/**
+ * Rest converts the json into a node tree.
+ * But rest is planned to be used in all application.
+ * So, it allows adding any data.
+ *
+ * Additionally, Rest also has the dispatcher.
+ * If dispatcher is given, then rest will forward any operation to that dispatcher.
+ *
+ * Additionally, Rest also has the syncer.
+ * If queue is given, then, rest before any request will ask queue,
+ * does it have any data to execute. If so, it will execute them before any operation.
+ *
+ * Any module, that has to synchronize must have it's node inside. And if given data,
+ * it must synchronize the rest with it.
+ *
+ * for example:
+ * in reflect:
+ * exts = new NodeJSextension().
+ * exts[0].node = rest.get!('#${ext.packageLink.moduleURL}');
+ * exts[0].putModules()
+ *      node !== undefined, and if module !== this.synchronizer.isExist()?
+ *          node.appendChild(nodeModules);
+ *          node.set();
+ *
+ * Rest Queue:
+ * Calls the rest queue.
+ */
+export declare class RestQueue {
+    private _queue;
+    private _parentNode?;
+    private _objectToNodeTree?;
+    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: ObjectToNodeTree<any>);
+    get parentNode(): ObjectNode<any> | undefined;
+    get objectToNodeTree(): ObjectToNodeTree<any> | undefined;
+    setAll(node: ObjectNode<any>, objectToNodeTree: ObjectToNodeTree<any>): void;
+    isExist(key: string): boolean;
+    set(key: string): void;
+    unset(key: string): void;
+}
 /**
  * A Rest Extension that forwards rest to the side.
  * For example, to save the data in the file system or in the database.
  */
-export declare class RestDispatcher<DataType> implements SDSExtensionInterface {
+export declare class RestDispatcher implements SDSExtensionInterface {
     private _operatorLink;
     private _tag;
     constructor(operatorLink: ModuleLink, tag: string);
     get packageLink(): ModuleLink;
     get tag(): string;
     isMatchingTag(selector: string): boolean;
-    posting?: Posting<DataType>;
-    putting?: Putting<DataType>;
-    patching?: Patching<DataType>;
-    deleting?: Deleting<DataType>;
+    posting?: Posting;
+    putting?: Putting;
+    patching?: Patching;
+    deleting?: Deleting;
 }
 /**
  * Rest methods. This interface is used to pass the rest object between modules.
@@ -33,34 +72,24 @@ export interface RestInterface<ElementType> {
      * A readonly methods of the Rest.
      */
     rootNode: ObjectNode<ElementType> | undefined;
-    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
     setRootNode(obj: ObjectNode<ElementType>): void;
+    objectToNodeTree: ObjectToNodeTree<ElementType>;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
+    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
+    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
     post?(selector: string, data: ElementType, options?: {
         lilBro?: boolean;
     }): Promise<OkResult>;
     put?(selector: string, data: ElementType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
-    dispatchers: Readonly<RestDispatcher<any>>[];
+    dispatchers: Readonly<RestDispatcher>[];
 }
 export interface RestOptions<ElementType> {
     lilBro?: boolean;
     parent?: ObjectNode<ElementType>;
     root?: boolean;
-}
-export declare class RestBranchProxy<ElementType> extends SDSProxy implements RestInterface<ElementType> {
-    protected _behindData?: Rest<ElementType>;
-    private _root;
-    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink);
-    setRootNode(obj: ObjectNode<ElementType>): void;
-    get rootNode(): ObjectNode<ElementType> | undefined;
-    putBehindData?(behindData: Rest<ElementType>): void;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
-    post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): Promise<OkResult>;
-    get dispatchers(): Readonly<RestDispatcher<unknown>>[];
 }
 /**
  * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
@@ -76,21 +105,22 @@ export declare class RestBranchProxy<ElementType> extends SDSProxy implements Re
  * const welcomeComponent = await rest.get!("Layout > Welcome")
  * ```
  */
-export declare class Rest<ElementType> extends SDSService<RestDispatcher<ElementType>> implements RestInterface<ElementType> {
+export declare class Rest<ObjectDataType> extends SDSService implements RestInterface<ObjectDataType> {
     private _options;
     private _root;
     private _objectToNodeTree;
-    constructor(object: ElementType, objectToTreeNode: ObjectToNodeTree<ElementType>, setup?: SDSSetup<RestDispatcher<ElementType>>);
-    get rootNode(): ObjectNode<ElementType>;
-    setRootNode(obj: ObjectNode<ElementType>): void;
-    get dispatchers(): Readonly<RestDispatcher<any>>[];
-    elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
+    constructor(object: ObjectDataType, objectToTreeNode: ObjectToNodeTree<ObjectDataType>, setup?: SDSSetup);
+    get rootNode(): ObjectNode<ObjectDataType>;
+    setRootNode(obj: ObjectNode<ObjectDataType>): void;
+    get objectToNodeTree(): ObjectToNodeTree<ObjectDataType>;
+    get dispatchers(): Readonly<RestDispatcher>[];
+    elementToObjectNode?(data: ObjectDataType, options: RestOptions<ObjectDataType>): Result<ObjectNode<ObjectDataType>>;
     /**
      * Retreive a resource node.
      * @param selector
      */
-    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
+    get?(selector: string): Promise<ObjectNode<ObjectDataType> | null>;
+    getAll?(selector: string): Promise<ObjectNode<ObjectDataType>[]>;
     /**
      * Post creates a new object node as `selector` child.
      * The object node's data is passed by `data` argument.
@@ -109,7 +139,7 @@ export declare class Rest<ElementType> extends SDSService<RestDispatcher<Element
      * @param options Set to little bro if you want to set object after the selector.
      * @returns
      */
-    post?(selector: string, data: ElementType, options?: {
+    post?(selector: string, data: ObjectDataType, options?: {
         lilBro?: boolean;
     }): Promise<OkResult>;
     private _getParentOrBigBro;
@@ -125,7 +155,7 @@ export declare class Rest<ElementType> extends SDSService<RestDispatcher<Element
      * @param selector
      * @param data
      */
-    put?(selector: string, data: ElementType): Promise<OkResult>;
+    put?(selector: string, data: ObjectDataType): Promise<OkResult>;
     /**
      * Make a partial update of a resource.
      * Requires the selector to be with attribute.
@@ -138,5 +168,5 @@ export declare class Rest<ElementType> extends SDSService<RestDispatcher<Element
      * @param selector
      */
     delete?(selector: string): Promise<OkResult>;
-    clone?(attrSelector: string): Rest<ElementType>;
+    clone?(attrSelector: string): Rest<ObjectDataType>;
 }

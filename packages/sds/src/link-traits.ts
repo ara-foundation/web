@@ -45,6 +45,7 @@ export interface ObjectNodeInterface extends Node {
     setChildren(children: ObjectNodeInterface[]): void;
     setParent(parent: ObjectNodeInterface): void;
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult;
+    appendChild<T extends Node>(node: T): T;
 }
 
 /**
@@ -269,7 +270,8 @@ export class ObjectNode<ElementType> implements ObjectNodeInterface {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     removeChild<T extends Node>(child: T): T {
-        throw new Error("Method not implemented.");
+        this._children = this._children.filter(node => (node._element as unknown as T) !== child);
+        return child;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     replaceChild<T extends Node>(node: Node, child: T): T {

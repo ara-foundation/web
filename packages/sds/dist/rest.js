@@ -1,8 +1,72 @@
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { SDSProxy, SDSService } from "./sds.js";
+import { SDSService } from "./sds.js";
 import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
+/**
+ * Rest converts the json into a node tree.
+ * But rest is planned to be used in all application.
+ * So, it allows adding any data.
+ *
+ * Additionally, Rest also has the dispatcher.
+ * If dispatcher is given, then rest will forward any operation to that dispatcher.
+ *
+ * Additionally, Rest also has the syncer.
+ * If queue is given, then, rest before any request will ask queue,
+ * does it have any data to execute. If so, it will execute them before any operation.
+ *
+ * Any module, that has to synchronize must have it's node inside. And if given data,
+ * it must synchronize the rest with it.
+ *
+ * for example:
+ * in reflect:
+ * exts = new NodeJSextension().
+ * exts[0].node = rest.get!('#${ext.packageLink.moduleURL}');
+ * exts[0].putModules()
+ *      node !== undefined, and if module !== this.synchronizer.isExist()?
+ *          node.appendChild(nodeModules);
+ *          node.set();
+ *
+ * Rest Queue:
+ * Calls the rest queue.
+ */
+export class RestQueue {
+    _queue;
+    _parentNode;
+    _objectToNodeTree;
+    constructor(parentNode, objectToNodeTree) {
+        this._queue = {};
+        this._parentNode = parentNode;
+        this._objectToNodeTree = objectToNodeTree;
+    }
+    get parentNode() {
+        return this._parentNode;
+    }
+    get objectToNodeTree() {
+        return this._objectToNodeTree;
+    }
+    setAll(node, objectToNodeTree) {
+        if (this._parentNode !== undefined)
+            throw `Parent node was set already`;
+        this._parentNode = node;
+        this._objectToNodeTree = objectToNodeTree;
+    }
+    isExist(key) {
+        if (this._parentNode === undefined)
+            throw `Please set the parent node.`;
+        return this._queue[key];
+    }
+    set(key) {
+        if (this._parentNode === undefined)
+            throw `Please set the parent node.`;
+        this._queue[key] = true;
+    }
+    unset(key) {
+        if (this._parentNode === undefined)
+            throw `Please set the parent node.`;
+        delete this._queue[key];
+    }
+}
 /**
  * A Rest Extension that forwards rest to the side.
  * For example, to save the data in the file system or in the database.
@@ -27,37 +91,6 @@ export class RestDispatcher {
     putting;
     patching;
     deleting;
-}
-export class RestBranchProxy extends SDSProxy {
-    _behindData;
-    _root;
-    constructor(root, moduleLink) {
-        super(moduleLink, ["post", "getAll"]);
-        this._root = root;
-    }
-    setRootNode(obj) {
-        if (this._root === undefined) {
-            return;
-        }
-        this._root.children.forEach(child => child.setParent(obj));
-        this._root = obj;
-    }
-    get rootNode() {
-        return this._root;
-    }
-    putBehindData(behindData) {
-        this._behindData = behindData;
-        this._behindData.setRootNode(this._root);
-    }
-    async getAll(selector) {
-        return await this._behindData.getAll(`${selector}`);
-    }
-    async post(selector, data, options) {
-        return await this._behindData.post.bind(this._behindData, `${selector}`, data, options)();
-    }
-    get dispatchers() {
-        return this._behindData.dispatchers;
-    }
 }
 /**
  * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
@@ -89,6 +122,9 @@ export class Rest extends SDSService {
     setRootNode(obj) {
         this._root.children.forEach(child => child.setParent(obj));
         this._root = obj;
+    }
+    get objectToNodeTree() {
+        return this._objectToNodeTree;
     }
     get dispatchers() {
         if (this.extensionOperator.extensionCount === 0) {

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, Rest, RestBranchProxy, RestDispatcher } from "../src/index.js";
+import { ModuleLink, ObjectNode, ObjectToNodeTree, Rest, RestDispatcher, RestInterface, RestOptions, SDSProxy } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter.js"
@@ -15,6 +15,53 @@ var navBar3Html = `<a href="github.com" id="github-link">github</a>`;
 var pageHtml = `<header>Here is the navigation<ul><li>menu</li></ul></header><section id="footer-section">bottom links</section>`
 var adapter = new NodeAdapter()
 
+export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterface<ElementType> {
+    protected _behindData?: Rest<ElementType>;
+    private _root: ObjectNode<ElementType>;
+
+    constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink) {
+        super(moduleLink, ["post", "getAll"]);
+        this._root = root;
+    }
+
+    public get objectToNodeTree(): ObjectToNodeTree<ElementType> {
+        // Return a dummy function to satisfy the type
+        return ((element: ElementType, parent?: ObjectNode<ElementType>, isRoot?: boolean) => {
+            throw new Error("objectToNodeTree is not implemented in RestBranchProxy.");
+        }) as ObjectToNodeTree<ElementType>;
+    }
+
+    public setRootNode(obj: ObjectNode<ElementType>) {
+        if (this._root === undefined) {
+            return;
+        }
+        this._root.children.forEach(child => child.setParent(obj));
+        this._root = obj;
+    }
+
+    public get rootNode(): ObjectNode<ElementType>|undefined {
+        return this._root;
+    }
+
+    public putBehindData?(behindData: Rest<ElementType>): void {
+        this._behindData = behindData;
+        this._behindData.setRootNode(this._root);
+    }
+
+    public async getAll?(selector: string): Promise<ObjectNode<ElementType>[]> {
+        return await this._behindData!.getAll!(`${selector}`);
+    }
+
+    public async post?(selector: string, data: ElementType, options: Omit<RestOptions<ElementType>, "parent">): Promise<OkResult> {
+        return await this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
+    }
+
+    public get dispatchers(): Readonly<RestDispatcher>[] {
+        return this._behindData!.dispatchers;
+    }
+}
+
+
 function getBody(html: string, root = 'body'): HTMLBodyElement | null {
     return new JSDOM(html).window.document.querySelector(root);
 }
@@ -28,7 +75,7 @@ class HTMLRestHandlers {
         this.objects = {};
     }
 
-    async handlePost(parentOrBigBro: ObjectNode<HTMLElement>, node: ObjectNode<HTMLElement>, _options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
+    async handlePost<DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, _options?: { lilBro?: boolean | undefined; }): Promise<OkResult> {
         if (this.objects === undefined) {
             this.objects = {}
         }
@@ -36,7 +83,7 @@ class HTMLRestHandlers {
         if (this.objects[selector] !== undefined) {
             return OkResult.fail(`Already posted`, `Can not import again`);
         } else {
-            this.objects[selector] = node;
+            this.objects[selector] = node as ObjectNode<HTMLElement>;
         }
         return { isSuccess: true, isFailure: false };
     }
@@ -167,7 +214,7 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Make sure modules are the children of the element
     const footerPkgLink = ModuleLink.newPackageURL('@ara-web', 'footer-pkg-link');
     const sampleHandler = new HTMLRestHandlers(footerPkgLink);
-    const sampleDispatcher = new RestDispatcher<HTMLElement>(footerPkgLink, "a");
+    const sampleDispatcher = new RestDispatcher(footerPkgLink, "a");
     sampleDispatcher.posting = sampleHandler.handlePost!;
     const footerRestOptions = {
         packageLink: footerPkgLink, 

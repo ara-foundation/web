@@ -1,6 +1,6 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink, ModuleLink as PackageLink } from "./links/index.js";
-import { RestDispatcher } from "./rest.js";
+import { Rest, RestDispatcher, RestQueue } from "./rest.js";
 import { DOCUMENT_SELECTOR, LinkTraits } from "./link-traits.js";
 /**********************************************************
  *
@@ -75,7 +75,10 @@ export class SDSProxy {
 export class SDSExtensionOperator {
     _extensions = {};
     _extDispatcher;
+    // Rest dispatcher. When extension is added,
+    // It will register extension's rest handler in the sds service's rest dispatcher.
     _restDispatcherOperator;
+    _restQueue;
     constructor(serviceLink, initialExts, extTag = 'memop') {
         initialExts.forEach(ext => {
             if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
@@ -83,13 +86,26 @@ export class SDSExtensionOperator {
             }
             this._extensions[ext.packageLink.moduleURL] = ext;
         });
+        this._restQueue = new RestQueue();
         this._extDispatcher = new RestDispatcher(serviceLink, extTag);
-        this._extDispatcher.posting = this.handleExtensionAddition;
-        this._extDispatcher.putting = this.handleExtensionUpdate;
-        this._extDispatcher.deleting = this.handleExtensionDeletion;
+        this._extDispatcher.posting = this.handleExtensionAddition.bind(this);
+        this._extDispatcher.putting = this.handleExtensionUpdate.bind(this);
+        this._extDispatcher.deleting = this.handleExtensionDeletion.bind(this);
     }
-    set restDispatcherOperator(operator) {
-        this._restDispatcherOperator = operator;
+    get restDispatcher() {
+        return this._extDispatcher;
+    }
+    async setRestDispatcherOperator(rest) {
+        const documentElement = await rest.get('*');
+        if (documentElement === null) {
+            return OkResult.fail(`No document element found, are you sure element exist?`, `Please make sure element exist`);
+        }
+        if (documentElement.selector !== DOCUMENT_SELECTOR) {
+            return OkResult.fail(`The element isn't document selector`, `Can not put element node`);
+        }
+        this._restQueue.setAll(documentElement, rest.objectToNodeTree);
+        this._restDispatcherOperator = rest.extensionOperator;
+        return OkResult.ok();
     }
     /*********************************************************************
      *
@@ -114,17 +130,27 @@ export class SDSExtensionOperator {
      * @returns
      */
     async add(ext) {
+        if (this._restDispatcherOperator === undefined) {
+            return OkResult.fail(`Please pass the rest dispatcher`, `call extensionOperator.setRestDispatcherOperator`);
+        }
         if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
             return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
         }
         this._extensions[ext.packageLink.moduleURL] = ext;
-        if (this._restDispatcherOperator) {
-            if (ext.restHandler) {
-                const added = await this._restDispatcherOperator.add(ext.restHandler);
-                if (added.isFailure) {
-                    return OkResult.fail(`restDispatcherOperator.add('${ext.restHandler.packageLink}'): ${added.errorTitle}`, added.errorDescription);
-                }
+        if (ext.extensionRestDispatcher) {
+            const added = await this._restDispatcherOperator.add(ext.extensionRestDispatcher);
+            if (added.isFailure) {
+                return OkResult.fail(`restDispatcherOperator.add('${ext.extensionRestDispatcher.packageLink}'): ${added.errorTitle}`, added.errorDescription);
             }
+        }
+        if (!this._restQueue.isExist(ext.packageLink.moduleURL)) {
+            // Very important line.
+            // If it's given at the end, then when trying
+            // to get the parent object node, it will
+            // enter into an infinite cycle. get -> beforeAny -> get...
+            this._restQueue.set(ext.packageLink.moduleURL);
+            const moduleElement = this._restQueue.objectToNodeTree(this._extensions[ext.packageLink.moduleURL], this._restQueue.parentNode);
+            this._restQueue.parentNode.appendChild(moduleElement);
         }
         return OkResult.ok();
     }
@@ -152,17 +178,28 @@ export class SDSExtensionOperator {
         return OkResult.ok();
     }
     async remove(exts) {
+        if (this._restDispatcherOperator === undefined) {
+            return OkResult.fail(`Please pass the rest dispatcher`, `call extensionOperator.setRestDispatcherOperator`);
+        }
         for (const ext of exts) {
             if (this._extensions[ext.packageLink.moduleURL] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
             }
-            if (this._restDispatcherOperator) {
-                if (ext.restHandler) {
-                    const removed = await this._restDispatcherOperator.remove([ext.restHandler]);
-                    if (removed.isFailure) {
-                        return OkResult.fail(`restDispatcherOperator.remove('${ext.restHandler.packageLink}'): ${removed.errorTitle}`, removed.errorDescription);
-                    }
+            // Remove the extension's rest dispatcher from rest
+            if (ext.extensionRestDispatcher) {
+                const removed = await this._restDispatcherOperator.remove([ext.extensionRestDispatcher]);
+                if (removed.isFailure) {
+                    return OkResult.fail(`restDispatcherOperator.remove('${ext.extensionRestDispatcher.packageLink}'): ${removed.errorTitle}`, removed.errorDescription);
                 }
+            }
+            if (this._restQueue.isExist(ext.packageLink.moduleURL)) {
+                // Very important line.
+                // If it's given at the end, then when trying
+                // to get the parent object node, it will
+                // enter into an infinite cycle. get -> beforeAny -> get...
+                this._restQueue.set(ext.packageLink.moduleURL);
+                const moduleElement = this._restQueue.objectToNodeTree(this._extensions[ext.packageLink.moduleURL], this._restQueue.parentNode);
+                this._restQueue.parentNode.removeChild(moduleElement);
             }
             delete this._extensions[ext.packageLink.moduleURL];
         }
@@ -198,18 +235,20 @@ export class SDSExtensionOperator {
             return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extDispatcher.tag}`, `The ${node.selector} expected to be an extension`);
         }
         const ext = node.getElement();
-        if (ext === null || !("packageLink" in ext)) {
+        if (ext === null) {
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
-        return await this.add(ext);
+        else if (!("packageLink" in ext)) {
+            return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
+        }
+        this._restQueue.set(ext.packageLink.moduleURL);
+        const added = await this.add(ext);
+        if (added.isSuccess) {
+            const moduleURL = ext.packageLink.moduleURL;
+            this._restQueue.set(moduleURL);
+        }
+        return added;
     }
-    /**
-     * Update the extension.
-     * @param _selector
-     * @param node
-     * @param data
-     * @returns
-     */
     async handleExtensionUpdate(_selector, node, data) {
         // Only children of DOCUMENT_SELECTOR are considered to be extensions.
         if (node.parent === undefined || node.parent?.selector !== DOCUMENT_SELECTOR) {
@@ -220,14 +259,19 @@ export class SDSExtensionOperator {
             return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extDispatcher.tag}`, `The ${node.selector} expected to be an extension`);
         }
         const ext = node.getElement();
-        if (ext === null || !("packageLink" in ext)) {
+        if (ext === null) {
+            return OkResult.fail(`The element is null`, `Please update the node argument`);
+        }
+        else if (!("packageLink" in ext)) {
             return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the node argument`);
         }
         if (!("packageLink" in data)) {
             return OkResult.fail(`The packageLink in the putting data`, `Please update the 'data' argument`);
         }
-        if (ext.packageLink.isEqual(data.packageLink)) {
-            return OkResult.fail(`The data that you are trying to put has incorrect module url`, `The extension you are trying to implement has '${ext.packageLink}', while data to put has '${data.packageLink}', please update your data's package link.`);
+        const dataPkgLink = data.packageLink;
+        const extPkgLink = ext.packageLink;
+        if (extPkgLink.isEqual(dataPkgLink)) {
+            return OkResult.fail(`The data that you are trying to put has incorrect module url`, `The extension you are trying to implement has '${extPkgLink}', while data to put has '${dataPkgLink}', please update your data's package link.`);
         }
         return await this.update(data);
     }
@@ -239,7 +283,11 @@ export class SDSExtensionOperator {
         if (exts.length === 0) {
             return OkResult.ok();
         }
-        return await this.remove(exts);
+        const removed = await this.remove(exts);
+        if (removed.isSuccess) {
+            exts.forEach(ext => this._restQueue.set(ext.packageLink.moduleURL));
+        }
+        return removed;
     }
 }
 /**

@@ -1,6 +1,6 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink, ModuleLink as PackageLink, type ModuleURL } from "./links/index.js";
-import { RestDispatcher } from "./rest.js";
+import { Rest, RestDispatcher, RestQueue, type RestInterface } from "./rest.js";
 import { DOCUMENT_SELECTOR, LinkTraits, type ObjectNode } from "./link-traits.js";
 
 /**
@@ -13,10 +13,10 @@ export interface SDSMetaInterface {
 /**
  * Setup proxies and extensions of the service
  */
-export interface SDSSetup<Ext extends SDSExtensionInterface> extends SDSMetaInterface {
+export interface SDSSetup extends SDSMetaInterface {
     proxies?: SDSProxy[];
     extensionTag?: string;
-    extensions?: Ext[];
+    extensions?: SDSExtensionInterface[];
 }
 
 /**
@@ -32,7 +32,7 @@ export interface SDSProxyInterface extends SDSMetaInterface {
  * Any SDS Extension must implement the following interface
  */
 export interface SDSExtensionInterface extends SDSMetaInterface {
-    restHandler?: RestDispatcher<any>;
+    extensionRestDispatcher?: RestDispatcher;
 }
 
 /**********************************************************
@@ -118,26 +118,43 @@ export abstract class SDSProxy implements SDSProxyInterface {
     }
 }
 
-export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
-    private _extensions: Record<ModuleURL, CustomExtension> = {};
-    private _extDispatcher: RestDispatcher<CustomExtension>;
-    private _restDispatcherOperator?: SDSExtensionOperator<RestDispatcher<any>>;
+export class SDSExtensionOperator {
+    private _extensions: Record<ModuleURL, SDSExtensionInterface> = {};
+    private _extDispatcher: RestDispatcher;
+    // Rest dispatcher. When extension is added,
+    // It will register extension's rest handler in the sds service's rest dispatcher.
+    private _restDispatcherOperator?: SDSExtensionOperator; 
+    private _restQueue: RestQueue;
 
-    constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag: string = 'memop') {
+    constructor(serviceLink: ModuleLink, initialExts: SDSExtensionInterface[], extTag: string = 'memop') {
         initialExts.forEach(ext => {
             if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
                 throw `Duplicate initial extension '${ext.packageLink.moduleURL}'.`
             }
             this._extensions[ext.packageLink.moduleURL] = ext;
         });
+        this._restQueue = new RestQueue();
         this._extDispatcher = new RestDispatcher(serviceLink, extTag);
-        this._extDispatcher.posting = this.handleExtensionAddition;
-        this._extDispatcher.putting = this.handleExtensionUpdate;
-        this._extDispatcher.deleting = this.handleExtensionDeletion;
+        this._extDispatcher.posting = this.handleExtensionAddition.bind(this);
+        this._extDispatcher.putting = this.handleExtensionUpdate.bind(this);
+        this._extDispatcher.deleting = this.handleExtensionDeletion.bind(this);
     }
 
-    public set restDispatcherOperator(operator: typeof this._restDispatcherOperator) {
-        this._restDispatcherOperator = operator;
+    public get restDispatcher(): RestDispatcher {
+        return this._extDispatcher;
+    }
+
+    public async setRestDispatcherOperator(rest: Rest<any>): Promise<OkResult> {
+        const documentElement = await rest.get!('*');
+        if (documentElement === null) {
+            return OkResult.fail(`No document element found, are you sure element exist?`, `Please make sure element exist`);
+        }
+        if (documentElement.selector !== DOCUMENT_SELECTOR) {
+            return OkResult.fail(`The element isn't document selector`, `Can not put element node`);
+        }
+        this._restQueue.setAll(documentElement!, rest.objectToNodeTree);
+        this._restDispatcherOperator = rest.extensionOperator;
+        return OkResult.ok();
     }
 
     /*********************************************************************
@@ -149,7 +166,7 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
     /**
      * Return all extensions of the SDS Service
      */
-    public get all(): Readonly<CustomExtension>[] {
+    public get all(): Readonly<SDSExtensionInterface>[] {
         return Object.values(this._extensions);
     }
 
@@ -166,20 +183,31 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
      * @returns 
      */
     public async add(
-        ext: CustomExtension,
+        ext: SDSExtensionInterface,
     ): Promise<OkResult> {
+        if (this._restDispatcherOperator === undefined) {
+            return OkResult.fail(`Please pass the rest dispatcher`, `call extensionOperator.setRestDispatcherOperator`);
+        }
         if (this._extensions[ext.packageLink.moduleURL] !== undefined) {
             return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
         }
-        
+
         this._extensions[ext.packageLink.moduleURL] = ext;
-        if (this._restDispatcherOperator) {
-            if (ext.restHandler) {
-                const added = await this._restDispatcherOperator.add(ext.restHandler);
-                if (added.isFailure) {
-                    return OkResult.fail(`restDispatcherOperator.add('${ext.restHandler.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
-                }
+        if (ext.extensionRestDispatcher) {
+            const added = await this._restDispatcherOperator.add(ext.extensionRestDispatcher);
+            if (added.isFailure) {
+                return OkResult.fail(`restDispatcherOperator.add('${ext.extensionRestDispatcher.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
             }
+        }
+
+        if (!this._restQueue.isExist(ext.packageLink.moduleURL)) {
+            // Very important line.
+            // If it's given at the end, then when trying
+            // to get the parent object node, it will
+            // enter into an infinite cycle. get -> beforeAny -> get...
+            this._restQueue.set(ext.packageLink.moduleURL);
+            const moduleElement = this._restQueue.objectToNodeTree!(this._extensions[ext.packageLink.moduleURL], this._restQueue.parentNode!);
+            this._restQueue.parentNode!.appendChild(moduleElement);
         }
 
         return OkResult.ok();
@@ -193,7 +221,7 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
      * @returns 
      */
     public async update(
-        ext: CustomExtension
+        ext: SDSExtensionInterface
     ): Promise<OkResult> {
         if (this._extensions[ext.packageLink.moduleURL] === undefined) {
             return OkResult.fail(`The extension not found`, `Can not over-write ${ext.packageLink}. Call rest.post instead.`);
@@ -214,20 +242,32 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
     }
 
     public async remove(
-        exts: CustomExtension[]
+        exts: SDSExtensionInterface[]
     ): Promise<OkResult> {
+        if (this._restDispatcherOperator === undefined) {
+            return OkResult.fail(`Please pass the rest dispatcher`, `call extensionOperator.setRestDispatcherOperator`);
+        }
         for (const ext of exts) {
             if (this._extensions[ext.packageLink.moduleURL] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
             }
 
-            if (this._restDispatcherOperator) {
-                if (ext.restHandler) {
-                    const removed = await this._restDispatcherOperator.remove([ext.restHandler]);
-                    if (removed.isFailure) {
-                        return OkResult.fail(`restDispatcherOperator.remove('${ext.restHandler.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
-                    }
+            // Remove the extension's rest dispatcher from rest
+            if (ext.extensionRestDispatcher) {
+                const removed = await this._restDispatcherOperator.remove([ext.extensionRestDispatcher]);
+                if (removed.isFailure) {
+                    return OkResult.fail(`restDispatcherOperator.remove('${ext.extensionRestDispatcher.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
                 }
+            }
+
+            if (this._restQueue.isExist(ext.packageLink.moduleURL)) {
+                // Very important line.
+                // If it's given at the end, then when trying
+                // to get the parent object node, it will
+                // enter into an infinite cycle. get -> beforeAny -> get...
+                this._restQueue.set(ext.packageLink.moduleURL);
+                const moduleElement = this._restQueue.objectToNodeTree!(this._extensions[ext.packageLink.moduleURL], this._restQueue.parentNode!);
+                this._restQueue.parentNode!.removeChild(moduleElement);
             }
 
             delete this._extensions[ext.packageLink.moduleURL];
@@ -249,9 +289,9 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
      * @param options 
      * @returns 
      */
-    private async handleExtensionAddition(
-        parentOrBigBro: ObjectNode<CustomExtension>,
-        node: ObjectNode<CustomExtension>,
+    private async handleExtensionAddition<DataType>(
+        parentOrBigBro: ObjectNode<DataType>,
+        node: ObjectNode<DataType>,
         options?: { lilBro?: boolean }
     ): Promise<OkResult> {
         if (options?.lilBro) {
@@ -270,25 +310,26 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
             return OkResult.fail(`The node is in the root, but it's tag isn't ${this._extDispatcher.tag}`, `The ${node.selector} expected to be an extension`);
         }
 
-        const ext = node.getElement()!
-        if (ext === null || !("packageLink" in ext)) {
+        const ext = node.getElement()!;
+        if (ext === null) {
+            return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
+         } else if (!("packageLink" in (ext! as unknown as SDSExtensionInterface))) {
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
 
-        return await this.add(ext!);
+        this._restQueue.set((ext! as unknown as SDSExtensionInterface).packageLink.moduleURL)
+        const added = await this.add(ext! as unknown as SDSExtensionInterface);
+        if (added.isSuccess) {
+            const moduleURL = (ext! as unknown as SDSExtensionInterface).packageLink.moduleURL;
+            this._restQueue.set(moduleURL);
+        }
+        return added;
     }
 
-    /**
-     * Update the extension.
-     * @param _selector 
-     * @param node 
-     * @param data 
-     * @returns 
-     */
-    private async handleExtensionUpdate(
+    private async handleExtensionUpdate<DataType>(
         _selector: string,
-        node: ObjectNode<CustomExtension>,
-        data: CustomExtension
+        node: ObjectNode<DataType>,
+        data: DataType
     ): Promise<OkResult> {
         // Only children of DOCUMENT_SELECTOR are considered to be extensions.
         if (node.parent === undefined || node.parent?.selector !== DOCUMENT_SELECTOR) {
@@ -300,33 +341,43 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
         }
         
         const ext = node.getElement()!
-        if (ext === null || !("packageLink" in ext)) {
+        if (ext === null) {
+            return OkResult.fail(`The element is null`, `Please update the node argument`);
+        } else if (!("packageLink" in (ext as unknown as SDSExtensionInterface))) {
             return OkResult.fail(`The packageLink attribute doesn't exist in the node element`, `Please update the node argument`);
         }
-        if (!("packageLink" in data)) {
+        if (!("packageLink" in (data as unknown as SDSExtensionInterface))) {
             return OkResult.fail(`The packageLink in the putting data`, `Please update the 'data' argument`);
         }
-        if (ext.packageLink.isEqual(data.packageLink)) {
+        const dataPkgLink = (data as unknown as SDSExtensionInterface).packageLink;
+        const extPkgLink = (ext as unknown as SDSExtensionInterface).packageLink;
+        if (extPkgLink.isEqual(dataPkgLink)) {
             return OkResult.fail(
                 `The data that you are trying to put has incorrect module url`,
-                `The extension you are trying to implement has '${ext.packageLink}', while data to put has '${data.packageLink}', please update your data's package link.`
+                `The extension you are trying to implement has '${extPkgLink}', while data to put has '${dataPkgLink}', please update your data's package link.`
             )
         }
 
-        return await this.update(data);
+        return await this.update(data as unknown as SDSExtensionInterface);
     }
 
-    private async handleExtensionDeletion(
-        _selector: string, nodes: ObjectNode<CustomExtension>[]
+    private async handleExtensionDeletion<DataType>(
+        _selector: string, nodes: ObjectNode<DataType>[]
     ): Promise<OkResult> {
         const exts = nodes
             .filter(node => this._extDispatcher.isMatchingTag(node.selector))
             .map(node => node.getElement())
-            .filter(el => el !== null && ("packageLink" in el));
+            .filter(el => el !== null && ("packageLink" in (el as unknown as SDSExtensionInterface)));
         if (exts.length === 0) {
             return OkResult.ok();
         }
-        return await this.remove(exts);
+        const removed = await this.remove(exts as unknown[] as SDSExtensionInterface[]);
+        if (removed.isSuccess) {
+            exts.forEach(ext => 
+                this._restQueue.set((ext as unknown as SDSExtensionInterface).packageLink.moduleURL)
+            );
+        }
+        return removed;
     }
 }
 
@@ -336,14 +387,14 @@ export class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface>
  * 
  * It comes with the Rest forward.
  */
-export class SDSService<Ext extends SDSExtensionInterface> extends SDSProxy {
-    private _extensionOperator: SDSExtensionOperator<Ext>;
+export class SDSService extends SDSProxy {
+    private _extensionOperator: SDSExtensionOperator;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup 
      */
-    constructor(setup: SDSSetup<Ext>, pubMethods: string[]) {
+    constructor(setup: SDSSetup, pubMethods: string[]) {
         super(setup.packageLink, pubMethods);
         const extTag = setup.extensionTag === undefined ? "memop" : setup.extensionTag;
         const exts = setup.extensions === undefined ? [] : setup.extensions;
@@ -355,7 +406,7 @@ export class SDSService<Ext extends SDSExtensionInterface> extends SDSProxy {
         }
     }
 
-    public get extensionOperator(): SDSExtensionOperator<Ext> {
+    public get extensionOperator(): SDSExtensionOperator {
         return this._extensionOperator;
     }
 }

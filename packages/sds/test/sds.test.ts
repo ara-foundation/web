@@ -14,8 +14,8 @@ interface SampleExtensionInterface extends SDSExtensionInterface {
     getTriple(): number;
 }
 
-class SampleService extends SDSService<SampleExtensionInterface> {
-    constructor(setup: SDSSetup<SampleExtensionInterface>) {
+class SampleService extends SDSService {
+    constructor(setup: SDSSetup) {
         super(setup, ["helloService", "getNumber"]);
     }
 
@@ -25,7 +25,8 @@ class SampleService extends SDSService<SampleExtensionInterface> {
 
     public getNumber?(extIndex?: number): number {
         if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.all.length) {
-            return this.extensionOperator.all[extIndex].getDouble();
+            const ext = this.extensionOperator.all[extIndex];
+            return (ext as SampleExtensionInterface).getDouble();
         }
         return 1;
     }

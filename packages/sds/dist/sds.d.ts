@@ -1,6 +1,6 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { ModuleLink, ModuleLink as PackageLink } from "./links/index.js";
-import { RestDispatcher } from "./rest.js";
+import { Rest, RestDispatcher } from "./rest.js";
 /**
  * Any SDS Service will have a meta information such as it's unique ID.
  */
@@ -10,10 +10,10 @@ export interface SDSMetaInterface {
 /**
  * Setup proxies and extensions of the service
  */
-export interface SDSSetup<Ext extends SDSExtensionInterface> extends SDSMetaInterface {
+export interface SDSSetup extends SDSMetaInterface {
     proxies?: SDSProxy[];
     extensionTag?: string;
-    extensions?: Ext[];
+    extensions?: SDSExtensionInterface[];
 }
 /**
  * Any SDS Proxy must implement the following interface.
@@ -27,7 +27,7 @@ export interface SDSProxyInterface extends SDSMetaInterface {
  * Any SDS Extension must implement the following interface
  */
 export interface SDSExtensionInterface extends SDSMetaInterface {
-    restHandler?: RestDispatcher<any>;
+    extensionRestDispatcher?: RestDispatcher;
 }
 /**********************************************************
  *
@@ -57,12 +57,14 @@ export declare abstract class SDSProxy implements SDSProxyInterface {
     protected postProxies(proxies: SDSProxy[]): void;
     protected hideByProxy<ProxyInheritance extends SDSProxy>(behindProxy: ProxyInheritance): void;
 }
-export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionInterface> {
+export declare class SDSExtensionOperator {
     private _extensions;
     private _extDispatcher;
     private _restDispatcherOperator?;
-    constructor(serviceLink: ModuleLink, initialExts: CustomExtension[], extTag?: string);
-    set restDispatcherOperator(operator: typeof this._restDispatcherOperator);
+    private _restQueue;
+    constructor(serviceLink: ModuleLink, initialExts: SDSExtensionInterface[], extTag?: string);
+    get restDispatcher(): RestDispatcher;
+    setRestDispatcherOperator(rest: Rest<any>): Promise<OkResult>;
     /*********************************************************************
      *
      * Operator's public methods
@@ -71,7 +73,7 @@ export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionIn
     /**
      * Return all extensions of the SDS Service
      */
-    get all(): Readonly<CustomExtension>[];
+    get all(): Readonly<SDSExtensionInterface>[];
     get extensionCount(): number;
     /**
      * Registering a new extension in run-time.
@@ -81,7 +83,7 @@ export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionIn
      * @param options
      * @returns
      */
-    add(ext: CustomExtension): Promise<OkResult>;
+    add(ext: SDSExtensionInterface): Promise<OkResult>;
     /**
      * Update the extension.
      * @param _selector
@@ -89,8 +91,8 @@ export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionIn
      * @param data
      * @returns
      */
-    update(ext: CustomExtension): Promise<OkResult>;
-    remove(exts: CustomExtension[]): Promise<OkResult>;
+    update(ext: SDSExtensionInterface): Promise<OkResult>;
+    remove(exts: SDSExtensionInterface[]): Promise<OkResult>;
     /***************************************************
      *
      * Rest dispatching methods
@@ -105,13 +107,6 @@ export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionIn
      * @returns
      */
     private handleExtensionAddition;
-    /**
-     * Update the extension.
-     * @param _selector
-     * @param node
-     * @param data
-     * @returns
-     */
     private handleExtensionUpdate;
     private handleExtensionDeletion;
 }
@@ -121,12 +116,12 @@ export declare class SDSExtensionOperator<CustomExtension extends SDSExtensionIn
  *
  * It comes with the Rest forward.
  */
-export declare class SDSService<Ext extends SDSExtensionInterface> extends SDSProxy {
+export declare class SDSService extends SDSProxy {
     private _extensionOperator;
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup
      */
-    constructor(setup: SDSSetup<Ext>, pubMethods: string[]);
-    get extensionOperator(): SDSExtensionOperator<Ext>;
+    constructor(setup: SDSSetup, pubMethods: string[]);
+    get extensionOperator(): SDSExtensionOperator;
 }

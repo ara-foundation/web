@@ -112,7 +112,8 @@ export class ObjectNode {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     removeChild(child) {
-        throw new Error("Method not implemented.");
+        this._children = this._children.filter(node => node._element !== child);
+        return child;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     replaceChild(node, child) {
