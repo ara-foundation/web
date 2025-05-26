@@ -1,5 +1,5 @@
 import { OkResult } from "@ara-web/p-hintjens";
-import type { ModuleLink, ModuleURL } from "./links/module-link.js";
+import { ModuleLink, type ModuleURL } from "./links/module-link.js";
 import { Rest, RestDispatcher, RestQueue } from "./rest.js";
 import type { Meta, ExtensionOperator, ExtensionOperatorTraits, Setup } from "./sds.js";
 import { LinkTraits } from "./link-traits.js";
@@ -27,9 +27,13 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
     private _restQueue: RestQueue;
 
     constructor(serviceLink: ModuleLink, extTag: string = 'memop', extOp: ExtensionOperator) {
+        if (!serviceLink.isPkgURL) {
+            throw `Only package url is allowed as the service link`
+        }
         this._extensionOperator = extOp;
         this._restQueue = new RestQueue();
-        this._extDispatcher = new RestDispatcher(serviceLink, extTag);
+        const restDispatcherLink = ModuleLink.fromModuleURL(serviceLink.url, {sub: `rest-dispatcher`, tag: extTag}).getValue();
+        this._extDispatcher = new RestDispatcher(restDispatcherLink, extTag);
         this._extDispatcher.posting = this.handleExtensionAddition.bind(this);
         this._extDispatcher.putting = this.handleExtensionUpdate.bind(this);
         this._extDispatcher.deleting = this.handleExtensionDeletion.bind(this);
@@ -93,13 +97,13 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
             }
         }
 
-        if (!this._restQueue.isExist(ext.packageLink.moduleURL)) {
+        if (!this._restQueue.isExist(ext.packageLink.url)) {
             // Very important line.
             // If it's given at the end, then when trying
             // to get the parent object node, it will
             // enter into an infinite cycle. get -> beforeAny -> get...
-            this._restQueue.set(ext.packageLink.moduleURL);
-            const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.moduleURL)!, this._restQueue.parentNode!);
+            this._restQueue.set(ext.packageLink.url);
+            const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.url)!, this._restQueue.parentNode!);
             this._restQueue.parentNode!.appendChild(moduleElement);
         }
 
@@ -140,13 +144,13 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
                 }
             }
 
-            if (this._restQueue.isExist(ext.packageLink.moduleURL)) {
+            if (this._restQueue.isExist(ext.packageLink.url)) {
                 // Very important line.
                 // If it's given at the end, then when trying
                 // to get the parent object node, it will
                 // enter into an infinite cycle. get -> beforeAny -> get...
-                this._restQueue.set(ext.packageLink.moduleURL);
-                const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.moduleURL)!, this._restQueue.parentNode!);
+                this._restQueue.set(ext.packageLink.url);
+                const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.url)!, this._restQueue.parentNode!);
                 this._restQueue.parentNode!.removeChild(moduleElement);
             }
         }
@@ -201,10 +205,10 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
 
-        this._restQueue.set((ext! as unknown as RestfulExtension).packageLink.moduleURL)
+        this._restQueue.set((ext! as unknown as RestfulExtension).packageLink.url)
         const added = await this.create(ext! as unknown as RestfulExtension);
         if (added.isSuccess) {
-            const moduleURL = (ext! as unknown as RestfulExtension).packageLink.moduleURL;
+            const moduleURL = (ext! as unknown as RestfulExtension).packageLink.url;
             this._restQueue.set(moduleURL);
         }
         return added;
@@ -258,7 +262,7 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
         const removed = await this.delete(exts as unknown[] as RestfulExtension[]);
         if (removed.isSuccess) {
             exts.forEach(ext => 
-                this._restQueue.set((ext as unknown as RestfulExtension).packageLink.moduleURL)
+                this._restQueue.set((ext as unknown as RestfulExtension).packageLink.url)
             );
         }
         return removed;

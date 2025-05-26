@@ -5,9 +5,9 @@ import { type Extension, Proxy, Service, type Setup } from "../src/sds";
 const serviceText = "Hello from the service";
 const proxyText = "Hello from the proxy";
 const proxyText2 = "Hello from the proxy 2";
-const serviceLink = ModuleLink.newPackageURL("@ara-web", "p-hintjens-service");
-const proxyLink = ModuleLink.newPackageURL("@ara-web", "p-hintjens-proxy");
-const proxyLink2 = ModuleLink.newPackageURL("@ara-web", "p-hintjens-proxy-2");
+const serviceLink = ModuleLink.newPackageLink("@ara-web", "p-hintjens-service");
+const proxyLink = ModuleLink.newPackageLink("@ara-web", "p-hintjens-proxy");
+const proxyLink2 = ModuleLink.newPackageLink("@ara-web", "p-hintjens-proxy-2");
 
 interface SampleExtension extends Extension {
     getDouble(): number;

@@ -177,7 +177,7 @@ export class Rest<ObjectDataType> extends Service implements RestTraits<ObjectDa
     constructor(
         object: ObjectDataType,
         objectToTreeNode: DataToObjectNode<ObjectDataType>,
-        setup: Setup = {packageLink: ModuleLink.newPackageURL("@ara-web", "rest")}
+        setup: Setup = {packageLink: ModuleLink.newPackageLink("@ara-web", "rest")}
     ) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = {adapter: new ObjectNodeAdapter()};

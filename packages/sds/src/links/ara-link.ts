@@ -123,11 +123,11 @@ export class AraLink<T> {
         const qualifiers: PurlQualifiers = {
             ...this._properties
         }
-        const pkgUrl = ModuleLink.newPackageURLWithQualifiers(
+        const pkgUrl = ModuleLink.newPackageLink(
             namespace,
             name,
-            qualifiers,
             subPath,
+            qualifiers,
             schema
         );
 
@@ -136,13 +136,13 @@ export class AraLink<T> {
 
     public static fromModuleLink = (moduleLink: ModuleLink): AraLink<string> => {
         if (moduleLink.isFileURL) {
-            const filePath = moduleLink.toFilePath;
+            const filePath = moduleLink.toAbsFilePath;
             const resource = path.basename(filePath);
             const slugs = path.dirname(filePath).split(path.sep);
             return new AraLink<string>("file", resource, slugs);
         }
 
-        const pkgURL = moduleLink.toPkgURL;
+        const pkgURL = moduleLink.toPackageURL;
 
         const protocol = pkgURL.type;
         const slugs: string[] = [];

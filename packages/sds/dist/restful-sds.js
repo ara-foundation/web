@@ -1,4 +1,5 @@
 import { OkResult } from "@ara-web/p-hintjens";
+import { ModuleLink } from "./links/module-link.js";
 import { Rest, RestDispatcher, RestQueue } from "./rest.js";
 import { LinkTraits } from "./link-traits.js";
 import { DOCUMENT_SELECTOR, ObjectNode } from "./tree.js";
@@ -10,9 +11,13 @@ export class RestfulExtensionOperator {
     _restDispatcherOperator;
     _restQueue;
     constructor(serviceLink, extTag = 'memop', extOp) {
+        if (!serviceLink.isPkgURL) {
+            throw `Only package url is allowed as the service link`;
+        }
         this._extensionOperator = extOp;
         this._restQueue = new RestQueue();
-        this._extDispatcher = new RestDispatcher(serviceLink, extTag);
+        const restDispatcherLink = ModuleLink.fromModuleURL(serviceLink.url, { sub: `rest-dispatcher`, tag: extTag }).getValue();
+        this._extDispatcher = new RestDispatcher(restDispatcherLink, extTag);
         this._extDispatcher.posting = this.handleExtensionAddition.bind(this);
         this._extDispatcher.putting = this.handleExtensionUpdate.bind(this);
         this._extDispatcher.deleting = this.handleExtensionDeletion.bind(this);
@@ -65,13 +70,13 @@ export class RestfulExtensionOperator {
                 return OkResult.fail(`restDispatcherOperator.create('${ext.extensionRestDispatcher.packageLink}'): ${added.errorTitle}`, added.errorDescription);
             }
         }
-        if (!this._restQueue.isExist(ext.packageLink.moduleURL)) {
+        if (!this._restQueue.isExist(ext.packageLink.url)) {
             // Very important line.
             // If it's given at the end, then when trying
             // to get the parent object node, it will
             // enter into an infinite cycle. get -> beforeAny -> get...
-            this._restQueue.set(ext.packageLink.moduleURL);
-            const moduleElement = this._restQueue.objectToNodeTree(this.read(ext.packageLink.moduleURL), this._restQueue.parentNode);
+            this._restQueue.set(ext.packageLink.url);
+            const moduleElement = this._restQueue.objectToNodeTree(this.read(ext.packageLink.url), this._restQueue.parentNode);
             this._restQueue.parentNode.appendChild(moduleElement);
         }
         return OkResult.ok();
@@ -102,13 +107,13 @@ export class RestfulExtensionOperator {
                     return OkResult.fail(`restDispatcherOperator.remove('${ext.extensionRestDispatcher.packageLink}'): ${removed.errorTitle}`, removed.errorDescription);
                 }
             }
-            if (this._restQueue.isExist(ext.packageLink.moduleURL)) {
+            if (this._restQueue.isExist(ext.packageLink.url)) {
                 // Very important line.
                 // If it's given at the end, then when trying
                 // to get the parent object node, it will
                 // enter into an infinite cycle. get -> beforeAny -> get...
-                this._restQueue.set(ext.packageLink.moduleURL);
-                const moduleElement = this._restQueue.objectToNodeTree(this.read(ext.packageLink.moduleURL), this._restQueue.parentNode);
+                this._restQueue.set(ext.packageLink.url);
+                const moduleElement = this._restQueue.objectToNodeTree(this.read(ext.packageLink.url), this._restQueue.parentNode);
                 this._restQueue.parentNode.removeChild(moduleElement);
             }
         }
@@ -154,10 +159,10 @@ export class RestfulExtensionOperator {
         else if (!("packageLink" in ext)) {
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
-        this._restQueue.set(ext.packageLink.moduleURL);
+        this._restQueue.set(ext.packageLink.url);
         const added = await this.create(ext);
         if (added.isSuccess) {
-            const moduleURL = ext.packageLink.moduleURL;
+            const moduleURL = ext.packageLink.url;
             this._restQueue.set(moduleURL);
         }
         return added;
@@ -198,7 +203,7 @@ export class RestfulExtensionOperator {
         }
         const removed = await this.delete(exts);
         if (removed.isSuccess) {
-            exts.forEach(ext => this._restQueue.set(ext.packageLink.moduleURL));
+            exts.forEach(ext => this._restQueue.set(ext.packageLink.url));
         }
         return removed;
     }

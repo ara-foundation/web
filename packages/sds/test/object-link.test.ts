@@ -3,8 +3,9 @@ import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter"
 import cssSelect from "css-select"
 import { LinkTraits, ModuleLink, ObjectLink } from "../src";
+import { Debug } from "@ara-web/p-hintjens";
 
-const moduleLink = ModuleLink.newFileURL("./test-app/src/components/Welcome.astro");
+const moduleLink = ModuleLink.newFileLink("./test-app/src/components/Welcome.astro");
 var html = "<main><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></main>";
 var adapter = new NodeAdapter()
 

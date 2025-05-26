@@ -5,7 +5,7 @@ import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter.js"
 import cssSelect from "css-select"
 import { nodeToObjectTree } from "./node-object-tree.js";
-import { Debug, OkResult } from "@ara-web/p-hintjens";
+import { OkResult } from "@ara-web/p-hintjens";
 
 var footerHtml = "<footer><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></footer>";
 var secondHtml = `<div id="secondDiv">Hello and welcome</div>`
@@ -155,8 +155,8 @@ test(`Testing the rest proxifying`, async() => {
     // Make sure it's parsing.
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
-    const proxy = new RestBranchProxy<HTMLElement>(contentBranch!, ModuleLink.newPackageURL('@ara-web', 'rest-branch-proxy'))
-    const footerRestResult = new Rest<HTMLElement>(footer!, nodeToObjectTree, {proxies: [proxy], packageLink: ModuleLink.newPackageURL('@ara-web', 'rest-side')});
+    const proxy = new RestBranchProxy<HTMLElement>(contentBranch!, ModuleLink.newPackageLink('@ara-web', 'rest-branch-proxy'))
+    const footerRestResult = new Rest<HTMLElement>(footer!, nodeToObjectTree, {proxies: [proxy], packageLink: ModuleLink.newPackageLink('@ara-web', 'rest-side')});
     const footerRest = footerRestResult.proxifyMe<RestBranchProxy<HTMLElement>>();
     expect(footerRest.isSuccess).toBe(true);
 
@@ -212,7 +212,7 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Make sure it's parsing.
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
-    const footerPkgLink = ModuleLink.newPackageURL('@ara-web', 'footer-pkg-link');
+    const footerPkgLink = ModuleLink.newPackageLink('@ara-web', 'footer-pkg-link');
     const sampleHandler = new HTMLRestHandlers(footerPkgLink);
     const sampleDispatcher = new RestDispatcher(footerPkgLink, "a");
     sampleDispatcher.posting = sampleHandler.handlePost!;
@@ -269,9 +269,9 @@ test(`Testing the forwarding SDS Extension receiver from rest`, async() => {
     const pageNode = nodeToObjectTree(pageBody!, undefined, true);
     const footerNode = nodeToObjectTree(footer!, pageNode, false);
     let navBar1Body = getBody(navBar1Html, 'a');
-    navBar1Body = Object.assign(navBar1Body!, {packageLink: ModuleLink.newPackageURL('ara-web', 'nav-bar-1')});
+    navBar1Body = Object.assign(navBar1Body!, {packageLink: ModuleLink.newPackageLink('ara-web', 'nav-bar-1')});
     const navBar1Node = nodeToObjectTree(navBar1Body!, pageNode, false);
-    const sdsExtReceiver = new HTMLRestHandlers(ModuleLink.newPackageURL(`@ara-web`, `sds-ext-receiver`));
+    const sdsExtReceiver = new HTMLRestHandlers(ModuleLink.newPackageLink(`@ara-web`, `sds-ext-receiver`));
     expect((await sdsExtReceiver.handlePost(
         footerNode!,
         navBar1Node!,

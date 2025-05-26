@@ -34,20 +34,42 @@ export class ModuleLink {
 
     protected constructor() {}
 
-    public static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string, schema: string = "npm"): ModuleLink {
+    /**
+     * Create a new package url:
+     * 
+     * Example:
+     * 
+     * ```typescript
+     * ModuleLink.newPackageLink(`@ara-web`, `sds`, `links/module-link.ts`, {absolutePath: import.meta.filename});
+     * ```
+     * 
+     * @param namespace 
+     * @param name 
+     * @param subpath 
+     * @param qualifiers 
+     * @param schema 
+     * @returns 
+     */
+    public static newPackageLink(
+        namespace: string | undefined, 
+        name: string, 
+        subpath?: string, 
+        qualifiers?: PurlQualifiers, 
+        schema: string = "npm"
+    ): ModuleLink {
         const moduleLink = new ModuleLink();
-        const qualifier = absolutePath === undefined ? undefined : {absolutePath: absolutePath.moduleURL};
-        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifier, subpath);
+        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifiers, subpath);
         return moduleLink;
     }
 
-    public static newPackageURLWithQualifiers(namespace: string, name: string, qualifiers: PurlQualifiers, subPath?: string, schema: string = "npm"): ModuleLink {
-        const moduleLink = new ModuleLink();
-        moduleLink._internal = new PackageURL(schema, namespace, name, version, qualifiers, subPath);
-        return moduleLink;
-    }
-
-    public static newFileURL(filePath: string | URL): ModuleLink {
+    /**
+     * Create a module link from the file path.
+     * The module link for the files are `file://` protocol supported
+     * by all browsers and OS explorers.
+     * @param filePath 
+     * @returns 
+     */
+    public static newFileLink(filePath: string | URL): ModuleLink {
         const moduleLink = new ModuleLink();
         moduleLink._internal = 
             typeof filePath === "string" ? 
@@ -56,67 +78,79 @@ export class ModuleLink {
         return moduleLink;
     }
 
-    public get moduleURL(): ModuleURL {
+    public get url(): ModuleURL {
         return this._internal!.toString() as ModuleURL;
     }
 
+    public getAttribute(attrName: string): string|undefined {
+        if (this.isPkgURL) {
+            const pkgUrl = this._internal as PackageURL;
+            if (pkgUrl.qualifiers !== undefined && pkgUrl.qualifiers[attrName]) {
+                return pkgUrl.qualifiers[attrName];
+            }
+        }
+        return undefined;
+    }
+
     public toString(): string {
-        return this.moduleURL as string;
+        return this.url as string;
     }
 
     public get isPkgURL(): boolean {
-        return this.moduleURL.startsWith("pkg:")
+        return this.url.startsWith("pkg:")
     }
 
     public get isFileURL(): boolean {
-        return this.moduleURL.startsWith("file://")
+        return this.url.startsWith("file://")
     }
 
     public isEqual(moduleURL: ModuleURL | ModuleLink): boolean {
         if (typeof moduleURL === "string") {
-            return this.moduleURL === moduleURL;
+            return this.url === moduleURL;
         }
-        return this.moduleURL === moduleURL.moduleURL;
+        return this.url === moduleURL.url;
     }
 
     /**
      * Returns the file path to use with the `node:fs`.
+     * If the module link is the PackageURL, then the package url must
+     * have the `absolutePath` argument that will be returned as the file path.
      */
-    public get toFilePath(): string {
+    public get toAbsFilePath(): string {
         if (this.isPkgURL) {
             const packageURL = this._internal as PackageURL;
             if (packageURL.qualifiers === undefined || packageURL.qualifiers["absolutePath"] === undefined) {
                 return `${packageURL.namespace !== undefined ? packageURL.namespace + '/' : ''}${packageURL.name}`;
             }
         }
-        return fileURLToPath(this.moduleURL);
+        return fileURLToPath(this.url);
     }
 
-    public get toPkgURL(): PackageURL {
+    public get toPackageURL(): PackageURL {
         return this._internal as PackageURL;
     }
 
-    public static fromModuleURL(moduleURL: ModuleURL): Result<ModuleLink> {
+    public static fromModuleURL(moduleURL: ModuleURL, pkgQualifiers?: PurlQualifiers): Result<ModuleLink> {
         if (moduleURL.startsWith('pkg:')) {
             try {
                 const packageURL = PackageURL.fromString(moduleURL)
-                if (packageURL.qualifiers === undefined || packageURL.qualifiers["absolutePath"] === undefined) {
-                    return Result.fail(
-                        `The ModuleURL doesnt have the qualifiers that points to the local file of the module`,
-                        `Please update the '${moduleURL}' to add the file by passing 'absolutePath' qualifier`
-                    );
+                if (pkgQualifiers === undefined) {
+                    pkgQualifiers = packageURL.qualifiers
+                } else if (packageURL.qualifiers !== undefined) {
+                    pkgQualifiers = {...packageURL.qualifiers, ...pkgQualifiers};
                 }
-                return Result.ok(ModuleLink.newPackageURL(
+
+                return Result.ok(ModuleLink.newPackageLink(
                     packageURL.namespace, 
                     packageURL.name, 
-                    ModuleLink.newFileURL(packageURL.qualifiers["absolutePath"]),
-                    packageURL.subpath
+                    packageURL.subpath,
+                    pkgQualifiers
                 ));
             } catch (e) {
                 return Result.fail(`Invalid url '${moduleURL}'`, (e as any).message)
             }
         } else if (moduleURL.startsWith('file://')) {
-            return Result.ok(ModuleLink.newFileURL(moduleURL));
+            return Result.ok(ModuleLink.newFileLink(moduleURL));
         }
 
         return Result.fail(`Unsupported module URL, the schema is unsupported by ModuleLink`)
@@ -135,8 +169,13 @@ export class ModuleLink {
         const subPath = subDirs.length === 0 ? undefined : subDirs.join(PathModule.sep);
         name = name === undefined || name.length === 0 ? possibleNamespaceOrName : name;
         const namespace = possibleNamespaceOrName === name ? undefined : possibleNamespaceOrName;
-            
-        const moduleLink = ModuleLink.newPackageURL(namespace, name, absPath, subPath);
+        
+        let qualifiers: PurlQualifiers = {};
+        if (absPath !== undefined) {
+            qualifiers = {absolutePath: absPath.url};
+        }
+
+        const moduleLink = ModuleLink.newPackageLink(namespace, name, subPath, qualifiers);
         return moduleLink;
     }
 

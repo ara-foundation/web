@@ -130,10 +130,10 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
 
     constructor(initialExts: Extension[]) {
         initialExts.forEach(ext => {
-            if (this._exts[ext.packageLink.moduleURL] !== undefined) {
-                throw `Duplicate initial extension '${ext.packageLink.moduleURL}'.`
+            if (this._exts[ext.packageLink.url] !== undefined) {
+                throw `Duplicate initial extension '${ext.packageLink.url}'.`
             }
-            this._exts[ext.packageLink.moduleURL] = ext;
+            this._exts[ext.packageLink.url] = ext;
         });
     }
 
@@ -165,7 +165,7 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
     public async create(
         ext: Extension,
     ): Promise<OkResult> {
-        if (this._exts[ext.packageLink.moduleURL] !== undefined) {
+        if (this._exts[ext.packageLink.url] !== undefined) {
             return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
         }
         return OkResult.ok();
@@ -185,7 +185,7 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
     public async update(
         ext: Extension
     ): Promise<OkResult> {
-        if (this._exts[ext.packageLink.moduleURL] === undefined) {
+        if (this._exts[ext.packageLink.url] === undefined) {
             return OkResult.fail(`The extension not found`, `Can not over-write ${ext.packageLink}. Call rest.post instead.`);
         }
  
@@ -207,11 +207,11 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
         exts: Extension[]
     ): Promise<OkResult> {
         for (const ext of exts) {
-            if (this._exts[ext.packageLink.moduleURL] === undefined) {
+            if (this._exts[ext.packageLink.url] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
             }
 
-            delete this._exts[ext.packageLink.moduleURL];
+            delete this._exts[ext.packageLink.url];
         }
         return OkResult.ok();
     }

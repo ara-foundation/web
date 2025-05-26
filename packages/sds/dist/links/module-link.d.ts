@@ -7,20 +7,45 @@ export type ModuleURL = `pkg:${string}` | `file://${string}`;
 export declare class ModuleLink {
     private _internal?;
     protected constructor();
-    static newPackageURL(namespace: string | undefined, name: string, absolutePath?: ModuleLink, subpath?: string, schema?: string): ModuleLink;
-    static newPackageURLWithQualifiers(namespace: string, name: string, qualifiers: PurlQualifiers, subPath?: string, schema?: string): ModuleLink;
-    static newFileURL(filePath: string | URL): ModuleLink;
-    get moduleURL(): ModuleURL;
+    /**
+     * Create a new package url:
+     *
+     * Example:
+     *
+     * ```typescript
+     * ModuleLink.newPackageLink(`@ara-web`, `sds`, `links/module-link.ts`, {absolutePath: import.meta.filename});
+     * ```
+     *
+     * @param namespace
+     * @param name
+     * @param subpath
+     * @param qualifiers
+     * @param schema
+     * @returns
+     */
+    static newPackageLink(namespace: string | undefined, name: string, subpath?: string, qualifiers?: PurlQualifiers, schema?: string): ModuleLink;
+    /**
+     * Create a module link from the file path.
+     * The module link for the files are `file://` protocol supported
+     * by all browsers and OS explorers.
+     * @param filePath
+     * @returns
+     */
+    static newFileLink(filePath: string | URL): ModuleLink;
+    get url(): ModuleURL;
+    getAttribute(attrName: string): string | undefined;
     toString(): string;
     get isPkgURL(): boolean;
     get isFileURL(): boolean;
     isEqual(moduleURL: ModuleURL | ModuleLink): boolean;
     /**
      * Returns the file path to use with the `node:fs`.
+     * If the module link is the PackageURL, then the package url must
+     * have the `absolutePath` argument that will be returned as the file path.
      */
-    get toFilePath(): string;
-    get toPkgURL(): PackageURL;
-    static fromModuleURL(moduleURL: ModuleURL): Result<ModuleLink>;
+    get toAbsFilePath(): string;
+    get toPackageURL(): PackageURL;
+    static fromModuleURL(moduleURL: ModuleURL, pkgQualifiers?: PurlQualifiers): Result<ModuleLink>;
     /**
      * Converts the import clauses, such as the last quoted string in `import {data} from 'import clause'`
      * to the package url. Optionally, pass the absolute path as the package urls qualifier.

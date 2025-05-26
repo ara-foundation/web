@@ -103,17 +103,17 @@ export class AraLink {
         const qualifiers = {
             ...this._properties
         };
-        const pkgUrl = ModuleLink.newPackageURLWithQualifiers(namespace, name, qualifiers, subPath, schema);
+        const pkgUrl = ModuleLink.newPackageLink(namespace, name, subPath, qualifiers, schema);
         return pkgUrl;
     };
     static fromModuleLink = (moduleLink) => {
         if (moduleLink.isFileURL) {
-            const filePath = moduleLink.toFilePath;
+            const filePath = moduleLink.toAbsFilePath;
             const resource = path.basename(filePath);
             const slugs = path.dirname(filePath).split(path.sep);
             return new AraLink("file", resource, slugs);
         }
-        const pkgURL = moduleLink.toPkgURL;
+        const pkgURL = moduleLink.toPackageURL;
         const protocol = pkgURL.type;
         const slugs = [];
         if (pkgURL.namespace) {

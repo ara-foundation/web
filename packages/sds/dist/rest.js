@@ -111,7 +111,7 @@ export class Rest extends Service {
     _options;
     _root;
     _objectToNodeTree;
-    constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("@ara-web", "rest") }) {
+    constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageLink("@ara-web", "rest") }) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
         this._options = { adapter: new ObjectNodeAdapter() };
         this._objectToNodeTree = objectToTreeNode;
