@@ -351,7 +351,7 @@ export class Rest<ObjectDataType> extends Service implements RestTraits<ObjectDa
             }
         }
 
-        node.setElement(data);
+        node.data = data;
         return OkResult.ok();
     }
 

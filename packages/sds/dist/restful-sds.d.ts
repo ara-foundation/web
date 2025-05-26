@@ -1,7 +1,10 @@
 import { OkResult } from "@ara-web/p-hintjens";
 import type { ModuleLink, ModuleURL } from "./links/module-link.js";
 import { Rest, RestDispatcher, RestQueue } from "./rest.js";
-import type { Meta, ExtensionOperator, ExtensionOperatorTraits } from "./sds.js";
+import type { Meta, ExtensionOperator, ExtensionOperatorTraits, Setup } from "./sds.js";
+export interface RestfulSetup extends Setup {
+    tag: string;
+}
 /**
  * Any Extension must implement the following interface
  */

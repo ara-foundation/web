@@ -115,7 +115,7 @@ export declare class ObjectNode<DataType> implements SelectorNode {
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean): void;
     isEqualTo(node: SelectorNode | null | undefined): boolean;
     get data(): DataType | null;
-    setElement(data: DataType): void;
+    set data(data: DataType);
     /**
      * For Pages, it returns empty string.
      */

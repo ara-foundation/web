@@ -1,9 +1,14 @@
 import { OkResult } from "@ara-web/p-hintjens";
 import type { ModuleLink, ModuleURL } from "./links/module-link.js";
 import { Rest, RestDispatcher, RestQueue } from "./rest.js";
-import type { Meta, ExtensionOperator, ExtensionOperatorTraits } from "./sds.js";
+import type { Meta, ExtensionOperator, ExtensionOperatorTraits, Setup } from "./sds.js";
 import { LinkTraits } from "./link-traits.js";
 import { DOCUMENT_SELECTOR, ObjectNode } from "./tree.js";
+
+
+export interface RestfulSetup extends Setup {
+    tag: string,
+}
 
 /**
  * Any Extension must implement the following interface
@@ -43,7 +48,7 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
             return OkResult.fail(`The element isn't document selector`, `Can not put element node`);
         }
         this._restQueue.setAll(documentElement!, rest.objectToNodeTree);
-        this._restDispatcherOperator = rest.extensionOperator;
+        this._restDispatcherOperator = rest.extensionOperator as ExtensionOperator;
         return OkResult.ok();
     }
 

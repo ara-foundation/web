@@ -242,7 +242,7 @@ export class Service extends Proxy {
         }
     }
 
-    public get extensionOperator(): ExtensionOperator {
+    public get extensionOperator(): ExtensionOperatorTraits {
         return this._op;
     }
 }

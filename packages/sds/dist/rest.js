@@ -270,7 +270,7 @@ export class Rest extends Service {
                 }
             }
         }
-        node.setElement(data);
+        node.data = data;
         return OkResult.ok();
     }
     /**

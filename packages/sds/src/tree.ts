@@ -222,7 +222,7 @@ export class ObjectNode<DataType> implements SelectorNode {
         return this._data === undefined ? null : this._data;
     }
 
-    public setElement(data: DataType): void {
+    public set data(data: DataType) {
         this._data = data;
     }
 

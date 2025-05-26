@@ -156,7 +156,7 @@ export class ObjectNode {
     get data() {
         return this._data === undefined ? null : this._data;
     }
-    setElement(data) {
+    set data(data) {
         this._data = data;
     }
     /**

@@ -110,5 +110,5 @@ export declare class Service extends Proxy {
      * @param setup
      */
     constructor(setup: Setup, pubMethods: string[]);
-    get extensionOperator(): ExtensionOperator;
+    get extensionOperator(): ExtensionOperatorTraits;
 }
