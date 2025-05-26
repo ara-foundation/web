@@ -1,5 +1,5 @@
 import { Debug } from "@ara-web/p-hintjens";
-import { Adapter } from "../src/link-traits";
+import { Adapter } from "../src/tree";
 
 export class NodeAdapter<BranchedModuleObject extends Node> implements Adapter<Node, BranchedModuleObject>{
     private EMPTY_OBJECT = {};

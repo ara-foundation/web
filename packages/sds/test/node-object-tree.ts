@@ -1,7 +1,7 @@
 import { OkResult } from "@ara-web/p-hintjens";
-import { type ObjectToNodeTree, type ElementOp, ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
+import { type DataToObjectNode, type DataOperations, ObjectNode, DOCUMENT_SELECTOR } from "../src/tree";
 
-export const nodeToObjectTree: ObjectToNodeTree<HTMLElement> = (codePiece: HTMLElement, parent?: ObjectNode<HTMLElement>, root?: boolean): ObjectNode<HTMLElement> => {
+export const nodeToObjectTree: DataToObjectNode<HTMLElement> = (codePiece: HTMLElement, parent?: ObjectNode<HTMLElement>, root?: boolean): ObjectNode<HTMLElement> => {
     // Creating the root for entire source code that has one or many code pieces.
 	if (root) {
 		return new ObjectNode<HTMLElement>(elementOps, nodeToObjectTree);
@@ -50,7 +50,7 @@ const setCodePieceAttribute = <AttrType>(_element: HTMLElement | undefined, attr
 	return OkResult.ok();
 }
 
-export const elementOps: ElementOp<HTMLElement> = {
+export const elementOps: DataOperations<HTMLElement> = {
 	getName: getCodePieceName,
 	getChildren: getCodePieceChildren,
 	getAttribute: getCodePieceAttribute,

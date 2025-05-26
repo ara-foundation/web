@@ -1,6 +1,6 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { SDSService, type SDSExtensionInterface, type SDSSetup } from "./sds.js";
-import { ObjectNode, type ObjectToNodeTree } from "./link-traits.js";
+import { Service, type Extension, type Setup } from "./sds.js";
+import { ObjectNode, type DataToObjectNode } from "./tree.js";
 import { ModuleLink } from "./links/index.js";
 export type Posting = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
     lilBro?: boolean;
@@ -39,10 +39,10 @@ export declare class RestQueue {
     private _queue;
     private _parentNode?;
     private _objectToNodeTree?;
-    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: ObjectToNodeTree<any>);
+    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: DataToObjectNode<any>);
     get parentNode(): ObjectNode<any> | undefined;
-    get objectToNodeTree(): ObjectToNodeTree<any> | undefined;
-    setAll(node: ObjectNode<any>, objectToNodeTree: ObjectToNodeTree<any>): void;
+    get objectToNodeTree(): DataToObjectNode<any> | undefined;
+    setAll(node: ObjectNode<any>, objectToNodeTree: DataToObjectNode<any>): void;
     isExist(key: string): boolean;
     set(key: string): void;
     unset(key: string): void;
@@ -51,7 +51,7 @@ export declare class RestQueue {
  * A Rest Extension that forwards rest to the side.
  * For example, to save the data in the file system or in the database.
  */
-export declare class RestDispatcher implements SDSExtensionInterface {
+export declare class RestDispatcher implements Extension {
     private _operatorLink;
     private _tag;
     constructor(operatorLink: ModuleLink, tag: string);
@@ -67,13 +67,13 @@ export declare class RestDispatcher implements SDSExtensionInterface {
  * Rest methods. This interface is used to pass the rest object between modules.
  * If you want to implement your custom rest, then better {@link Rest}
  */
-export interface RestInterface<ElementType> {
+export interface RestTraits<ElementType> {
     /**
      * A readonly methods of the Rest.
      */
     rootNode: ObjectNode<ElementType> | undefined;
     setRootNode(obj: ObjectNode<ElementType>): void;
-    objectToNodeTree: ObjectToNodeTree<ElementType>;
+    objectToNodeTree: DataToObjectNode<ElementType>;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
     get?(selector: string): Promise<ObjectNode<ElementType> | null>;
@@ -92,7 +92,7 @@ export interface RestOptions<ElementType> {
     root?: boolean;
 }
 /**
- * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ * Rest is the Service that creates a CSS Selector traversing for the objects.
  *
  * It starts by accepting the JSON object that could be the root node.
  *
@@ -105,14 +105,14 @@ export interface RestOptions<ElementType> {
  * const welcomeComponent = await rest.get!("Layout > Welcome")
  * ```
  */
-export declare class Rest<ObjectDataType> extends SDSService implements RestInterface<ObjectDataType> {
+export declare class Rest<ObjectDataType> extends Service implements RestTraits<ObjectDataType> {
     private _options;
     private _root;
     private _objectToNodeTree;
-    constructor(object: ObjectDataType, objectToTreeNode: ObjectToNodeTree<ObjectDataType>, setup?: SDSSetup);
+    constructor(object: ObjectDataType, objectToTreeNode: DataToObjectNode<ObjectDataType>, setup?: Setup);
     get rootNode(): ObjectNode<ObjectDataType>;
     setRootNode(obj: ObjectNode<ObjectDataType>): void;
-    get objectToNodeTree(): ObjectToNodeTree<ObjectDataType>;
+    get objectToNodeTree(): DataToObjectNode<ObjectDataType>;
     get dispatchers(): Readonly<RestDispatcher>[];
     elementToObjectNode?(data: ObjectDataType, options: RestOptions<ObjectDataType>): Result<ObjectNode<ObjectDataType>>;
     /**

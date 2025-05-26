@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { ModuleLink } from "../src"
-import { SDSExtensionInterface, SDSProxy, SDSService, type SDSSetup } from "../src/sds";
+import { type Extension, Proxy, Service, type Setup } from "../src/sds";
 
 const serviceText = "Hello from the service";
 const proxyText = "Hello from the proxy";
@@ -9,13 +9,13 @@ const serviceLink = ModuleLink.newPackageURL("@ara-web", "p-hintjens-service");
 const proxyLink = ModuleLink.newPackageURL("@ara-web", "p-hintjens-proxy");
 const proxyLink2 = ModuleLink.newPackageURL("@ara-web", "p-hintjens-proxy-2");
 
-interface SampleExtensionInterface extends SDSExtensionInterface {
+interface SampleExtension extends Extension {
     getDouble(): number;
     getTriple(): number;
 }
 
-class SampleService extends SDSService {
-    constructor(setup: SDSSetup) {
+class SampleService extends Service {
+    constructor(setup: Setup) {
         super(setup, ["helloService", "getNumber"]);
     }
 
@@ -26,13 +26,13 @@ class SampleService extends SDSService {
     public getNumber?(extIndex?: number): number {
         if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.all.length) {
             const ext = this.extensionOperator.all[extIndex];
-            return (ext as SampleExtensionInterface).getDouble();
+            return (ext as SampleExtension).getDouble();
         }
         return 1;
     }
 }
 
-class SampleProxy extends SDSProxy {
+class SampleProxy extends Proxy {
     protected _behindData?: SampleService;
 
     constructor(moduleLink: ModuleLink) {
@@ -52,7 +52,7 @@ class SampleProxy extends SDSProxy {
     }
 }
 
-class SampleProxy2 extends SDSProxy {
+class SampleProxy2 extends Proxy {
     protected _behindData?: SampleProxy;
 
     constructor(moduleLink: ModuleLink) {
@@ -72,7 +72,7 @@ class SampleProxy2 extends SDSProxy {
     }
 }
 
-class Sample42Extension implements SampleExtensionInterface {
+class Sample42Extension implements SampleExtension {
     description?: string | undefined;
     packageLink: ModuleLink;
     private num: number = 42;
@@ -89,7 +89,7 @@ class Sample42Extension implements SampleExtensionInterface {
     }
 }
 
-class Sample6Extension implements SampleExtensionInterface {
+class Sample6Extension implements SampleExtension {
     description?: string | undefined;
     packageLink: ModuleLink;
     private num: number = 6;
@@ -153,7 +153,7 @@ test(`Creating an extension`, async () => {
     expect(service.packageLink).toBe(serviceLink);
     expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService!()).toBe(serviceText);
-    expect(service.extensionOperator.extensionCount).toBe(2);
+    expect(service.extensionOperator.count).toBe(2);
 
     expect(service.getNumber!()).toBe(1);
     expect(service.getNumber!(0)).toBe(12);

@@ -1,7 +1,8 @@
 import { selectOne as cssSelectOne, selectAll as cssSelectAll } from "css-select";
-import { OkResult, Result } from "@ara-web/p-hintjens";
-import { SDSService } from "./sds.js";
-import { CSSObjectAdapter, LinkTraits, ObjectNode } from "./link-traits.js";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
+import { Service } from "./sds.js";
+import { ObjectNodeAdapter, ObjectNode } from "./tree.js";
+import { LinkTraits } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 /**
  * Rest converts the json into a node tree.
@@ -93,7 +94,7 @@ export class RestDispatcher {
     deleting;
 }
 /**
- * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ * Rest is the Service that creates a CSS Selector traversing for the objects.
  *
  * It starts by accepting the JSON object that could be the root node.
  *
@@ -106,13 +107,13 @@ export class RestDispatcher {
  * const welcomeComponent = await rest.get!("Layout > Welcome")
  * ```
  */
-export class Rest extends SDSService {
+export class Rest extends Service {
     _options;
     _root;
     _objectToNodeTree;
     constructor(object, objectToTreeNode, setup = { packageLink: ModuleLink.newPackageURL("@ara-web", "rest") }) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
-        this._options = { adapter: new CSSObjectAdapter() };
+        this._options = { adapter: new ObjectNodeAdapter() };
         this._objectToNodeTree = objectToTreeNode;
         this._root = this._objectToNodeTree(object, undefined, true);
     }
@@ -127,7 +128,7 @@ export class Rest extends SDSService {
         return this._objectToNodeTree;
     }
     get dispatchers() {
-        if (this.extensionOperator.extensionCount === 0) {
+        if (this.extensionOperator.count === 0) {
             return [];
         }
         return this.extensionOperator.all;
@@ -174,6 +175,7 @@ export class Rest extends SDSService {
      * @returns
      */
     async post(selector, data, options = { lilBro: false }) {
+        Debug.log(`posting the data in the rest`);
         const parentOrBigBro = await this._getParentOrBigBro(selector, options);
         if (parentOrBigBro.isFailure) {
             return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription);
@@ -191,9 +193,12 @@ export class Rest extends SDSService {
         if (newBornChild.isFailure) {
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription);
         }
+        Debug.log(`Rest dispatcher pass the element to the extensions `);
         for (const restDispatcher of this.extensionOperator.all) {
             if (restDispatcher.posting !== undefined) {
+                Debug.push(`rest dispatcher of ${restDispatcher.packageLink}`);
                 const afterPosted = await restDispatcher.posting(parentOrBigBro.getValue(), newBornChild.getValue(), options);
+                Debug.pop();
                 if (afterPosted.isFailure) {
                     return OkResult.fail(`extension('${restDispatcher.packageLink}').forwardPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription);
                 }
@@ -253,7 +258,7 @@ export class Rest extends SDSService {
         if (node.parent === null) {
             return OkResult.fail(`Rest.get('${selector}'): parent not found`, `Please pass the correct object selector`);
         }
-        const element = node.getElement();
+        const element = node.data;
         if (element !== null && typeof element !== typeof data) {
             return OkResult.fail(`Element type mismatch`);
         }
@@ -339,7 +344,7 @@ export class Rest extends SDSService {
         return OkResult.ok();
     }
     clone(attrSelector) {
-        const clone = new Rest(this._root.getElement(), this._objectToNodeTree);
+        const clone = new Rest(this._root.data, this._objectToNodeTree);
         clone._root = this._root;
         clone.delete(attrSelector);
         return clone;

@@ -2,19 +2,19 @@ import {
     selectOne as cssSelectOne, 
     selectAll as cssSelectAll 
 } from "css-select";
-import { OkResult, Result } from "@ara-web/p-hintjens";
+import { Debug, OkResult, Result } from "@ara-web/p-hintjens";
 import { 
-    SDSService, 
-    type SDSExtensionInterface, 
-    type SDSSetup
+    Service, 
+    type Extension, 
+    type Setup
 } from "./sds.js";
 import { 
-    CSSObjectAdapter, 
-    LinkTraits, 
+    ObjectNodeAdapter, 
     ObjectNode, 
-    type ObjectNodeInterface, 
-    type ObjectToNodeTree 
-} from "./link-traits.js";
+    type SelectorNode, 
+    type DataToObjectNode 
+} from "./tree.js";
+import { LinkTraits } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 
 export type Posting = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: { lilBro?: boolean }) => Promise<OkResult>;
@@ -52,9 +52,9 @@ export type Deleting = <DataType>(selector: string, nodes: ObjectNode<DataType>[
 export class RestQueue {
     private _queue: Record<string, boolean>;
     private _parentNode?: ObjectNode<any>;
-    private _objectToNodeTree?: ObjectToNodeTree<any>;
+    private _objectToNodeTree?: DataToObjectNode<any>;
 
-    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: ObjectToNodeTree<any>) {
+    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: DataToObjectNode<any>) {
         this._queue = {};
         this._parentNode = parentNode;
         this._objectToNodeTree = objectToNodeTree;
@@ -64,11 +64,11 @@ export class RestQueue {
         return this._parentNode;
     }
 
-    public get objectToNodeTree(): ObjectToNodeTree<any>|undefined {
+    public get objectToNodeTree(): DataToObjectNode<any>|undefined {
         return this._objectToNodeTree;
     }
 
-    public setAll(node: ObjectNode<any>, objectToNodeTree: ObjectToNodeTree<any>) {
+    public setAll(node: ObjectNode<any>, objectToNodeTree: DataToObjectNode<any>) {
         if (this._parentNode !== undefined) throw `Parent node was set already`;
         this._parentNode = node;
         this._objectToNodeTree = objectToNodeTree;
@@ -94,7 +94,7 @@ export class RestQueue {
  * A Rest Extension that forwards rest to the side.
  * For example, to save the data in the file system or in the database.
  */
-export class RestDispatcher implements SDSExtensionInterface {
+export class RestDispatcher implements Extension {
     private _operatorLink: ModuleLink;
     private _tag: string;
 
@@ -125,14 +125,14 @@ export class RestDispatcher implements SDSExtensionInterface {
  * Rest methods. This interface is used to pass the rest object between modules.
  * If you want to implement your custom rest, then better {@link Rest}
  */
-export interface RestInterface<ElementType> {
+export interface RestTraits<ElementType> {
     /**
      * A readonly methods of the Rest.
      */
     rootNode: ObjectNode<ElementType>|undefined;
     setRootNode(obj: ObjectNode<ElementType>): void;
 
-    objectToNodeTree: ObjectToNodeTree<ElementType>;
+    objectToNodeTree: DataToObjectNode<ElementType>;
     elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
     clone?(attrSelector: string): Rest<ElementType>;
 
@@ -156,7 +156,7 @@ export interface RestOptions<ElementType> {
 
 
 /**
- * Rest is the SDS Service that creates a CSS Selector traversing for the objects.
+ * Rest is the Service that creates a CSS Selector traversing for the objects.
  * 
  * It starts by accepting the JSON object that could be the root node.
  * 
@@ -169,18 +169,18 @@ export interface RestOptions<ElementType> {
  * const welcomeComponent = await rest.get!("Layout > Welcome")
  * ```
  */
-export class Rest<ObjectDataType> extends SDSService implements RestInterface<ObjectDataType> {
-    private _options: {adapter: CSSObjectAdapter<ObjectDataType>};
+export class Rest<ObjectDataType> extends Service implements RestTraits<ObjectDataType> {
+    private _options: {adapter: ObjectNodeAdapter<ObjectDataType>};
     private _root: ObjectNode<ObjectDataType>;
-    private _objectToNodeTree: ObjectToNodeTree<ObjectDataType>;
+    private _objectToNodeTree: DataToObjectNode<ObjectDataType>;
 
     constructor(
         object: ObjectDataType,
-        objectToTreeNode: ObjectToNodeTree<ObjectDataType>,
-        setup: SDSSetup = {packageLink: ModuleLink.newPackageURL("@ara-web", "rest")}
+        objectToTreeNode: DataToObjectNode<ObjectDataType>,
+        setup: Setup = {packageLink: ModuleLink.newPackageURL("@ara-web", "rest")}
     ) {
         super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone", "elementToObjectNode"]);
-        this._options = {adapter: new CSSObjectAdapter()};
+        this._options = {adapter: new ObjectNodeAdapter()};
         this._objectToNodeTree = objectToTreeNode;
         this._root = this._objectToNodeTree(object, undefined, true);
     }
@@ -194,12 +194,12 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
         this._root = obj;
     }
 
-    public get objectToNodeTree(): ObjectToNodeTree<ObjectDataType> {
+    public get objectToNodeTree(): DataToObjectNode<ObjectDataType> {
         return this._objectToNodeTree;
     }
 
     public get dispatchers(): Readonly<RestDispatcher>[] {
-        if (this.extensionOperator.extensionCount === 0) {
+        if (this.extensionOperator.count === 0) {
             return [];
         }
 
@@ -249,6 +249,7 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
      * @returns 
      */
     public async post?(selector: string, data: ObjectDataType, options: {lilBro?: boolean} = {lilBro: false}): Promise<OkResult> {
+        Debug.log(`posting the data in the rest`)
         const parentOrBigBro = await this._getParentOrBigBro(selector, options);
         if (parentOrBigBro.isFailure) {
             return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription!);
@@ -267,9 +268,12 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
             return OkResult.fail(`this.elementToObjectNode(): ${newBornChild.errorTitle}`, newBornChild.errorDescription!);
         }
 
+        Debug.log(`Rest dispatcher pass the element to the extensions `)
         for (const restDispatcher of this.extensionOperator.all) {
             if ((restDispatcher as RestDispatcher).posting !== undefined) {
+                Debug.push(`rest dispatcher of ${restDispatcher.packageLink}`)
                 const afterPosted = await (restDispatcher as RestDispatcher).posting!(parentOrBigBro.getValue()!, newBornChild.getValue(), options);
+                Debug.pop();
                 if (afterPosted.isFailure) {
                     return OkResult.fail(`extension('${restDispatcher.packageLink}').forwardPost(parent: '${selector}'): ${afterPosted.errorTitle}`, afterPosted.errorDescription!);
                 }
@@ -310,7 +314,7 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
             }
             const elderBrothers = newBornChild.parent!.children.slice(0, bigBroIndex + 1);
             const youngerCousins = newBornChild.parent!.children.slice(bigBroIndex + 1);
-            const allChildren: ObjectNodeInterface[] = [...elderBrothers, newBornChild as ObjectNodeInterface, ...youngerCousins];
+            const allChildren: SelectorNode[] = [...elderBrothers, newBornChild as SelectorNode, ...youngerCousins];
             newBornChild.parent!.setChildren(allChildren);
         }
         
@@ -333,7 +337,7 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
         if (node.parent === null) {
             return OkResult.fail(`Rest.get('${selector}'): parent not found`, `Please pass the correct object selector`);
         }
-        const element = node.getElement();
+        const element = node.data;
         if (element !== null && typeof element !== typeof data) {
             return OkResult.fail(`Element type mismatch`)
         }
@@ -429,7 +433,7 @@ export class Rest<ObjectDataType> extends SDSService implements RestInterface<Ob
     }
 
     public clone?(attrSelector: string): Rest<ObjectDataType> {
-        const clone = new Rest<ObjectDataType>(this._root.getElement()!, this._objectToNodeTree);
+        const clone = new Rest<ObjectDataType>(this._root.data!, this._objectToNodeTree);
         clone._root = this._root;
         clone.delete!(attrSelector);
         return clone;

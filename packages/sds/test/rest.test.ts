@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, ObjectToNodeTree, Rest, RestDispatcher, RestInterface, RestOptions, SDSProxy } from "../src/index.js";
+import { ModuleLink, ObjectNode, DataToObjectNode, Rest, RestDispatcher, RestTraits, RestOptions, Proxy } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter.js"
@@ -15,7 +15,7 @@ var navBar3Html = `<a href="github.com" id="github-link">github</a>`;
 var pageHtml = `<header>Here is the navigation<ul><li>menu</li></ul></header><section id="footer-section">bottom links</section>`
 var adapter = new NodeAdapter()
 
-export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterface<ElementType> {
+export class RestBranchProxy<ElementType> extends Proxy implements RestTraits<ElementType> {
     protected _behindData?: Rest<ElementType>;
     private _root: ObjectNode<ElementType>;
 
@@ -24,11 +24,11 @@ export class RestBranchProxy<ElementType> extends SDSProxy implements RestInterf
         this._root = root;
     }
 
-    public get objectToNodeTree(): ObjectToNodeTree<ElementType> {
+    public get objectToNodeTree(): DataToObjectNode<ElementType> {
         // Return a dummy function to satisfy the type
         return ((element: ElementType, parent?: ObjectNode<ElementType>, isRoot?: boolean) => {
             throw new Error("objectToNodeTree is not implemented in RestBranchProxy.");
-        }) as ObjectToNodeTree<ElementType>;
+        }) as DataToObjectNode<ElementType>;
     }
 
     public setRootNode(obj: ObjectNode<ElementType>) {
@@ -114,11 +114,11 @@ test(`Testing the rest with simple operations`, async() => {
 
     const sameChild = await rest.get!('footer > div');
     expect(sameChild !== null).toBe(true);
-    expect(sameChild?.getElement() === child[0]).toBe(true);
+    expect(sameChild?.data === child[0]).toBe(true);
 
     const secondChild = await rest.get!('footer > div.apple');
     expect(secondChild !== null).toBe(true);
-    expect(secondChild?.getElement() === child[1]).toBe(true);
+    expect(secondChild?.data === child[1]).toBe(true);
 
     // Get document
     const a = rest.get!('footer a');
