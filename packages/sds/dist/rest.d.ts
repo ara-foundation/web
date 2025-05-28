@@ -1,94 +1,73 @@
-import { OkResult, Result } from "@ara-web/p-hintjens";
-import { Service, type Extension, type Setup } from "./sds.js";
+import { OkResult } from "@ara-web/p-hintjens";
+import { ExtensionOperator, Service, type Extendable, type Setup } from "./sds.js";
 import { ObjectNode, type DataToObjectNode } from "./tree.js";
 import { ModuleLink } from "./links/index.js";
-export type Posting = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
+export type PostHandler = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: {
     lilBro?: boolean;
 }) => Promise<OkResult>;
-export type Putting = <DataType>(selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
-export type Patching = <DataType, AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
-export type Deleting = <DataType>(selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
+export type PutHandler = <DataType>(selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
+export type PatchHandler = <DataType, AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
+export type DeleteHandler = <DataType>(selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
 /**
- * Rest converts the json into a node tree.
- * But rest is planned to be used in all application.
- * So, it allows adding any data.
- *
- * Additionally, Rest also has the dispatcher.
- * If dispatcher is given, then rest will forward any operation to that dispatcher.
- *
- * Additionally, Rest also has the syncer.
- * If queue is given, then, rest before any request will ask queue,
- * does it have any data to execute. If so, it will execute them before any operation.
- *
- * Any module, that has to synchronize must have it's node inside. And if given data,
- * it must synchronize the rest with it.
- *
- * for example:
- * in reflect:
- * exts = new NodeJSextension().
- * exts[0].node = rest.get!('#${ext.packageLink.moduleURL}');
- * exts[0].putModules()
- *      node !== undefined, and if module !== this.synchronizer.isExist()?
- *          node.appendChild(nodeModules);
- *          node.set();
- *
- * Rest Queue:
- * Calls the rest queue.
+ * RestSynchronizer is used to keep track of the object nodes
+ * that are pending to be synchronized by the rest.
  */
-export declare class RestQueue {
-    private _queue;
-    private _parentNode?;
-    private _objectToNodeTree?;
-    constructor(parentNode?: ObjectNode<any>, objectToNodeTree?: DataToObjectNode<any>);
-    get parentNode(): ObjectNode<any> | undefined;
-    get objectToNodeTree(): DataToObjectNode<any> | undefined;
-    setAll(node: ObjectNode<any>, objectToNodeTree: DataToObjectNode<any>): void;
-    isExist(key: string): boolean;
-    set(key: string): void;
-    unset(key: string): void;
+export declare class RestSynchronizer {
+    readonly pendingKeys: Set<string>;
+    readonly rootNode: ObjectNode<any>;
+    readonly objectToNodeTree: DataToObjectNode<any>;
+    constructor(node: ObjectNode<any>, objectToNodeTree: DataToObjectNode<any>);
 }
 /**
  * A Rest Extension that forwards rest to the side.
  * For example, to save the data in the file system or in the database.
  */
-export declare class RestDispatcher implements Extension {
+export declare class RestHandler implements Extendable {
     private _operatorLink;
     private _tag;
     constructor(operatorLink: ModuleLink, tag: string);
     get packageLink(): ModuleLink;
     get tag(): string;
     isMatchingTag(selector: string): boolean;
-    posting?: Posting;
-    putting?: Putting;
-    patching?: Patching;
-    deleting?: Deleting;
+    handlePost?: PostHandler;
+    handlePut?: PutHandler;
+    handlePatch?: PatchHandler;
+    handleDelete?: DeleteHandler;
+}
+export declare class RestDispatcher<ObjectDataType> extends ExtensionOperator {
+    private get handlers();
+    post(parentOrBigBro: ObjectNode<ObjectDataType>, newBornChild: ObjectNode<ObjectDataType>, options?: {
+        lilBro?: boolean;
+    }): Promise<OkResult>;
+    put(selector: string, node: ObjectNode<ObjectDataType>, data: ObjectDataType): Promise<OkResult>;
+    patch<AttrType>(selector: string, node: ObjectNode<ObjectDataType>, data: AttrType): Promise<OkResult>;
+    delete(selector: string, nodes: ObjectNode<ObjectDataType>[]): Promise<OkResult>;
 }
 /**
  * Rest methods. This interface is used to pass the rest object between modules.
  * If you want to implement your custom rest, then better {@link Rest}
  */
-export interface RestTraits<ElementType> {
+export interface Restful<ObjectDataType> {
     /**
      * A readonly methods of the Rest.
      */
-    rootNode: ObjectNode<ElementType> | undefined;
-    setRootNode(obj: ObjectNode<ElementType>): void;
-    objectToNodeTree: DataToObjectNode<ElementType>;
-    elementToObjectNode?(data: ElementType, options: RestOptions<ElementType>): Result<ObjectNode<ElementType>>;
-    clone?(attrSelector: string): Rest<ElementType>;
-    get?(selector: string): Promise<ObjectNode<ElementType> | null>;
-    getAll?(selector: string): Promise<ObjectNode<ElementType>[]>;
-    post?(selector: string, data: ElementType, options?: {
+    rootNode: ObjectNode<ObjectDataType> | undefined;
+    setRootNode(obj: ObjectNode<ObjectDataType>): void;
+    dataToObjectNode: DataToObjectNode<ObjectDataType>;
+    clone?(attrSelector: string): Rest<ObjectDataType>;
+    get?(selector: string): Promise<ObjectNode<ObjectDataType> | null>;
+    getAll?(selector: string): Promise<ObjectNode<ObjectDataType>[]>;
+    post?(selector: string, data: ObjectDataType, options?: {
         lilBro?: boolean;
     }): Promise<OkResult>;
-    put?(selector: string, data: ElementType): Promise<OkResult>;
+    put?(selector: string, data: ObjectDataType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
-    dispatchers: Readonly<RestDispatcher>[];
+    dispatcher: RestDispatcher<ObjectDataType>;
 }
-export interface RestOptions<ElementType> {
+export interface RestOptions<ObjectDataType> {
     lilBro?: boolean;
-    parent?: ObjectNode<ElementType>;
+    parent?: ObjectNode<ObjectDataType>;
     root?: boolean;
 }
 /**
@@ -105,20 +84,22 @@ export interface RestOptions<ElementType> {
  * const welcomeComponent = await rest.get!("Layout > Welcome")
  * ```
  */
-export declare class Rest<ObjectDataType> extends Service implements RestTraits<ObjectDataType> {
+export declare class Rest<ObjectDataType> extends Service implements Restful<ObjectDataType> {
     private _options;
     private _root;
-    private _objectToNodeTree;
-    constructor(object: ObjectDataType, objectToTreeNode: DataToObjectNode<ObjectDataType>, setup?: Setup);
+    readonly dataToObjectNode: DataToObjectNode<ObjectDataType>;
+    constructor(object: ObjectDataType, dataToObjectNode: DataToObjectNode<ObjectDataType>, setup?: Setup);
     get rootNode(): ObjectNode<ObjectDataType>;
     setRootNode(obj: ObjectNode<ObjectDataType>): void;
-    get objectToNodeTree(): DataToObjectNode<ObjectDataType>;
-    get dispatchers(): Readonly<RestDispatcher>[];
-    elementToObjectNode?(data: ObjectDataType, options: RestOptions<ObjectDataType>): Result<ObjectNode<ObjectDataType>>;
     /**
-     * Retreive a resource node.
-     * @param selector
+     * Returns the extension operator as the rest dispatcher, since all rest handlers are returned as extensions.
      */
+    get dispatcher(): RestDispatcher<ObjectDataType>;
+    /******************************************************************
+     *
+     * RESTFule methods
+     *
+     *******************************************************************/
     get?(selector: string): Promise<ObjectNode<ObjectDataType> | null>;
     getAll?(selector: string): Promise<ObjectNode<ObjectDataType>[]>;
     /**

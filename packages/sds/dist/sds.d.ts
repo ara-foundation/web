@@ -1,46 +1,67 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ModuleLink as PackageLink, type ModuleURL } from "./links/index.js";
+import { ModuleLink, type ModuleURL } from "./links/index.js";
+/**********************************************************
+ *
+ * Interfaces
+ *
+ *********************************************************/
 /**
  * Any Service will have a meta information such as it's unique ID.
  */
 export interface Meta {
-    packageLink: PackageLink;
+    packageLink: ModuleLink;
 }
 /**
  * Setup proxies and extensions of the service
  */
 export interface Setup extends Meta {
     proxies?: Proxy[];
-    extensions?: Extension[];
+    extensions?: Extendable[];
 }
 /**
  * Any Proxy must implement the following interface.
  * Not recommended to use on it's own, but instead extend {@link Proxy}
  */
-export interface ProxyFrontier extends Meta {
+export interface Target extends Meta {
     putBehindData?: <BehindProxy>(behindData: BehindProxy) => void;
+    proxifyMe<ProxyFront>(): Result<ProxyFront>;
 }
 /**
  * Any Extension must implement the following interface
  */
-export interface Extension extends Meta {
+export interface Extendable extends Meta {
+}
+/**
+ * Even though we can use Record<ModuleURL, Extendable> as a type for the extensions,
+ * We use the operator to handle the extensions.
+ * This is because we can replace it later to use with the restful API.
+ */
+export interface ExtendableOperator {
+    exts: Readonly<Extendable>[];
+    extensionAmount: number;
+    addExtension(ext: Extendable): Promise<OkResult>;
+    getExtension(moduleURL: ModuleURL): Extendable | undefined;
+    updateExtension(ext: Extendable): Promise<OkResult>;
+    removeExtension(exts: Extendable[]): Promise<OkResult>;
 }
 /**********************************************************
  *
  * Implement the classes with the implementing interfaces
  *
  *********************************************************/
+export declare class Base implements Meta {
+    private readonly _packageLink;
+    constructor(packageLink: ModuleLink);
+    get packageLink(): ModuleLink;
+}
 /**
  * Almost a ready to use Proxy
  */
-export declare class Proxy {
-    private _packageLink;
+export declare class Proxy extends Base implements Target {
     private _proxies?;
-    protected _publicMethods: string[];
-    protected _hidedMethods: Record<string, any>;
-    get publicMethods(): string[];
-    constructor(_moduleLink: PackageLink, _publicMethods: string[]);
-    get packageLink(): PackageLink;
+    readonly hideableMethods: string[];
+    protected hiddenMethods: Record<string, any>;
+    constructor(packageLink: ModuleLink, hideableMethods: string[]);
     /**
      * Main source to call, proxifyMe will hide the methods of this instance and put behind
      * the first proxy.
@@ -53,20 +74,12 @@ export declare class Proxy {
     protected postProxies(proxies: Proxy[]): void;
     protected hideByProxy<ProxyInheritance extends Proxy>(behindProxy: ProxyInheritance): void;
 }
-export interface ExtensionOperatorTraits {
-    all: Readonly<Extension>[];
-    count: number;
-    create(ext: Extension): Promise<OkResult>;
-    read(moduleURL: ModuleURL): Extension | undefined;
-    update(ext: Extension): Promise<OkResult>;
-    delete(exts: Extension[]): Promise<OkResult>;
-}
 /**
  * This operator handls all Extensions that service has.
  */
-export declare class ExtensionOperator implements ExtensionOperatorTraits {
+export declare class ExtensionOperator implements ExtendableOperator {
     private _exts;
-    constructor(initialExts: Extension[]);
+    constructor(initialExts: Extendable[]);
     /*********************************************************************
      *
      * Operator's public methods
@@ -75,8 +88,8 @@ export declare class ExtensionOperator implements ExtensionOperatorTraits {
     /**
      * Return all extensions of the Service
      */
-    get all(): Readonly<Extension>[];
-    get count(): number;
+    get exts(): Readonly<Extendable>[];
+    get extensionAmount(): number;
     /**
      * Registering a new extension in run-time.
      * If extension exists, then it throws error asking to use Put.
@@ -85,8 +98,8 @@ export declare class ExtensionOperator implements ExtensionOperatorTraits {
      * @param options
      * @returns
      */
-    create(ext: Extension): Promise<OkResult>;
-    read(moduleURL: ModuleURL): Extension | undefined;
+    addExtension(ext: Extendable): Promise<OkResult>;
+    getExtension(moduleURL: ModuleURL): Extendable | undefined;
     /**
      * Update the extension.
      * @param _selector
@@ -94,8 +107,8 @@ export declare class ExtensionOperator implements ExtensionOperatorTraits {
      * @param data
      * @returns
      */
-    update(ext: Extension): Promise<OkResult>;
-    delete(exts: Extension[]): Promise<OkResult>;
+    updateExtension(ext: Extendable): Promise<OkResult>;
+    removeExtension(exts: Extendable[]): Promise<OkResult>;
 }
 /**
  * Independent Service that will have proxies and extensions.
@@ -104,11 +117,11 @@ export declare class ExtensionOperator implements ExtensionOperatorTraits {
  * It comes with the Rest forward.
  */
 export declare class Service extends Proxy {
-    private _op;
+    protected operator: ExtendableOperator;
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup
      */
     constructor(setup: Setup, pubMethods: string[]);
-    get extensionOperator(): ExtensionOperatorTraits;
+    get extensionOperator(): ExtendableOperator;
 }

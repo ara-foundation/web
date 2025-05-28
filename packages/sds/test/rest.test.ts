@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
-import { ModuleLink, ObjectNode, DataToObjectNode, Rest, RestDispatcher, RestTraits, RestOptions, Proxy } from "../src/index.js";
+import { ModuleLink, ObjectNode, DataToObjectNode, Rest, RestDispatcher, RestOptions, Proxy, Restful, RestHandler } from "../src/index.js";
 
 import { JSDOM } from "jsdom";
 import { NodeAdapter } from "./node-adapter.js"
 import cssSelect from "css-select"
 import { nodeToObjectTree } from "./node-object-tree.js";
-import { OkResult } from "@ara-web/p-hintjens";
+import { Debug, OkResult } from "@ara-web/p-hintjens";
 
 var footerHtml = "<footer><div></div><div class=\"apple\"></div><a href=\"example.com\">link</a><span class=\"pear potato\"><strong id=\"cheese-burger\">Hello</strong>, <em>World!</em></span></footer>";
 var secondHtml = `<div id="secondDiv">Hello and welcome</div>`
@@ -15,13 +15,17 @@ var navBar3Html = `<a href="github.com" id="github-link">github</a>`;
 var pageHtml = `<header>Here is the navigation<ul><li>menu</li></ul></header><section id="footer-section">bottom links</section>`
 var adapter = new NodeAdapter()
 
-export class RestBranchProxy<ElementType> extends Proxy implements RestTraits<ElementType> {
+export class RestBranchProxy<ElementType> extends Proxy implements Restful<ElementType> {
     protected _behindData?: Rest<ElementType>;
     private _root: ObjectNode<ElementType>;
 
     constructor(root: ObjectNode<ElementType>, moduleLink: ModuleLink) {
         super(moduleLink, ["post", "getAll"]);
         this._root = root;
+    }
+    dataToObjectNode: DataToObjectNode<ElementType>;
+    get dispatcher(): RestDispatcher<ElementType> {
+        return this._behindData!.dispatcher;
     }
 
     public get objectToNodeTree(): DataToObjectNode<ElementType> {
@@ -56,8 +60,9 @@ export class RestBranchProxy<ElementType> extends Proxy implements RestTraits<El
         return await this._behindData!.post!.bind(this._behindData, `${selector}`, data, options)();
     }
 
-    public get dispatchers(): Readonly<RestDispatcher>[] {
-        return this._behindData!.dispatchers;
+
+    public get dispatchers(): Readonly<RestDispatcher<ElementType>>[] {
+        return this._behindData!.extensionOperator.exts as unknown as RestDispatcher<ElementType>[];
     }
 }
 
@@ -100,13 +105,12 @@ test(`Testing the rest with simple operations`, async() => {
     // get child
     let child = cssSelect("div", footer!, options);
     expect(child).toHaveLength(2);
-
     // Make sure it's parsing.
     // Add to the extensions the some modules
     // Make sure modules are the children of the element
     const rest = new Rest<HTMLElement>(footer!, nodeToObjectTree);
     const elems1 = await rest.getAll!('*');
-    expect(elems1).toHaveLength(1);
+    expect(elems1.length).toBe(7);
 
     // Post the body
     const bodyPosted = await rest.post!('*', footer!, {});
@@ -214,8 +218,8 @@ test(`Testing the rest branching without proxifying`, async() => {
     // Make sure modules are the children of the element
     const footerPkgLink = ModuleLink.newPackageLink('@ara-web', 'footer-pkg-link');
     const sampleHandler = new HTMLRestHandlers(footerPkgLink);
-    const sampleDispatcher = new RestDispatcher(footerPkgLink, "a");
-    sampleDispatcher.posting = sampleHandler.handlePost!;
+    const sampleDispatcher = new RestHandler(footerPkgLink, "a");
+    sampleDispatcher.handlePost = sampleHandler.handlePost!;
     const footerRestOptions = {
         packageLink: footerPkgLink, 
         extensions: [sampleDispatcher]
@@ -266,11 +270,11 @@ test(`Testing the forwarding SDS Extension receiver from rest`, async() => {
     const footer = getBody(footerHtml, 'footer');
 
     const pageBody = getBody(pageHtml, 'body');
-    const pageNode = nodeToObjectTree(pageBody!, undefined, true);
-    const footerNode = nodeToObjectTree(footer!, pageNode, false);
+    const pageNode = nodeToObjectTree(pageBody!, undefined);
+    const footerNode = nodeToObjectTree(footer!, pageNode);
     let navBar1Body = getBody(navBar1Html, 'a');
     navBar1Body = Object.assign(navBar1Body!, {packageLink: ModuleLink.newPackageLink('ara-web', 'nav-bar-1')});
-    const navBar1Node = nodeToObjectTree(navBar1Body!, pageNode, false);
+    const navBar1Node = nodeToObjectTree(navBar1Body!, pageNode);
     const sdsExtReceiver = new HTMLRestHandlers(ModuleLink.newPackageLink(`@ara-web`, `sds-ext-receiver`));
     expect((await sdsExtReceiver.handlePost(
         footerNode!,

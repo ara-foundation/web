@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { ModuleLink } from "../src"
-import { type Extension, Proxy, Service, type Setup } from "../src/sds";
+import { type Extendable, Proxy, Service, type Setup } from "../src/sds";
 
 const serviceText = "Hello from the service";
 const proxyText = "Hello from the proxy";
@@ -9,7 +9,7 @@ const serviceLink = ModuleLink.newPackageLink("@ara-web", "p-hintjens-service");
 const proxyLink = ModuleLink.newPackageLink("@ara-web", "p-hintjens-proxy");
 const proxyLink2 = ModuleLink.newPackageLink("@ara-web", "p-hintjens-proxy-2");
 
-interface SampleExtension extends Extension {
+interface SampleExtension extends Extendable {
     getDouble(): number;
     getTriple(): number;
 }
@@ -24,8 +24,8 @@ class SampleService extends Service {
     }
 
     public getNumber?(extIndex?: number): number {
-        if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.all.length) {
-            const ext = this.extensionOperator.all[extIndex];
+        if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.exts.length) {
+            const ext = this.extensionOperator.exts[extIndex];
             return (ext as SampleExtension).getDouble();
         }
         return 1;
@@ -109,13 +109,13 @@ class Sample6Extension implements SampleExtension {
 test('Creating a proxy', async () => {
     const proxy = new SampleProxy(proxyLink);
     expect(proxy.packageLink).toBe(proxyLink);
-    expect(proxy.publicMethods).toEqual(["helloProxy", "getDoubleNumber"]);
+    expect(proxy.hideableMethods).toEqual(["helloProxy", "getDoubleNumber"]);
     expect(proxy.helloProxy).toBeDefined();
     expect(proxy.helloProxy!()).toBe(proxyText);
 
     const proxy2 = new SampleProxy2(proxyLink2);
     expect(proxy2.packageLink).toBe(proxyLink2);
-    expect(proxy2.publicMethods).toEqual(["helloProxy2", "getTripleNumber"]);
+    expect(proxy2.hideableMethods).toEqual(["helloProxy2", "getTripleNumber"]);
     expect(proxy2.helloProxy2).toBeDefined();
     expect(proxy2.helloProxy2!()).toBe(proxyText2);
 
@@ -125,7 +125,7 @@ test('Creating a proxy', async () => {
         extensions: []
     });
     expect(service.packageLink).toBe(serviceLink);
-    expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
+    expect(service.hideableMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService).toBeUndefined();
 
     const proxified = service.proxifyMe<SampleProxy2>();
@@ -151,9 +151,9 @@ test(`Creating an extension`, async () => {
         extensions: [extension6, extension42]
     });
     expect(service.packageLink).toBe(serviceLink);
-    expect(service.publicMethods).toEqual(["helloService", "getNumber"]);
+    expect(service.hideableMethods).toEqual(["helloService", "getNumber"]);
     expect(service.helloService!()).toBe(serviceText);
-    expect(service.extensionOperator.count).toBe(2);
+    expect(service.extensionOperator.extensionAmount).toBe(2);
 
     expect(service.getNumber!()).toBe(1);
     expect(service.getNumber!(0)).toBe(12);

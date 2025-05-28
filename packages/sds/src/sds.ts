@@ -1,11 +1,18 @@
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ModuleLink as PackageLink, type ModuleURL } from "./links/index.js";
+import { ModuleLink, type ModuleURL } from "./links/index.js";
+
+/**********************************************************
+ * 
+ * Interfaces
+ * 
+ *********************************************************/
+
 
 /**
  * Any Service will have a meta information such as it's unique ID.
  */
 export interface Meta {
-    packageLink: PackageLink;
+    packageLink: ModuleLink;
 }
 
 /**
@@ -13,21 +20,36 @@ export interface Meta {
  */
 export interface Setup extends Meta {
     proxies?: Proxy[];
-    extensions?: Extension[];
+    extensions?: Extendable[];
 }
 
 /**
  * Any Proxy must implement the following interface.
  * Not recommended to use on it's own, but instead extend {@link Proxy}
  */
-export interface ProxyFrontier extends Meta {
-    putBehindData?: <BehindProxy>(behindData: BehindProxy) => void
+export interface Target extends Meta {
+    putBehindData?: <BehindProxy>(behindData: BehindProxy) => void;
+    proxifyMe<ProxyFront>(): Result<ProxyFront>;
 }
 
 /**
  * Any Extension must implement the following interface
  */
-export interface Extension extends Meta {}
+export interface Extendable extends Meta {}
+
+/**
+ * Even though we can use Record<ModuleURL, Extendable> as a type for the extensions,
+ * We use the operator to handle the extensions.
+ * This is because we can replace it later to use with the restful API.
+ */
+export interface ExtendableOperator {
+    exts: Readonly<Extendable>[];
+    extensionAmount: number;
+    addExtension(ext: Extendable): Promise<OkResult>;
+    getExtension(moduleURL: ModuleURL): Extendable|undefined;
+    updateExtension(ext: Extendable): Promise<OkResult>;
+    removeExtension(exts: Extendable[]): Promise<OkResult>;
+}
 
 /**********************************************************
  * 
@@ -35,26 +57,29 @@ export interface Extension extends Meta {}
  * 
  *********************************************************/
 
+export class Base implements Meta {
+    private readonly _packageLink: ModuleLink;
+
+    constructor(packageLink: ModuleLink) {
+        this._packageLink = packageLink;
+    }
+
+    public get packageLink(): ModuleLink {
+        return this._packageLink;
+    }
+}
+
 /**
  * Almost a ready to use Proxy
  */
-export class Proxy {
-    private _packageLink: PackageLink;
+export class Proxy extends Base implements Target {
     private _proxies?: Proxy[];
-    protected _publicMethods: string[] = [];
-    protected _hidedMethods: Record<string, any> = {};
+    public readonly hideableMethods: string[] = [];
+    protected hiddenMethods: Record<string, any> = {};
 
-    public get publicMethods(): string[] {
-        return this._publicMethods;
-    }
-
-    constructor(_moduleLink: PackageLink, _publicMethods: string[]) {
-        this._packageLink = _moduleLink;
-        this._publicMethods = _publicMethods;
-    }
-
-    public get packageLink(): PackageLink {
-        return this._packageLink;
+    constructor(packageLink: ModuleLink, hideableMethods: string[]) {
+        super(packageLink);
+        this.hideableMethods = hideableMethods;
     }
 
     /**
@@ -66,19 +91,19 @@ export class Proxy {
             return Result.ok(this as unknown as ProxyFront);
         }
 
-        if (this.publicMethods !== undefined && this.publicMethods.length > 0) {
+        if (this.hideableMethods?.length > 0) {
             this.hideByProxy(this);
         }
 
         const proxy = this._proxies.shift()!;
 
-        if ((proxy as ProxyFrontier).putBehindData !== undefined) {
+        if ((proxy as Target).putBehindData !== undefined) {
             // Hided methods are shown back if the data is put behind.
             let obj: any = Object.create(this);
-            for (let methodName in this._hidedMethods) {
-                obj[methodName] = this._hidedMethods[methodName].bind(obj);
+            for (let methodName in this.hiddenMethods) {
+                obj[methodName] = this.hiddenMethods[methodName].bind(obj);
             }
-            (proxy as ProxyFrontier).putBehindData!(obj);
+            (proxy as Target).putBehindData!(obj);
         }
         proxy.postProxies(this._proxies);
 
@@ -99,36 +124,26 @@ export class Proxy {
     }
 
     protected hideByProxy<ProxyInheritance extends Proxy>(behindProxy: ProxyInheritance): void {
-        if (Object.keys(behindProxy._hidedMethods).length > 0 || behindProxy.publicMethods === undefined) {
+        if (Object.keys(behindProxy.hiddenMethods).length > 0 || behindProxy.hideableMethods === undefined) {
             return;
         }
-        for(let pubKey of behindProxy.publicMethods) {
+        for(let pubKey of behindProxy.hideableMethods) {
             if ((behindProxy as any)[pubKey] === undefined) {
                 throw `The '${pubKey}' not in the ${behindProxy.packageLink.toString()} Proxy inheritance`;
             }
-            behindProxy._hidedMethods[pubKey] = (behindProxy as any)[pubKey];
+            behindProxy.hiddenMethods[pubKey] = (behindProxy as any)[pubKey];
             (behindProxy as any)[pubKey] = undefined;
         }
     }
 }
 
-export interface ExtensionOperatorTraits {
-    all: Readonly<Extension>[];
-    count: number;
-    // CRUD ;)
-    create(ext: Extension): Promise<OkResult>;
-    read(moduleURL: ModuleURL): Extension|undefined;
-    update(ext: Extension): Promise<OkResult>;
-    delete(exts: Extension[]): Promise<OkResult>;
-}
-
 /**
  * This operator handls all Extensions that service has.
  */
-export class ExtensionOperator implements ExtensionOperatorTraits {
-    private _exts: Record<ModuleURL, Extension> = {};
+export class ExtensionOperator implements ExtendableOperator {
+    private _exts: Record<ModuleURL, Extendable> = {};
 
-    constructor(initialExts: Extension[]) {
+    constructor(initialExts: Extendable[]) {
         initialExts.forEach(ext => {
             if (this._exts[ext.packageLink.url] !== undefined) {
                 throw `Duplicate initial extension '${ext.packageLink.url}'.`
@@ -146,11 +161,11 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
     /**
      * Return all extensions of the Service
      */
-    public get all(): Readonly<Extension>[] {
+    public get exts(): Readonly<Extendable>[] {
         return Object.values(this._exts);
     }
 
-    public get count(): number {
+    public get extensionAmount(): number {
         return Object.keys(this._exts).length;
     }
 
@@ -162,16 +177,18 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
      * @param options 
      * @returns 
      */
-    public async create(
-        ext: Extension,
-    ): Promise<OkResult> {
+    public async addExtension(ext: Extendable): Promise<OkResult> {
         if (this._exts[ext.packageLink.url] !== undefined) {
-            return OkResult.fail(`The extension exists already`, `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`);
+            return OkResult.fail(
+                `The extension exists already`, 
+                `Can not post duplicate of ${ext.packageLink}. Call rest.put instead.`
+            );
         }
+        this._exts[ext.packageLink.url] = ext;
         return OkResult.ok();
     }
 
-    public read(moduleURL: ModuleURL): Extension|undefined {
+    public getExtension(moduleURL: ModuleURL): Extendable|undefined {
         return this._exts[moduleURL];
     }
 
@@ -182,20 +199,18 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
      * @param data 
      * @returns 
      */
-    public async update(
-        ext: Extension
-    ): Promise<OkResult> {
+    public async updateExtension(ext: Extendable): Promise<OkResult> {
         if (this._exts[ext.packageLink.url] === undefined) {
             return OkResult.fail(`The extension not found`, `Can not over-write ${ext.packageLink}. Call rest.post instead.`);
         }
  
         // Remove all dispatchers for the extension's modules.
         // Call first the this.delete();
-        const removed = await this.delete([ext]);
+        const removed = await this.removeExtension([ext]);
         if (removed.isFailure) {
             return OkResult.fail(`delete('${ext.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
         }
-        const added = await this.create(ext);
+        const added = await this.addExtension(ext);
         if (added.isFailure) {
             return OkResult.fail(`create('${ext.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
         }
@@ -203,9 +218,7 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
         return OkResult.ok();
     }
 
-    public async delete(
-        exts: Extension[]
-    ): Promise<OkResult> {
+    public async removeExtension(exts: Extendable[]): Promise<OkResult> {
         for (const ext of exts) {
             if (this._exts[ext.packageLink.url] === undefined) {
                 return OkResult.fail(`The extension not found`, `Can not delete ${ext.packageLink}.`);
@@ -217,7 +230,6 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
     }
 }
 
-
 /**
  * Independent Service that will have proxies and extensions.
  * Since, Services can be proxified, they also have some elements of proxies.
@@ -225,7 +237,7 @@ export class ExtensionOperator implements ExtensionOperatorTraits {
  * It comes with the Rest forward.
  */
 export class Service extends Proxy {
-    private _op: ExtensionOperator;
+    protected operator: ExtendableOperator;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
@@ -234,7 +246,7 @@ export class Service extends Proxy {
     constructor(setup: Setup, pubMethods: string[]) {
         super(setup.packageLink, pubMethods);
         const exts = setup.extensions === undefined ? [] : setup.extensions;
-        this._op = new ExtensionOperator(exts);
+        this.operator = new ExtensionOperator(exts);
         // In case if it's proxified:
         if (setup.proxies !== undefined && setup.proxies.length > 0) {
             this.postProxies(setup.proxies.reverse());
@@ -242,7 +254,7 @@ export class Service extends Proxy {
         }
     }
 
-    public get extensionOperator(): ExtensionOperatorTraits {
-        return this._op;
+    public get extensionOperator(): ExtendableOperator {
+        return this.operator;
     }
 }

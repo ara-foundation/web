@@ -2,23 +2,23 @@ import { OkResult, ObjectTraits } from "@ara-web/p-hintjens";
 
 export type Predicate<Value> = (v: Value) => boolean;
 export const DOCUMENT_SELECTOR = "#document";
-export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>, root?: boolean) => ObjectNode<T>;
+export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>) => ObjectNode<T>;
 
-export interface SelectorNode extends Node {
+export interface CustomSelectorNode extends Node {
     selector: string;
     isTag: boolean;    // The component html name or component name.
     getAttribute(attr: string): string | undefined;
-    children: SelectorNode[];
-    parent: SelectorNode | null;
+    children: CustomSelectorNode[];
+    parent: CustomSelectorNode | null;
     name: string;
-    siblings: SelectorNode[];
+    siblings: CustomSelectorNode[];
     data: unknown | null;
     deleteChildren(): void;
     toString(): string;
     isAttributeExist(name: string): boolean;
-    isEqualTo(node: SelectorNode | null | undefined): boolean;
-    setChildren(children: SelectorNode[]): void;
-    setParent(parent: SelectorNode): void;
+    isEqualTo(node: CustomSelectorNode | null | undefined): boolean;
+    setChildren(children: CustomSelectorNode[]): void;
+    setParent(parent: CustomSelectorNode): void;
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult;
     appendChild<T extends Node>(node: T): T;
 }
@@ -61,18 +61,18 @@ export type DataOperations<T> = {
  * Using with the `CSSObjectAdapter` and `pageToObjectNodes` function,
  * it can be used to walk through the page using CSS selectors.
  */
-export class ObjectNode<DataType> implements SelectorNode {
+export class ObjectNode<DataType> implements CustomSelectorNode {
     public isTag: boolean = true;   // legacy, this is needed by CSS-Select package.
     private _data?: DataType;  // Only component like data
     private _children: ObjectNode<DataType>[] = [];
-    private _parent?: SelectorNode;
+    private _parent?: CustomSelectorNode;
     private _dataTraits: DataOperations<DataType>;
 
     constructor(
         dataTraits: DataOperations<DataType>,
         dataToObjectNode: DataToObjectNode<DataType>,
         data?: DataType,
-        parent?: SelectorNode,
+        parent?: CustomSelectorNode,
     ) {
         this._dataTraits = dataTraits;
         this._children = [];
@@ -210,7 +210,7 @@ export class ObjectNode<DataType> implements SelectorNode {
         throw new Error("Method not implemented.");
     }
 
-    isEqualTo(node: SelectorNode | null | undefined): boolean {
+    isEqualTo(node: CustomSelectorNode | null | undefined): boolean {
         if (!node) {
             return false;
         }
@@ -233,7 +233,7 @@ export class ObjectNode<DataType> implements SelectorNode {
         return this._dataTraits.getName(this._data);
     }
     
-    public get parent(): SelectorNode | null {
+    public get parent(): CustomSelectorNode | null {
 		return this._parent === undefined ? null : this._parent;
 	}
 
@@ -248,10 +248,10 @@ export class ObjectNode<DataType> implements SelectorNode {
         return this._dataTraits.setAttribute<AttributeValue>(this._data, name, value);
     }
 
-    public get children(): SelectorNode[] {
+    public get children(): CustomSelectorNode[] {
         return this._children;
     }
-    public get siblings(): SelectorNode[] {
+    public get siblings(): CustomSelectorNode[] {
 		return this.parent === null ? [this] : this.parent.children;
 	}
     deleteChildren(): void {
@@ -264,22 +264,22 @@ export class ObjectNode<DataType> implements SelectorNode {
         return this._dataTraits.getAttribute(this._data, attrName) !== undefined;
     }
 
-    public setChildren(children: SelectorNode[]) {
+    public setChildren(children: CustomSelectorNode[]) {
         this._children = children as ObjectNode<DataType>[];
     }
 
-    public setParent(parent: SelectorNode) {
+    public setParent(parent: CustomSelectorNode) {
         this._parent = parent;
     }
 }
 
 
-export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, ObjectNode<ElementType>>{
-	public isTag(elem: SelectorNode): elem is ObjectNode<ElementType> {
+export class ObjectNodeAdapter<ElementType> implements Adapter<CustomSelectorNode, ObjectNode<ElementType>>{
+	public isTag(elem: CustomSelectorNode): elem is ObjectNode<ElementType> {
 		return elem.isTag;
 	}
 
-    public getChildren(elem: SelectorNode): SelectorNode[] {
+    public getChildren(elem: CustomSelectorNode): CustomSelectorNode[] {
 		return elem.children ? Array.prototype.slice.call(elem.children, 0) : [];
     }
 
@@ -287,10 +287,10 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
 	    return elem.parent as unknown as ObjectNode<ElementType>;
     }
 
-    public removeSubsets(nodes: SelectorNode[]): SelectorNode[] {
+    public removeSubsets(nodes: CustomSelectorNode[]): CustomSelectorNode[] {
 	    let idx = nodes.length;
-        let node: SelectorNode;
-        let ancestor: SelectorNode | null;
+        let node: CustomSelectorNode;
+        let ancestor: CustomSelectorNode | null;
         let replace: boolean;
 
         // Check if each node (or one of its ancestors) is already contained in the
@@ -320,7 +320,7 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
         return nodes;
     }
 
-    public existsOne(test: Predicate<ObjectNode<ElementType>>, elems: SelectorNode[]): boolean {
+    public existsOne(test: Predicate<ObjectNode<ElementType>>, elems: CustomSelectorNode[]): boolean {
 		return elems.some((elem) => {
 			return this.isTag(elem) ?
 				test(elem) || this.existsOne(test, this.getChildren(elem)) :
@@ -328,7 +328,7 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
 		});
 	}
 
-	public getSiblings(elem: SelectorNode): SelectorNode[] {
+	public getSiblings(elem: CustomSelectorNode): CustomSelectorNode[] {
 		const parent = this.getParent(elem as unknown as ObjectNode<ElementType>);
 		return parent ? this.getChildren(parent) : [elem];
 	}
@@ -348,7 +348,7 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
 
 	public findOne(
         test: Predicate<ObjectNode<ElementType>>,
-        arr: SelectorNode[]
+        arr: CustomSelectorNode[]
     ): ObjectNode<ElementType> | null {
 		let elem: ObjectNode<ElementType> | null = null;
 
@@ -366,7 +366,7 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
 		return elem;
 	}
 
-	public findAll(test: Predicate<ObjectNode<ElementType>>, elems: SelectorNode[]): ObjectNode<ElementType>[] {
+	public findAll(test: Predicate<ObjectNode<ElementType>>, elems: CustomSelectorNode[]): ObjectNode<ElementType>[] {
 		let result: ObjectNode<ElementType>[] = [];
 		for(let i = 0, j = elems.length; i < j; i++){
 			if(!this.isTag(elems[i])) continue;
@@ -382,7 +382,7 @@ export class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, Obj
 		return result;
 	}
 	
-    public getText(elem: SelectorNode): string {
+    public getText(elem: CustomSelectorNode): string {
 		if (elem.isTag) {
 			return this.getChildren(elem).map(this.getText).join("");
 

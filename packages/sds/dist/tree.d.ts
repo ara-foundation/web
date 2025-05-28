@@ -1,22 +1,22 @@
 import { OkResult } from "@ara-web/p-hintjens";
 export type Predicate<Value> = (v: Value) => boolean;
 export declare const DOCUMENT_SELECTOR = "#document";
-export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>, root?: boolean) => ObjectNode<T>;
-export interface SelectorNode extends Node {
+export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>) => ObjectNode<T>;
+export interface CustomSelectorNode extends Node {
     selector: string;
     isTag: boolean;
     getAttribute(attr: string): string | undefined;
-    children: SelectorNode[];
-    parent: SelectorNode | null;
+    children: CustomSelectorNode[];
+    parent: CustomSelectorNode | null;
     name: string;
-    siblings: SelectorNode[];
+    siblings: CustomSelectorNode[];
     data: unknown | null;
     deleteChildren(): void;
     toString(): string;
     isAttributeExist(name: string): boolean;
-    isEqualTo(node: SelectorNode | null | undefined): boolean;
-    setChildren(children: SelectorNode[]): void;
-    setParent(parent: SelectorNode): void;
+    isEqualTo(node: CustomSelectorNode | null | undefined): boolean;
+    setChildren(children: CustomSelectorNode[]): void;
+    setParent(parent: CustomSelectorNode): void;
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult;
     appendChild<T extends Node>(node: T): T;
 }
@@ -55,13 +55,13 @@ export type DataOperations<T> = {
  * Using with the `CSSObjectAdapter` and `pageToObjectNodes` function,
  * it can be used to walk through the page using CSS selectors.
  */
-export declare class ObjectNode<DataType> implements SelectorNode {
+export declare class ObjectNode<DataType> implements CustomSelectorNode {
     isTag: boolean;
     private _data?;
     private _children;
     private _parent?;
     private _dataTraits;
-    constructor(dataTraits: DataOperations<DataType>, dataToObjectNode: DataToObjectNode<DataType>, data?: DataType, parent?: SelectorNode);
+    constructor(dataTraits: DataOperations<DataType>, dataToObjectNode: DataToObjectNode<DataType>, data?: DataType, parent?: CustomSelectorNode);
     baseURI: string;
     childNodes: NodeListOf<ChildNode>;
     firstChild: ChildNode | null;
@@ -113,35 +113,35 @@ export declare class ObjectNode<DataType> implements SelectorNode {
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean): void;
     dispatchEvent(event: Event): boolean;
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean): void;
-    isEqualTo(node: SelectorNode | null | undefined): boolean;
+    isEqualTo(node: CustomSelectorNode | null | undefined): boolean;
     get data(): DataType | null;
     set data(data: DataType);
     /**
      * For Pages, it returns empty string.
      */
     get name(): string;
-    get parent(): SelectorNode | null;
+    get parent(): CustomSelectorNode | null;
     getAttribute(attrName: string): string | undefined;
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult;
-    get children(): SelectorNode[];
-    get siblings(): SelectorNode[];
+    get children(): CustomSelectorNode[];
+    get siblings(): CustomSelectorNode[];
     deleteChildren(): void;
     toString(): string;
     isAttributeExist(attrName: string): boolean;
-    setChildren(children: SelectorNode[]): void;
-    setParent(parent: SelectorNode): void;
+    setChildren(children: CustomSelectorNode[]): void;
+    setParent(parent: CustomSelectorNode): void;
 }
-export declare class ObjectNodeAdapter<ElementType> implements Adapter<SelectorNode, ObjectNode<ElementType>> {
-    isTag(elem: SelectorNode): elem is ObjectNode<ElementType>;
-    getChildren(elem: SelectorNode): SelectorNode[];
+export declare class ObjectNodeAdapter<ElementType> implements Adapter<CustomSelectorNode, ObjectNode<ElementType>> {
+    isTag(elem: CustomSelectorNode): elem is ObjectNode<ElementType>;
+    getChildren(elem: CustomSelectorNode): CustomSelectorNode[];
     getParent(elem: ObjectNode<ElementType>): ObjectNode<ElementType> | null;
-    removeSubsets(nodes: SelectorNode[]): SelectorNode[];
-    existsOne(test: Predicate<ObjectNode<ElementType>>, elems: SelectorNode[]): boolean;
-    getSiblings(elem: SelectorNode): SelectorNode[];
+    removeSubsets(nodes: CustomSelectorNode[]): CustomSelectorNode[];
+    existsOne(test: Predicate<ObjectNode<ElementType>>, elems: CustomSelectorNode[]): boolean;
+    getSiblings(elem: CustomSelectorNode): CustomSelectorNode[];
     getAttributeValue(elem: ObjectNode<ElementType>, name: string): string | undefined;
     hasAttrib(elem: ObjectNode<ElementType>, name: string): boolean;
     getName(elem: ObjectNode<ElementType>): string;
-    findOne(test: Predicate<ObjectNode<ElementType>>, arr: SelectorNode[]): ObjectNode<ElementType> | null;
-    findAll(test: Predicate<ObjectNode<ElementType>>, elems: SelectorNode[]): ObjectNode<ElementType>[];
-    getText(elem: SelectorNode): string;
+    findOne(test: Predicate<ObjectNode<ElementType>>, arr: CustomSelectorNode[]): ObjectNode<ElementType> | null;
+    findAll(test: Predicate<ObjectNode<ElementType>>, elems: CustomSelectorNode[]): ObjectNode<ElementType>[];
+    getText(elem: CustomSelectorNode): string;
 }

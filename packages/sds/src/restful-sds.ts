@@ -1,49 +1,61 @@
 import { OkResult } from "@ara-web/p-hintjens";
 import { ModuleLink, type ModuleURL } from "./links/module-link.js";
-import { Rest, RestDispatcher, RestQueue } from "./rest.js";
-import type { Meta, ExtensionOperator, ExtensionOperatorTraits, Setup } from "./sds.js";
+import { RestHandler as RestHandler, RestDispatcher, RestSynchronizer, type Restful } from "./rest.js";
+import type { Meta, ExtensionOperator, ExtendableOperator, Setup, Extendable } from "./sds.js";
 import { LinkTraits } from "./link-traits.js";
 import { DOCUMENT_SELECTOR, ObjectNode } from "./tree.js";
 
 
 export interface RestfulSetup extends Setup {
-    tag: string,
+    rootNodeTag: string,
 }
 
 /**
  * Any Extension must implement the following interface
  */
 export interface RestfulExtension extends Meta {
-    extensionRestDispatcher?: RestDispatcher;
-    extensionRestQueue?: RestQueue;
+    restHandler?: RestHandler;
+    extensionRestQueue?: RestSynchronizer;
 }
 
-export class RestfulExtensionOperator implements ExtensionOperatorTraits {
+/**
+ * Wraps the ExtensionOperator to provide
+ * the synchronization with the rest through RestSynchronizer and RestDispatcher.
+ * 
+ * Purpose is to allow an SDS Service to have a RESTful API
+ * to manage the extensions in run-time.
+ * 
+ * It uses the RestDispatcher to handle the RESTful setters
+ * and RestSynchronizer to synchronize the data with the rest when this object is updated.
+ */
+export class RestfulExtensionOperator implements ExtendableOperator {
     private _extensionOperator: ExtensionOperator;
-    private _extDispatcher: RestDispatcher;
-    // Rest dispatcher. When extension is added,
-    // It will register extension's rest handler in the service's rest dispatcher.
-    private _restDispatcherOperator?: ExtensionOperator; 
-    private _restQueue: RestQueue;
+    private _extDispatcher: RestHandler;
+    // To register the extension's own restful data if extension has custom handler.
+    private _restDispatcherOperator?: RestDispatcher<any>; 
+    private _restSynchronizer?: RestSynchronizer;
 
-    constructor(serviceLink: ModuleLink, extTag: string = 'memop', extOp: ExtensionOperator) {
+    constructor(
+        serviceLink: ModuleLink, 
+        extTag: string = 'memop', 
+        extOp: ExtensionOperator
+    ) {
         if (!serviceLink.isPkgURL) {
             throw `Only package url is allowed as the service link`
         }
         this._extensionOperator = extOp;
-        this._restQueue = new RestQueue();
-        const restDispatcherLink = ModuleLink.fromModuleURL(serviceLink.url, {sub: `rest-dispatcher`, tag: extTag}).getValue();
-        this._extDispatcher = new RestDispatcher(restDispatcherLink, extTag);
-        this._extDispatcher.posting = this.handleExtensionAddition.bind(this);
-        this._extDispatcher.putting = this.handleExtensionUpdate.bind(this);
-        this._extDispatcher.deleting = this.handleExtensionDeletion.bind(this);
+        const restDispatcherLink = ModuleLink.fromModuleURL(serviceLink.url, {class: `SDSRestfulExtensionOperator`, tag: extTag}).getValue();
+        this._extDispatcher = new RestHandler(restDispatcherLink, extTag);
+        this._extDispatcher.handlePost = this.handleExtensionAddition.bind(this);
+        this._extDispatcher.handlePut = this.handleExtensionUpdate.bind(this);
+        this._extDispatcher.handleDelete = this.handleExtensionDeletion.bind(this);
     }
 
-    public get restDispatcher(): RestDispatcher {
+    public get restDispatcher(): RestHandler {
         return this._extDispatcher;
     }
 
-    public async setRestDispatcherOperator(rest: Rest<any>): Promise<OkResult> {
+    public async setRestDispatcherOperator(rest: Restful<any>): Promise<OkResult> {
         const documentElement = await rest.get!('*');
         if (documentElement === null) {
             return OkResult.fail(`No document element found, are you sure element exist?`, `Please make sure element exist`);
@@ -51,8 +63,8 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
         if (documentElement.selector !== DOCUMENT_SELECTOR) {
             return OkResult.fail(`The element isn't document selector`, `Can not put element node`);
         }
-        this._restQueue.setAll(documentElement!, rest.objectToNodeTree);
-        this._restDispatcherOperator = rest.extensionOperator as ExtensionOperator;
+        this._restSynchronizer = new RestSynchronizer(documentElement!, rest.dataToObjectNode);
+        this._restDispatcherOperator = rest.dispatcher;
         return OkResult.ok();
     }
 
@@ -62,12 +74,12 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
      * 
      *********************************************************************/
 
-    public get all(): Readonly<RestfulExtension>[] {
-        return this._extensionOperator.all;
+    public get exts(): Readonly<RestfulExtension>[] {
+        return this._extensionOperator.exts;
     }
 
-    public get count(): number {
-        return this._extensionOperator.count;
+    public get extensionAmount(): number {
+        return this._extensionOperator.extensionAmount;
     }
 
     /**
@@ -78,50 +90,50 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
      * @param options 
      * @returns 
      */
-    public async create(
+    public async addExtension(
         ext: RestfulExtension,
     ): Promise<OkResult> {
         if (this._restDispatcherOperator === undefined) {
             return OkResult.fail(`Please pass the rest dispatcher`, `call extensionOperator.setRestDispatcherOperator`);
         }
 
-        const added = await this._extensionOperator.create(ext);
+        const added = await this._extensionOperator.addExtension(ext);
         if (added.isFailure) {
             return OkResult.fail(`super.add(): ${added.errorTitle}`, added.errorDescription!);
         }
 
-        if (ext.extensionRestDispatcher) {
-            const added = await this._restDispatcherOperator.create(ext.extensionRestDispatcher);
+        if (ext.restHandler) {
+            const added = await this._restDispatcherOperator.addExtension(ext.restHandler);
             if (added.isFailure) {
-                return OkResult.fail(`restDispatcherOperator.create('${ext.extensionRestDispatcher.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
+                return OkResult.fail(`restDispatcherOperator.create('${ext.restHandler.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
             }
         }
 
-        if (!this._restQueue.isExist(ext.packageLink.url)) {
+        if (!this._restSynchronizer!.pendingKeys.has(ext.packageLink.url)) {
             // Very important line.
             // If it's given at the end, then when trying
             // to get the parent object node, it will
             // enter into an infinite cycle. get -> beforeAny -> get...
-            this._restQueue.set(ext.packageLink.url);
-            const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.url)!, this._restQueue.parentNode!);
-            this._restQueue.parentNode!.appendChild(moduleElement);
+            this._restSynchronizer!.pendingKeys.add(ext.packageLink.url);
+            const moduleElement = this._restSynchronizer!.objectToNodeTree!(this.getExtension(ext.packageLink.url)!, this._restSynchronizer!.rootNode!);
+            this._restSynchronizer!.rootNode!.appendChild(moduleElement);
         }
 
         return OkResult.ok();
     }
 
-    public read(moduleURL: ModuleURL): RestfulExtension|undefined {
-        return this._extensionOperator.read(moduleURL);
+    public getExtension(moduleURL: ModuleURL): RestfulExtension|undefined {
+        return this._extensionOperator.getExtension(moduleURL);
     }
 
-    public async update(
+    public async updateExtension(
         ext: RestfulExtension
     ): Promise<OkResult> {
-        const removed = await this.delete([ext]);
+        const removed = await this.removeExtension([ext]);
         if (removed.isFailure) {
             return OkResult.fail(`delete('${ext.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
         }
-        const added = await this.create(ext);
+        const added = await this.addExtension(ext);
         if (added.isFailure) {
             return OkResult.fail(`delete('${ext.packageLink}'): ${added.errorTitle}`, added.errorDescription!);
         }
@@ -129,7 +141,7 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
         return OkResult.ok();
     }
 
-    public async delete(
+    public async removeExtension(
         exts: RestfulExtension[]
     ): Promise<OkResult> {
         if (this._restDispatcherOperator === undefined) {
@@ -137,25 +149,25 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
         }
         for (const ext of exts) {
             // Remove the extension's rest dispatcher from rest
-            if (ext.extensionRestDispatcher) {
-                const removed = await this._restDispatcherOperator.delete([ext.extensionRestDispatcher]);
+            if (ext.restHandler) {
+                const removed = await this._restDispatcherOperator.removeExtension([ext.restHandler]);
                 if (removed.isFailure) {
-                    return OkResult.fail(`restDispatcherOperator.remove('${ext.extensionRestDispatcher.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
+                    return OkResult.fail(`restDispatcherOperator.remove('${ext.restHandler.packageLink}'): ${removed.errorTitle}`, removed.errorDescription!);
                 }
             }
 
-            if (this._restQueue.isExist(ext.packageLink.url)) {
+            if (this._restSynchronizer!.pendingKeys.has(ext.packageLink.url)) {
                 // Very important line.
                 // If it's given at the end, then when trying
                 // to get the parent object node, it will
                 // enter into an infinite cycle. get -> beforeAny -> get...
-                this._restQueue.set(ext.packageLink.url);
-                const moduleElement = this._restQueue.objectToNodeTree!(this.read(ext.packageLink.url)!, this._restQueue.parentNode!);
-                this._restQueue.parentNode!.removeChild(moduleElement);
+                this._restSynchronizer!.pendingKeys.delete(ext.packageLink.url);
+                const moduleElement = this._restSynchronizer!.objectToNodeTree!(this.getExtension(ext.packageLink.url)!, this._restSynchronizer!.rootNode!);
+                this._restSynchronizer!.rootNode!.removeChild(moduleElement);
             }
         }
 
-        const removed = await this._extensionOperator.delete(exts);
+        const removed = await this._extensionOperator.removeExtension(exts);
         if (removed.isFailure) {
             return OkResult.fail(`super.delete(): ${removed.errorTitle}`, removed.errorDescription!);
         }
@@ -205,11 +217,14 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
             return OkResult.fail(`The packageLink attribute doesn't exist in the data`, `Please update it`);
         }
 
-        this._restQueue.set((ext! as unknown as RestfulExtension).packageLink.url)
-        const added = await this.create(ext! as unknown as RestfulExtension);
-        if (added.isSuccess) {
+        // Explicitly add pending keys, since rest already synchronized.
+        // Because this function comes from the rest.
+        this._restSynchronizer!.pendingKeys.add((ext! as unknown as RestfulExtension).packageLink.url)
+
+        const added = await this.addExtension(ext! as unknown as RestfulExtension);
+        if (added.isFailure) {
             const moduleURL = (ext! as unknown as RestfulExtension).packageLink.url;
-            this._restQueue.set(moduleURL);
+            this._restSynchronizer!.pendingKeys.delete(moduleURL);
         }
         return added;
     }
@@ -246,7 +261,7 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
             )
         }
 
-        return await this.update(data as unknown as RestfulExtension);
+        return await this.updateExtension(data as unknown as RestfulExtension);
     }
 
     private async handleExtensionDeletion<DataType>(
@@ -255,14 +270,17 @@ export class RestfulExtensionOperator implements ExtensionOperatorTraits {
         const exts = nodes
             .filter(node => this._extDispatcher.isMatchingTag(node.selector))
             .map(node => node.data)
-            .filter(el => el !== null && ("packageLink" in (el as unknown as RestfulExtension)));
+            .filter(el => el !== null)
+            .map(el => el as unknown as Extendable)
+            .filter(el => el.packageLink !== undefined);
+        
         if (exts.length === 0) {
             return OkResult.ok();
         }
-        const removed = await this.delete(exts as unknown[] as RestfulExtension[]);
-        if (removed.isSuccess) {
+        const removed = await this.removeExtension(exts);
+        if (removed.isFailure) {
             exts.forEach(ext => 
-                this._restQueue.set((ext as unknown as RestfulExtension).packageLink.url)
+                this._restSynchronizer!.pendingKeys.add(ext.packageLink.url)
             );
         }
         return removed;
