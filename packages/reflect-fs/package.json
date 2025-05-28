@@ -1,0 +1,29 @@
+{
+  "name": "@ara-web/reflect-fs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "File system work",
+  "license": "ISC",
+  "main": "dist",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "prepublishOnly": "pnpm test:lint && tsc",
+    "_chore": "pnpm i",
+    "test": "vitest -r ./"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@ara-web/p-hintjens": "workspace:*",
+    "@ara-web/sds": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.16",
+    "vitest": "2.1.6"
+  }
+}
