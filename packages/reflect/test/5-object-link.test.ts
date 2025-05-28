@@ -137,52 +137,6 @@ test(`Object Tree building from code piece as Module Memory Child`, async() => {
     const firstModuleNode = await rest.get!(`#${firstModuleLink}`);
     expect(firstModuleNode !== null).toBe(true);
     expect(firstModuleNode?.data instanceof Module).toBe(true);
-
-    return
-    //
-    // The following is used by the CodePiece not this package.
-    // Trying to fetch code pieces from module memory
-    //
-    const typeName = 'CustomType';
-    const varName = 'varName';
-    let src = ` export type ${typeName} = { name: string; sex: number };` +
-        `const ${varName} = 'Hello and Welcome'`;
-    let code = new Code(src, ModuleLink.newFileLink(import.meta.filename));
-    
-    // Add types and lint them.
-    const elems2 = await rest.getAll!('*');
-    const parentElems = await firstModule.rest.getAll!('*')!
-    let types = await code.getTypeIdentifiers();
-    expect(types.isSuccess).toBe(true);
-    for (const importedCodePiece of types.getValue()) {
-        const posted = await firstModule.rest.post!('*', importedCodePiece, {});
-        expect(posted.isSuccess).toBe(true);
-    };
-
-    const elems3 = await rest.getAll!('*');
-    const parentElemsAfter = await firstModule.rest.getAll!('*');
-    expect(elems3.length).toBe(elems2.length + types.getValue().length)
-    expect(parentElems.length + types.getValue().length).toBe(parentElemsAfter.length)
-    // Make sure to test from rest now.
-    const codePiece = await rest.get!('type#CustomType');
-    expect(codePiece !== null).toBe(true);
-
-    // Posting from the rest not from code piece rest should work
-    let vars = await code.getVariableIdentifiers();
-    expect(vars.isSuccess).toBe(true);
-    expect(vars.getValue()).toHaveLength(1);
-    for (const importedCodePiece of vars.getValue()) {
-        const posted = await rest.post!(`#${firstModuleLink}`, importedCodePiece, {});
-        expect(posted.isSuccess).toBe(true);
-    };
-
-    const elems4 = await rest.getAll!('*');
-    const parentElemsAfterVars = await firstModule.rest.getAll!('*');
-    expect(elems4.length).toBe(elems3.length + vars.getValue().length)
-    expect(parentElemsAfter.length + vars.getValue().length).toBe(parentElemsAfterVars.length)
-
-    const varCodePiece = await firstModule.rest.get!(`#${varName}`);
-    expect(varCodePiece !== null).toBe(true);
 })
 
 // Adding the modules after creating the rest.
@@ -271,7 +225,7 @@ test(`Adding extension using extension operator`, async() => {
 
     const restOptions = {packageLink: pkgLink, extensions: [projectMemory.restDispatcher]};
     const rest = new Rest<any>(projectMemory!, reflectDataToObjectTree, restOptions);
-    const restfulLinked = await projectMemory.setRestDispatcherOperator(rest);
+    const restfulLinked = projectMemory.setRestDispatcherOperator(rest);
     expect(restfulLinked.isSuccess).toBe(true);
 
     const memops1 = await rest.getAll!(MEMOP_TAG);
