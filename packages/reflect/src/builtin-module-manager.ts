@@ -9,7 +9,6 @@ import {
     RestSynchronizer, 
 } from "@ara-web/sds";
 import { 
-    Debug,
     EnumTraits,
     OkResult, 
     Result,
@@ -132,7 +131,6 @@ export class BuiltinModuleManager implements ModuleManager {
         const importingFilePath = params.importMetaFilename ? params.importMetaFilename : FilePath.getCurrentWorkingDir();
         const moduleLinks: ModuleLink[] = [];
         if ("records" in params) {
-            Debug.log(`Put modules`);
             const importedRecords = params as ModuleRecords;
             for (let filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);

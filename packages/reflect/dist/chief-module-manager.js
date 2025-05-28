@@ -39,7 +39,7 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
     getModule = (link) => {
         for (const ext of this.exts) {
             const result = ext.getModule(link);
-            if (result && result.ok) {
+            if (result.isSuccess) {
                 return result;
             }
         }
@@ -62,13 +62,13 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
         return [];
     }
     putPackage(_) {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager can not put package, delegate to the module managers");
     }
     putModules(_) {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager can not put modules, delegate to the module managers");
     }
     watchModules(_) {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager won't watch modules, delegate to the module managers");
     }
     get memOps() {
         return this.exts;

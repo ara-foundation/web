@@ -49,7 +49,7 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
     getModule = <T>(link: ModuleLink): Result<Module> => {
         for (const ext of this.exts) {
             const result = (ext as ModuleManager).getModule(link);
-            if (result && (result as any).ok) {
+            if (result.isSuccess) {
                 return result;
             }
         }
@@ -75,13 +75,13 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
     }
 
     putPackage(_: ModuleRecord): Promise<Result<ModuleLink>> {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager can not put package, delegate to the module managers");
     }
     putModules(_: ModuleRecords | ModuleRecord): Promise<Result<ModuleLink[]>> {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager can not put modules, delegate to the module managers");
     }
     watchModules(_: AutoImporter): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Chief Module Manager won't watch modules, delegate to the module managers");
     }
 
     public get memOps(): ModuleManager[] {
