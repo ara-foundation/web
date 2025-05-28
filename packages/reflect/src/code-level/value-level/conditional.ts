@@ -4,7 +4,7 @@ import {
     AstNodeTraits, 
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     ValueTypeString,
     type ValueLevelInterface
@@ -23,7 +23,7 @@ export class Conditional {
         return node instanceof ConditionalExpression;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 4)) {
             return Result.fail(
                 `The ts node must have four children at least`,

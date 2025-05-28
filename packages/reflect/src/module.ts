@@ -182,7 +182,7 @@ export class FilePath {
     }
 
     public static getFileAbsolutePath = (filePath: string, filePathFrom: string): ModuleLink => {
-        return ModuleLink.newFileURL(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
+        return ModuleLink.newFileLink(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
     }
 
     /**
@@ -209,7 +209,7 @@ export class FilePath {
         }
 
         try {
-            const stats = statSync(moduleLink.toFilePath);
+            const stats = statSync(moduleLink.toAbsFilePath);
             return stats.isFile();
         } catch (_) {
             return false;

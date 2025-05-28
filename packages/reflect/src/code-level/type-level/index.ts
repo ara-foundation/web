@@ -8,7 +8,7 @@ import {
     UnionTypeDeclaration, 
     ValueTypeString,
     CodePiece,
-    AstNodeContext,
+    CodePieceContext,
     ReflectLink,
     type IdentifiedNodeDataType,
     type ValueType
@@ -196,7 +196,7 @@ export class TypeLevel {
      */
     public static lintType = (
         node: CodePiece|AraLink<string>,
-        parentNodeContext: AstNodeContext,
+        parentNodeContext: CodePieceContext,
     ): Result<CodePiece> => {
         if (node instanceof AraLink) {
             if (!ReflectLink.isIdentifierLink(node)) {
@@ -271,7 +271,7 @@ export class TypeLevel {
      */
     public static lintAstNodeMemory = (
         node: CodePiece,
-        nodeContext: AstNodeContext,
+        nodeContext: CodePieceContext,
     ): Result<CodePiece> => {
         if (node.memoryDataLength() === 0) {
             return Result.ok(node);
@@ -309,7 +309,7 @@ export class TypeLevel {
 
     private static lintTypeData = (
         data: IdentifiedNodeDataType,
-        nodeContext: AstNodeContext,
+        nodeContext: CodePieceContext,
     ): Result<TypedData> => {
         if (data instanceof AraLink) {
             // Debug.push(`this.lintAraLinkData()`, {araLink: data.toString(), nodeContext: `${nodeContext.localScopeLength} local scopes)`})
@@ -496,7 +496,7 @@ export class TypeLevel {
     // If the CodePiece.data is AraLink
     private static lintAraLinkData = (
         data: AraLink<string>,
-        nodeContext: AstNodeContext,
+        nodeContext: CodePieceContext,
     ): Result<TypedData> => {
         if (!ReflectLink.isIdentifierLink(data)) {
             return Result.fail(
@@ -580,7 +580,7 @@ export class TypeLevel {
 
     private static lintObjectData = (
         objData: object, 
-        nodeContext: AstNodeContext,
+        nodeContext: CodePieceContext,
     ): Result<TypedData> => {
         if (Array.isArray(objData)) {
             return Result.fail(

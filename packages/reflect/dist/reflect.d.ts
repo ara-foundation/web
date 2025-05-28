@@ -1,20 +1,21 @@
-import type { ExtensionInterface } from "./extension-interface.js";
-import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import type { ReflectInterface } from "./reflect-interface.js";
-import { SDSService, type SDSSetup } from "@ara-web/sds";
+import { RestfulExtensionOperator, Service, type RestfulSetup } from "@ara-web/sds";
+import { BuiltinModuleManager } from "./builtin-module-manager.js";
 import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
-export type ReflectSetup = SDSSetup<ExtensionInterface>;
+export interface RestfulReflect {
+    rest?(): RestReflectHookProxy;
+}
 /**
  * Reflect is the main source to Reflect on the website itself.
+ * It's restful, so depends on the RestfulExtensionOperator, instead ExtensionOperator.
  */
-export declare class Reflect extends SDSService<Reflect, ExtensionInterface> implements ReflectInterface {
-    private _memory;
+export declare class Reflect extends Service implements RestfulReflect {
     private _rest;
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
-     * @param reflectSetup
+     * @param setup
      */
-    constructor(reflectSetup: ReflectSetup);
-    get nodeJsExt(): NodejsReflectExtension;
+    constructor(setup: Omit<RestfulSetup, "tag" | "packageLink">);
+    get nodeJsExt(): BuiltinModuleManager;
     rest?(): RestReflectHookProxy;
+    get extensionOperator(): RestfulExtensionOperator;
 }

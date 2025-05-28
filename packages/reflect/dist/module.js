@@ -155,7 +155,7 @@ export class FilePath {
         return PathModule.dirname(dirOrfilePath);
     };
     static getFileAbsolutePath = (filePath, filePathFrom) => {
-        return ModuleLink.newFileURL(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
+        return ModuleLink.newFileLink(PathModule.resolve(this.getDirectory(filePathFrom), filePath));
     };
     /**
      * @param dirPath Directory without the file path
@@ -178,7 +178,7 @@ export class FilePath {
             return false;
         }
         try {
-            const stats = statSync(moduleLink.toFilePath);
+            const stats = statSync(moduleLink.toAbsFilePath);
             return stats.isFile();
         }
         catch (_) {

@@ -6,7 +6,7 @@ import {
     type ValueType,
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     type ValueLevelInterface,
     AstNodeTraits
@@ -86,7 +86,7 @@ export class PrefixUnary {
         return this.isPrefixUnary(node);
     }
 
-    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!PrefixUnary.isA(tsNode)) {
             return Result.fail(`The TS Node is not a prefix unary`, `Please pass the correct value instead '${tsNode.getText()}'`)
         }

@@ -4,7 +4,7 @@ export { AstNodeTraits } from "./ast-node-traits.js";
 export { Identifier } from "./idenitifier.js";
 export { UserTypeDeclaration, ValueTypeString, UnionTypeDeclaration, IntersectedUnionType } from "./code-piece-types.js";
 export { Literal } from "./literal.js";
-export { CodePieceContext as AstNodeContext } from "./code-piece-context.js";
+export { CodePieceContext } from "./code-piece-context.js";
 export { ValueLevel } from "./value-level/index.js";
 export { Code } from "./code.js";
 export { VariableLevel } from "./variable-level/index.js";

@@ -1,15 +1,15 @@
-import { Debug, OkResult } from "@ara-web/p-hintjens";
+import { OkResult } from "@ara-web/p-hintjens";
 import { ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
 import { CodePiece } from "./code-level/index.js";
-export const moduleToObjectTree = (codePiece, parent, root) => {
+export const moduleToCodePieceTree = (codePiece, parent, root) => {
     // Creating the root for entire source code that has one or many code pieces.
     if (root) {
-        return new ObjectNode(codePieceOps, moduleToObjectTree);
+        return new ObjectNode(codePieceOps, moduleToCodePieceTree);
     }
-    else if (parent !== undefined) {
-        return new ObjectNode(codePieceOps, moduleToObjectTree, codePiece, parent);
+    else if (parent === undefined) {
+        throw `No root, no parent, can not convert module memory into an object tree node`;
     }
-    return new ObjectNode(codePieceOps, moduleToObjectTree, codePiece);
+    return new ObjectNode(codePieceOps, moduleToCodePieceTree, codePiece, parent);
 };
 export const MODULE_SELECTOR = '*:nth-child(1) >';
 const getCodePieceName = (_element) => {

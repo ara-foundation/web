@@ -40,10 +40,8 @@ test('Post modules into the Nodejs Reflect Extension', async () => {
     // After adding the records
     const posted = await reflect.nodeJsExt.putModules(categorizedModules);
     expect(posted.isSuccess).toBe(true);
-    expect(reflect.nodeJsExt.untrackedModuleAmount).toEqual(posted.getValue().length)
 
     builtIn = await reflect.rest!().getAll!(`.${BuiltinModuleCategory.NodeJsModule}`);
-    expect(reflect.nodeJsExt.untrackedModuleAmount).toEqual(0)
     expect(builtIn).toHaveLength(getCategorizedModuleAmount());
 });
 
@@ -89,6 +87,9 @@ test('Post packages into the Nodejs Reflect Extension and getting submodule of t
     const posted = await reflect.nodeJsExt.putPackage(samplePackage);
     expect(posted.isSuccess).toBe(true);
 
+    const applied = await reflect.nodeJsExt.beforeGet!('*', reflect.rest!());
+    expect(applied.isSuccess).toBe(true);
+    
     const foundPkg = reflect.nodeJsExt.getModule(ModuleLink.newPackageURLFromImportClause("@ara-web/p-hintjens"));
     expect(foundPkg.isSuccess).toBe(true);
 

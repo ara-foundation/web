@@ -4,14 +4,12 @@
  */
 import { Project, SourceFile as TsSourceFile, Node } from "ts-morph";
 import { Result, Debug } from "@ara-web/p-hintjens";
-import { ModuleLink, ObjectNode } from "@ara-web/sds";
+import { ModuleLink } from "@ara-web/sds";
 
 import { 
     ModuleMemory, 
-    ProjectMemory,
     BuiltInIdentifiers,
     FilePath,
-    codePieceOps,
     MODULE_SELECTOR
 } from "../index.js";
 
@@ -24,6 +22,7 @@ import { ValueTypeString, type ValueType } from "./code-piece-types.js";
 import { AstNodeTraits, type AstNodeFilter } from "./ast-node-traits.js";
 import { CodePieceContext } from "./code-piece-context.js";
 import { ValueLevel } from "./value-level/index.js";
+import type { ModuleMemoryOperator } from "../module-manager-operator.js";
 
 export type Object = {[key: string]: ValueType};
 
@@ -83,7 +82,7 @@ export class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    public getImportedIdentifiers = async (projectMemory: ProjectMemory): Promise<Result<CodePiece[]>> => {
+    public getImportedIdentifiers = async (projectMemory: ModuleMemoryOperator): Promise<Result<CodePiece[]>> => {
         let identifiers: CodePiece[] = [];
         const tsNodes = this.getTsNodes()
 
@@ -103,7 +102,7 @@ export class Code {
             const identifiedModuleLink = this.importClauseToModuleLink(importClause.getValue(), this._moduleLink, projectMemory);
             if (identifiedModuleLink.isFailure) {
                 return Result.fail(
-                    `this.importClauseToModuleLink('${importClause.getValue()}', '${this._moduleLink.moduleURL}'): ${identifiedModuleLink.errorTitle}`,
+                    `this.importClauseToModuleLink('${importClause.getValue()}', '${this._moduleLink.url}'): ${identifiedModuleLink.errorTitle}`,
                     identifiedModuleLink.errorDescription!
                 )
             }
@@ -122,7 +121,7 @@ export class Code {
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
      */
-    private importClauseToModuleLink = (importClause: string, callingModulePath: ModuleLink, projectMemory: ProjectMemory): Result<ModuleLink> => {
+    private importClauseToModuleLink = (importClause: string, callingModulePath: ModuleLink, projectMemory: ModuleMemoryOperator): Result<ModuleLink> => {
         // Not a module link, then package link?
         const packageLink = ModuleLink.newPackageURLFromImportClause(importClause);
         const packageExists = projectMemory.isModuleExist(packageLink);
@@ -131,7 +130,7 @@ export class Code {
         }
 
         // First assuming the importClause is referencing to a file.
-        const absoluteImportPath = FilePath.getFileAbsolutePath(importClause, callingModulePath.toFilePath)
+        const absoluteImportPath = FilePath.getFileAbsolutePath(importClause, callingModulePath.toAbsFilePath)
         if (FilePath.isFileExist(absoluteImportPath)) {
             const moduleExists = projectMemory.isModuleExist(absoluteImportPath)
             if (moduleExists) {
@@ -149,7 +148,7 @@ export class Code {
         
         return Result.fail(
             `Not found`,
-            `The '${importClause}' is not a file module at '${absoluteImportPath}'. It's also not a package at '${packageLink.moduleURL}' in the project memory`
+            `The '${importClause}' is not a file module at '${absoluteImportPath}'. It's also not a package at '${packageLink.url}' in the project memory`
         )
     }
 
@@ -184,9 +183,9 @@ export class Code {
      * @param projectMemory {Lint from all modules}
      * @returns 
      */
-    public getLintedImportIdentifiers = async <T>(moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<CodePiece[]>> => {
-        const identifierNodes  = moduleMemory.rest.getAll!(MODULE_SELECTOR);
-        const identifiers = identifierNodes.map(identifierNode => identifierNode.getElement()!).filter(codePiece => codePiece !== null && CodePiece.isDefinedInOtherModule(codePiece))
+    public getLintedImportIdentifiers = async <T>(moduleMemory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator): Promise<Result<CodePiece[]>> => {
+        const identifierNodes = await moduleMemory.rest.getAll!(MODULE_SELECTOR);
+        const identifiers = identifierNodes.map(identifierNode => identifierNode.data!).filter(codePiece => codePiece !== null && CodePiece.isDefinedInOtherModule(codePiece))
 
         for (let identifier in identifiers) {
             let node = identifiers[identifier];
@@ -223,7 +222,7 @@ export class Code {
      * @limitation Make sure identifiedNode passes the AstNode.isDefinedInOtherModule() before calling this function.
      * @returns 
      */
-    private identifyImportedIdentifier = async(identifiedNode: CodePiece, memory: ProjectMemory): Promise<Result<CodePiece>> => {
+    private identifyImportedIdentifier = async(identifiedNode: CodePiece, memory: ModuleMemoryOperator): Promise<Result<CodePiece>> => {
         if (identifiedNode.identifier === undefined) {
             return Result.fail(
                 `The identifier property is missing`,
@@ -301,17 +300,17 @@ export class Code {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////
 
-    public getLintedTypeIdentifiers = async <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<CodePiece[]>> => {
-        const identifierNodes  = memory.rest.getAll!(MODULE_SELECTOR);
+    public getLintedTypeIdentifiers = async <T>(memory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator): Promise<Result<CodePiece[]>> => {
+        const identifierNodes = await memory.rest.getAll!(MODULE_SELECTOR);
         const typesToLint = identifierNodes
-            .map(identifierNode => identifierNode.getElement()!)
+            .map(identifierNode => identifierNode.data!)
             .filter(codePiece => CodePiece.isDefinedInLocal(codePiece))
             .filter(codePiece => CodePiece.isTypeDeclaration(codePiece))
             .filter(codePiece => BuiltInIdentifiers.isNonBuiltInIdentifier(codePiece));
 
         const typesCount = typesToLint.length;
         if (typesCount == 0) {
-            return Result.ok(memory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!));
+            return Result.ok((await memory.rest.getAll!(MODULE_SELECTOR)).map(node => node.data!));
         }
 
         typesToLint.forEach((node, index, arr) => {
@@ -321,11 +320,11 @@ export class Code {
             }
 
             const moduleIdentifiers = identifierNodes
-                .map(identifierNode => identifierNode.getElement()!)
+                .map(identifierNode => identifierNode.data!)
                 .filter(codePiece => CodePiece.isTypeDeclaration(codePiece))
                 .filter(codePiece => codePiece.identifier !== node.identifier);
             
-            const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
+            const memoryContext = new CodePieceContext([], moduleIdentifiers);
             const lintedNode = TypeLevel.lintType(node, memoryContext);
             if (lintedNode.isFailure) {
                 return Result.fail(
@@ -376,17 +375,17 @@ export class Code {
         return Result.ok(identifiers.getValue());
     }
 
-    public getLintedVariableIdentifiers = async <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory): Promise<Result<CodePiece[]>> => {
-        const identifierNodes  = memory.rest.getAll!(MODULE_SELECTOR);
+    public getLintedVariableIdentifiers = async <T>(memory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator): Promise<Result<CodePiece[]>> => {
+        const identifierNodes = await memory.rest.getAll!(MODULE_SELECTOR);
         const varsToLint = identifierNodes
-            .map(identifierNode => identifierNode.getElement()!)
+            .map(identifierNode => identifierNode.data!)
             .filter(codePiece => CodePiece.isDefinedInLocal(codePiece))
             .filter(codePiece => CodePiece.isVariableDeclaration(codePiece))
             .filter(codePiece => BuiltInIdentifiers.isNonBuiltInIdentifier(codePiece));
         
         const typesCount = Object.keys(varsToLint).length;
         if (typesCount == 0) {
-            return Result.ok(memory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement!() as CodePiece));
+            return Result.ok((await memory.rest.getAll!(MODULE_SELECTOR)).map(node => node.data! as CodePiece));
         }
         
         for (let identifier in varsToLint) {
@@ -395,11 +394,11 @@ export class Code {
                 node.dataType = (node as CodePiece).data as ValueTypeString;
                 continue;
             }
-            const identifierNodes  = memory.rest.getAll!(MODULE_SELECTOR);
+            const identifierNodes = await memory.rest.getAll!(MODULE_SELECTOR);
             const moduleIdentifiers = identifierNodes
-            .map(identifierNode => identifierNode.getElement()!)
+            .map(identifierNode => identifierNode.data!)
             .filter(codePiece => codePiece.identifier !== identifier)
-            const memoryContext = new CodePieceContext([], moduleIdentifiers, projectMemory);
+            const memoryContext = new CodePieceContext([], moduleIdentifiers);
 
             const lintedVariable = await ValueLevel.identifyAstNodeData(node, memoryContext);
             if (lintedVariable.isFailure) {
@@ -430,14 +429,12 @@ export class Code {
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    public static identifyCodePiece = async (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: CodePiece[]): Promise<Result<TypedData>> => {
-        const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileURL(import.meta.filename), projectMemory);
+    public static identifyCodePiece = async (expression: string, projectMemory: ModuleMemoryOperator, optionalIdentifiers?: CodePiece[]): Promise<Result<TypedData>> => {
+        const tempMemory = new ModuleMemory("__temp", ModuleLink.newFileLink(import.meta.filename), projectMemory);
         if (optionalIdentifiers !== undefined) {
-            optionalIdentifiers.forEach(
-                (codePiece) => {
-                    tempMemory.rest.post!('*', codePiece, {})
-                }
-            )
+            for (const codePiece of optionalIdentifiers) {
+                await tempMemory.rest.post!('*', codePiece, {})
+            }
         }
         
         const tempVarName = "__temp_var_";
@@ -449,11 +446,9 @@ export class Code {
                 vars.errorDescription!
             )
         } else {
-            vars.getValue().forEach(
-                (codePiece) => {
-                    tempMemory.rest.post!('*', codePiece, {})
-                }
-            )
+            for (const codePiece of vars.getValue()) {
+                await tempMemory.rest.post!('*', codePiece, {})
+            }
 
             const tempVarValue = vars.getValue().find((codePiece) => codePiece.identifier === tempVarName)
             if (tempVarValue === undefined) {

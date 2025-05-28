@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, ShorthandPropertyAssignment } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { ValueTypeString, AstNodeContext, ValueLevel, Identifier, AstNodeTraits } from "../index.js";
+import { ValueTypeString, CodePieceContext, ValueLevel, Identifier, AstNodeTraits } from "../index.js";
 /**
  * Property access such as Object.Property
  */

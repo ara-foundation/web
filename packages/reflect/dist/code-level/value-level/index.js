@@ -4,7 +4,7 @@
 import { Node } from "ts-morph";
 import { AraLink } from "@ara-web/sds";
 import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
-import { ValueTypeString, CodePieceType, CodePiece, AstNodeContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
+import { ValueTypeString, CodePieceType, CodePiece, CodePieceContext, Literal, Identifier, TypeLevel, ReflectLink } from "../index.js";
 import { FunctionCall } from "./function-call.js";
 import { ObjectLiteral } from "./object-literal.js";
 import { PropertyLiteral } from "./property-literal.js";
@@ -227,7 +227,7 @@ export class ValueLevel {
             const dataTypeLink = astDataType;
             const dataType = astNodeContext.getIdentifier(dataTypeLink);
             if (dataType === undefined) {
-                return Result.fail(`Data type '${dataTypeLink.toString()}' not found`, `Add the type into AstNodeContext`);
+                return Result.fail(`Data type '${dataTypeLink.toString()}' not found`, `Add the type into CodePieceContext`);
             }
             else if (dataType.nodeType !== CodePieceType.Type) {
                 return Result.fail(`Data type is not a type`, `Update valueLevel.identifyAstNodeData() to support '${dataType.nodeType}' nodes`);
@@ -269,7 +269,7 @@ export class ValueLevel {
     static identifyAstNodeData = async (astNode, astNodeContext) => {
         const identifiedData = this.identifyDataType(astNode.dataType, astNodeContext);
         if (identifiedData.isFailure) {
-            return Result.fail(`${astNode.identifier} referenced '${astNode.dataType?.toString()}' not found`, `Add the type into AstNodeContext`);
+            return Result.fail(`${astNode.identifier} referenced '${astNode.dataType?.toString()}' not found`, `Add the type into CodePieceContext`);
         }
         astNode.dataType = identifiedData.getValue();
         if (astNode.data === undefined) {

@@ -8,7 +8,7 @@ import {
     ValueTypeString,
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     ReflectLink,
     type ValueLevelInterface
@@ -27,7 +27,7 @@ export class ObjectLiteral {
         return node instanceof ObjectLiteralExpression;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList])!;
         if (syntaxLists.length !== 1) {
             return Result.fail(`tsNode.getChildren([Node.isSyntaxList]): expected 1 syntax list`, `There must be one syntax list, while node has ${syntaxLists.length}`)
@@ -51,7 +51,7 @@ export class ObjectLiteral {
          * @child {SyntaxList} anything
          * @child Node '}'
          */
-    private identifyObjectLiteral = async(typedData: TypedData, syntaxList: Node, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private identifyObjectLiteral = async(typedData: TypedData, syntaxList: Node, astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         const syntaxListElements = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","]);
         if (typedData.data === undefined) {
             const exactData = ValueLevel.exactValueByType(typedData);

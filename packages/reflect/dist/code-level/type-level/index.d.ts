@@ -1,7 +1,7 @@
 import { Node } from "ts-morph";
 import { AraLink } from "@ara-web/sds";
 import { Result } from "@ara-web/p-hintjens";
-import { type TypedData, CodePiece, AstNodeContext, type ValueType } from "../index.js";
+import { type TypedData, CodePiece, CodePieceContext, type ValueType } from "../index.js";
 import { type PossibleTypeValue } from "./type-value-traits.js";
 export declare class TypeLevel {
     static readonly GENERIC_VALUES_LINK_PROPERTY = "generic_values";
@@ -31,7 +31,7 @@ export declare class TypeLevel {
      * @param parentNodeContext
      * @returns
      */
-    static lintType: (node: CodePiece | AraLink<string>, parentNodeContext: AstNodeContext) => Result<CodePiece>;
+    static lintType: (node: CodePiece | AraLink<string>, parentNodeContext: CodePieceContext) => Result<CodePiece>;
     /**
      * Data Type has: Memory, Page Memory, and Project Memory.
      * We need to lint the data. The node has no scope memory yet.
@@ -47,7 +47,7 @@ export declare class TypeLevel {
      * @param projectMemory
      * @returns
      */
-    static lintAstNodeMemory: (node: CodePiece, nodeContext: AstNodeContext) => Result<CodePiece>;
+    static lintAstNodeMemory: (node: CodePiece, nodeContext: CodePieceContext) => Result<CodePiece>;
     private static lintTypeData;
     private static lintAraLinkData;
     private static lintObjectData;

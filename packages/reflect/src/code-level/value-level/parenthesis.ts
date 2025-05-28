@@ -3,7 +3,7 @@ import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     type ValueLevelInterface,
     AstNodeTraits
@@ -22,7 +22,7 @@ export class Parenthesis {
         return node instanceof ParenthesizedExpression;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(
                 `The ts node must have three children`,

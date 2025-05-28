@@ -1,15 +1,15 @@
-import { Debug, OkResult } from "@ara-web/p-hintjens";
-import { type ObjectToNodeTree, type ElementOp, ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
+import { OkResult } from "@ara-web/p-hintjens";
+import { type DataToObjectNode, type DataOperations, ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
 import { CodePiece } from "./code-level/index.js";
 
-export const moduleToObjectTree: ObjectToNodeTree<CodePiece> = (codePiece: CodePiece, parent?: ObjectNode<CodePiece>, root?: boolean): ObjectNode<CodePiece> => {
+export const moduleToCodePieceTree: DataToObjectNode<CodePiece> = (codePiece: CodePiece, parent?: ObjectNode<CodePiece>, root?: boolean): ObjectNode<CodePiece> => {
     // Creating the root for entire source code that has one or many code pieces.
 	if (root) {
-		return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree);
-	} else if (parent !== undefined) {
-	    return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, codePiece, parent);
+		return new ObjectNode<CodePiece>(codePieceOps, moduleToCodePieceTree);
+	} else if (parent === undefined) {
+		throw `No root, no parent, can not convert module memory into an object tree node`
 	}
-	return new ObjectNode<CodePiece>(codePieceOps, moduleToObjectTree, codePiece);
+	return new ObjectNode<CodePiece>(codePieceOps, moduleToCodePieceTree, codePiece, parent);
 }
 
 export const MODULE_SELECTOR = '*:nth-child(1) >';
@@ -56,7 +56,7 @@ const setCodePieceAttribute = <AttrType>(_element: CodePiece | undefined, attrNa
 	}
 }
 
-export const codePieceOps: ElementOp<CodePiece> = {
+export const codePieceOps: DataOperations<CodePiece> = {
 	getName: getCodePieceName,
 	getChildren: getCodePieceChildren,
 	getAttribute: getCodePieceAttribute,

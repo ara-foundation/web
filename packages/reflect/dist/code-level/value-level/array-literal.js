@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { ArrayLiteralExpression, Node } from "ts-morph";
 import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
-import { AstNodeTraits, AstNodeContext, ValueLevel } from "../index.js";
+import { AstNodeTraits, CodePieceContext, ValueLevel } from "../index.js";
 /**
  * Literal class identifies the object literals
  */

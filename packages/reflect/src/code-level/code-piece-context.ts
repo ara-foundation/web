@@ -1,6 +1,5 @@
-import { Debug, Result } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
-import type { MemoryOperations } from "../index.js";
 import { CodePiece } from "./code-piece.js";
 
 /**
@@ -13,16 +12,14 @@ import { CodePiece } from "./code-piece.js";
 export class CodePieceContext {
     private _localDefined: CodePiece[];
     private _pageIdentifiers: CodePiece[]; 
-    private _projectMemory: MemoryOperations;
 
-    constructor(localDefined: CodePiece[], pageIdentifiers: CodePiece[], projectMemory: MemoryOperations) {
+    constructor(localDefined: CodePiece[], pageIdentifiers: CodePiece[]) {
         this._localDefined = localDefined;
         this._pageIdentifiers = pageIdentifiers;
-        this._projectMemory = projectMemory;
     }
 
     public clone(additionalLocals: CodePiece[], skipIdentifiers?: string[]): CodePieceContext {
-        const context = new CodePieceContext(additionalLocals, [], this._projectMemory);
+        const context = new CodePieceContext(additionalLocals, []);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];

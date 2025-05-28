@@ -1,14 +1,14 @@
 import  { type Result } from "@ara-web/p-hintjens";
-import { AraLink, ModuleLink } from "@ara-web/sds";
+import { AraLink, ModuleLink, Restful, ExtensionOperator, RestfulExtensionOperator, Extendable } from "@ara-web/sds";
 import { CodePiece, CodePieceType } from "../src/code-level/code-piece.js";
 import { expect } from "vitest";
 import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/code-piece-types.js";
 import { CodePieceContext } from "../src/code-level/code-piece-context.js";
-import { ProjectMemory } from "../src/project-memory.js";
+import { ModuleMemoryOperator } from "../src/module-manager-operator.js";
 import { ModuleMemory } from "../src/module-memory.js";
-import { ExtensionInterface, ImportedRecords, MemoryOperations, SingleRecord } from "../src/extension-interface.js";
-import { ModuleCategory } from "../src/reflect-nodejs-ext/index.js";
-import { FilePath } from "../src/module.js";
+import { ModuleRecords, ModuleManager, ModuleRecord } from "../src/module-manager.js";
+import { ModuleCategory } from "../src/builtin-module-manager.js";
+import { MEMOP_TAG, ReflectDataType } from "../src/reflect-object-tree.js";
 
 export type AstNodeProperties = Pick<CodePiece, "constant" | "public">
 
@@ -59,36 +59,37 @@ export const expectValidVariableNode = (astNode: CodePiece, identfier: string, p
 }
 
 export const getEmptyContext = (identifers?: CodePiece[]): CodePieceContext => {
-  const projectMemory = new ProjectMemory()
   if (identifers === undefined) {
     identifers = [];
   }
 
-  const context = new CodePieceContext([], identifers, projectMemory);
+  const context = new CodePieceContext([], identifers);
 
   return context;
 }
 
 export const modulePath = `./funcs.ts`;
 
-export const getProjectMemory = (modOps: MemoryOperations): ProjectMemory => {
-  const projectMemory = new ProjectMemory();
-  projectMemory.putMemoryOperations(modOps);
+export const getProjectMemory = (modOps: ModuleManager[]): ModuleMemoryOperator => {
+  const extOp = new ExtensionOperator(modOps);
+  const projectMemory = new ModuleMemoryOperator(extOp)
   return projectMemory;
 }
 
 export const getEmptyModule = (filePath: string = import.meta.filename): ModuleMemory<unknown> => {
-  const fileModuleLink = ModuleLink.newFileURL(filePath);
-  const moduleLink = ModuleLink.newPackageURL("reflect", "test", fileModuleLink, modulePath);
+  const fileModuleLink = ModuleLink.newFileLink(filePath);
+  const moduleLink = ModuleLink.newPackageLink("reflect", "test", modulePath, {absolutePath: fileModuleLink.url});
   return new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, undefined);
 }
 
-export const putFuncModule = async (ext: ExtensionInterface, _modulePath: string = modulePath): Promise<ExtensionInterface> => {
+export const putFuncModule = async (ext: ModuleManager, rest: Restful<ReflectDataType>, _modulePath: string = modulePath): Promise<Extendable> => {
   const glob = await import(_modulePath);
-  const importedRecords: ImportedRecords = {records: {[_modulePath]: glob}, importMetaFilename: import.meta.filename};
+  const importedRecords: ModuleRecords = {records: {[_modulePath]: glob}, importMetaFilename: import.meta.filename};
 
   const putted = await ext.putModules(importedRecords)
   expect(putted.isSuccess).toBe(true);
+  const applied = await ext.beforeGet!('*', rest);
+  expect(applied.isSuccess).toBe(true);
   return ext;
 }
 
@@ -101,7 +102,7 @@ export const getCategorizedModuleAmount = (): number => {
  * Imports
  * @returns 
  */
-export const getImportRecords = (): ImportedRecords => {
+export const getImportRecords = (): ModuleRecords => {
   const imported = import.meta.glob("../node_modules/@ara-web/p-hintjens/**/*.js", {eager: true});
   
   categorizedModuleAmount = Object.keys(imported).length;
@@ -116,7 +117,7 @@ export const getImportRecords = (): ImportedRecords => {
  * @param reflect 
  * @returns 
  */
-export const getSamplePackage = (): SingleRecord => {
+export const getSamplePackage = (): ModuleRecord => {
   const imported = import.meta.glob("packageurl-js", {eager: true});
 
   return {
@@ -125,7 +126,7 @@ export const getSamplePackage = (): SingleRecord => {
   }
 }
 
-export const getSamplePackageWithSubModules = (): SingleRecord => {
+export const getSamplePackageWithSubModules = (): ModuleRecord => {
   const imported = import.meta.glob("@ara-web/p-hintjens", {eager: true});
 
   return {

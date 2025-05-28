@@ -4,7 +4,7 @@ import {
     type AstNodeFilter,
     ValueTypeString,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     Identifier,
     type ValueLevelInterface,
@@ -24,7 +24,7 @@ export class ShorthandAccess {
         return node instanceof ShorthandPropertyAssignment;
     }
 
-    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
         }

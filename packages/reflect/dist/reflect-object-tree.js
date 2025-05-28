@@ -1,117 +1,106 @@
-import { Debug, OkResult } from "@ara-web/p-hintjens";
-import { ObjectNode, DOCUMENT_SELECTOR } from "@ara-web/sds";
+import { OkResult } from "@ara-web/p-hintjens";
+import { ObjectNode, DOCUMENT_SELECTOR, RestfulExtensionOperator } from "@ara-web/sds";
 import { ModuleMemory } from "./module-memory.js";
-import { codePieceOps, moduleToObjectTree } from "./code-piece-object-tree.js";
-import { ProjectMemory } from "./project-memory.js";
+import { codePieceOps, moduleToCodePieceTree } from "./code-piece-object-tree.js";
 import { CodePiece } from "./code-level/index.js";
 export const MEMOP_TAG = "memop"; // extension tag
 export const MODULE_MEMORY_TAG = "module";
 export const MODULE_MEMORY_SELECTOR = `*:nth-child(1) ${MODULE_MEMORY_TAG}`;
 export const MEMOP_SELECTOR = `*:nth-child(1) > ${MEMOP_TAG}`;
-export const reflectElementToObjectTree = (element, parent, root) => {
-    if (element instanceof CodePiece) {
-        return moduleToObjectTree(element, parent, root);
+export const reflectDataToObjectTree = (data, parent) => {
+    if (data instanceof CodePiece) {
+        return moduleToCodePieceTree(data, parent);
     }
     // Creating the root for entire source code that has one or many code pieces.
     let obj;
-    if (root) {
-        if (!(element instanceof ProjectMemory)) {
-            throw `Root element must be a project memory`;
+    if (parent === undefined) {
+        if (!(data instanceof RestfulExtensionOperator)) {
+            throw `Root element must be an extension operator`;
         }
-        obj = new ObjectNode(reflectElementOps, reflectElementToObjectTree, element);
-        for (const memOp of element.memOps) {
-            const ext = memOp;
-            const created = ext.afterCreation();
-            if (created.isFailure) {
-                throw created;
-            }
-        }
-    }
-    else if (parent !== undefined) {
-        obj = new ObjectNode(reflectElementOps, reflectElementToObjectTree, element, parent);
+        obj = new ObjectNode(reflectElementOps, reflectDataToObjectTree, data);
     }
     else {
-        throw `Can not create orphan object node in the tree, either make it as a root or pass the parent`;
+        obj = new ObjectNode(reflectElementOps, reflectDataToObjectTree, data, parent);
     }
-    if (element instanceof ModuleMemory) {
-        element.rest.setRootNode(obj);
+    if (data instanceof ModuleMemory) {
+        data.rest.setRootNode(obj);
     }
     return obj;
 };
-const getElementTag = (_element) => {
-    if (_element === undefined || _element === null || _element instanceof ProjectMemory) {
+const getName = (data) => {
+    if (data === undefined || data === null || data instanceof RestfulExtensionOperator) {
         return '';
     }
-    if (_element instanceof CodePiece) {
-        return codePieceOps.getName(_element);
+    if (data instanceof CodePiece) {
+        return codePieceOps.getName(data);
     }
-    if (_element instanceof ModuleMemory) {
+    if (data instanceof ModuleMemory) {
         return MODULE_MEMORY_TAG;
     }
     // Extension
     return MEMOP_TAG;
 };
-const getElementChildren = (_element) => {
-    if (_element instanceof ModuleMemory) { // Children of module memory is code level
-        return _element.rest.rootNode.children;
+const getChildren = (data) => {
+    if (data instanceof ModuleMemory) { // Children of module memory is code level
+        return data.rest.rootNode.children;
     }
-    else if (_element instanceof CodePiece) {
-        return codePieceOps.getChildren(_element);
+    else if (data instanceof CodePiece) {
+        return codePieceOps.getChildren(data);
     }
-    else if (_element instanceof ProjectMemory) {
-        return _element.memOps;
+    else if (data instanceof RestfulExtensionOperator) {
+        return data.exts;
     }
     // For extensions.
-    const moduleMemories = _element.getModules();
+    const moduleMemories = data.getModules();
     return moduleMemories;
 };
-const getElementAttribute = (_element, attrName) => {
-    if (_element === undefined || _element === null || _element instanceof ProjectMemory) {
+const getAttribute = (data, attrName) => {
+    if (data === undefined || data === null || data instanceof RestfulExtensionOperator) {
         if (attrName === 'id') {
             return DOCUMENT_SELECTOR.substring(1);
         }
         return undefined;
     }
-    if (_element instanceof CodePiece) {
-        return codePieceOps.getAttribute(_element, attrName);
+    if (data instanceof CodePiece) {
+        return codePieceOps.getAttribute(data, attrName);
     }
     if (attrName === "id") {
-        if (_element instanceof ModuleMemory) {
-            return escapeId(_element.moduleLink.moduleURL);
+        if (data instanceof ModuleMemory) {
+            return escapeId(data.moduleLink.url);
         }
         else {
-            return escapeId(_element.memoryOperatorId.toString());
+            return escapeId(data.packageLink.toString());
         }
     }
     else if (attrName === "class") {
-        if (_element instanceof ModuleMemory) {
-            return _element.moduleCategory;
+        if (data instanceof ModuleMemory) {
+            return data.moduleCategory;
         }
         else {
             return undefined;
         }
     }
-    if (attrName in _element) {
-        return _element[attrName]?.toString();
+    if (attrName in data) {
+        return data[attrName]?.toString();
     }
     return undefined;
 };
-const setElementAttribute = (_element, attrName, attrValue) => {
-    if (_element === undefined || _element === null || _element instanceof ProjectMemory) {
+const setAttribute = (data, attrName, attrValue) => {
+    if (data === undefined || data === null || data instanceof RestfulExtensionOperator) {
         return OkResult.ok();
     }
-    if (_element instanceof CodePiece) {
-        return codePieceOps.setAttribute(_element, attrName, attrValue);
+    if (data instanceof CodePiece) {
+        return codePieceOps.setAttribute(data, attrName, attrValue);
     }
-    const moduleLink = _element instanceof ModuleMemory ? _element.moduleLink.toString() : _element.memoryOperatorId;
+    const moduleLink = data instanceof ModuleMemory ? data.moduleLink.toString() : data.packageLink;
     if (attrName === "id") {
         return OkResult.fail(`Can not set id`, `Please dont set id`);
     }
     else if (attrName === "class") {
         return OkResult.fail(`Can not set class`, `Category of the module is pre-defined`);
     }
-    if (attrName in _element) {
-        _element[attrName] = attrValue;
+    if (attrName in data) {
+        data[attrName] = attrValue;
         return OkResult.ok();
     }
     else {
@@ -124,8 +113,8 @@ export const escapeId = (path) => {
     return replaced;
 };
 export const reflectElementOps = {
-    getName: getElementTag,
-    getChildren: getElementChildren,
-    getAttribute: getElementAttribute,
-    setAttribute: setElementAttribute,
+    getName,
+    getChildren,
+    getAttribute,
+    setAttribute,
 };

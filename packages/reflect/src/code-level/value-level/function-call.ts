@@ -4,7 +4,7 @@ import {
     AstNodeTraits, 
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     ValueTypeString, 
     type ValueType,
@@ -26,7 +26,7 @@ export class FunctionCall {
         return node instanceof CallExpression;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`The TS Node doesn't have any children`, `Please, update the TS Node`)
         }
@@ -90,7 +90,7 @@ export class FunctionCall {
         return Result.ok(callResult.getValue());
     }
 
-    private getFuncArgs = async (syntaxList: Node, astNodeContext: AstNodeContext): Promise<Result<TypedData[]>> => {
+    private getFuncArgs = async (syntaxList: Node, astNodeContext: CodePieceContext): Promise<Result<TypedData[]>> => {
         const funcArgs: TypedData[] = [];
         const children = AstNodeTraits.getChildren(syntaxList, [], [AstNodeTraits.isNonImportant], [","])
         for (let funcArg of children) {
@@ -117,7 +117,7 @@ export class FunctionCall {
      * @param memory 
      * @returns 
      */
-    private identifyMethodCall = async(methodAccess: Node, funcArgs: TypedData[], astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private identifyMethodCall = async(methodAccess: Node, funcArgs: TypedData[], astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         const propertyAccess = new PropertyAccess();
         const propertyValue = await propertyAccess.identifyValue(methodAccess, {dataType: ValueTypeString.default}, astNodeContext);
         if (propertyValue.isFailure) {
@@ -147,13 +147,13 @@ export class FunctionCall {
          * @param {any[]} funcArgs function argument
          * @returns {error?: string, data?: T}
      */
-    private identifyFunctionCall = async (funcName: string, funcArgs: TypedData[], astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private identifyFunctionCall = async (funcName: string, funcArgs: TypedData[], astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         // Find the function
         const funcAstNode = astNodeContext.getIdentifier(funcName);
         if (funcAstNode === undefined) {
             return Result.fail(
                 `astNodeContext.getIdentifier('${funcName}'): not found`,
-                `Please post the function identity into the AstNodeContext`
+                `Please post the function identity into the CodePieceContext`
             )
         }
 

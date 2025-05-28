@@ -3,13 +3,13 @@
  */
 import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
-import { SDSProxy, ModuleLink } from "@ara-web/sds";
+import { Proxy, ModuleLink } from "@ara-web/sds";
 
-class SampleProxy extends SDSProxy {
+class SampleProxy extends Proxy {
     protected _behindData?: Reflect;
     
-    constructor(moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["helloWorld", "hasGetMethod"], description);
+    constructor(moduleLink: ModuleLink) {
+        super(moduleLink, ["helloWorld", "hasGetMethod"]);
     }
     
     public putBehindData?(behindData: Reflect): void {
@@ -30,7 +30,7 @@ class SampleProxy extends SDSProxy {
 }
 
 test('Simply creating a reflect proxy and trying to fetch data', async () => {
-    const sampleLink = ModuleLink.newPackageURL(undefined, "sample-package");
+    const sampleLink = ModuleLink.newPackageLink(undefined, "sample-package");
     const sampleProxy = new SampleProxy(sampleLink);
     const reflect = new Reflect({proxies: [sampleProxy], packageLink: sampleLink});
     expect(reflect.rest).toBeUndefined();
@@ -45,9 +45,9 @@ test('Simply creating a reflect proxy and trying to fetch data', async () => {
 });
 
 test('Check that proxies chain returns the first proxy', async () => {
-    const sampleLink1 = ModuleLink.newPackageURL(undefined, "sample-package-1");
+    const sampleLink1 = ModuleLink.newPackageLink(undefined, "sample-package-1");
     const sampleProxy1 = new SampleProxy(sampleLink1);
-    const sampleLink2 = ModuleLink.newPackageURL(undefined, "sample-package-2");
+    const sampleLink2 = ModuleLink.newPackageLink(undefined, "sample-package-2");
     const sampleProxy2 = new SampleProxy(sampleLink2);
     const reflect = new Reflect({proxies: [sampleProxy1, sampleProxy2], packageLink: sampleLink1});
     expect(reflect.rest).toBeUndefined();

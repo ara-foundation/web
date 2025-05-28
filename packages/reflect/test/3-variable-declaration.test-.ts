@@ -12,6 +12,7 @@ import { ValueLevel } from "../src/code-level/value-level/index.js";
 import { BuiltInIdentifiers } from "../src/built-in-identifiers.js";
 import { MODULE_SELECTOR } from "../src/code-piece-object-tree.js";
 import { TypeLevel } from "../src/code-level/index.js";
+import { Debug } from "@ara-web/p-hintjens";
 
 const reflectingPkgUrl = ModuleLink.newPackageURL("@ara-web", "var-declaration-test")
 
@@ -242,15 +243,15 @@ test('Supports the linting variable parameter from object decoupling', async () 
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const objectName = 'obj'
   const objectAstNode = vars.getValue().find(codePiece => codePiece.identifier === objectName);
   expect(objectAstNode !== undefined).toBe(true);
-  const posted = moduleMemory.rest.post!('*', objectAstNode!, {});
+  const posted = await moduleMemory.rest.post!('*', objectAstNode!, {});
   expect(posted.isSuccess).toBe(true);
   
-  const context = new CodePieceContext(astNode.getAllMemoryData(), moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext(astNode.getAllMemoryData(), (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -268,7 +269,7 @@ test('Supports the function call as variable value', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const funcName = 'fooBar'
   const varName = 'nameLength'
@@ -283,10 +284,10 @@ test('Supports the function call as variable value', async () => {
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
   
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
@@ -297,7 +298,7 @@ test('Supports the function call as variable value', async () => {
   expect(astNode.dataType).toBeUndefined();
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -314,7 +315,7 @@ test('Supports the function call as variable value but mismatch the types', asyn
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const funcName = 'fooBar'
   const varName = 'nameLength'
@@ -328,10 +329,10 @@ test('Supports the function call as variable value but mismatch the types', asyn
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -343,7 +344,7 @@ test('Supports the function call as variable value but mismatch the types', asyn
   expect(astNode.dataType).toEqual(ValueTypeString.string)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(false);
 });
@@ -356,7 +357,7 @@ test('Supports the function call without any argument', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const funcName = 'helloAndWelcome'
   const varName = 'greeting'
@@ -370,11 +371,10 @@ test('Supports the function call without any argument', async () => {
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
-  
+  };
   
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -386,7 +386,7 @@ test('Supports the function call without any argument', async () => {
   expect(astNode.dataType).toEqual(ValueTypeString.string)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -403,7 +403,7 @@ test('Supports the method call', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const funcName = 'fooBar'
   const objName = 'CustomObj'
@@ -420,10 +420,10 @@ test('Supports the method call', async () => {
 
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -433,7 +433,7 @@ test('Supports the method call', async () => {
   expect(objAstNode.data).toBeInstanceOf(AraLink)
   expect(objAstNode.dataType).toBeUndefined()
   expect(ReflectLink.isTsNodeLink(objAstNode.data)).toBe(true)
-  moduleMemory.rest.post!('*', objAstNode, {})
+  await moduleMemory.rest.post!('*', objAstNode, {})
 
   // We don't check the result, as previous tests must ensure its passing
   let astNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -442,7 +442,7 @@ test('Supports the method call', async () => {
   expect(astNode.dataType).toEqual(ValueTypeString.number)
   expect(ReflectLink.isTsNodeLink(astNode.data)).toBe(true)
 
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedData = await ValueLevel.identifyAstNodeData(astNode, context);
   expect(identifiedData.isSuccess).toBe(true);
   astNode.typedData = identifiedData.getValue();
@@ -457,7 +457,7 @@ test('Supports the spread assignment through enums', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const enumName = 'Sex'
   const profileName = 'profile'
@@ -474,10 +474,10 @@ test('Supports the spread assignment through enums', async () => {
   // Add imports and lint them.
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -490,7 +490,7 @@ test('Supports the spread assignment through enums', async () => {
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
@@ -517,7 +517,7 @@ test('Supports the type from the imports', async () => {
   const reflect = new Reflect({packageLink: reflectingPkgUrl});
   const projectMemory = getProjectMemory(reflect.nodeJsExt);
   const moduleMemory = getEmptyModule();
-  await putFuncModule(reflect.nodeJsExt);
+  await putFuncModule(reflect.nodeJsExt, reflect.rest!());
 
   const typeName = 'CustomType'
   const profileName = 'profile'
@@ -534,10 +534,10 @@ test('Supports the type from the imports', async () => {
   // Add imports and lint them.
   let imports = await code.getImportedIdentifiers(projectMemory);
   expect(imports.isSuccess).toBe(true);
-  imports.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of imports.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
     
   let identified = await code.getLintedImportIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -550,7 +550,7 @@ test('Supports the type from the imports', async () => {
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
@@ -593,11 +593,10 @@ test('Supports the type from the local type with `as` keyword', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
-  
+  };
   
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -610,7 +609,7 @@ test('Supports the type from the local type with `as` keyword', async () => {
   expect(ReflectLink.isTsNodeLink(profileAstNode.data)).toBe(true)
 
   // Profile's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(profileAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   profileAstNode.typedData = identifiedProfile.getValue();
@@ -649,11 +648,10 @@ test('Supports the union types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
-  
+  };
   
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -672,7 +670,7 @@ test('Supports the union types', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -704,10 +702,10 @@ test('Supports the intersected types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -726,7 +724,7 @@ test('Supports the intersected types', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -753,19 +751,20 @@ test('Supports the arrays through Array generic', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
 
   // Type checks
   let typeAstNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
@@ -781,7 +780,7 @@ test('Supports the arrays through Array generic', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -808,19 +807,20 @@ test('Supports the arrays through Array literals', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
 
   // Type checks
   let typeAstNode = types.getValue().find(codePiece => codePiece.identifier === typeName)!;
@@ -836,7 +836,7 @@ test('Supports the arrays through Array literals', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -858,10 +858,11 @@ test('Supports the arrays with primitive types', async () => {
   let vars = await code.getVariableIdentifiers();
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
 
   // Variable check
   let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -872,7 +873,7 @@ test('Supports the arrays with primitive types', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -901,11 +902,10 @@ test('Supports the shorthand project assign with primitive types', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece);
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
-  });
-  
+  };
     
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -916,12 +916,13 @@ test('Supports the shorthand project assign with primitive types', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece);
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece);
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
-  moduleMemory.rest.post!('*', foundVar!)
+  await moduleMemory.rest.post!('*', foundVar!)
 
   // Variable check
   let varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -930,7 +931,7 @@ test('Supports the shorthand project assign with primitive types', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -958,11 +959,10 @@ test('Supports the parenthesis', async () => {
   // Add types and lint them.
   let types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece);
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
-  });
-  
+  };
     
   let identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -973,10 +973,12 @@ test('Supports the parenthesis', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece);
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece);
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
+
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === propertyName);
   moduleMemory.rest.post!('*', foundVar!)
 
@@ -989,7 +991,7 @@ test('Supports the parenthesis', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -1019,10 +1021,11 @@ test('Supports the conditional expression', async () => {
   // Add types and lint them.
   const types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece);
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece);
       expect(posted.isSuccess).toBe(true);
-  });
+  };
+
   const identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
 
@@ -1032,12 +1035,13 @@ test('Supports the conditional expression', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
-  })
+  };
   const foundVar = vars.getValue().find(codePiece => codePiece.identifier === 'data');
-  moduleMemory.rest.post!('*', foundVar!, {})
+  await moduleMemory.rest.post!('*', foundVar!, {})
 
   // Variable check
   const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -1046,7 +1050,7 @@ test('Supports the conditional expression', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();
@@ -1078,10 +1082,10 @@ test('Supports the conditional expression when its false', async () => {
   // Add types and lint them.
   const types = await code.getTypeIdentifiers();
   expect(types.isSuccess).toBe(true);
-  types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-  });
+  };
   
   const identified = await code.getLintedTypeIdentifiers(moduleMemory, projectMemory)
   expect(identified.isSuccess).toBe(true);
@@ -1093,12 +1097,13 @@ test('Supports the conditional expression when its false', async () => {
   expect(typeNode.dataType).toBe(ValueTypeString.object);
 
   // Add built in types and lint them
-  (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+  const builtIns = (await BuiltInIdentifiers.getBuiltInIdentifiers()).getValue();
+  for (const importedCodePiece of builtIns) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
     expect(posted.isSuccess).toBe(true);   
-  })
+  }
   const foundVar2 = vars.getValue().find(codePiece => codePiece.identifier === 'data');
-  const var2Posted = moduleMemory.rest.post!('*', foundVar2!, {})
+  const var2Posted = await moduleMemory.rest.post!('*', foundVar2!, {})
   expect(var2Posted.isSuccess).toBe(true);
   // Variable check
   const varAstNode = vars.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -1107,7 +1112,7 @@ test('Supports the conditional expression when its false', async () => {
   expect(ReflectLink.isTsNodeLink(varAstNode.data)).toBe(true)
 
   // Variable's data lint
-  const context = new CodePieceContext([], moduleMemory.rest.getAll!(MODULE_SELECTOR).map(node => node.getElement()!), projectMemory);
+  const context = new CodePieceContext([], (await moduleMemory.rest.getAll!(MODULE_SELECTOR)).map(node => node.getElement()!), projectMemory);
   const identifiedProfile = await ValueLevel.identifyAstNodeData(varAstNode, context);
   expect(identifiedProfile.isSuccess).toBe(true);
   varAstNode.typedData = identifiedProfile.getValue();

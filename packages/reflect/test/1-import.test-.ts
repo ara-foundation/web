@@ -6,6 +6,7 @@ import { Reflect } from "../src/reflect.js"
 import { expect, test } from "vitest";
 import { getEmptyModule, getProjectMemory, putFuncModule } from "./shared.js";
 import { Code } from "../src/code-level/code.js";
+import { Debug } from "@ara-web/p-hintjens";
 
 class TestCode extends Code {
 }
@@ -23,30 +24,31 @@ const reflect = new Reflect({packageLink: moduleLink});
 const projectMemory = getProjectMemory(reflect.nodeJsExt);
 
 test('Import with "as" keyword', async () => {
-    await putFuncModule(reflect.nodeJsExt);
-    await putFuncModule(reflect.nodeJsExt, "./custom-type.ts");
+    await putFuncModule(reflect.nodeJsExt, reflect.rest!());
+    await putFuncModule(reflect.nodeJsExt, reflect.rest!(), "./custom-type.ts");
     const testModule = getEmptyModule(moduleLink.toFilePath);
     const testCode = new TestCode(sourceCode, moduleLink);
     const data = await testCode.getImportedIdentifiers(projectMemory);
+    Debug.log(`testCode.getImportedIdentifiers:`, data);
     expect(data.isSuccess).toBe(true);
-    data.getValue().forEach((importedCodePiece) => {
-      testModule.rest.post!('*', importedCodePiece, {})
-    })
+    for (const importedCodePiece of data.getValue()) {
+      await testModule.rest.post!('*', importedCodePiece, {})
+    }
 
     const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
     expect(identifiers.isSuccess).toBe(true)
 });
 
 test('Import with type as first node', async () => {
-    await putFuncModule(reflect.nodeJsExt);
-    await putFuncModule(reflect.nodeJsExt, "./custom-type.ts");
+    await putFuncModule(reflect.nodeJsExt, reflect.rest!());
+    await putFuncModule(reflect.nodeJsExt, reflect.rest!(), "./custom-type.ts");
     const testModule = getEmptyModule(moduleLink.toFilePath);
     const testCode = new TestCode(genericTypeCode, moduleLink);
     const data = await testCode.getImportedIdentifiers(projectMemory);
     expect(data.isSuccess).toBe(true);
-    data.getValue().forEach((importedCodePiece) => {
+    for (const importedCodePiece of data.getValue()) {
       testModule.rest.post!('*', importedCodePiece, {})
-    })
+    }
     
     const identifiers = await testCode.getLintedImportIdentifiers(testModule, projectMemory)
     expect(identifiers.isSuccess).toBe(true)

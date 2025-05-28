@@ -1,34 +1,40 @@
-import { ProjectMemory } from "./project-memory.js";
-import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import { Rest, SDSService } from "@ara-web/sds";
-import { reflectElementToObjectTree } from "./reflect-object-tree.js";
+import { ExtensionOperator, ModuleLink, Rest, RestfulExtensionOperator, Service } from "@ara-web/sds";
+import { BuiltinModuleManager } from "./builtin-module-manager.js";
+import { MEMOP_TAG, reflectDataToObjectTree } from "./reflect-object-tree.js";
 import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
-const setupWithNodeJsExt = (reflectSetup) => {
+import { ModuleMemoryOperator } from "./module-manager-operator.js";
+const reflectPkgLink = ModuleLink.newPackageLink('@ara-web', 'reflect');
+const restLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'rest-engine');
+const withDefaults = (reflectSetup) => {
     if (reflectSetup.extensions === undefined) {
-        reflectSetup.extensions = [new NodejsReflectExtension()];
+        reflectSetup.extensions = [new BuiltinModuleManager()];
     }
     else {
-        reflectSetup.extensions.unshift(new NodejsReflectExtension());
+        reflectSetup.extensions.unshift(new BuiltinModuleManager());
     }
-    return reflectSetup;
+    return { ...reflectSetup, rootNodeTag: MEMOP_TAG, packageLink: reflectPkgLink };
 };
 /**
  * Reflect is the main source to Reflect on the website itself.
+ * It's restful, so depends on the RestfulExtensionOperator, instead ExtensionOperator.
  */
-export class Reflect extends SDSService {
+export class Reflect extends Service {
     // Category => Path => ModuleMemory Instance
-    _memory;
     _rest;
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
-     * @param reflectSetup
+     * @param setup
      */
-    constructor(reflectSetup) {
-        super(setupWithNodeJsExt(reflectSetup), ["rest"]);
-        this._memory = new ProjectMemory();
-        this._memory.putMemoryOperations(...this._extensions);
-        const _proxy = new RestReflectHookProxy();
-        const rest = new Rest(this._memory, reflectElementToObjectTree, { proxies: [_proxy], packageLink: reflectSetup.packageLink });
+    constructor(setup) {
+        super(withDefaults(setup), ["rest"]);
+        this.operator = new ModuleMemoryOperator(this.operator);
+        const restHookProxy = new RestReflectHookProxy();
+        const restSetup = {
+            packageLink: restLink,
+            proxies: [restHookProxy],
+            extensions: [this.operator.restDispatcher],
+        };
+        const rest = new Rest(this.extensionOperator, reflectDataToObjectTree, restSetup);
         const proxified = rest.proxifyMe();
         if (proxified.isFailure) {
             throw proxified;
@@ -36,9 +42,12 @@ export class Reflect extends SDSService {
         this._rest = proxified.getValue();
     }
     get nodeJsExt() {
-        return this._extensions[0];
+        return this.extensionOperator.exts[0];
     }
     rest() {
         return this._rest;
+    }
+    get extensionOperator() {
+        return this.operator;
     }
 }

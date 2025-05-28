@@ -3,7 +3,7 @@ import { Result, ObjectTraits, Debug } from "@ara-web/p-hintjens";
 import { 
     ValueTypeString,
     type AstNodeFilter,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel, 
     Identifier,
     type TypedData,
@@ -24,7 +24,7 @@ export class PropertyAccess {
         return node instanceof PropertyAccessExpression;
     }
 
-    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Method expects to have a children`, `Please update method access TS Node`);
         }

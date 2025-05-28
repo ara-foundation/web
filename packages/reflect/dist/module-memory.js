@@ -1,6 +1,5 @@
 import { ModuleLink, Rest } from "@ara-web/sds";
-import { Debug } from "@ara-web/p-hintjens";
-import { moduleToObjectTree } from "./code-piece-object-tree.js";
+import { moduleToCodePieceTree } from "./code-piece-object-tree.js";
 export class ModuleMemory {
     _moduleLink;
     _glob;
@@ -11,13 +10,8 @@ export class ModuleMemory {
         this._moduleLink = moduleLink;
         this._moduleCategory = moduleCategory;
         this._glob = glob;
-        this._rest = new Rest({}, moduleToObjectTree);
+        this._rest = new Rest({}, moduleToCodePieceTree);
     }
-    print = (filterKey, filterValue) => {
-        Debug.push(`Module (${this._moduleLink.toString()})`);
-        Debug.log(`Printing the Identifiers`);
-        Debug.pop();
-    };
     get moduleCategory() {
         return this._moduleCategory;
     }

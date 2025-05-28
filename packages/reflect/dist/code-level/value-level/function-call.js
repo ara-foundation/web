@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, CallExpression } from "ts-morph";
 import { Debug, Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { AstNodeTraits, AstNodeContext, ValueLevel, ValueTypeString, Identifier } from "../index.js";
+import { AstNodeTraits, CodePieceContext, ValueLevel, ValueTypeString, Identifier } from "../index.js";
 import { PropertyAccess } from "./property-access.js";
 /**
  * Calls the function.
@@ -148,7 +148,7 @@ let FunctionCall = (() => {
             // Find the function
             const funcAstNode = astNodeContext.getIdentifier(funcName);
             if (funcAstNode === undefined) {
-                return Result.fail(`astNodeContext.getIdentifier('${funcName}'): not found`, `Please post the function identity into the AstNodeContext`);
+                return Result.fail(`astNodeContext.getIdentifier('${funcName}'): not found`, `Please post the function identity into the CodePieceContext`);
             }
             let data = await funcAstNode.data(...(funcArgs.map((typedData) => typedData.data)));
             const identifiedType = ValueLevel.getValueTypeStringByData(data);

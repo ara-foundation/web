@@ -1,7 +1,6 @@
 import { ModuleLink, Rest } from "@ara-web/sds";
-import { Debug } from "@ara-web/p-hintjens";
 import type { CodePiece } from "./code-level/index.js";
-import { moduleToObjectTree } from "./code-piece-object-tree.js";
+import { moduleToCodePieceTree } from "./code-piece-object-tree.js";
 
 export class ModuleMemory<T> {
     private _moduleLink: ModuleLink;
@@ -14,13 +13,7 @@ export class ModuleMemory<T> {
         this._moduleLink = moduleLink;
         this._moduleCategory = moduleCategory;
         this._glob = glob;
-        this._rest = new Rest<CodePiece>({} as CodePiece, moduleToObjectTree);
-    }
-
-    public print = (filterKey?: string, filterValue?: any): void => {
-        Debug.push(`Module (${this._moduleLink.toString()})`)
-        Debug.log(`Printing the Identifiers`)
-        Debug.pop();
+        this._rest = new Rest<CodePiece>({} as CodePiece, moduleToCodePieceTree);
     }
 
     public get moduleCategory(): string {

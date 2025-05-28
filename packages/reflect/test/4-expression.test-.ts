@@ -2,12 +2,14 @@ import { expect, test } from "vitest";
 import { Code } from "../src/code-level/code.js";
 import { ValueTypeString } from "../src/code-level/code-piece-types.js";
 import { ProjectMemory } from "../src/project-memory.js";
+import { Debug } from "@ara-web/p-hintjens";
 
 test('Identify literal value', async () => {
   const varValue = "/ara/act/ara-web/action/get";
   let exp = `"${varValue}"`;
   let projectMemory = new ProjectMemory();
   let calculationResult = await Code.identifyCodePiece(exp, projectMemory);
+  Debug.log(`Calculation result:`, calculationResult)
   expect(calculationResult.isSuccess).toBe(true);
   let calculated = calculationResult.getValue();
   expect(calculated.dataType).toEqual(ValueTypeString.string);

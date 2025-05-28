@@ -1,4 +1,4 @@
-import { Debug, Result } from "@ara-web/p-hintjens";
+import { Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
 import { CodePiece } from "./code-piece.js";
 /**
@@ -11,14 +11,12 @@ import { CodePiece } from "./code-piece.js";
 export class CodePieceContext {
     _localDefined;
     _pageIdentifiers;
-    _projectMemory;
-    constructor(localDefined, pageIdentifiers, projectMemory) {
+    constructor(localDefined, pageIdentifiers) {
         this._localDefined = localDefined;
         this._pageIdentifiers = pageIdentifiers;
-        this._projectMemory = projectMemory;
     }
     clone(additionalLocals, skipIdentifiers) {
-        const context = new CodePieceContext(additionalLocals, [], this._projectMemory);
+        const context = new CodePieceContext(additionalLocals, []);
         if (skipIdentifiers === undefined) {
             context._pageIdentifiers = this._pageIdentifiers;
             context._localDefined = [...context._localDefined, ...this._localDefined];

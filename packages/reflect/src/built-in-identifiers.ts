@@ -86,7 +86,7 @@ export class BuiltInIdentifiers {
             return Result.ok(this._identifiers);
         }
         let identifiers: CodePiece[] = [];
-        const code = new Code(this.builtInSrc, ModuleLink.newFileURL(import.meta.filename));
+        const code = new Code(this.builtInSrc, ModuleLink.newFileLink(import.meta.filename));
     
         const varStatements = code.getTsNodes()
         const arrayAstNode = await this.identifyArrayAstNode(varStatements)

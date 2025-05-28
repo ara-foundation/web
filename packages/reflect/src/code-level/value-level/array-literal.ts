@@ -3,7 +3,7 @@ import { Result, Debug, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     AstNodeTraits, 
     type AstNodeFilter,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     type ValueType,
     type TypedData,
@@ -23,7 +23,7 @@ export class ArrayLiteral {
         return node instanceof ArrayLiteralExpression;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         const syntaxLists = AstNodeTraits.getChildren(tsNode, [AstNodeTraits.isSyntaxList]);
         if (syntaxLists.length !== 1) {
             return Result.fail('The Ts Node expected to have syntax list', `The '${tsNode.getText()}' has '${syntaxLists.length}' syntax list only`)
@@ -49,7 +49,7 @@ export class ArrayLiteral {
          * @child {SyntaxList} anything
          * @child Node '}'
          */
-    private identifyArrayLiteral = async (syntaxList: Node, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<ValueType[]>> => {
+    private identifyArrayLiteral = async (syntaxList: Node, typedData: TypedData, astNodeContext: CodePieceContext): Promise<Result<ValueType[]>> => {
         if (!Array.isArray(typedData.dataType)) {
             const err = Debug.error(
                 `Data is not an array when expression is array literal`,

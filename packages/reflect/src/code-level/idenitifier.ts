@@ -4,7 +4,7 @@ import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { ValueTypeString } from "./code-piece-types.js";
 import { type AstNodeFilter } from "./ast-node-traits.js";
 import type { TypedData } from "./code-piece.js";
-import { type ValueLevelInterface } from "./value-level-interface.js";
+import { type ValueAstNode } from "./value-level-interface.js";
 import type { CodePieceContext } from "./code-piece-context.js";
 import { ReflectLink } from "./reflect-link.js";
 import { ValueLevel } from "./value-level/index.js";
@@ -12,7 +12,7 @@ import { ValueLevel } from "./value-level/index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */
-@ObjectTraits.staticImplements<ValueLevelInterface>()   /* this statement implements both normal interface & static interface */
+@ObjectTraits.staticImplements<ValueAstNode>()   /* this statement implements both normal interface & static interface */
 export class Identifier {
     public static get name(): string {
         return "Identifier"

@@ -7,7 +7,6 @@ export declare class ModuleMemory<T> {
     private _moduleCategory;
     private _rest;
     constructor(moduleCategory: string, moduleLink: ModuleLink, glob: unknown);
-    print: (filterKey?: string, filterValue?: any) => void;
     get moduleCategory(): string;
     get moduleLink(): ModuleLink;
     get glob(): unknown;

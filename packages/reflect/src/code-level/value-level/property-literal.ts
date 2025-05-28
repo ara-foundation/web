@@ -4,7 +4,7 @@ import  {
     type TypedData,
     ValueTypeString,
     type AstNodeFilter,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     Identifier,
     Literal,
@@ -25,7 +25,7 @@ export class PropertyLiteral {
         return node instanceof PropertyAssignment;
     }
 
-    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 0)) {
             return Result.fail(`Property assignment has no first value`, `Please pass the first element of property assignment`)
         }

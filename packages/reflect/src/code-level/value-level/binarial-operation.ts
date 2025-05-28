@@ -3,7 +3,7 @@ import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import {
     AstNodeTraits, 
     type AstNodeFilter,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     ValueTypeString, 
     type ValueType,
@@ -112,7 +112,7 @@ export class BinarialOperation {
         return node instanceof BinaryExpression;
     }
 
-    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, _?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 2)) {
             return Result.fail(
                 `The ts node must have three children at least`,

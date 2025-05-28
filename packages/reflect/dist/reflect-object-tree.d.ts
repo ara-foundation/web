@@ -1,13 +1,12 @@
-import { type ObjectToNodeTree, type ElementOp } from "@ara-web/sds";
+import { type DataToObjectNode, type DataOperations, RestfulExtensionOperator } from "@ara-web/sds";
 import { ModuleMemory } from "./module-memory.js";
-import type { MemoryOperations } from "./extension-interface.js";
-import { ProjectMemory } from "./project-memory.js";
 import { CodePiece } from "./code-level/index.js";
-export type ReflectElementType = ModuleMemory<unknown> | MemoryOperations | ProjectMemory | CodePiece;
+import type { ModuleManager } from "./module-manager.js";
+export type ReflectDataType = ModuleMemory<unknown> | ModuleManager | RestfulExtensionOperator | CodePiece;
 export declare const MEMOP_TAG = "memop";
 export declare const MODULE_MEMORY_TAG = "module";
 export declare const MODULE_MEMORY_SELECTOR = "*:nth-child(1) module";
 export declare const MEMOP_SELECTOR = "*:nth-child(1) > memop";
-export declare const reflectElementToObjectTree: ObjectToNodeTree<ReflectElementType>;
+export declare const reflectDataToObjectTree: DataToObjectNode<ReflectDataType>;
 export declare const escapeId: (path: string) => string;
-export declare const reflectElementOps: ElementOp<ReflectElementType>;
+export declare const reflectElementOps: DataOperations<ReflectDataType>;

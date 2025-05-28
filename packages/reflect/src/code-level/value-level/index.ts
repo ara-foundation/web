@@ -11,7 +11,7 @@ import {
     CodePieceType, 
     CodePiece, 
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     type ValueLevelInterface,
     Literal,
     Identifier,
@@ -203,7 +203,7 @@ export class ValueLevel {
      * Identify the value of the {tsNode}, and update the ast node.
      * @returns 
      */
-    public static identifyValue = async (tsNode: Node, typedData: TypedData, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    public static identifyValue = async (tsNode: Node, typedData: TypedData, astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         const supportedValueLevels: ValueLevelInterface[] = [
             Literal,          // "literal" | 12.2 | false
             FunctionCall,     // fooBar()
@@ -237,7 +237,7 @@ export class ValueLevel {
 
     private static identifyDataType = (
         astDataType: IdentifiedNodeDataType | undefined,
-        astNodeContext: AstNodeContext
+        astNodeContext: CodePieceContext
     ): Result<IdentifiedNodeDataType | undefined> => {
         if (astDataType === undefined) {
             return Result.ok(astDataType);
@@ -263,7 +263,7 @@ export class ValueLevel {
             if (dataType === undefined) {
                 return Result.fail(
                     `Data type '${dataTypeLink.toString()}' not found`,
-                    `Add the type into AstNodeContext`
+                    `Add the type into CodePieceContext`
                 )
             } else if (dataType.nodeType !== CodePieceType.Type) {
                 return Result.fail(
@@ -315,12 +315,12 @@ export class ValueLevel {
      * @limitation Only supports AST Nodes that are Links to the expressions.
      * @returns 
      */
-    public static identifyAstNodeData = async (astNode: CodePiece, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    public static identifyAstNodeData = async (astNode: CodePiece, astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         const identifiedData = this.identifyDataType(astNode.dataType, astNodeContext);
         if (identifiedData.isFailure) {
             return Result.fail(
                 `${astNode.identifier} referenced '${astNode.dataType?.toString()}' not found`,
-                `Add the type into AstNodeContext`
+                `Add the type into CodePieceContext`
             )
         }
         astNode.dataType = identifiedData.getValue();
@@ -351,7 +351,7 @@ export class ValueLevel {
      * @param astNode
      * @returns 
      */
-    private static identifyExpressionLinkData = async (astNode: CodePiece, astNodeContext: AstNodeContext): Promise<Result<TypedData>> => {
+    private static identifyExpressionLinkData = async (astNode: CodePiece, astNodeContext: CodePieceContext): Promise<Result<TypedData>> => {
         if (astNode.isObjectBinding()) {
             const objectBinding = astNode.getBindedObject()!;
             if (ReflectLink.isTsNodeLink(objectBinding.data)) {

@@ -3,7 +3,7 @@ import { Result, ObjectTraits } from "@ara-web/p-hintjens";
 import { 
     type AstNodeFilter,
     type TypedData,
-    AstNodeContext,
+    CodePieceContext,
     ValueLevel,
     type ValueLevelInterface,
     AstNodeTraits
@@ -22,7 +22,7 @@ export class SpreadLiteral {
         return node instanceof SpreadAssignment;
     }
 
-    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: AstNodeContext): Promise<Result<TypedData>> => {
+    public identifyValue = async (tsNode: Node, typedData?: TypedData, astNodeContext?: CodePieceContext): Promise<Result<TypedData>> => {
         if (!AstNodeTraits.isChildExist(tsNode, 1)) {
             return Result.fail(`Spread assignment must have the second element`, `Please pass the second element`)
         }

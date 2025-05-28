@@ -8,6 +8,7 @@ import { ReflectLink } from "../src/code-level/reflect-link.js";
 import { BuiltInIdentifiers } from "../src/index.js";
 import { TypeValueTraits } from "../src/code-level/type-level/type-value-traits.js";
 import { expectAstNodeResult, expectValidTypeNode } from "./shared.js";
+import { Debug } from "@ara-web/p-hintjens";
 
 const moduleLink = ModuleLink.newFileURL(import.meta.filename);
 
@@ -32,12 +33,12 @@ test('Supports the union types: type Primary = string | number | boolean', async
     // Linting
     const projectMemory = new ProjectMemory()
     const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-    types.getValue().forEach((importedCodePiece) => {
-      const posted = moduleMemory.rest.post!('*', importedCodePiece, {});
+    for (const importedCodePiece of types.getValue()) {
+      const posted = await moduleMemory.rest.post!('*', importedCodePiece, {});
       expect(posted.isSuccess).toBe(true);
-    });
+    };
     const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
-
+    expect(linted.getValue()).toHaveLength(types.getValue().length);
     // Linting Result
     expectAstNodeResult(linted, varName)
     const lintedNode = linted.getValue().find(codePiece => codePiece.identifier === varName)!;
@@ -78,10 +79,10 @@ test('Supports the union types with nested union: type Type2 = string | "keyword
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    const posted = moduleMemory.rest.post!('*', importedCodePiece, {})
+  for (const importedCodePiece of types.getValue()) {
+    const posted = await moduleMemory.rest.post!('*', importedCodePiece, {})
     expect(posted.isSuccess).toBe(true);
-  });  
+  };  
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // Linting Result
@@ -127,9 +128,9 @@ test('Support the custom data as part of union such as false, number, float', as
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece, {})
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece, {})
+  };
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // Linting Result
@@ -175,9 +176,9 @@ test('Support the literals in the union types', async () => {
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece, {})
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece, {})
+  };
   
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
@@ -223,9 +224,9 @@ test('Support the literals with union types', async () => {
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece)
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece)
+  };
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // Linting Result
@@ -262,9 +263,9 @@ test('Support the expression as a type alias', async () => {
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece)
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece)
+  };
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // Linting Result
@@ -298,9 +299,9 @@ test('Support the generic types', async () => {
   // // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece)
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece)
+  };
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // // Linting Result
@@ -338,9 +339,9 @@ test('Support the generic union types', async () => {
   // Linting
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece)
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece)
+  };
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 
   // Linting Result
@@ -389,12 +390,12 @@ test('Support the generic types with the nested generic types and union types', 
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
   const builtInIdentifiers = await BuiltInIdentifiers.getBuiltInIdentifiers();
   expect(builtInIdentifiers.isSuccess).toBe(true);
-  builtInIdentifiers.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece, {})
-  });
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece, {})
-  });
+  for (const importedCodePiece of builtInIdentifiers.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece, {})
+  };
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece, {})
+  };
 
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
   // Linting Result
@@ -516,7 +517,7 @@ test('Support the type that has another type in the reference defined later than
   expect(simpleData.get("age")).toEqual(ValueTypeString.number)
 
   // Second, the complex type must have a reference to the simple type
- const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
+  const astNode = types.getValue().find(codePiece => codePiece.identifier === varName)!;
   expectValidTypeNode(astNode, varName, IntersectedUnionType);
 
   // Intersection
@@ -532,9 +533,9 @@ test('Support the type that has another type in the reference defined later than
   const projectMemory = new ProjectMemory()
   const moduleMemory = new ModuleMemory<undefined>("page", moduleLink, {});
 
-  types.getValue().forEach((importedCodePiece) => {
-    moduleMemory.rest.post!('*', importedCodePiece, {})
-  });
+  for (const importedCodePiece of types.getValue()) {
+    await moduleMemory.rest.post!('*', importedCodePiece, {})
+  };
 
   const linted = await code.getLintedTypeIdentifiers<undefined>(moduleMemory, projectMemory)
 

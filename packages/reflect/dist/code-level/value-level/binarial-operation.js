@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { BinaryExpression, Node } from "ts-morph";
 import { Result, ObjectTraits } from "@ara-web/p-hintjens";
-import { AstNodeTraits, AstNodeContext, ValueLevel, ValueTypeString } from "../index.js";
+import { AstNodeTraits, CodePieceContext, ValueLevel, ValueTypeString } from "../index.js";
 /**
  * Literal class identifies the literal data such as "string", 123, false, true.
  */

@@ -1,40 +1,59 @@
-import { ProjectMemory } from "./project-memory.js";
-import type { ExtensionInterface } from "./extension-interface.js";
-import { NodejsReflectExtension } from "./reflect-nodejs-ext/index.js";
-import type { ReflectInterface } from "./reflect-interface.js";
-import { Rest, SDSService, type SDSSetup } from "@ara-web/sds";
-import { reflectElementToObjectTree, type ReflectElementType } from "./reflect-object-tree.js";
+import { 
+    ExtensionOperator, 
+    ModuleLink, 
+    Rest, 
+    RestfulExtensionOperator, 
+    Service, 
+    type RestfulSetup, 
+    type Setup 
+} from "@ara-web/sds";
+import { BuiltinModuleManager } from "./builtin-module-manager.js";
+import { 
+    MEMOP_TAG,
+    reflectDataToObjectTree, 
+    type ReflectDataType
+} from "./reflect-object-tree.js";
 import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
+import { ModuleMemoryOperator } from "./module-manager-operator.js";
 
-export type ReflectSetup = SDSSetup<ExtensionInterface>;
+export interface RestfulReflect {
+    rest?(): RestReflectHookProxy;
+}
 
-const setupWithNodeJsExt = (reflectSetup: ReflectSetup): ReflectSetup => {
+const reflectPkgLink = ModuleLink.newPackageLink('@ara-web', 'reflect');
+const restLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'rest-engine');
+
+const withDefaults = (reflectSetup: Omit<RestfulSetup, "tag" | "packageLink">): RestfulSetup => {
     if (reflectSetup.extensions === undefined) {
-        reflectSetup.extensions = [new NodejsReflectExtension()]
+        reflectSetup.extensions = [new BuiltinModuleManager()]
     } else {
-        reflectSetup.extensions.unshift(new NodejsReflectExtension())
+        reflectSetup.extensions.unshift(new BuiltinModuleManager())
     }
-    return reflectSetup;
+    return {...reflectSetup, rootNodeTag: MEMOP_TAG, packageLink: reflectPkgLink};
 }
 
 /**
  * Reflect is the main source to Reflect on the website itself.
+ * It's restful, so depends on the RestfulExtensionOperator, instead ExtensionOperator.
  */
-export class Reflect extends SDSService<Reflect, ExtensionInterface> implements ReflectInterface  {    
+export class Reflect extends Service implements RestfulReflect  {    
     // Category => Path => ModuleMemory Instance
-    private _memory: ProjectMemory;
     private _rest: RestReflectHookProxy;
 
     /**
      * Pass the Reflect Setup to support new types of the modules and their parsing
-     * @param reflectSetup 
+     * @param setup 
      */
-    constructor(reflectSetup: ReflectSetup) {
-        super(setupWithNodeJsExt(reflectSetup), ["rest"]);
-        this._memory = new ProjectMemory();
-        this._memory.putMemoryOperations(...this._extensions);
-        const _proxy = new RestReflectHookProxy();
-        const rest = new Rest<ReflectElementType>(this._memory, reflectElementToObjectTree, {proxies: [_proxy], packageLink: reflectSetup.packageLink});
+    constructor(setup: Omit<RestfulSetup, "tag" | "packageLink">) {
+        super(withDefaults(setup), ["rest"]);
+        this.operator = new ModuleMemoryOperator(this.operator as ExtensionOperator);
+        const restHookProxy = new RestReflectHookProxy();
+        const restSetup: Setup = {
+            packageLink: restLink,
+            proxies: [restHookProxy], 
+            extensions: [(this.operator as RestfulExtensionOperator).restDispatcher],
+        }
+        const rest = new Rest<ReflectDataType>(this.extensionOperator, reflectDataToObjectTree, restSetup);
         const proxified = rest.proxifyMe<RestReflectHookProxy>();
         if (proxified.isFailure) {
             throw proxified;
@@ -42,11 +61,15 @@ export class Reflect extends SDSService<Reflect, ExtensionInterface> implements 
         this._rest = proxified.getValue();
     }
 
-    public get nodeJsExt(): NodejsReflectExtension {
-        return this._extensions[0] as NodejsReflectExtension;
+    public get nodeJsExt(): BuiltinModuleManager {
+        return this.extensionOperator.exts[0] as BuiltinModuleManager;
     }
 
     public rest?(): RestReflectHookProxy {
         return this._rest;
+    }
+
+    public get extensionOperator(): RestfulExtensionOperator {
+        return this.operator as RestfulExtensionOperator;
     }
 }

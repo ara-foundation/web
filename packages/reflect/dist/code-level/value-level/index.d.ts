@@ -3,7 +3,7 @@
  */
 import { Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
-import { ValueTypeString, type ValueType, CodePiece, type TypedData, AstNodeContext } from "../index.js";
+import { ValueTypeString, type ValueType, CodePiece, type TypedData, CodePieceContext } from "../index.js";
 export declare class ValueLevel {
     static emptyValueByType: (identifier: string, val: ValueTypeString | ValueType | undefined) => Result<ValueType>;
     /**
@@ -36,14 +36,14 @@ export declare class ValueLevel {
      * Identify the value of the {tsNode}, and update the ast node.
      * @returns
      */
-    static identifyValue: (tsNode: Node, typedData: TypedData, astNodeContext: AstNodeContext) => Promise<Result<TypedData>>;
+    static identifyValue: (tsNode: Node, typedData: TypedData, astNodeContext: CodePieceContext) => Promise<Result<TypedData>>;
     private static identifyDataType;
     /**
      * @param astNode Evaluate all the AST Node data property
      * @limitation Only supports AST Nodes that are Links to the expressions.
      * @returns
      */
-    static identifyAstNodeData: (astNode: CodePiece, astNodeContext: AstNodeContext) => Promise<Result<TypedData>>;
+    static identifyAstNodeData: (astNode: CodePiece, astNodeContext: CodePieceContext) => Promise<Result<TypedData>>;
     /**
      * Identify the data of the Ast Node if it's a link to the Expression
      * @param astNode

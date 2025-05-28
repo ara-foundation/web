@@ -5,10 +5,11 @@
 import { Project, Node } from "ts-morph";
 import { Result } from "@ara-web/p-hintjens";
 import { ModuleLink } from "@ara-web/sds";
-import { ModuleMemory, ProjectMemory } from "../index.js";
+import { ModuleMemory } from "../index.js";
 import { CodePiece, type TypedData } from "./code-piece.js";
 import { type ValueType } from "./code-piece-types.js";
 import { type AstNodeFilter } from "./ast-node-traits.js";
+import type { ModuleMemoryOperator } from "../module-manager-operator.js";
 export type Object = {
     [key: string]: ValueType;
 };
@@ -39,7 +40,7 @@ export declare class Code {
      * This is the first function called by Reflect.
      * @returns AstIdentifiers
      */
-    getImportedIdentifiers: (projectMemory: ProjectMemory) => Promise<Result<CodePiece[]>>;
+    getImportedIdentifiers: (projectMemory: ModuleMemoryOperator) => Promise<Result<CodePiece[]>>;
     /**
      * Creates a link that this import declaration imports from.
      * @returns {AraLink<string>} Link to the import
@@ -53,7 +54,7 @@ export declare class Code {
      * @param projectMemory {Lint from all modules}
      * @returns
      */
-    getLintedImportIdentifiers: <T>(moduleMemory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePiece[]>>;
+    getLintedImportIdentifiers: <T>(moduleMemory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator) => Promise<Result<CodePiece[]>>;
     /**
      * If the node type is a Type, then it simply sets the {} empty object and leaves as it is.
      *
@@ -65,7 +66,7 @@ export declare class Code {
      * @returns
      */
     private identifyImportedIdentifier;
-    getLintedTypeIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePiece[]>>;
+    getLintedTypeIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator) => Promise<Result<CodePiece[]>>;
     /**
      * Returns all the types defined in this code.
      * @param memory
@@ -73,11 +74,11 @@ export declare class Code {
      */
     getTypeIdentifiers: () => Promise<Result<CodePiece[]>>;
     getVariableIdentifiers: () => Promise<Result<CodePiece[]>>;
-    getLintedVariableIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ProjectMemory) => Promise<Result<CodePiece[]>>;
+    getLintedVariableIdentifiers: <T>(memory: ModuleMemory<T>, projectMemory: ModuleMemoryOperator) => Promise<Result<CodePiece[]>>;
     /**
      * Find the result of the expression, by setting it as a variable declaration.
      * @param {string} exp a JS doc that after evaluating gives the result
      * @returns {T} the result of the expression
      */
-    static identifyCodePiece: (expression: string, projectMemory: ProjectMemory, optionalIdentifiers?: CodePiece[]) => Promise<Result<TypedData>>;
+    static identifyCodePiece: (expression: string, projectMemory: ModuleMemoryOperator, optionalIdentifiers?: CodePiece[]) => Promise<Result<TypedData>>;
 }

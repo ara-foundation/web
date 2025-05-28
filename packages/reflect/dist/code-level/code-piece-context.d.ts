@@ -1,6 +1,5 @@
 import { Result } from "@ara-web/p-hintjens";
 import { AraLink, ModuleLink } from "@ara-web/sds";
-import type { MemoryOperations } from "../index.js";
 import { CodePiece } from "./code-piece.js";
 /**
  * Collection of the variables, functions that are available for the Ast Node.
@@ -12,8 +11,7 @@ import { CodePiece } from "./code-piece.js";
 export declare class CodePieceContext {
     private _localDefined;
     private _pageIdentifiers;
-    private _projectMemory;
-    constructor(localDefined: CodePiece[], pageIdentifiers: CodePiece[], projectMemory: MemoryOperations);
+    constructor(localDefined: CodePiece[], pageIdentifiers: CodePiece[]);
     clone(additionalLocals: CodePiece[], skipIdentifiers?: string[]): CodePieceContext;
     /**
      * Returns the total amount of identifiers within the Ast Node's scope

@@ -34,7 +34,7 @@ var __runInitializers = (this && this.__runInitializers) || function (thisArg, i
 };
 import { Node, PropertyAssignment } from "ts-morph";
 import { ObjectTraits, Result, Debug } from "@ara-web/p-hintjens";
-import { ValueTypeString, AstNodeContext, ValueLevel, Identifier, Literal, AstNodeTraits } from "../index.js";
+import { ValueTypeString, CodePieceContext, ValueLevel, Identifier, Literal, AstNodeTraits } from "../index.js";
 /**
  * Property assignment such as Property: <expression> in the context of the object literals
  */
