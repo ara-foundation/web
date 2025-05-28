@@ -1,6 +1,6 @@
 import { LinkTraits, ModuleLink, ObjectNode, RestHandler, RestSynchronizer, } from "@ara-web/sds";
-import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
-import { ModuleMemory, FilePath, MODULE_MEMORY_TAG, MEMOP_TAG, escapeId, } from "./index.js";
+import { Debug, EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
+import { FilePath, MODULE_MEMORY_TAG, MEMOP_TAG, escapeId, Module, } from "./index.js";
 export var ModuleCategory;
 (function (ModuleCategory) {
     ModuleCategory["NodeJsModule"] = "node_modules";
@@ -46,7 +46,7 @@ export class BuiltinModuleManager {
     /**************************************
      *  Module operators
      *************************************/
-    get memories() {
+    get modules() {
         return Object.values(this._modules);
     }
     get categories() {
@@ -73,28 +73,15 @@ export class BuiltinModuleManager {
         return Result.ok(module);
     }
     getModules(moduleCategory) {
-        const moduleMemories = [];
-        for (let moduleMemory of this.memories) {
-            if (moduleCategory === undefined || moduleMemory.moduleCategory === moduleCategory) {
-                moduleMemories.push(moduleMemory);
-            }
-        }
-        return moduleMemories;
-    }
-    getModuleContents(moduleCategory) {
-        const moduleMemories = this.getModules(moduleCategory);
-        return moduleMemories.map((memory) => memory.content);
-    }
-    getNoContentModules(moduleCategory) {
-        const moduleMemories = this.getModules(moduleCategory);
-        return moduleMemories.filter((memory) => (memory.content === undefined));
+        const modules = this.modules.filter(module => moduleCategory === undefined || module.category === moduleCategory);
+        return modules;
     }
     getModuleWithFileExtensions(_) {
         return [];
     }
     async putPackage({ importModuleClause, module }) {
         const moduleLink = ModuleLink.newPackageURLFromImportClause(importModuleClause);
-        const moduleMemory = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, module);
+        const moduleMemory = new Module(ModuleCategory.NodeJsModule, moduleLink, module);
         this._modules[moduleLink.url] = moduleMemory;
         return Result.ok(moduleLink);
     }
@@ -102,14 +89,14 @@ export class BuiltinModuleManager {
         const importingFilePath = params.importMetaFilename ? params.importMetaFilename : FilePath.getCurrentWorkingDir();
         const moduleLinks = [];
         if ("records" in params) {
+            Debug.log(`Put modules`);
             const importedRecords = params;
             for (let filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
                 if (!(FilePath.isFileExist(moduleLink))) {
                     return Result.fail(`FilePath.isFileExist('${moduleLink.url}'): not found`, `Make sure absolute path is created from '${filePath}' relative to '${importedRecords.importMetaFilename}' locates to a file`);
                 }
-                const moduleMemory = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
-                moduleMemory.content = moduleMemory.glob;
+                const moduleMemory = new Module(ModuleCategory.NodeJsModule, moduleLink, importedRecords.records[filePath]);
                 this._modules[moduleLink.url] = moduleMemory;
                 moduleLinks.push(moduleLink);
             }
@@ -120,8 +107,7 @@ export class BuiltinModuleManager {
             if (!(FilePath.isFileExist(moduleLink))) {
                 return Result.fail(`FilePath.isFileExist('${moduleLink.url}'): not found`, `Make sure absolute path is created from '${singleRecord.importModuleClause}' relative to '${singleRecord.importMetaFilename}' locates to a file`);
             }
-            const moduleMemory = new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, singleRecord.module);
-            moduleMemory.content = moduleMemory.glob;
+            const moduleMemory = new Module(ModuleCategory.NodeJsModule, moduleLink, singleRecord.module);
             this._modules[moduleLink.url] = moduleMemory;
             moduleLinks.push(moduleLink);
         }
@@ -210,14 +196,14 @@ export class BuiltinModuleManager {
             return OkResult.fail(`The node is in the root, but it's tag isn't ${this._restHandler.tag}`, `The ${node.selector} expected to be an module memory`);
         }
         const data = node.data;
-        if (data === null || !(data instanceof ModuleMemory)) {
+        if (data === null || !(data instanceof Module)) {
             return OkResult.fail(`The data is not an instance of module memory`, `Please update it`);
         }
-        const moduleMemory = this._modules[data.moduleLink.url];
+        const moduleMemory = this._modules[data.link.url];
         if (moduleMemory) {
-            return OkResult.fail(`The module memory exists already`, `Can not post duplicate of ${data.moduleLink.url}. Call rest.put instead.`);
+            return OkResult.fail(`The module memory exists already`, `Can not post duplicate of ${data.link.url}. Call rest.put instead.`);
         }
-        this._modules[data.moduleLink.url] = data;
+        this._modules[data.link.url] = data;
         return OkResult.ok();
     }
     async handleModuleUpdate(_selector, node, data) {
@@ -229,19 +215,19 @@ export class BuiltinModuleManager {
         if (!this._restHandler.isMatchingTag(node.selector)) {
             return OkResult.fail(`The node is in the root, but it's tag isn't ${this._restHandler.tag}`, `The ${node.selector} expected to be a module`);
         }
-        if (node.data === null || !(node.data instanceof ModuleMemory)) {
+        if (node.data === null || !(node.data instanceof Module)) {
             return OkResult.fail(`The node that we try to put data is not module memory`, `Please update it`);
         }
-        if (!(data instanceof ModuleMemory)) {
+        if (!(data instanceof Module)) {
             return OkResult.fail(`The data is not module memory`, `Please update the 'data' argument`);
         }
-        if (node.data.moduleLink.isEqual(data.moduleLink)) {
-            return OkResult.fail(`The data that you are trying to put has incorrect module url`, `The extension you are trying to implement has '${data.moduleLink}', while data to put has '${data.moduleLink}', please update your data's module link.`);
+        if (node.data.link.isEqual(data.link)) {
+            return OkResult.fail(`The data that you are trying to put has incorrect module url`, `The extension you are trying to implement has '${data.link}', while data to put has '${data.link}', please update your data's module link.`);
         }
-        if (this._modules[node.data.moduleLink.url] === undefined) {
-            return OkResult.fail(`The module memory not found`, `Can not find ${node.data.moduleLink.url}. Call rest.post instead.`);
+        if (this._modules[node.data.link.url] === undefined) {
+            return OkResult.fail(`The module memory not found`, `Can not find ${node.data.link.url}. Call rest.post instead.`);
         }
-        this._modules[node.data.moduleLink.url] = data;
+        this._modules[node.data.link.url] = data;
         return OkResult.ok();
     }
     async forwardPatch(_selector, _node, _attrValue) {
@@ -251,8 +237,8 @@ export class BuiltinModuleManager {
         const moduleURLs = nodes
             .filter(node => this._restHandler.isMatchingTag(node.selector))
             .map(node => node.data)
-            .filter(el => el !== null && (el instanceof ModuleMemory))
-            .map(moduleMemory => moduleMemory.moduleLink.url)
+            .filter(el => el !== null && (el instanceof Module))
+            .map(moduleMemory => moduleMemory.link.url)
             .filter(moduleURL => this._modules[moduleURL] !== undefined);
         if (moduleURLs.length === 0) {
             return OkResult.ok();

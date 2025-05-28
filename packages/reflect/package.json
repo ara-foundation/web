@@ -18,23 +18,16 @@
       "default": "./dist/index.js"
     },
     "./nodejs-ext": {
-      "types": "./src/reflect-nodejs-ext/index.ts",
-      "default": "./dist/reflect-nodejs-ext/index.js"
-    },
-    "./code-level": {
-      "types": "./src/code-level/index.ts",
-      "default": "./dist/code-level/index.js"
+      "types": "./src/builtin-module-manager.ts",
+      "default": "./dist/builtin-module-manager.js"
     }
   },
   "dependencies": {
     "@ara-web/p-hintjens": "workspace:*",
-    "@ara-web/sds": "workspace:*",
-    "ts-morph": "^25.0.1"
+    "@ara-web/sds": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.16",
-    "@types/react": "19.1.2",
-    "@types/react-dom": "19.1.2",
     "vite": "^6.3.3",
     "vitest": "2.1.6"
   }

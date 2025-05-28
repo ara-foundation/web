@@ -1,85 +1,23 @@
-import  { type Result } from "@ara-web/p-hintjens";
-import { AraLink, ModuleLink, Restful, ExtensionOperator, RestfulExtensionOperator, Extendable } from "@ara-web/sds";
-import { CodePiece, CodePieceType } from "../src/code-level/code-piece.js";
+import { ModuleLink, Restful, ExtensionOperator, Extendable } from "@ara-web/sds";
 import { expect } from "vitest";
-import { ValueTypeString, type IdentifiedNodeDataType } from "../src/code-level/code-piece-types.js";
-import { CodePieceContext } from "../src/code-level/code-piece-context.js";
-import { ModuleMemoryOperator } from "../src/module-manager-operator.js";
-import { ModuleMemory } from "../src/module-memory.js";
+import { ChiefModuleManager } from "../src/chief-module-manager.js";
+import { Module } from "../src/module.js";
 import { ModuleRecords, ModuleManager, ModuleRecord } from "../src/module-manager.js";
 import { ModuleCategory } from "../src/builtin-module-manager.js";
-import { MEMOP_TAG, ReflectDataType } from "../src/reflect-object-tree.js";
-
-export type AstNodeProperties = Pick<CodePiece, "constant" | "public">
-
-export const expectAstNodeResult = (result: Result<CodePiece[]>, identifier: string|string[]): void => {
-    expect(result.isSuccess).toBe(true);
-}
-  
-export const expectValidTypeNode = <DATA_TYPE>(astNode: CodePiece, identfier: string, data: DATA_TYPE | string, dataType?: IdentifiedNodeDataType): void => {
-  expect(astNode !== undefined).toBe(true);  
-  expect(astNode.identifier).toEqual(identfier)
-    expect(astNode.nodeType).toEqual(CodePieceType.Type)
-    if (typeof data === "string") {
-      expect(astNode.data).toBe(data)
-    } else if (data === undefined) {
-      expect(astNode.data).toStrictEqual({})
-    } else {
-      expect(astNode.data).toBeInstanceOf(data)
-    }
-  
-    if (dataType === undefined) {
-      expect(astNode.dataType).toBeUndefined();
-    } else {
-      expect(astNode.dataType).toEqual(dataType)
-    }
-}
-
-export const expectValidVariableNode = (astNode: CodePiece, identfier: string, properties: AstNodeProperties, dataType?: IdentifiedNodeDataType): void => {
-    expect(astNode.identifier).toEqual(identfier)
-    expect(astNode.nodeType).toEqual(CodePieceType.Variable)
-    if (astNode.data !== undefined) {
-      expect(astNode.data).toBeInstanceOf(AraLink);
-    }
-
-    // Property check
-    expect(astNode.constant).toBe(properties.constant)
-    expect(astNode.public).toBe(properties.public)
-
-    // Data Type check
-    if (dataType === undefined || dataType === ValueTypeString.undefined) {
-      expect(astNode.dataType).toBeUndefined();
-    } else if (dataType === ValueTypeString.object) {
-      expect(astNode.dataType).toStrictEqual({})
-    } else if (typeof dataType === "string") {
-      expect(astNode.dataType).toBe(dataType)
-    } else {
-      expect(astNode.dataType).toBeInstanceOf(dataType)
-    }
-}
-
-export const getEmptyContext = (identifers?: CodePiece[]): CodePieceContext => {
-  if (identifers === undefined) {
-    identifers = [];
-  }
-
-  const context = new CodePieceContext([], identifers);
-
-  return context;
-}
+import { ReflectDataType } from "../src/reflect-object-tree.js";
 
 export const modulePath = `./funcs.ts`;
 
-export const getProjectMemory = (modOps: ModuleManager[]): ModuleMemoryOperator => {
+export const getProjectMemory = (modOps: ModuleManager[]): ChiefModuleManager => {
   const extOp = new ExtensionOperator(modOps);
-  const projectMemory = new ModuleMemoryOperator(extOp)
+  const projectMemory = new ChiefModuleManager(extOp)
   return projectMemory;
 }
 
-export const getEmptyModule = (filePath: string = import.meta.filename): ModuleMemory<unknown> => {
+export const getEmptyModule = (filePath: string = import.meta.filename): Module => {
   const fileModuleLink = ModuleLink.newFileLink(filePath);
   const moduleLink = ModuleLink.newPackageLink("reflect", "test", modulePath, {absolutePath: fileModuleLink.url});
-  return new ModuleMemory(ModuleCategory.NodeJsModule, moduleLink, undefined);
+  return new Module(ModuleCategory.NodeJsModule, moduleLink, undefined);
 }
 
 export const putFuncModule = async (ext: ModuleManager, rest: Restful<ReflectDataType>, _modulePath: string = modulePath): Promise<Extendable> => {

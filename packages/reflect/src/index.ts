@@ -8,18 +8,11 @@ export type {
     AutoImporter, 
 } from "./module-manager.js"
 export {
-    ModuleMemoryOperator
-} from "./module-manager-operator.js"
-export {
-    codePieceOps,
-    moduleToCodePieceTree,
-    MODULE_SELECTOR
-} from "./code-piece-object-tree.js"
-export { CodePiece } from "./code-level/index.js"
-export { ModuleMemory } from "./module-memory.js";
-export { type ModuleMemories } from "./module-manager-operator.js";
-export { BuiltInIdentifiers } from "./built-in-identifiers.js";
-export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module.js";
+    ChiefModuleManager,
+    type Modules
+} from "./chief-module-manager.js"
+export { Module } from "./module.js";
+export { FilePath, FileExtension, ModulePath, ModuleCategory } from "./module-path.js";
 export {
     type ReflectDataType,
     reflectDataToObjectTree, 

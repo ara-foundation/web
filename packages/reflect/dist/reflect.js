@@ -2,7 +2,7 @@ import { ExtensionOperator, ModuleLink, Rest, RestfulExtensionOperator, Service 
 import { BuiltinModuleManager } from "./builtin-module-manager.js";
 import { MEMOP_TAG, reflectDataToObjectTree } from "./reflect-object-tree.js";
 import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
-import { ModuleMemoryOperator } from "./module-manager-operator.js";
+import { ChiefModuleManager } from "./chief-module-manager.js";
 const reflectPkgLink = ModuleLink.newPackageLink('@ara-web', 'reflect');
 const restLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'rest-engine');
 const withDefaults = (reflectSetup) => {
@@ -25,9 +25,9 @@ export class Reflect extends Service {
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup
      */
-    constructor(setup) {
+    constructor(setup = {}) {
         super(withDefaults(setup), ["rest"]);
-        this.operator = new ModuleMemoryOperator(this.operator);
+        this.operator = new ChiefModuleManager(this.operator);
         const restHookProxy = new RestReflectHookProxy();
         const restSetup = {
             packageLink: restLink,
@@ -40,6 +40,11 @@ export class Reflect extends Service {
             throw proxified;
         }
         this._rest = proxified.getValue();
+        const restfulLinked = this.operator.setRestDispatcherOperator(rest);
+        if (restfulLinked.isFailure) {
+            throw restfulLinked;
+        }
+        this.nodeJsExt.setRestSyncer(this._rest.rootNode, reflectDataToObjectTree);
     }
     get nodeJsExt() {
         return this.extensionOperator.exts[0];

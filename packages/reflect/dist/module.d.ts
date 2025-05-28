@@ -1,83 +1,20 @@
-import { Result, OkResult } from "@ara-web/p-hintjens";
 import { ModuleLink } from "@ara-web/sds";
-/**
- * Defualt Module Categories
- */
-export declare enum ModuleCategory {
-    Untracked = "untracked"
-}
-/**
- * Default supported file extentions
- */
-export declare enum FileExtension {
-    Typescript = ".ts",
-    Javascript = ".js"
-}
-export declare class ModulePath {
-    private static getParentLevel;
-    static getFilenameOrIndex: (filePath: string, ext?: string) => string;
-    static getLevel: (callerFilePath: string, importFilePath: string) => number | undefined;
-}
-/**
- * Works with the file path. Anything related to your OS file system is going through here.
- */
-export declare class FilePath {
+export declare class Module {
+    readonly link: ModuleLink;
     /**
-     * Removes any special character prefixes:
-     *  `./`
-     *  `../`
-     *  `@`
-     * @param module path
+     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import#module_namespace_object
+     *
+     * Returns all exported methods as the sealed object:
+     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/seal
+     *
+     * Sealing an object prevents extensions and makes existing properties non-configurable.
      */
-    static trimPath: (path: string) => string;
-    static isFileExtensionExist: (filePath: string | undefined) => boolean;
+    readonly namespaceObject: unknown;
+    readonly category: string;
+    constructor(category: string, url: ModuleLink, namespaceObject: unknown);
     /**
-     * Detects the file type by the file extension,
-     * if not supported file then returns error.
-     * @param filePath the full path to the file within the Ara Web
-     * @returns {FileExtension}
-     */
-    static getFileExtension: (filePath: string | undefined, supportedExtensions?: string[]) => Result<string>;
-    /**
-     * Returns the file name
-     * @param filePath
-     * @param includeExt? optinally set include the extension or not. By default set to false.
+     * Returns the content (imported by glob)
      * @returns
      */
-    static getFileName: (filePath: string | undefined, includeExt?: boolean) => Result<string>;
-    static getCurrentWorkingDir: () => string;
-    static isAbsolutePath: (dirOrFilePath: string) => boolean;
-    static isDirectory: (filePath: string) => boolean;
-    /**
-     * If the file path is a directory then simply return it.
-     * Otherwise, return the file's .
-     * @param dirOrfilePath
-     */
-    static getDirectory: (dirOrfilePath: string) => string;
-    static getFileAbsolutePath: (filePath: string, filePathFrom: string) => ModuleLink;
-    /**
-     * @param dirPath Directory without the file path
-     * @returns
-     */
-    static getDirSegments: (dirPath: string) => string[];
-    static join: (segments: string[]) => string;
-    /**
-     * Returns true if the file exists by given `moduleLink`.
-     * For now it only supports the `file://` module URLs and in this case
-     * checks the file system. The file must not be a directory also.
-     * @param moduleLink
-     */
-    static isFileExist: (moduleLink: ModuleLink) => boolean;
-    /**
-     * Writes the file content, to a new file.
-     * @param filePath absolute file path.
-     * @param fileContent data to write.
-     */
-    static postFileContent: (filePath: string, fileContent: string) => OkResult;
-    /**
-     * Reads the file content
-     * @param filePath
-     */
-    static getFileContent: (filePath: string) => Result<string>;
-    static getPackageJsonDependencies: (cwd?: string, fileName?: string) => string[];
+    as<T>(): T;
 }

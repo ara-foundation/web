@@ -3,20 +3,21 @@
 //  Page -> Index -> memory of index
 import { ExtensionOperator, ModuleLink, RestfulExtensionOperator } from "@ara-web/sds";
 import { Result } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "./module-memory.js";
+import { Module } from "./module.js";
 import { MEMOP_TAG } from "./reflect-object-tree.js";
 const packageLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'module-manager-operator');
-//  purl -> memory of Ceo.tsx
 /**
- * `ProjectMemory` links all the module memories between extensions.
+ * ModuleOperator is the SDSExtension operator that
+ * returns ModuleManager. It also acts as the module manager,
+ * but simply calls its module managers. :)
  */
-export class ModuleMemoryOperator extends RestfulExtensionOperator {
+export class ChiefModuleManager extends RestfulExtensionOperator {
     constructor(extOp) {
         super(packageLink, MEMOP_TAG, extOp);
     }
-    get memories() {
+    get modules() {
         return this.exts.reduce((memories, ext) => {
-            memories = [...memories, ...ext.memories];
+            memories = [...memories, ...ext.modules];
             return memories;
         }, []);
     }
@@ -51,12 +52,6 @@ export class ModuleMemoryOperator extends RestfulExtensionOperator {
         }
         return modules;
     };
-    getModuleContents(category) {
-        return this.getModules(category).map(m => m.content);
-    }
-    getNoContentModules(category) {
-        return this.getModules(category).filter(m => m.content == null);
-    }
     getModuleWithFileExtensions(link) {
         for (const ext of this.exts) {
             const links = ext.getModuleWithFileExtensions(link);

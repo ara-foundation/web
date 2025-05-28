@@ -14,7 +14,7 @@ export declare class Reflect extends Service implements RestfulReflect {
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup
      */
-    constructor(setup: Omit<RestfulSetup, "tag" | "packageLink">);
+    constructor(setup?: Omit<RestfulSetup, "rootNodeTag" | "packageLink">);
     get nodeJsExt(): BuiltinModuleManager;
     rest?(): RestReflectHookProxy;
     get extensionOperator(): RestfulExtensionOperator;

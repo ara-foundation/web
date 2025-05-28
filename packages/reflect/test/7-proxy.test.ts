@@ -32,7 +32,7 @@ class SampleProxy extends Proxy {
 test('Simply creating a reflect proxy and trying to fetch data', async () => {
     const sampleLink = ModuleLink.newPackageLink(undefined, "sample-package");
     const sampleProxy = new SampleProxy(sampleLink);
-    const reflect = new Reflect({proxies: [sampleProxy], packageLink: sampleLink});
+    const reflect = new Reflect({proxies: [sampleProxy]});
     expect(reflect.rest).toBeUndefined();
     
 
@@ -49,7 +49,7 @@ test('Check that proxies chain returns the first proxy', async () => {
     const sampleProxy1 = new SampleProxy(sampleLink1);
     const sampleLink2 = ModuleLink.newPackageLink(undefined, "sample-package-2");
     const sampleProxy2 = new SampleProxy(sampleLink2);
-    const reflect = new Reflect({proxies: [sampleProxy1, sampleProxy2], packageLink: sampleLink1});
+    const reflect = new Reflect({proxies: [sampleProxy1, sampleProxy2]});
     expect(reflect.rest).toBeUndefined();
 
     const proxifiedReflect = reflect.proxifyMe<SampleProxy>();

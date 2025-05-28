@@ -1,8 +1,8 @@
 import { ModuleLink, type ModuleURL, type Restful, type Extendable } from "@ara-web/sds";
 import { OkResult, type Result } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "./module-memory.js";
+import { Module } from "./module.js";
 import { type ReflectDataType } from "./reflect-object-tree.js";
-export type Module = unknown;
+export type NamespaceObject = unknown;
 export type ModulePath = string;
 export type ModuleCategory = string;
 export type AbsoluteFilePath = string;
@@ -11,11 +11,11 @@ export type AbsoluteFilePath = string;
  * The `importingFilePath` property is the module that records. You may set it using `import.meta.filename`
  */
 export type ModuleRecords = {
-    records: Record<ModulePath, Module>;
+    records: Record<ModulePath, NamespaceObject>;
     importMetaFilename?: AbsoluteFilePath;
 };
 export type ModuleRecord = {
-    module: Module;
+    module: NamespaceObject;
     importModuleClause: ModulePath;
     importMetaFilename?: AbsoluteFilePath;
 };
@@ -28,14 +28,12 @@ export type AutoImporter = () => ModuleRecords;
  * This is an SDS Extension interface. Any Reflect plugins must extend it.
  */
 export interface ModuleManager extends Extendable {
-    memories: ModuleMemory<unknown>[];
+    modules: Module[];
     categories: ModuleCategory[];
     isDefinedModuleCategory(category: ModuleCategory): boolean;
     isModuleExist(link: ModuleLink | ModuleURL): boolean;
-    getModule: <T>(link: ModuleLink) => Result<ModuleMemory<T>>;
-    getModules: <T>(category?: ModuleCategory) => ModuleMemory<T>[];
-    getModuleContents<T>(category?: ModuleCategory): T[];
-    getNoContentModules<T>(category?: ModuleCategory): ModuleMemory<T>[];
+    getModule: (link: ModuleLink) => Result<Module>;
+    getModules: (category?: ModuleCategory) => Module[];
     /**
      * If the module link is a file and doesn't have file extension, it will populate it.
      *

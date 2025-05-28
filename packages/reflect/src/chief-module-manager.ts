@@ -3,27 +3,28 @@
 //  Page -> Index -> memory of index
 import { ExtensionOperator, ModuleLink, type ModuleURL, RestfulExtensionOperator } from "@ara-web/sds";
 import { Result } from "@ara-web/p-hintjens";
-import { ModuleMemory } from "./module-memory.js";
+import { Module } from "./module.js";
 import type { AutoImporter, ModuleRecords, ModuleCategory, ModuleManager, ModuleRecord } from "./module-manager.js";
 import { MEMOP_TAG } from "./reflect-object-tree.js";
 
-export type ModuleMemories<T> = { [key: ModuleURL]: ModuleMemory<T | unknown> };
+export type Modules = { [key: ModuleURL]: Module };
 
 const packageLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'module-manager-operator');
 
-//  purl -> memory of Ceo.tsx
 /**
- * `ProjectMemory` links all the module memories between extensions. 
+ * ModuleOperator is the SDSExtension operator that
+ * returns ModuleManager. It also acts as the module manager,
+ * but simply calls its module managers. :)
  */
-export class ModuleMemoryOperator extends RestfulExtensionOperator implements ModuleManager {
+export class ChiefModuleManager extends RestfulExtensionOperator implements ModuleManager {
     constructor(extOp: ExtensionOperator) {
         super(packageLink, MEMOP_TAG, extOp)
     }
-    public get memories(): ModuleMemory<unknown>[] {
+    public get modules(): Module[] {
         return this.exts.reduce((memories, ext) => {
-            memories = [...memories, ...(ext as ModuleManager).memories]
+            memories = [...memories, ...(ext as ModuleManager).modules]
             return memories;
-        }, [] as ModuleMemory<unknown>[]);
+        }, [] as Module[]);
     }
     
     public get categories(): string[] {
@@ -45,9 +46,9 @@ export class ModuleMemoryOperator extends RestfulExtensionOperator implements Mo
         return this.exts.some(ext => (ext as ModuleManager).isModuleExist(link));
     }
 
-    getModule = <T>(link: ModuleLink): Result<ModuleMemory<T>> => {
+    getModule = <T>(link: ModuleLink): Result<Module> => {
         for (const ext of this.exts) {
-            const result = (ext as ModuleManager).getModule<T>(link);
+            const result = (ext as ModuleManager).getModule(link);
             if (result && (result as any).ok) {
                 return result;
             }
@@ -55,21 +56,13 @@ export class ModuleMemoryOperator extends RestfulExtensionOperator implements Mo
         return Result.fail("Module not found", `The given '${link.url}' not found`);
     };
 
-    getModules = <T>(category?: ModuleCategory): ModuleMemory<T>[] => {
-        let modules: ModuleMemory<T>[] = [];
+    getModules = <T>(category?: ModuleCategory): Module[] => {
+        let modules: Module[] = [];
         for (const ext of this.exts) {
-            modules = modules.concat((ext as ModuleManager).getModules<T>(category));
+            modules = modules.concat((ext as ModuleManager).getModules(category));
         }
         return modules;
     };
-
-    getModuleContents<T>(category?: ModuleCategory): T[] {
-        return this.getModules<T>(category).map(m => m.content as T);
-    }
-
-    getNoContentModules<T>(category?: ModuleCategory): ModuleMemory<T>[] {
-        return this.getModules<T>(category).filter(m => m.content == null);
-    }
 
     getModuleWithFileExtensions(link: ModuleLink): ModuleLink[] {
         for (const ext of this.exts) {

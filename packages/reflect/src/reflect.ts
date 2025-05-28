@@ -14,7 +14,7 @@ import {
     type ReflectDataType
 } from "./reflect-object-tree.js";
 import { RestReflectHookProxy } from "./rest-reflect-hook-proxy.js";
-import { ModuleMemoryOperator } from "./module-manager-operator.js";
+import { ChiefModuleManager } from "./chief-module-manager.js";
 
 export interface RestfulReflect {
     rest?(): RestReflectHookProxy;
@@ -23,7 +23,7 @@ export interface RestfulReflect {
 const reflectPkgLink = ModuleLink.newPackageLink('@ara-web', 'reflect');
 const restLink = ModuleLink.newPackageLink('@ara-web', 'reflect', 'rest-engine');
 
-const withDefaults = (reflectSetup: Omit<RestfulSetup, "tag" | "packageLink">): RestfulSetup => {
+const withDefaults = (reflectSetup: Omit<RestfulSetup, "rootNodeTag" | "packageLink">): RestfulSetup => {
     if (reflectSetup.extensions === undefined) {
         reflectSetup.extensions = [new BuiltinModuleManager()]
     } else {
@@ -44,9 +44,9 @@ export class Reflect extends Service implements RestfulReflect  {
      * Pass the Reflect Setup to support new types of the modules and their parsing
      * @param setup 
      */
-    constructor(setup: Omit<RestfulSetup, "tag" | "packageLink">) {
+    constructor(setup: Omit<RestfulSetup, "rootNodeTag" | "packageLink"> = {}) {
         super(withDefaults(setup), ["rest"]);
-        this.operator = new ModuleMemoryOperator(this.operator as ExtensionOperator);
+        this.operator = new ChiefModuleManager(this.operator as ExtensionOperator);
         const restHookProxy = new RestReflectHookProxy();
         const restSetup: Setup = {
             packageLink: restLink,
@@ -59,6 +59,12 @@ export class Reflect extends Service implements RestfulReflect  {
             throw proxified;
         }
         this._rest = proxified.getValue();
+        const restfulLinked = (this.operator as ChiefModuleManager).setRestDispatcherOperator(rest);
+        if (restfulLinked.isFailure) {
+            throw restfulLinked;
+        }
+        this.nodeJsExt.setRestSyncer(this._rest.rootNode!, reflectDataToObjectTree);
+
     }
 
     public get nodeJsExt(): BuiltinModuleManager {

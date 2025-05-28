@@ -1,6 +1,6 @@
 import { type DataToObjectNode, type ModuleURL, type Restful, ModuleLink, ObjectNode, RestHandler, RestSynchronizer } from "@ara-web/sds";
 import { OkResult, Result } from "@ara-web/p-hintjens";
-import { ModuleMemory, type AutoImporter, type ModuleManager, type ModuleRecord, type ModuleRecords, type ReflectDataType } from "./index.js";
+import { type AutoImporter, type ModuleManager, type ModuleRecord, type ModuleRecords, type ReflectDataType, Module } from "./index.js";
 export declare enum ModuleCategory {
     NodeJsModule = "node_modules"
 }
@@ -27,14 +27,12 @@ export declare class BuiltinModuleManager implements ModuleManager {
     /**************************************
      *  Module operators
      *************************************/
-    get memories(): ModuleMemory<unknown>[];
+    get modules(): Module[];
     get categories(): string[];
     isDefinedModuleCategory(moduleCategory: string): boolean;
     isModuleExist(moduleLink: ModuleLink | ModuleURL): boolean;
-    getModule<T>(moduleLink: ModuleLink | string): Result<ModuleMemory<T>>;
-    getModules<T>(moduleCategory?: string): ModuleMemory<T>[];
-    getModuleContents<T>(moduleCategory?: string): T[];
-    getNoContentModules<T>(moduleCategory?: string): ModuleMemory<T>[];
+    getModule<T>(moduleLink: ModuleLink | string): Result<Module>;
+    getModules(moduleCategory?: string): Module[];
     getModuleWithFileExtensions(_: ModuleLink): ModuleLink[];
     putPackage({ importModuleClause, module }: ModuleRecord): Promise<Result<ModuleLink>>;
     putModules(params: ModuleRecords | ModuleRecord): Promise<Result<ModuleLink[]>>;

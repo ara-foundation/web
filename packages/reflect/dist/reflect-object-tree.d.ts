@@ -1,8 +1,7 @@
 import { type DataToObjectNode, type DataOperations, RestfulExtensionOperator } from "@ara-web/sds";
-import { ModuleMemory } from "./module-memory.js";
-import { CodePiece } from "./code-level/index.js";
+import { Module } from "./module.js";
 import type { ModuleManager } from "./module-manager.js";
-export type ReflectDataType = ModuleMemory<unknown> | ModuleManager | RestfulExtensionOperator | CodePiece;
+export type ReflectDataType = Module | ModuleManager | RestfulExtensionOperator;
 export declare const MEMOP_TAG = "memop";
 export declare const MODULE_MEMORY_TAG = "module";
 export declare const MODULE_MEMORY_SELECTOR = "*:nth-child(1) module";
