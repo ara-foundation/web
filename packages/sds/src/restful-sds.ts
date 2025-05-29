@@ -55,9 +55,9 @@ export class RestfulExtensionOperator implements ExtendableOperator {
         return this._extDispatcher;
     }
 
-    public async setRestDispatcherOperator(rest: Restful<any>): Promise<OkResult> {
-        const documentElement = await rest.get!('*');
-        if (documentElement === null) {
+    public setRestDispatcherOperator(rest: Restful<any>): OkResult {
+        const documentElement = rest.rootNode!;
+        if (documentElement === undefined) {
             return OkResult.fail(`No document element found, are you sure element exist?`, `Please make sure element exist`);
         }
         if (documentElement.selector !== DOCUMENT_SELECTOR) {

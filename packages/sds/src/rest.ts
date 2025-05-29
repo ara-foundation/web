@@ -15,26 +15,10 @@ import {
 import { LinkTraits } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
 
-export type PostHandler = <DataType>(parentOrBigBro: ObjectNode<DataType>, node: ObjectNode<DataType>, options?: { lilBro?: boolean }) => Promise<OkResult>;
+export type PostHandler = <DataType>(parentNode: ObjectNode<DataType>, childNode: ObjectNode<DataType>) => Promise<OkResult>;
 export type PutHandler = <DataType>(selector: string, node: ObjectNode<DataType>, data: DataType) => Promise<OkResult>;
 export type PatchHandler = <DataType, AttrType>(selector: string, node: ObjectNode<DataType>, attrValue: AttrType) => Promise<OkResult>;
 export type DeleteHandler = <DataType>(selector: string, nodes: ObjectNode<DataType>[]) => Promise<OkResult>;
-
-/**
- * RestSynchronizer is used to keep track of the object nodes 
- * that are pending to be synchronized by the rest.
- */
-export class RestSynchronizer {
-    readonly pendingKeys = new Set<string>();
-    readonly rootNode: ObjectNode<any>;
-    readonly objectToNodeTree: DataToObjectNode<any>;
-
-    constructor(node: ObjectNode<any>, objectToNodeTree: DataToObjectNode<any>) {
-        this.pendingKeys = new Set<string>();
-        this.rootNode = node;
-        this.objectToNodeTree = objectToNodeTree;
-    }
-}
 
 /**
  * A Rest Extension that forwards rest to the side.
@@ -67,17 +51,20 @@ export class RestHandler implements Extendable {
     public handleDelete?: DeleteHandler;
 }
 
+/**
+ * RestDispatcher is the extension operator of the SDS service called Rest.
+ */
 export class RestDispatcher<ObjectDataType> extends ExtensionOperator {
     private get handlers(): RestHandler[] {
         return this.exts.filter(ext => ext instanceof RestHandler) as RestHandler[];
     }
 
-    async post(parentOrBigBro: ObjectNode<ObjectDataType>, newBornChild: ObjectNode<ObjectDataType>, options: {lilBro?: boolean} = {lilBro: false}): Promise<OkResult> {
+    async post(parentNode: ObjectNode<ObjectDataType>, newBornChild: ObjectNode<ObjectDataType>): Promise<OkResult> {
         for (const handler of this.handlers) {
             if (handler.handlePost === undefined) {
                 continue;
             }
-            const handled = await handler.handlePost!(parentOrBigBro, newBornChild, options);
+            const handled = await handler.handlePost!(parentNode, newBornChild);
             if (handled.isFailure) {
                 return OkResult.fail(`restHandler('${handler.packageLink}').posting(): ${handled.errorTitle}`, handled.errorDescription!);
             }
@@ -149,7 +136,7 @@ export interface Restful<ObjectDataType> {
     // Hooks
     get?(selector: string): Promise<ObjectNode<ObjectDataType>|null>;
     getAll?(selector: string): Promise<ObjectNode<ObjectDataType>[]>;
-    post?(selector: string, data: ObjectDataType, options?: {lilBro?: boolean}): Promise<OkResult>;
+    post?(selector: string, data: ObjectDataType): Promise<OkResult>;
     put?(selector: string, data: ObjectDataType): Promise<OkResult>;
     patch?<AttrType>(attrSelector: string, data: AttrType): Promise<OkResult>;
     delete?(selector: string): Promise<OkResult>;
@@ -238,71 +225,24 @@ export class Rest<ObjectDataType> extends Service implements Restful<ObjectDataT
      * This method doesn't set the children relationship to the parent.
      * Letting know that selector is a parent occurs in the ObjectNode instantiation.
      * @requires Selector to exist, the object must have a parent.
-     * @param selector Parent or a big brother's link if `options.lilBro` is set true.
-     * @param data  Object node's data
+     * @param parentSelector Parent or a big brother's link if `options.lilBro` is set true.
+     * @param childData  Object node's data
      * @param options Set to little bro if you want to set object after the selector.
      * @returns 
      */
-    public async post?(selector: string, data: ObjectDataType, options: {lilBro?: boolean} = {lilBro: false}): Promise<OkResult> {
-        const parentOrBigBro = await this._getParentOrBigBro(selector, options);
-        if (parentOrBigBro.isFailure) {
-            return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription!);
+    public async post?(parentSelector: string, childData: ObjectDataType): Promise<OkResult> {
+        const parent = await this.get!(parentSelector);
+        if (parent === null) {
+            return Result.fail(`Rest.get('${parentSelector}'): parent not found`, `Please pass the correct selector`);
         }
 
-        let bigBro: ObjectNode<ObjectDataType>|undefined;
-        let parent: ObjectNode<ObjectDataType>|undefined;
-        if (options.lilBro) {
-            bigBro = parentOrBigBro.getValue();
-            parent = bigBro.parent! as ObjectNode<ObjectDataType>;
-        } else {
-            parent = parentOrBigBro.getValue();
-        }
+        let newBornChild = this.dataToObjectNode!(childData, parent);
 
-        let newBornChild = this.dataToObjectNode!(data, parent);
-
-        const handled = await this.dispatcher.post(parentOrBigBro.getValue(), newBornChild, options);
+        const handled = await this.dispatcher.post(parent, newBornChild);
         if (handled.isFailure) {
-            return OkResult.fail(`dispatcher.post(selector: '${selector}'): ${handled.errorTitle}`, handled.errorDescription!);
+            return OkResult.fail(`dispatcher.post(selector: '${parentSelector}'): ${handled.errorTitle}`, handled.errorDescription!);
         }
-
-        const posted = this._appendChild(newBornChild, bigBro);
-        return posted;
-    }
-
-    private async _getParentOrBigBro(selector: string, options: {lilBro?: boolean} = {lilBro: false}): Promise<Result<ObjectNode<ObjectDataType>>> {
-        let parentOrBigBro = await this.get!(selector);
-        if (parentOrBigBro === null) {
-            return Result.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
-        }
-        if (options.lilBro) {
-            if (parentOrBigBro.parent === null) {
-                return Result.fail(`Rest('${selector}') is me, and I have no parent to post my lil'bro!`, `Add my parent first. How can I add my sibling if its not my parents.`)
-            }
-        }
-        // not calling lil bro, then its the parents decided to make a love.
-        return Result.ok(parentOrBigBro);
-    }
-
-    /**
-     * Append the data as the child of a parent by calling `data.parent.appendChild()`
-     * or `data.parent.setChildren()`.
-     * @param newBornChild 
-     * @param bigBro 
-     */
-    private _appendChild(newBornChild: ObjectNode<ObjectDataType>, bigBro?: ObjectNode<ObjectDataType>): OkResult {
-        if (bigBro === undefined) {
-            newBornChild.parent!.appendChild(newBornChild);
-        } else {
-            const bigBroIndex = newBornChild.parent!.children.findIndex(sibling => sibling.isEqualTo(bigBro));
-            if (bigBroIndex === -1) {
-                return OkResult.fail(`Can not find the big bro`, `Are you sure it works?`);
-            }
-            const elderBrothers = newBornChild.parent!.children.slice(0, bigBroIndex + 1);
-            const youngerCousins = newBornChild.parent!.children.slice(bigBroIndex + 1);
-            const allChildren: CustomSelectorNode[] = [...elderBrothers, newBornChild as CustomSelectorNode, ...youngerCousins];
-            newBornChild.parent!.setChildren(allChildren);
-        }
-        
+        newBornChild.parent!.appendChild(newBornChild);
         return OkResult.ok();
     }
 

@@ -29,7 +29,7 @@ export declare class RestfulExtensionOperator implements ExtendableOperator {
     private _restSynchronizer?;
     constructor(serviceLink: ModuleLink, extTag: string | undefined, extOp: ExtensionOperator);
     get restDispatcher(): RestHandler;
-    setRestDispatcherOperator(rest: Restful<any>): Promise<OkResult>;
+    setRestDispatcherOperator(rest: Restful<any>): OkResult;
     /*********************************************************************
      *
      * Operator's public methods
