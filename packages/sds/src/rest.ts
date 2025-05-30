@@ -249,9 +249,9 @@ export class Rest<ObjectDataType> extends Service implements Restful<ObjectDataT
 
     constructor(
         dataToObjectNode: DataToObjectNode<ObjectDataType>,
-        setup: Setup = {packageLink: restPackgeLink}
+        setup: Omit<Setup, "packageLink"> = {}
     ) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete"]);
+        super({...setup, packageLink: restPackgeLink}, ["get", "getAll", "post", "put", "patch", "delete"]);
         this._options = {adapter: new ObjectNodeAdapter()};
         this._root = dataToObjectNode();
         this.dataToObjectNode = dataToObjectNode;

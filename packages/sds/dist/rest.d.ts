@@ -119,7 +119,7 @@ export declare class Rest<ObjectDataType> extends Service implements Restful<Obj
     private _options;
     private _root;
     readonly dataToObjectNode: DataToObjectNode<ObjectDataType>;
-    constructor(dataToObjectNode: DataToObjectNode<ObjectDataType>, setup?: Setup);
+    constructor(dataToObjectNode: DataToObjectNode<ObjectDataType>, setup?: Omit<Setup, "packageLink">);
     get rootNode(): ObjectNode<ObjectDataType>;
     setRootNode(obj: ObjectNode<ObjectDataType>): void;
     /**

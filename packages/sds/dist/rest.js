@@ -160,8 +160,8 @@ export class Rest extends Service {
     _options;
     _root;
     dataToObjectNode;
-    constructor(dataToObjectNode, setup = { packageLink: restPackgeLink }) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete"]);
+    constructor(dataToObjectNode, setup = {}) {
+        super({ ...setup, packageLink: restPackgeLink }, ["get", "getAll", "post", "put", "patch", "delete"]);
         this._options = { adapter: new ObjectNodeAdapter() };
         this._root = dataToObjectNode();
         this.dataToObjectNode = dataToObjectNode;

@@ -1,267 +1,141 @@
 # SDS
-**SDS** module to convert your app into a plug-and-play  architecture. It lets others:
-* **Extend, add Plugins to Your App**: Developers can write extensions (plugins) that add functionality without modifying your code.
-* **Customize interface**: Use proxies to intercept the methods so that the service could be exposed as a different class. *For example: as a CLI, Http Web, Http API, or other interfaces separated from the core logic. Additionally, with proxy create validations, authentications.*
-* **Modularize Code**: By separating the app into a main service with proxies and extensions, SDS creates a standard which makes your app as a framework open to community contributions.
+**SDS** is a package that helps you turn your app into a plug-and-play system. It lets others:
 
-In essence, SDS is intended for apps where you expect third parties or even for internal develoeprs to create plugins and extensions that build on top of your app functionality.
+- **Add Plugins Easily**: Developers can write plugins to add new features without changing your code.
+- **Customize Interfaces**: Use proxies to expose your service as a CLI, HTTP API, or other interfaces, separate from your core logic. Proxies can also add things like validation or authentication.
+- **Module under the hood**: Write your apps thinking about your business logic, without worry about modularity. SDS helps to scale and refactor your app.
 
-Check out the [Reflect](https://github.com/ara-foundation/web/tree/main/packages/reflect/README.md) for real-world implementation.
+SDS is for you if you want:
+- you want others (even your own team) to build plugins or extensions on top of your app.
+- writing a monolith—focus on your MVP or demo without worrying about scalability. When you’re ready to grow, SDS helps you scale on demand. Instead of throwing away your early code, use it as the blueprint for your startup and evolve it into a modular, extensible system.
 
-Additionally, SDS includes:
-- 📝 **Ara Link** adds various types of links between objects.
-    * Ara Link &ndash; A generic Link that could link to any resource, not only text value.
-    * Module Link &ndash; either a file url or a Purl. Used to create module IDs.
+See the [Reflect](https://github.com/ara-foundation/web/tree/main/packages/reflect/README.md) package for a real-world example.
 
+Additionally SDS package includes:
+- 📝 **Link**: A series of modules to provide a universal URL for your data and code.
+    - Ara Link: A generic link to any resource.
+    - Module Link: A link to a file or module, used for module IDs. It's based on package URL.
+    - Object Link: A universal link to your app's data or source code.
+- 📝 **Restful SDS**: Create a Rest API for your app or data.
+    - Need to call `/dir/sub_dir/module.method`? Then use: `rest.get!('dir > sub_dir > method')()`
 
-### SDS Architecture
-Modules such as scripting files has three rules. A module can:
-* Import it's siblings in the same directory.
-* Import it's children index.
-* Importing child module other than index is prohibited.
-* Importing sub children not allowed.
-* Import it's parent index.
-* Importing named parent module is prohibited.
-* Importing grand parent is prohibited.
+> As a separate module, the Restful SDS documentation is defined in [REST.md](./REST.md). Here I describe the SDS only.
 
-Group of modules is a package. A package interaction:
-* If package is called by any module, then define it as NPM Package.
-* Other packages must be either an extension or a proxy.
+### Understanding SDS
+Let's first define our terminology.
+A standalone app in SDS is called a **service**.
+It's a synonymous of a Package, App, Library, 
+etc.
+
+Each service (app) is composed of the modules. A **module** is a synonymous of the source code, a namespace or object.
+
+SDS has few rules for services and for modules.
+
+#### Services
+SDS defines three types of services:
+* A service that keeps the business logic. It's called a simply as a service, or independent service. Example of independent services: *blog*, *game backend*, *todo list* etc.
+* An extension is another type of service. Extension's only talk to the independent service, and no other entities could connect to it. Example of the extensions are: *database*, *leaderboard* etc. Usually extensions are handling the side things that is independent from the business logic. For example, if your app is the blog, then extension is the place that saves the data. Optimize, or replace the extension if you migrate your data, without breaking the code logic.
+* A proxy is the third type of the service. A proxy only works with the independent service. It hides the independent service, and provides another interface for your app users. Example of the proxy: *a cli*, *http router*, *ddos-preventer*, *authentication*, *cache*.
+
+#### Service rules:
+* If a service has a proxy, then the app methods are available for the proxy. Proxy could organize a chain of proxies each doing its task.
+* A proxy either forwards to the next proxy or independent service, or returns its own data.
+* If a service has an extension, then independent service could send a data to the extension, and optionally receive it back.
+* All interactions are initiated by the independent service, never by the extension. Although whether to return back the information or not to the independent service is optional. It could be a one way interaction. Basically, extensions are managed by the independent service.
+
+> Any third party apps that your app depends on (for example database, OTP authentication, third party API) always interact using the extensions. This way your business logic will be independent from the api.
+
+#### Module rules
+Modules are the source codes. The rules for modules are:
+- A module can import siblings in the same directory.
+- It can import its own index file or its parent’s index.
+- It cannot import other child modules, named parent modules, or anything from a grandparent.
+
+> The [SDS Restful](./REST.md) module is another way how your modules could connect to another modules that doesn't follow the sds module rule. If your object depends on another object that is defined on another directory, then preferably interact with it using Restful api.
+
+---
+That's all the rules to write modular app without worry.
+You start by writing your app as an sds service. As you want to add more features, that is not related to the business logic, but necessary for functional work, add as the proxy or extension.
+
+Each service wether it's independent service, extension or proxy organize using the module rules. That will make your code as the tree node.
 
 ## Tutorial
 
-By following this tutorial, you can build an app that is a plug-&-play, turning your application into a more dynamic and community-driven project.
+This tutorial shows how to make your app plug-and-play and open to community contributions.
 
-### 1. Setting Up your App
-Let's start with the app setup.
-This setup contains details like the name of the app, description, a list of proxies and extensions that your app will have.
+### 1. Setting Up Your App
+
+Start by setting up your app with its name, description, proxies, and extensions.
 
 ```typescript
-import { PackageLink, SDSExtensionInterface, SDSProxy, SDSService, type SDSSetup } from "./src/sds";
+import { Express } from "express";
+import { ModuleLink, type Setup } from "@ara-web/sds";
+import { dbCredentials } from "./config.js";
+// Defined an authentication using Openapi, so that users
+// could authenticate using social network accounts
+import { AuthProxy } from "@game-company/chess-auth-proxy";
+// Package that defines the caching.
+import { WebProxy } from "@ara-web/sds-web-proxy";
+// Package that saves the chess sessions, leaderboards in the database
+import { DbExt } from "@game-company/chess-db-ext";
+// Package that defines a chess AI, if user wants to play against the bot.
+import { AiExt } from "@game-company/chess-ai-ext";
 
-const serviceText = "Hello from the service";
-const proxyText = "Hello from the proxy";
-const proxyText2 = "Hello from the proxy 2";
+// Universal ID of the service by purl specification.
+const backgammonUrl = ModuleLink.newPackageLink("game-company", "chess-backend");
 
-const serviceLink = PackageLink.newPackageURL("@ara-web", "p-hintjens-service");
-const proxyLink = PackageLink.newPackageURL("@ara-web", "p-hintjens-proxy");
-const proxyLink2 = PackageLink.newPackageURL("@ara-web", "p-hintjens-proxy-2");
+const authProxy = new AuthProxy(import.meta.env);
+const webProxy = new WebProxy({
+    get: [
+        "session",
+        "start",
+        "resume",
+    ],
+    post: [
+        "move",
+    ]
+});
+const dbExt = new DbExt(dbCredentials);
+const aiExt = new AiExt();
 
-const backgammonSetup: SDSSetup = {
-    packageLink: serviceLink,
-    description: "The backgammon game backend with the fair dices",
-    proxies: [proxyLink, proxy2Link],
-    extensions: [extLink, ext2Link],
-}
 ```
 
 ### 2. Defining a Service
-In SDS, each app is exposed as Objects. Create your apps' primary class by extending `SDSService`. 
+
+Each app is a class that extends `Service`.
 
 ```typescript
-interface SampleExtensionInterface extends SDSExtensionInterface {
-    getDouble(): number;
-    getTriple(): number;
-}
 
-class SampleService extends SDSService<SampleExtensionInterface> {
-    constructor(setup: SDSSetup<SampleExtensionInterface>) {
-        super(setup, ["helloService", "getNumber"]);
+class Chess extends Service {
+    constructor(setup: Setup) {
+        super(setup, ["start", "move", "resume", "session"]);
     }
 
-    public helloService?(): string {
-        return serviceText;
-    }
-
-    // If an extension is provided, getNumber returns the value from that extension.
-    public getNumber?(extIndex?: number): number {
-        if (extIndex !== undefined && extIndex >= 0 && extIndex < this._extensions.length) {
-            return this._extensions[extIndex].getDouble();
-        }
-        return 1;
-    }
-}
+    // Below are the functions of the game logic.
+    start?(userId: string, againstBot?: boolean): SessionID;
+    move?(userId, gameId, movement): Error|undefined;
+    resume?(userIdOrSessionId): SessionID;
+    session?(sessionID): Session;
 ```
 
-Before we setup our service, we define the possible Extensions interfaces.
-Any plugin for our app will have to implement the extension interface we provided.
+Suppose we implemented the body of the functions, perhaps using the AI's help. Let's run our chess.
 
-> Tip
-> Don't try to define all extension methods upfront.
-> My recommendation is to add the methods as they come to your needs.
-> Initially, its better to start with the empty extension interface.
+```ts
+const chessSetup: Setup = {
+    packageLink: backgammonUrl,
+    proxies: [webProxy, authProxy],
+    extensions: [aiExt, dbExt],
+}
+const chess = new Chess(chessSetup);
+const chessWeb = await chess.proxifyMe<Express>();
 
-After declaring the extension interface, we define our app by extending SDS Service. Our app for this tutorial has `helloService` and `getNumber` methods.
-
-Our app initialization in the constructor has two processes. Firstly, we initialize by SDSSetup. It tells our app what are the proxies and extensions that we have. Other initialization is keep track of all public methods that pass to SDSService constructor as the second argument.
-
-```typescript
-super(setup, ["helloService", "getNumber"])
+chessWeb.run();
 ```
 
-> Note, the methods or properties that we pass to SDSService must be optional, which that ends with `?` mark. Or, a type should be a union of `string|undefined`. Otherwise, if the app is proxified, SDS wouldn't be able to hide the methods you passed.
-
-### 3. Creating Proxies
-Proxies wrap the service (a.k.a our app) to modify its interface.
-Potentially, you may create a proxy that returns the web interface, another proxy that returns the CLI interface.
-
-Proxies are also includable, which means you can create your own set of proxies. For example for web interface, we can also add another proxy that authorizes the user if he access from the web.
-
-For the tutorial we create a one proxy that returns a custom greeting (via getDouble) and another proxy that overwrites the getDouble into a (getTriple). Create two proxy classes:
-
-```typescript
-class SampleProxy extends SDSProxy {
-    protected _behindData?: SampleService;
-
-    constructor(moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["helloProxy", "getDoubleNumber"], description);
-    }
-
-    public putBehindData?(behindData: SampleService): void {
-        this._behindData = behindData;
-    }
-
-    public helloProxy?(): string {
-        return proxyText;
-    }
-
-    public getDoubleNumber?(): number {
-        // Return double the result from the service's getNumber method.
-        return this._behindData!.getNumber!() * 2;
-    }
-}
-
-class SampleProxy2 extends SDSProxy {
-    protected _behindData?: SampleProxy;
-
-    constructor(moduleLink: ModuleLink, description?: string) {
-        super(moduleLink, ["helloProxy2", "getTripleNumber"], description);
-    }
-
-    public putBehindData?(behindData: SampleProxy): void {
-        this._behindData = behindData;
-    }
-
-    public helloProxy2?(): string {
-        return proxyText2;
-    }
-
-    public getTripleNumber?(): number {
-        // Return triple the value by further decorating the result from the previous proxy.
-        return this._behindData!.getDoubleNumber!() * 2;
-    }
-}
-
-```
-
-The `SDSProxyInterface` both optional `putBehindData?<Type>(proxifiedObject: T) => void` method. If you define it, then during the proxification, your service will be available to the proxy, so that proxy could manipulate the data.
-
-### 4. Writing Extensions
-Extensions add functionality to the service. In this example, two extensions are created that each implement getDouble and getTriple:
-For our tutorial we create two extensions each implementing `getDouble` and `getTriple` methods:
-
-```typescript
-class Sample42Extension implements SampleExtensionInterface {
-    description?: string | undefined;
-    packageLink: ModuleLink;
-    private num: number = 42;
-    
-    constructor(moduleLink: ModuleLink, description: string) {
-        this.description = description;
-        this.packageLink = moduleLink;
-    }
-    getDouble(): number {
-        return this.num * 2;
-    }
-    getTriple(): number {
-        return this.num * 3;
-    }
-}
-
-class Sample6Extension implements SampleExtensionInterface {
-    description?: string | undefined;
-    packageLink: ModuleLink;
-    private num: number = 6;
-    
-    constructor(moduleLink: ModuleLink, description: string) {
-        this.description = description;
-        this.packageLink = moduleLink;
-    }
-    getDouble(): number {
-        return this.num * 2;
-    }
-    getTriple(): number {
-        return this.num * 3;
-    }
-}
-```
-
-Now, let's use our service that setup with two extensions and two proxies:
-
-```
-console.log("Service helloService:", serviceWithExtensions.helloService!());
-console.log("Service getNumber (default):", serviceWithExtensions.getNumber!());
-console.log("Service getNumber with first extension:", serviceWithExtensions.getNumber!(0)); // should use Sample6Extension (6*2 = 12)
-console.log("Service getNumber with second extension:", serviceWithExtensions.getNumber!(1)); // should use Sample42Extension (42*2 = 84)
-```
-## When & Why to use SDS
-* **Plugin Architecture**: If you want your app to support plugins that can extend or override default behaviours, SDS provides a ready-made structure.
-* **Dynamic Extensions**: When you need to hide internal methods and expose only a clean public API that can be customized via proxies.
-* **Service Modularization**: Use SDS to create a distinct services with unique identifiers, making it easier to manage and update parts of your application separately.
-
-Developers should use this module when want to build an ecosystem where outside contributions (extensions and proxies) can be safely integrated without interfering with internal implementations.
-
-const proxifiedBackgammon = backgammon.proxifyMe<Express>();
-if (proxifiedResult.isSuccess) {
-    const proxifiedService = proxififedResult.getValue();
-    proxifiedService.getExpressApp().listen();
-}
-
-Summary
-* Purpose: SDS transforms your app into one that is plugin-friendly, enabling extensions and proxies.
-* Usage: Choose SDSw when you want to offer a modular, extensible service architecture.
-* Structure: SDS provides interfaces for metadata, proxies, and extensions, SDSService acts as the main service class, while SDSProxy lets you wrap and modify behaviour.
-* Tutorial: The steps above guide you from defining a module setup, creating and proxyfying a backgammon game backend, to add web interface independent from the game logic.
-
+Voila!
+Still not clear? Ask me a question, or help me to improve the documents by emailing me at `medet@ara.foundation`. In the title, write `SDS` so that bot don't throw it into the spam. As my email is public, someone will send an unnecessary information.
 
 # Roadmap
-* Parse the id and serialize it in any rest that calls id.
-* Create a script that can generate the SDS in interactive form through `pnpm create sds`.
-* Create a vice-versa, from Object Tree, to Page, basically opposite through RestExtension.
-* Make description addition as a later call from AI agent.
-  The AI make will get the object id. Then will return back to the Reflect the Object ID and the REST operation to operate.
-  For example, the AI extension might return `Rest.patch(ObjectLink("*[description]"), "description generated by Ara Web", ReflectExtension as REST, true)`
-
-How to work with the REST?
-
-```typescript
-const pageRestProxy = new PageREST(target: Page);
-const restSetup = {proxies: [pageRestProxy]};
-const pageRest = new REST(restSetup).proxifyMe<PageREST>();
-
-// Functions:
-pageRest.put(selector: string, value?: Component | ValueType)
-```
-
-Or shorter version:
-
-```typescript
-REST.put<PageREST>(page, selector, value?);
-```
-
----
-Rest:
-create document!
---
-    Available as div -> hello
---
-pass document as array to look for.
-create new Rest!
-pass the rest as parent of previous rest.
-
---
-    Available as
-
-    main -> []
-    side -> div -> hello
---
+- Parse and serialize IDs in REST calls.
+- Add a script to generate SDS interactively with `pnpm create sds`.
+- Allow AI agents to add descriptions later, using object IDs and REST operations.
