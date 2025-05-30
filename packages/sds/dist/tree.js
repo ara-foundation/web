@@ -13,14 +13,14 @@ export class ObjectNode {
     _data; // Only component like data
     _children = [];
     _parent;
-    _dataTraits;
-    constructor(dataTraits, dataToObjectNode, data, parent) {
-        this._dataTraits = dataTraits;
+    _dataOps;
+    constructor(dataOps, dataToObjectNode, data, parent) {
+        this._dataOps = dataOps;
         this._children = [];
         this._parent = parent;
-        if (data) {
+        if (data !== undefined) {
             this._data = data;
-            const children = dataTraits.getChildren(data);
+            const children = dataOps.getChildren(data);
             const parentElement = this;
             // new ObjectNode() lints this object to it's children
             const childNodes = children.map((child) => dataToObjectNode(child, parentElement));
@@ -163,19 +163,19 @@ export class ObjectNode {
      * For Pages, it returns empty string.
      */
     get name() {
-        return this._dataTraits.getName(this._data);
+        return this._dataOps.getName(this._data);
     }
     get parent() {
         return this._parent === undefined ? null : this._parent;
     }
     getAttribute(attrName) {
-        return this._dataTraits.getAttribute(this._data, attrName);
+        return this._dataOps.getAttribute(this._data, attrName);
     }
     setAttribute(name, value) {
         if (this._data === undefined) {
             return OkResult.fail(`No internal element`, `Are you sure it can set an attribute?`);
         }
-        return this._dataTraits.setAttribute(this._data, name, value);
+        return this._dataOps.setAttribute(this._data, name, value);
     }
     get children() {
         return this._children;
@@ -190,7 +190,7 @@ export class ObjectNode {
         throw new Error("Method not implemented.");
     }
     isAttributeExist(attrName) {
-        return this._dataTraits.getAttribute(this._data, attrName) !== undefined;
+        return this._dataOps.getAttribute(this._data, attrName) !== undefined;
     }
     setChildren(children) {
         this._children = children;

@@ -42,7 +42,7 @@ export interface Extendable extends Meta {}
  * This is because we can replace it later to use with the restful API.
  */
 export interface ExtendableOperator {
-    exts: Readonly<Extendable>[];
+    extensions: Readonly<Extendable>[];
     extensionAmount: number;
     addExtension(ext: Extendable): Promise<OkResult>;
     getExtension(moduleURL: ModuleURL): Extendable|undefined;
@@ -160,7 +160,7 @@ export class ExtensionOperator implements ExtendableOperator {
     /**
      * Return all extensions of the Service
      */
-    public get exts(): Readonly<Extendable>[] {
+    public get extensions(): Readonly<Extendable>[] {
         return Object.values(this._exts);
     }
 

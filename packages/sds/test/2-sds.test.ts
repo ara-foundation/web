@@ -24,8 +24,8 @@ class SampleService extends Service {
     }
 
     public getNumber?(extIndex?: number): number {
-        if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.exts.length) {
-            const ext = this.extensionOperator.exts[extIndex];
+        if (extIndex !== undefined && extIndex >= 0 && extIndex < this.extensionOperator.extensionAmount) {
+            const ext = this.extensionOperator.extensions[extIndex];
             return (ext as SampleExtension).getDouble();
         }
         return 1;

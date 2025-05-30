@@ -1,7 +1,7 @@
 import { OkResult } from "@ara-web/p-hintjens";
 export type Predicate<Value> = (v: Value) => boolean;
 export declare const DOCUMENT_SELECTOR = "#document";
-export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>) => ObjectNode<T>;
+export type DataToObjectNode<T> = (obj?: T, parent?: ObjectNode<T>) => ObjectNode<T>;
 export interface CustomSelectorNode extends Node {
     selector: string;
     isTag: boolean;
@@ -60,8 +60,8 @@ export declare class ObjectNode<DataType> implements CustomSelectorNode {
     private _data?;
     private _children;
     private _parent?;
-    private _dataTraits;
-    constructor(dataTraits: DataOperations<DataType>, dataToObjectNode: DataToObjectNode<DataType>, data?: DataType, parent?: CustomSelectorNode);
+    private _dataOps;
+    constructor(dataOps: DataOperations<DataType>, dataToObjectNode: DataToObjectNode<DataType>, data?: DataType, parent?: CustomSelectorNode);
     baseURI: string;
     childNodes: NodeListOf<ChildNode>;
     firstChild: ChildNode | null;

@@ -2,7 +2,7 @@ import { OkResult, ObjectTraits } from "@ara-web/p-hintjens";
 
 export type Predicate<Value> = (v: Value) => boolean;
 export const DOCUMENT_SELECTOR = "#document";
-export type DataToObjectNode<T> = (obj: T, parent?: ObjectNode<T>) => ObjectNode<T>;
+export type DataToObjectNode<T> = (obj?: T, parent?: ObjectNode<T>) => ObjectNode<T>;
 
 export interface CustomSelectorNode extends Node {
     selector: string;
@@ -66,20 +66,20 @@ export class ObjectNode<DataType> implements CustomSelectorNode {
     private _data?: DataType;  // Only component like data
     private _children: ObjectNode<DataType>[] = [];
     private _parent?: CustomSelectorNode;
-    private _dataTraits: DataOperations<DataType>;
+    private _dataOps: DataOperations<DataType>;
 
     constructor(
-        dataTraits: DataOperations<DataType>,
+        dataOps: DataOperations<DataType>,
         dataToObjectNode: DataToObjectNode<DataType>,
         data?: DataType,
         parent?: CustomSelectorNode,
     ) {
-        this._dataTraits = dataTraits;
+        this._dataOps = dataOps;
         this._children = [];
 		this._parent = parent;
-		if (data) {
+		if (data !== undefined) {
 			this._data = data;
-            const children = dataTraits.getChildren(data);
+            const children = dataOps.getChildren(data);
             const parentElement: ObjectNode<DataType> = this;
 
             // new ObjectNode() lints this object to it's children
@@ -230,7 +230,7 @@ export class ObjectNode<DataType> implements CustomSelectorNode {
      * For Pages, it returns empty string.
      */
     public get name(): string {
-        return this._dataTraits.getName(this._data);
+        return this._dataOps.getName(this._data);
     }
     
     public get parent(): CustomSelectorNode | null {
@@ -238,14 +238,14 @@ export class ObjectNode<DataType> implements CustomSelectorNode {
 	}
 
     getAttribute(attrName: string): string | undefined {
-        return this._dataTraits.getAttribute(this._data, attrName);
+        return this._dataOps.getAttribute(this._data, attrName);
     }
       
     setAttribute<AttributeValue>(name: string, value: AttributeValue): OkResult {
         if (this._data === undefined) {
             return OkResult.fail(`No internal element`, `Are you sure it can set an attribute?`)
         }
-        return this._dataTraits.setAttribute<AttributeValue>(this._data, name, value);
+        return this._dataOps.setAttribute<AttributeValue>(this._data, name, value);
     }
 
     public get children(): CustomSelectorNode[] {
@@ -261,7 +261,7 @@ export class ObjectNode<DataType> implements CustomSelectorNode {
 		throw new Error("Method not implemented.");
     }
     isAttributeExist(attrName: string): boolean {
-        return this._dataTraits.getAttribute(this._data, attrName) !== undefined;
+        return this._dataOps.getAttribute(this._data, attrName) !== undefined;
     }
 
     public setChildren(children: CustomSelectorNode[]) {
@@ -272,7 +272,6 @@ export class ObjectNode<DataType> implements CustomSelectorNode {
         this._parent = parent;
     }
 }
-
 
 export class ObjectNodeAdapter<ElementType> implements Adapter<CustomSelectorNode, ObjectNode<ElementType>>{
 	public isTag(elem: CustomSelectorNode): elem is ObjectNode<ElementType> {

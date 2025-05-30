@@ -93,7 +93,7 @@ export class ExtensionOperator {
     /**
      * Return all extensions of the Service
      */
-    get exts() {
+    get extensions() {
         return Object.values(this._exts);
     }
     get extensionAmount() {

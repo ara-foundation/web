@@ -4,19 +4,15 @@ import { ExtensionOperator, Service } from "./sds.js";
 import { ObjectNodeAdapter, ObjectNode } from "./tree.js";
 import { LinkTraits } from "./link-traits.js";
 import { ModuleLink } from "./links/index.js";
-/**
- * RestSynchronizer is used to keep track of the object nodes
- * that are pending to be synchronized by the rest.
- */
-export class RestSynchronizer {
-    pendingKeys = new Set();
-    rootNode;
-    objectToNodeTree;
-    constructor(node, objectToNodeTree) {
-        this.pendingKeys = new Set();
-        this.rootNode = node;
-        this.objectToNodeTree = objectToNodeTree;
-    }
+// Decorator to use if the method is hided behind the post.
+export function RestfulMethod(message) {
+    return function (target, key, descriptor) {
+        const errorMessage = message || 'Method is hidden by the RESTful API, please call REST operation';
+        descriptor.value = function (...args) {
+            throw new Error(errorMessage);
+        };
+        return descriptor;
+    };
 }
 /**
  * A Rest Extension that forwards rest to the side.
@@ -43,22 +39,46 @@ export class RestHandler {
     handlePatch;
     handleDelete;
 }
+/**
+ * RestDispatcher is the extension operator of the SDS service called Rest.
+ */
 export class RestDispatcher extends ExtensionOperator {
     get handlers() {
-        return this.exts.filter(ext => ext instanceof RestHandler);
+        return this.extensions.filter(ext => ext instanceof RestHandler);
     }
-    async post(parentOrBigBro, newBornChild, options = { lilBro: false }) {
+    /**
+     * Dispatch newly created data, for example to save in the database
+     * @param parentNode
+     * @param newBornChild
+     * @returns
+     */
+    async post(parentNode, newBornChild) {
         for (const handler of this.handlers) {
             if (handler.handlePost === undefined) {
                 continue;
             }
-            const handled = await handler.handlePost(parentOrBigBro, newBornChild, options);
+            const handled = await handler.handlePost(parentNode, newBornChild);
             if (handled.isFailure) {
                 return OkResult.fail(`restHandler('${handler.packageLink}').posting(): ${handled.errorTitle}`, handled.errorDescription);
             }
         }
+        // Add the sub handler
+        const subHandler = newBornChild.data;
+        if (subHandler.restHandler !== undefined) {
+            const subHandlerAdded = await this.addExtension(subHandler.restHandler);
+            if (subHandlerAdded.isFailure) {
+                return OkResult.fail(`this.dispatcher.addExtension(subHandler): ${subHandlerAdded.errorTitle}`, subHandlerAdded.errorDescription);
+            }
+        }
         return OkResult.ok();
     }
+    /**
+     * Dispatch the data update for example update the database row.
+     * @param selector
+     * @param node
+     * @param data
+     * @returns
+     */
     async put(selector, node, data) {
         for (const handler of this.handlers) {
             if (handler.handlePut === undefined) {
@@ -71,6 +91,13 @@ export class RestDispatcher extends ExtensionOperator {
         }
         return OkResult.ok();
     }
+    /**
+     * Dispatch the update of the data's property, for example to update the database.
+     * @param selector
+     * @param node
+     * @param data
+     * @returns
+     */
     async patch(selector, node, data) {
         for (const handler of this.handlers) {
             if (handler.handlePatch === undefined) {
@@ -83,6 +110,12 @@ export class RestDispatcher extends ExtensionOperator {
         }
         return OkResult.ok();
     }
+    /**
+     * Dispatch the deletion of the data, for example delete the row in the database too.
+     * @param selector
+     * @param nodes
+     * @returns
+     */
     async delete(selector, nodes) {
         if (nodes.length === 0) {
             return OkResult.ok();
@@ -96,9 +129,19 @@ export class RestDispatcher extends ExtensionOperator {
                 return OkResult.fail(`restHandler('${handler.packageLink}').handleDelete(selector: '${selector}'): ${handled.errorTitle}`, handled.errorDescription);
             }
         }
+        for (const node of nodes) {
+            const subHandler = node.data;
+            if (subHandler.restHandler !== undefined) {
+                const subHandlerRemoved = await this.removeExtension([subHandler.restHandler]);
+                if (subHandlerRemoved.isFailure) {
+                    return OkResult.fail(`this.removeExtension(subHandler): ${subHandlerRemoved.errorTitle}`, subHandlerRemoved.errorDescription);
+                }
+            }
+        }
         return OkResult.ok();
     }
 }
+const restPackgeLink = ModuleLink.newPackageLink("@ara-web", "sds", "rest");
 /**
  * Rest is the Service that creates a CSS Selector traversing for the objects.
  *
@@ -117,10 +160,10 @@ export class Rest extends Service {
     _options;
     _root;
     dataToObjectNode;
-    constructor(object, dataToObjectNode, setup = { packageLink: ModuleLink.newPackageLink("@ara-web", "rest") }) {
-        super(setup, ["get", "getAll", "post", "put", "patch", "delete", "clone"]);
+    constructor(dataToObjectNode, setup = { packageLink: restPackgeLink }) {
+        super(setup, ["get", "getAll", "post", "put", "patch", "delete"]);
         this._options = { adapter: new ObjectNodeAdapter() };
-        this._root = dataToObjectNode(object);
+        this._root = dataToObjectNode();
         this.dataToObjectNode = dataToObjectNode;
         this.operator = new RestDispatcher(setup.extensions || []);
     }
@@ -132,7 +175,8 @@ export class Rest extends Service {
         this._root = obj;
     }
     /**
-     * Returns the extension operator as the rest dispatcher, since all rest handlers are returned as extensions.
+     * Returns the extension operator as the rest dispatcher,
+     * since all writing back in the code is done by the extensions.
      */
     get dispatcher() {
         return this.operator;
@@ -161,66 +205,22 @@ export class Rest extends Service {
      * This method doesn't set the children relationship to the parent.
      * Letting know that selector is a parent occurs in the ObjectNode instantiation.
      * @requires Selector to exist, the object must have a parent.
-     * @param selector Parent or a big brother's link if `options.lilBro` is set true.
-     * @param data  Object node's data
+     * @param parentSelector Parent or a big brother's link if `options.lilBro` is set true.
+     * @param childData  Object node's data
      * @param options Set to little bro if you want to set object after the selector.
      * @returns
      */
-    async post(selector, data, options = { lilBro: false }) {
-        const parentOrBigBro = await this._getParentOrBigBro(selector, options);
-        if (parentOrBigBro.isFailure) {
-            return OkResult.fail(`getParent(): ${parentOrBigBro.errorTitle}`, parentOrBigBro.errorDescription);
+    async post(parentSelector, childData) {
+        const parent = await this.get(parentSelector);
+        if (parent === null) {
+            return Result.fail(`Rest.get('${parentSelector}'): parent not found`, `Please pass the correct selector`);
         }
-        let bigBro;
-        let parent;
-        if (options.lilBro) {
-            bigBro = parentOrBigBro.getValue();
-            parent = bigBro.parent;
-        }
-        else {
-            parent = parentOrBigBro.getValue();
-        }
-        let newBornChild = this.dataToObjectNode(data, parent);
-        const handled = await this.dispatcher.post(parentOrBigBro.getValue(), newBornChild, options);
+        let newBornChild = this.dataToObjectNode(childData, parent);
+        const handled = await this.dispatcher.post(parent, newBornChild);
         if (handled.isFailure) {
-            return OkResult.fail(`dispatcher.post(selector: '${selector}'): ${handled.errorTitle}`, handled.errorDescription);
+            return OkResult.fail(`dispatcher.post(selector: '${parentSelector}'): ${handled.errorTitle}`, handled.errorDescription);
         }
-        const posted = this._appendChild(newBornChild, bigBro);
-        return posted;
-    }
-    async _getParentOrBigBro(selector, options = { lilBro: false }) {
-        let parentOrBigBro = await this.get(selector);
-        if (parentOrBigBro === null) {
-            return Result.fail(`Rest.get('${selector}'): not found`, `Please pass the correct elder's selector`);
-        }
-        if (options.lilBro) {
-            if (parentOrBigBro.parent === null) {
-                return Result.fail(`Rest('${selector}') is me, and I have no parent to post my lil'bro!`, `Add my parent first. How can I add my sibling if its not my parents.`);
-            }
-        }
-        // not calling lil bro, then its the parents decided to make a love.
-        return Result.ok(parentOrBigBro);
-    }
-    /**
-     * Append the data as the child of a parent by calling `data.parent.appendChild()`
-     * or `data.parent.setChildren()`.
-     * @param newBornChild
-     * @param bigBro
-     */
-    _appendChild(newBornChild, bigBro) {
-        if (bigBro === undefined) {
-            newBornChild.parent.appendChild(newBornChild);
-        }
-        else {
-            const bigBroIndex = newBornChild.parent.children.findIndex(sibling => sibling.isEqualTo(bigBro));
-            if (bigBroIndex === -1) {
-                return OkResult.fail(`Can not find the big bro`, `Are you sure it works?`);
-            }
-            const elderBrothers = newBornChild.parent.children.slice(0, bigBroIndex + 1);
-            const youngerCousins = newBornChild.parent.children.slice(bigBroIndex + 1);
-            const allChildren = [...elderBrothers, newBornChild, ...youngerCousins];
-            newBornChild.parent.setChildren(allChildren);
-        }
+        newBornChild.parent.appendChild(newBornChild);
         return OkResult.ok();
     }
     /**
@@ -266,13 +266,13 @@ export class Rest extends Service {
         if (node === null) {
             return OkResult.fail(`Rest.get('${selector}'): not found`, `There is no element with the selector`);
         }
-        const handled = await this.dispatcher.patch(selector, node, data);
-        if (handled.isFailure) {
-            return OkResult.fail(`dispatcher.patch(selector: '${selector}'): ${handled.errorTitle}`, handled.errorDescription);
-        }
         const attrSetted = node.setAttribute(attrName, data);
         if (attrSetted.isFailure) {
             return OkResult.fail(`Rest.get('${selector}').setAttribute('${attrName}'): ${attrSetted.errorTitle}`, attrSetted.errorDescription);
+        }
+        const handled = await this.dispatcher.patch(attrSelector, node, data);
+        if (handled.isFailure) {
+            return OkResult.fail(`dispatcher.patch(selector: '${attrSelector}'): ${handled.errorTitle}`, handled.errorDescription);
         }
         return OkResult.ok();
     }
@@ -311,11 +311,5 @@ export class Rest extends Service {
             node.parent.setChildren(remainingChildren);
         }
         return OkResult.ok();
-    }
-    clone(attrSelector) {
-        const clone = new Rest(this._root.data, this.dataToObjectNode);
-        clone._root = this._root;
-        clone.delete(attrSelector);
-        return clone;
     }
 }
