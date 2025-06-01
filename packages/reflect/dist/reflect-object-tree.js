@@ -6,32 +6,14 @@ export const MODULE_MEMORY_TAG = "module";
 export const MODULE_MEMORY_SELECTOR = `*:nth-child(1) ${MODULE_MEMORY_TAG}`;
 export const MEMOP_SELECTOR = `*:nth-child(1) > ${MEMOP_TAG}`;
 export const reflectDataToObjectTree = (data, parent) => {
-    // if (data instanceof CodePiece) {
-    // 	return moduleToCodePieceTree(data, parent as ObjectNode<CodePiece>);
-    // }
     // Creating the root for entire source code that has one or many code pieces.
-    let obj;
-    if (parent === undefined) {
-        if (!(data instanceof RestfulExtensionOperator)) {
-            throw `Root element must be an extension operator`;
-        }
-        obj = new ObjectNode(reflectElementOps, reflectDataToObjectTree, data);
-    }
-    else {
-        obj = new ObjectNode(reflectElementOps, reflectDataToObjectTree, data, parent);
-    }
-    // if (data instanceof ModuleMemory) {
-    // 	data.rest.setRootNode(obj as any as ObjectNode<CodePiece>);
-    // } 
+    const obj = new ObjectNode(reflectElementOps, reflectDataToObjectTree, data, parent);
     return obj;
 };
 const getName = (data) => {
     if (data === undefined || data === null || data instanceof RestfulExtensionOperator) {
         return '';
     }
-    // if (data instanceof CodePiece) {
-    // 	return codePieceOps.getName(data);
-    // }
     if (data instanceof Module) {
         return MODULE_MEMORY_TAG;
     }
@@ -46,7 +28,7 @@ const getChildren = (data) => {
         // return codePieceOps.getChildren(data);
     }
     else if (data instanceof RestfulExtensionOperator) {
-        return data.exts;
+        return data.extensions;
     }
     // For extensions.
     const moduleMemories = data.getModules();

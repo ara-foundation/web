@@ -21,14 +21,14 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
         super(packageLink, MEMOP_TAG, extOp)
     }
     public get modules(): Module[] {
-        return this.exts.reduce((memories, ext) => {
+        return this.extensions.reduce((memories, ext) => {
             memories = [...memories, ...(ext as ModuleManager).modules]
             return memories;
         }, [] as Module[]);
     }
     
     public get categories(): string[] {
-        return this.exts.reduce((categories, moduleManager) => {
+        return this.extensions.reduce((categories, moduleManager) => {
             categories = [...categories, ...(moduleManager as ModuleManager).categories]
             return categories;
         }, [] as string[])
@@ -39,15 +39,15 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
     }
 
     isDefinedModuleCategory(category: ModuleCategory): boolean {
-        return this.exts.some(ext => (ext as ModuleManager).isDefinedModuleCategory(category));
+        return this.extensions.some(ext => (ext as ModuleManager).isDefinedModuleCategory(category));
     }
 
     isModuleExist(link: ModuleLink | ModuleURL): boolean {
-        return this.exts.some(ext => (ext as ModuleManager).isModuleExist(link));
+        return this.extensions.some(ext => (ext as ModuleManager).isModuleExist(link));
     }
 
     getModule = <T>(link: ModuleLink): Result<Module> => {
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             const result = (ext as ModuleManager).getModule(link);
             if (result.isSuccess) {
                 return result;
@@ -58,14 +58,14 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
 
     getModules = <T>(category?: ModuleCategory): Module[] => {
         let modules: Module[] = [];
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             modules = modules.concat((ext as ModuleManager).getModules(category));
         }
         return modules;
     };
 
     getModuleWithFileExtensions(link: ModuleLink): ModuleLink[] {
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             const links = (ext as ModuleManager).getModuleWithFileExtensions(link);
             if (links && links.length > 0) {
                 return links;
@@ -85,6 +85,6 @@ export class ChiefModuleManager extends RestfulExtensionOperator implements Modu
     }
 
     public get memOps(): ModuleManager[] {
-        return this.exts as ModuleManager[];
+        return this.extensions as ModuleManager[];
     }
 }

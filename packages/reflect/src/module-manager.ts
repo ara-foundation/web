@@ -28,9 +28,7 @@ export interface ModuleManager extends Extendable {
     modules: Module[]; // returns module memories that were tracked
     categories: ModuleCategory[];
     isDefinedModuleCategory(category: ModuleCategory): boolean;
-
     isModuleExist(link: ModuleLink|ModuleURL): boolean;
-
     getModule: (link: ModuleLink) => Result<Module>;
     getModules: (category?: ModuleCategory) => Module[];
 
@@ -44,7 +42,6 @@ export interface ModuleManager extends Extendable {
     
     putPackage(record: ModuleRecord): Promise<Result<ModuleLink>>;
     putModules(recordOrRecords: ModuleRecords|ModuleRecord): Promise<Result<ModuleLink[]>>;
-    watchModules(autoImporter: AutoImporter): void;
 
     /**************************************************************************
      * HOOKS that Reflect will call

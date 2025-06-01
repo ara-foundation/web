@@ -1,5 +1,5 @@
-import { LinkTraits, ModuleLink, ObjectNode, RestHandler, RestSynchronizer, } from "@ara-web/sds";
-import { Debug, EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
+import { LinkTraits, ModuleLink, ObjectNode, RestHandler, } from "@ara-web/sds";
+import { EnumTraits, OkResult, Result, } from "@ara-web/p-hintjens";
 import { FilePath, MODULE_MEMORY_TAG, MEMOP_TAG, escapeId, Module, } from "./index.js";
 export var ModuleCategory;
 (function (ModuleCategory) {
@@ -11,7 +11,6 @@ export var ModuleCategory;
 export class BuiltinModuleManager {
     _moduleLink;
     _modules;
-    _restSync;
     // If rest has operations related to the module memories with
     // the ModuleCategory.NodeJsModule category,
     // then it will use this method.
@@ -31,17 +30,11 @@ export class BuiltinModuleManager {
     get packageLink() {
         return this._moduleLink;
     }
-    setRestSyncer(node, dataToObjectNode) {
-        this._restSync = new RestSynchronizer(node, dataToObjectNode);
-    }
     /**
      * The rest handler of the nodejs module manager.
      */
     get extensionRestDispatcher() {
         return this._restHandler;
-    }
-    get extensionRestQueue() {
-        return this._restSync;
     }
     /**************************************
      *  Module operators
@@ -89,7 +82,6 @@ export class BuiltinModuleManager {
         const importingFilePath = params.importMetaFilename ? params.importMetaFilename : FilePath.getCurrentWorkingDir();
         const moduleLinks = [];
         if ("records" in params) {
-            Debug.log(`Put modules`);
             const importedRecords = params;
             for (let filePath in importedRecords.records) {
                 const moduleLink = FilePath.getFileAbsolutePath(filePath, importingFilePath);
@@ -138,30 +130,11 @@ export class BuiltinModuleManager {
     // Hooks
     //
     //****************************************************************
-    async beforeAny(rest) {
+    async beforeAny(_rest) {
         if (this.autoImporter !== undefined) {
             const result = await this.autoPost();
             if (result.isFailure) {
                 return OkResult.fail(`this.autoPost(): ${result.errorTitle}`, result.errorDescription);
-            }
-        }
-        let objNode = undefined;
-        for (const moduleURLStr in this._modules) {
-            const moduleURL = moduleURLStr;
-            if (!this._restSync.pendingKeys.has(moduleURL)) {
-                // Very important line.
-                // If it's given at the end, then when trying
-                // to get the parent object node, it will
-                // enter into an infinite cycle. get -> beforeAny -> get...
-                this._restSync.pendingKeys.add(moduleURL);
-                if (objNode === undefined) {
-                    objNode = await rest.get(`#${escapeId(this._moduleLink.url)}`);
-                    if (objNode === null) {
-                        return OkResult.fail(`The nodejs extension not found`, `Are you sure it exists in the rest?`);
-                    }
-                }
-                const moduleElement = rest.dataToObjectNode(this._modules[moduleURL], objNode);
-                objNode.appendChild(moduleElement);
             }
         }
         return OkResult.ok();
@@ -242,10 +215,6 @@ export class BuiltinModuleManager {
             .filter(moduleURL => this._modules[moduleURL] !== undefined);
         if (moduleURLs.length === 0) {
             return OkResult.ok();
-        }
-        for (const moduleURL of moduleURLs) {
-            delete this._modules[moduleURL];
-            this._restSync.pendingKeys.delete(moduleURL);
         }
         return OkResult.ok();
     }

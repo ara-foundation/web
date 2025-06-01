@@ -27,27 +27,24 @@ export class Reflect extends Service {
      */
     constructor(setup = {}) {
         super(withDefaults(setup), ["rest"]);
-        this.operator = new ChiefModuleManager(this.operator);
         const restHookProxy = new RestReflectHookProxy();
         const restSetup = {
             packageLink: restLink,
             proxies: [restHookProxy],
-            extensions: [this.operator.restDispatcher],
         };
-        const rest = new Rest(this.extensionOperator, reflectDataToObjectTree, restSetup);
+        const rest = new Rest(reflectDataToObjectTree, restSetup);
         const proxified = rest.proxifyMe();
         if (proxified.isFailure) {
             throw proxified;
         }
         this._rest = proxified.getValue();
-        const restfulLinked = this.operator.setRestDispatcherOperator(rest);
-        if (restfulLinked.isFailure) {
-            throw restfulLinked;
-        }
-        this.nodeJsExt.setRestSyncer(this._rest.rootNode, reflectDataToObjectTree);
+        // Override the SDS's built in extension operator by 
+        // the Reflect's chief module manager which is restful module manager.
+        this.operator = new ChiefModuleManager(this.operator);
+        this._rest.dispatcher.addExtension(this.operator.restHandler);
     }
     get nodeJsExt() {
-        return this.extensionOperator.exts[0];
+        return this.extensionOperator.extensions[0];
     }
     rest() {
         return this._rest;

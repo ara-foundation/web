@@ -19,8 +19,8 @@ export class RestReflectHookProxy extends Proxy implements Restful<ReflectDataTy
         this._rest!.setRootNode(obj);
     }
 
-    public get dispatchers(): Readonly<RestHandler>[] {
-        return this._rest!.dispatcher.exts as unknown as Readonly<RestHandler>[];
+    public get handlers(): Readonly<RestHandler>[] {
+        return this._rest!.dispatcher.extensions as unknown as Readonly<RestHandler>[];
     }
 
     public get dispatcher(): RestDispatcher<ReflectDataType> {
@@ -72,9 +72,7 @@ export class RestReflectHookProxy extends Proxy implements Restful<ReflectDataTy
             return OkResult.fail(`beforePost('${selector}'): ${preparationResult.errorTitle}`, preparationResult.errorDescription!);
         }
 
-        Debug.push(`rest post`)
-        const result = await this._rest!.post!(selector, data, options);
-        Debug.pop();
+        const result = await this._rest!.post!(selector, data);
         if (result.isFailure) {
             return OkResult.fail(`rest.post('${selector}'): ${result.errorTitle}`, result.errorDescription!);
         }

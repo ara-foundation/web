@@ -46,29 +46,25 @@ export class Reflect extends Service implements RestfulReflect  {
      */
     constructor(setup: Omit<RestfulSetup, "rootNodeTag" | "packageLink"> = {}) {
         super(withDefaults(setup), ["rest"]);
-        this.operator = new ChiefModuleManager(this.operator as ExtensionOperator);
         const restHookProxy = new RestReflectHookProxy();
         const restSetup: Setup = {
             packageLink: restLink,
             proxies: [restHookProxy], 
-            extensions: [(this.operator as RestfulExtensionOperator).restDispatcher],
         }
-        const rest = new Rest<ReflectDataType>(this.extensionOperator, reflectDataToObjectTree, restSetup);
+        const rest = new Rest<ReflectDataType>(reflectDataToObjectTree, restSetup);
         const proxified = rest.proxifyMe<RestReflectHookProxy>();
         if (proxified.isFailure) {
             throw proxified;
         }
         this._rest = proxified.getValue();
-        const restfulLinked = (this.operator as ChiefModuleManager).setRestDispatcherOperator(rest);
-        if (restfulLinked.isFailure) {
-            throw restfulLinked;
-        }
-        this.nodeJsExt.setRestSyncer(this._rest.rootNode!, reflectDataToObjectTree);
-
+        // Override the SDS's built in extension operator by 
+        // the Reflect's chief module manager which is restful module manager.
+        this.operator = new ChiefModuleManager(this.operator as ExtensionOperator);
+        this._rest.dispatcher.addExtension((this.operator as RestfulExtensionOperator).restHandler);
     }
 
     public get nodeJsExt(): BuiltinModuleManager {
-        return this.extensionOperator.exts[0] as BuiltinModuleManager;
+        return this.extensionOperator.extensions[0] as BuiltinModuleManager;
     }
 
     public rest?(): RestReflectHookProxy {

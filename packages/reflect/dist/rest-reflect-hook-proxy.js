@@ -12,8 +12,8 @@ export class RestReflectHookProxy extends Proxy {
     setRootNode(obj) {
         this._rest.setRootNode(obj);
     }
-    get dispatchers() {
-        return this._rest.dispatcher.exts;
+    get handlers() {
+        return this._rest.dispatcher.extensions;
     }
     get dispatcher() {
         return this._rest.dispatcher;
@@ -56,9 +56,7 @@ export class RestReflectHookProxy extends Proxy {
         if (preparationResult.isFailure) {
             return OkResult.fail(`beforePost('${selector}'): ${preparationResult.errorTitle}`, preparationResult.errorDescription);
         }
-        Debug.push(`rest post`);
-        const result = await this._rest.post(selector, data, options);
-        Debug.pop();
+        const result = await this._rest.post(selector, data);
         if (result.isFailure) {
             return OkResult.fail(`rest.post('${selector}'): ${result.errorTitle}`, result.errorDescription);
         }

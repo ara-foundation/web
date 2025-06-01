@@ -1,4 +1,4 @@
-import { type DataToObjectNode, type ModuleURL, type Restful, ModuleLink, ObjectNode, RestHandler, RestSynchronizer } from "@ara-web/sds";
+import { type ModuleURL, type Restful, ModuleLink, ObjectNode, RestHandler } from "@ara-web/sds";
 import { OkResult, Result } from "@ara-web/p-hintjens";
 import { type AutoImporter, type ModuleManager, type ModuleRecord, type ModuleRecords, type ReflectDataType, Module } from "./index.js";
 export declare enum ModuleCategory {
@@ -10,7 +10,6 @@ export declare enum ModuleCategory {
 export declare class BuiltinModuleManager implements ModuleManager {
     protected _moduleLink: ModuleLink;
     private _modules;
-    private _restSync?;
     protected _restHandler: RestHandler;
     protected autoImporter?: AutoImporter;
     constructor();
@@ -18,12 +17,10 @@ export declare class BuiltinModuleManager implements ModuleManager {
      * The SDS Extension methods
      *************************************/
     get packageLink(): ModuleLink;
-    setRestSyncer(node: ObjectNode<ReflectDataType>, dataToObjectNode: DataToObjectNode<ReflectDataType>): void;
     /**
      * The rest handler of the nodejs module manager.
      */
     get extensionRestDispatcher(): RestHandler;
-    get extensionRestQueue(): RestSynchronizer;
     /**************************************
      *  Module operators
      *************************************/
@@ -38,7 +35,7 @@ export declare class BuiltinModuleManager implements ModuleManager {
     putModules(params: ModuleRecords | ModuleRecord): Promise<Result<ModuleLink[]>>;
     watchModules: (autoImporter: AutoImporter) => void;
     protected autoPost: () => Promise<Result<ModuleLink[]>>;
-    beforeAny(rest: Restful<ReflectDataType>): Promise<OkResult>;
+    beforeAny(_rest: Restful<ReflectDataType>): Promise<OkResult>;
     /****************************************************************
      *
      * Rest handler

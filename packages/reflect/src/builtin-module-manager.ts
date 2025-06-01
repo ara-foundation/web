@@ -6,7 +6,6 @@ import {
     ModuleLink, 
     ObjectNode, 
     RestHandler,
-    RestSynchronizer, 
 } from "@ara-web/sds";
 import { 
     EnumTraits,
@@ -37,7 +36,6 @@ export enum ModuleCategory {
 export class BuiltinModuleManager implements ModuleManager {
     protected _moduleLink: ModuleLink;
     private _modules: Modules;
-    private _restSync?: RestSynchronizer;
 
     // If rest has operations related to the module memories with
     // the ModuleCategory.NodeJsModule category,
@@ -61,19 +59,11 @@ export class BuiltinModuleManager implements ModuleManager {
         return this._moduleLink;
     }
 
-    setRestSyncer(node: ObjectNode<ReflectDataType>, dataToObjectNode: DataToObjectNode<ReflectDataType>): void {
-        this._restSync = new RestSynchronizer(node, dataToObjectNode);
-    }
-    
     /**
      * The rest handler of the nodejs module manager.
      */
     public get extensionRestDispatcher(): RestHandler {
         return this._restHandler;
-    }
-
-    public get extensionRestQueue(): RestSynchronizer {
-        return this._restSync!;
     }
 
     /**************************************
@@ -100,7 +90,7 @@ export class BuiltinModuleManager implements ModuleManager {
         return false;
     }
     
-    public getModule<T>(moduleLink: ModuleLink|string): Result<Module> {
+    public getModule(moduleLink: ModuleLink|string): Result<Module> {
         if (typeof moduleLink === "string") {
             return Result.fail(`${this._moduleLink.url} accepts module links only`, `Please pass the absolute path`)
         }
@@ -183,33 +173,11 @@ export class BuiltinModuleManager implements ModuleManager {
     //
     //****************************************************************
 
-    public async beforeAny(rest: Restful<ReflectDataType>): Promise<OkResult> {
+    public async beforeAny(_rest: Restful<ReflectDataType>): Promise<OkResult> {
         if (this.autoImporter !== undefined) {
             const result = await this.autoPost();
             if (result.isFailure) {
                 return OkResult.fail(`this.autoPost(): ${result.errorTitle}`, result.errorDescription!);
-            }
-        }
-
-        let objNode: ObjectNode<ReflectDataType> | null | undefined = undefined;
-
-        for (const moduleURLStr in this._modules) {
-            const moduleURL = moduleURLStr as ModuleURL;
-            if (!this._restSync!.pendingKeys.has(moduleURL)) {
-                // Very important line.
-                // If it's given at the end, then when trying
-                // to get the parent object node, it will
-                // enter into an infinite cycle. get -> beforeAny -> get...
-                this._restSync!.pendingKeys.add(moduleURL);
-                if (objNode === undefined) {
-                    objNode = await rest.get!(`#${escapeId(this._moduleLink.url)}`)
-                    if (objNode === null) {
-                        return OkResult.fail(`The nodejs extension not found`, `Are you sure it exists in the rest?`);
-                    }
-                }
-
-                const moduleElement = rest.dataToObjectNode!(this._modules[moduleURL], objNode!);
-                objNode.appendChild(moduleElement);
             }
         }
 
@@ -321,10 +289,6 @@ export class BuiltinModuleManager implements ModuleManager {
             .filter(moduleURL => this._modules[moduleURL] !== undefined)
         if (moduleURLs.length === 0) {
             return OkResult.ok();
-        }
-        for (const moduleURL of moduleURLs) {
-            delete this._modules[moduleURL];
-            this._restSync!.pendingKeys.delete(moduleURL);
         }
         return OkResult.ok();
     }

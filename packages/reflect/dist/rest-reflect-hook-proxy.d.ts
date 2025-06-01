@@ -6,7 +6,7 @@ export declare class RestReflectHookProxy extends Proxy implements Restful<Refle
     constructor();
     get rootNode(): ObjectNode<ReflectDataType> | undefined;
     setRootNode(obj: ObjectNode<ReflectDataType>): void;
-    get dispatchers(): Readonly<RestHandler>[];
+    get handlers(): Readonly<RestHandler>[];
     get dispatcher(): RestDispatcher<ReflectDataType>;
     get dataToObjectNode(): DataToObjectNode<ReflectDataType>;
     putBehindData(behindData: Rest<ReflectDataType>): void;

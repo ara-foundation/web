@@ -16,13 +16,13 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
         super(packageLink, MEMOP_TAG, extOp);
     }
     get modules() {
-        return this.exts.reduce((memories, ext) => {
+        return this.extensions.reduce((memories, ext) => {
             memories = [...memories, ...ext.modules];
             return memories;
         }, []);
     }
     get categories() {
-        return this.exts.reduce((categories, moduleManager) => {
+        return this.extensions.reduce((categories, moduleManager) => {
             categories = [...categories, ...moduleManager.categories];
             return categories;
         }, []);
@@ -31,13 +31,13 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
         return packageLink;
     }
     isDefinedModuleCategory(category) {
-        return this.exts.some(ext => ext.isDefinedModuleCategory(category));
+        return this.extensions.some(ext => ext.isDefinedModuleCategory(category));
     }
     isModuleExist(link) {
-        return this.exts.some(ext => ext.isModuleExist(link));
+        return this.extensions.some(ext => ext.isModuleExist(link));
     }
     getModule = (link) => {
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             const result = ext.getModule(link);
             if (result.isSuccess) {
                 return result;
@@ -47,13 +47,13 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
     };
     getModules = (category) => {
         let modules = [];
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             modules = modules.concat(ext.getModules(category));
         }
         return modules;
     };
     getModuleWithFileExtensions(link) {
-        for (const ext of this.exts) {
+        for (const ext of this.extensions) {
             const links = ext.getModuleWithFileExtensions(link);
             if (links && links.length > 0) {
                 return links;
@@ -71,6 +71,6 @@ export class ChiefModuleManager extends RestfulExtensionOperator {
         throw new Error("Chief Module Manager won't watch modules, delegate to the module managers");
     }
     get memOps() {
-        return this.exts;
+        return this.extensions;
     }
 }
