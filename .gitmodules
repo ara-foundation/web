@@ -4,3 +4,6 @@
 [submodule "apps/landing-page"]
 	path = apps/landing-page
 	url = https://github.com/zeon-studio/astroplate.git
+[submodule "apps/hyperpayment-page"]
+	path = apps/hyperpayment-page
+	url = git@github.com:ara-foundation/hyperpayment-page.git
